@@ -8,7 +8,7 @@ bool continue_execution = true;
 void signalHandler(int s){
 	printf("Shutdown application Requested. Stopping Services...\n");
 	continue_execution = false;
-
+	robot->stopVideoStreaming();
 	robot->Close();
 	if(ros::ok())
 	{

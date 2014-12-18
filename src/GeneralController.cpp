@@ -7,7 +7,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 {
 	this->nh = nh_;
 	
-	//this->maestroControllers = new SerialPort();
+	this->maestroControllers = new SerialPort();
 	
 	this->keepSpinning = true;
 	this->bumpersOk = true;
@@ -116,7 +116,10 @@ void GeneralController::OnMsg(char* cad,int length)//callback for client and ser
 			break;
 		case 0x21:
 			videoDevice = atoi(cad);
-			//beginVideoStreaming(videoDevice);
+			beginVideoStreaming(videoDevice);
+			break;
+		case 0x22:
+			stopVideoStreaming();
 			break;
 	}
 	
@@ -587,9 +590,8 @@ void GeneralController::beginVideoStreaming(int videoDevice)
 	
 	pthread_t t1;
 	stopVideoStreaming();
-	cv::VideoCapture cap(videoDevice);
-	//if(videoCapture.isOpened())
-	if(true)
+	videoCapture = cv::VideoCapture(videoDevice);
+	if(videoCapture.isOpened())
 	{
 		std::cout << "Streaming from camera device: " << videoDevice << std::endl;
 		pthread_create(&t1, NULL, streamingThread, (void *)(this));
@@ -607,12 +609,26 @@ void GeneralController::stopVideoStreaming()
 	if(streamingActive == YES)
 	{
 		streamingActive = MAYBE;
+		std::cout << "Stopping video streaming" << std::endl;
 		while(streamingActive != NO) Sleep(100);
 	}
 }
 
 void GeneralController::GetNumberOfCamerasAvailable(int& count){
-	count = 3;
+	int value = 0;
+	bool firstCrash = false;
+	for(int i = 0; i < 10 && !firstCrash; i++)
+	{
+		cv::VideoCapture vc(i);
+		if(vc.isOpened())
+		{
+			value++;
+		}
+		else{
+			firstCrash = true;
+		}
+	}
+	count = value;
 }
 
 void* GeneralController::streamingThread(void* object)
@@ -623,7 +639,10 @@ void* GeneralController::streamingThread(void* object)
 	cv::Mat frame;
 	while(ros::ok() && This->streamingActive == YES)
 	{
-		//This->videoCapture >> frame;
+		This->videoCapture >> frame;
+		Sleep(100);
+		int imgSize = frame.total()*frame.elemSize();
+		//This->SendMsg(0x21, (char*)frame.data, imgSize);
 	}
 	This->streamingActive = NO;
 	return NULL;

@@ -73,7 +73,7 @@ private:
 	
 	ros::NodeHandle nh;
 	ros::Publisher cmd_vel_pub;
-	//cv::VideoCapture videoCapture;
+	cv::VideoCapture videoCapture;
 public:
 	GeneralController(ros::NodeHandle nh_);
 	~GeneralController(void);
@@ -81,6 +81,7 @@ public:
 	virtual void OnConnection();//callback for client and server
 	virtual void OnMsg(char* cad,int length);//callback for client and server
 	void Define(void *_Dlg);
+	void StopDynamicGesture();
 private:
 	void GetPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value);
 	void GetGestures(std::string type, std::string& gestures);
@@ -98,7 +99,7 @@ private:
 	void SetServoSpeed(unsigned char card_id, unsigned char servo_id, int speed);
 	void SetServoAcceleration(unsigned char card_id, unsigned char servo_id, int speed);
 
-	void StopDynamicGesture();
+	
 	
 	static void* DynamicFaceThread(void*);
 	
@@ -111,7 +112,7 @@ public:
 	//void laserStateCallback(const sensor_msgs::PointCloud &laser);
 	void batteryVoltageCallback(const std_msgs::Float64::ConstPtr& battery);
 	
-		
+	void stopVideoStreaming();
 private:
 	bool keepSpinning;
 	bool bumpersOk;
@@ -123,7 +124,7 @@ private:
 	
 	void GetNumberOfCamerasAvailable(int& count);
 	void beginVideoStreaming(int videoDevice);
-	void stopVideoStreaming();
+	
 	static void* streamingThread(void*);
 	
 };
