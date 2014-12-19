@@ -34,6 +34,7 @@ void GeneralController::OnConnection()//callback for client and server
 	{
 		std::cout << "Disconnected..." << std::endl;
 		StopDynamicGesture();
+		stopVideoStreaming();
 	}
 }
 void GeneralController::OnMsg(char* cad,int length)//callback for client and server
@@ -637,16 +638,20 @@ void* GeneralController::streamingThread(void* object)
 	GeneralController* This = (GeneralController*)object;
 	This->streamingActive = YES;
 	cv::Mat frame;
+	CSocketNode* udp_client = new CSocketNode(SOCKET_DGRAM);
+	udp_client->Init(This->ip_address, 556, SOCKET_CLIENT);
+	udp_client->StartThread();
 	while(ros::ok() && This->streamingActive == YES)
 	{
 		This->videoCapture >> frame;
-		Sleep(100);
+		frame = (frame.reshape(0,1));
 		int imgSize = frame.total()*frame.elemSize();
-		//This->SendMsg(0x21, (char*)frame.data, imgSize);
+		std::cout << "Image Size: " << imgSize << std::endl;
+		udp_client->SendMsg(0x21, (char*)frame.data, imgSize);
+		Sleep(30);
 	}
+	udp_client->Close();
 	This->streamingActive = NO;
-	return NULL;
-	
 	return NULL;
 }
 

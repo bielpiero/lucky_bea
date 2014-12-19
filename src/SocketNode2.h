@@ -36,14 +36,19 @@
 
 #define SOCKET_SERVER 0
 #define SOCKET_CLIENT 1
+#define BUFFER_SIZE 1048576
+
+#define SOCKET_DGRAM 0
+#define SOCKET_TCP 1
 
 class CSocketNode 
 {
 public:
-
-	char	Buffer_in[4096];	  // Maximun buiffer to send
-	char	Buffer_out[4096];
+	char* ip_address;
+	char	Buffer_in[BUFFER_SIZE];	  // Maximun buiffer to send
+	char	Buffer_out[BUFFER_SIZE];
 	CSocketNode();
+	CSocketNode(int socket_type);
 	virtual ~CSocketNode();	
 	int Init(const char* address, int port,int type);
 	int Close();
@@ -60,7 +65,9 @@ protected:
 	virtual void OnMsg(char* cad, int length);//callback for client and server
 protected:
 	void Error(const char* cad="");
-
+private:
+	int socket_type;
+	
 public:
 	int type;//server or client
 	int thread_status;//0 not started, 1 started, 2 waiting to finish

@@ -12,11 +12,14 @@
 
 CSocketNode::CSocketNode()
 {
+	this->socket_type = SOCKET_TCP;
 	socket_conn=INVALID_SOCKET;
 	thread_status=0;
-	//WSADATA wsaData;
-   
-	//WSAStartup(MAKEWORD(2, 2),&wsaData);
+}
+
+CSocketNode::CSocketNode(int socket_type)
+{
+	this->socket_type = socket_type;
 }
 
 CSocketNode::~CSocketNode()
@@ -29,6 +32,9 @@ CSocketNode::~CSocketNode()
 int CSocketNode::Init(const char *address,int port, int t)
 {
 	type=t;
+	this->ip_address = new char[strlen(address)];
+	strcpy(this->ip_address, address);
+	
 	socket_conn=INVALID_SOCKET;
 // Configuracion del socket del Servidor	
 	socket_server_address.sin_family = AF_INET;
@@ -68,14 +74,11 @@ void CSocketNode::HandleConnection(void)
 {
 	if(type==SOCKET_SERVER)
 	{
-		//if disconnected, Try connection
+
 		if(socket_conn==INVALID_SOCKET)
 		{
-//			#ifdef SOCKET_NODE_WINDOWS
-//			int len = sizeof(socket_address);
-//			#else
 			unsigned int len = sizeof(socket_address);
-//			#endif
+
 			fd_set readfds;
 			
 			FD_ZERO(&readfds);
@@ -91,8 +94,12 @@ void CSocketNode::HandleConnection(void)
 				{
 					return;
 				}	
-                                int optval;
-                                setsockopt(socket_conn, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+				int optval;
+				setsockopt(socket_conn, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+				
+				int buff_size = BUFFER_SIZE;
+				setsockopt(socket_conn, SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
+				setsockopt(socket_conn, SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));
 				OnConnection();		
 			}
 		}
@@ -103,20 +110,44 @@ void CSocketNode::HandleConnection(void)
 		if(socket_conn==INVALID_SOCKET)
 		{
 			//Aux socket to avoid sock_conn!=INVALID without connecting
-			int aux_sock=socket(AF_INET, SOCK_STREAM,0);
+			int aux_sock = 0;
+			if(this->socket_type == SOCKET_TCP)
+			{
+				aux_sock=socket(AF_INET, SOCK_STREAM,0);
+				
+			} 
+			else{
+				aux_sock=socket(AF_INET, SOCK_DGRAM, 0);
+			}
+			
 			if (aux_sock == INVALID_SOCKET) 
 			{
 				return;
 			}
-	
-			int len= sizeof(socket_server_address);
-			if(connect(aux_sock,(const struct sockaddr *) &socket_server_address,len)!=0) 
+			
+			if(this->socket_type == SOCKET_TCP)
 			{
-				shutdown(aux_sock,SD_BOTH);
-				closesocket(aux_sock);
-				return;
+				int len= sizeof(socket_server_address);
+				if(connect(aux_sock,(const struct sockaddr *) &socket_server_address,len)!=0) 
+				{
+					shutdown(aux_sock,SD_BOTH);
+					closesocket(aux_sock);
+					return;
+				}
 			}
+			else{
+				int len= sizeof(socket_server_address);
+				if (bind(aux_sock, (struct sockaddr *) &socket_server_address, len) < 0)
+				{
+					return;
+				}
+			}
+			
 			socket_conn=aux_sock;
+			int buff_size = BUFFER_SIZE;
+			setsockopt(socket_conn, SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
+			setsockopt(socket_conn, SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));
+			
 			OnConnection();
 		}
 	}	
@@ -262,8 +293,8 @@ void* LaunchThread(void* p)
 		}
 		else
 		{	
-			char msg[4096];
-			int l=4096;
+			char msg[BUFFER_SIZE];
+			int l=BUFFER_SIZE;
 			if(0==node->ReceiveMsg(msg,&l,0))
 			{
 				//printf("mensaje recibido\n");
