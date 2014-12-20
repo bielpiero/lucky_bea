@@ -639,7 +639,7 @@ void* GeneralController::streamingThread(void* object)
 	This->streamingActive = YES;
 	cv::Mat frame;
 	CSocketNode* udp_client = new CSocketNode(SOCKET_DGRAM);
-	udp_client->Init(This->ip_address, 556, SOCKET_CLIENT);
+	udp_client->Init(This->getClientIPAddress(), 556, SOCKET_CLIENT);
 	udp_client->StartThread();
 	while(ros::ok() && This->streamingActive == YES)
 	{
