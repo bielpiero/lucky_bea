@@ -332,3 +332,17 @@ int CSocketNode::Close()
 	closesocket(socket_server);
 	return 1;
 }
+
+char* CSocketNode::getClientIPAddress()
+{
+	char* ip_address = new char[15];
+	socklen_t len;
+	struct sockaddr_in addr;
+
+
+	len = sizeof(addr);
+	getpeername(socket_conn, (struct sockaddr*)&addr, &len);
+	sprintf(ip_address, "%d.%d.%d.%d", int(addr.sin_addr.s_addr&0xFF), int((addr.sin_addr.s_addr&0xFF00)>>8), int		 ((addr.sin_addr.s_addr&0xFF0000)>>16), int((addr.sin_addr.s_addr&0xFF000000)>>24));
+
+	return ip_address;
+}

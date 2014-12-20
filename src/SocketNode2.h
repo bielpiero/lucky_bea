@@ -58,6 +58,7 @@ public:
 	int ReceiveMsg(char* cad, int* size, int timeout=200);		
 	int ReceiveBytes(char* cad,int* length, int timeout);
 	
+	char* getClientIPAddress();
 	void StartThread();//launch a 10 ms thread loop over the following actions
 	void HandleConnection();//manages all connection and reconnection
 protected:

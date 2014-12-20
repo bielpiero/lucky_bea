@@ -28,7 +28,7 @@ void GeneralController::OnConnection()//callback for client and server
 {
 	if(IsConnected())
 	{
-		std::cout << "Connected to Doris' face..." << std::endl;
+		std::cout << "Client "<< this->getClientIPAddress() << " is Connected to Doris..." << std::endl;
 	}
 	else
 	{
