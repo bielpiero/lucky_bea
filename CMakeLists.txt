@@ -105,6 +105,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 ## Declare a cpp executable
 add_executable(lucky_bea 
 	src/lucky_bea.cpp
+	src/UDPClient.cpp
 	src/SocketNode2.cpp
 	src/GeneralController.cpp
 	src/SerialPort.cpp
@@ -118,7 +119,7 @@ add_dependencies(lucky_bea lucky_bea_generate_messages_cpp)
 target_link_libraries(lucky_bea
   ${catkin_LIBRARIES}
   ${LIBUSB_1_LIBRARIES}
-  ${OpenCV_LIBRARIES}
+  ${OpenCV_LIBS}
 )
 
 #############

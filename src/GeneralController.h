@@ -6,6 +6,7 @@
 #include "SocketNode2.h"
 #include "SerialPort.h"
 #include "stdxros.hpp"
+#include "UDPClient.h"
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
 

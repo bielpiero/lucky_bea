@@ -12,14 +12,8 @@
 
 CSocketNode::CSocketNode()
 {
-	this->socket_type = SOCKET_TCP;
 	socket_conn=INVALID_SOCKET;
 	thread_status=0;
-}
-
-CSocketNode::CSocketNode(int socket_type)
-{
-	this->socket_type = socket_type;
 }
 
 CSocketNode::~CSocketNode()
@@ -46,6 +40,7 @@ int CSocketNode::Init(const char *address,int port, int t)
 	if(type==SOCKET_SERVER)
 	{
 		socket_server = socket(AF_INET, SOCK_STREAM, 0);
+
 		if (socket_server==INVALID_SOCKET)
 		{
 			Error("Server: Error Socket");
@@ -60,7 +55,8 @@ int CSocketNode::Init(const char *address,int port, int t)
 		if (listen(socket_server,5) < 0)
 		{
 			return -1;
-		}	
+		}
+			
 		return 0;
 	}
 //CLIENT
@@ -80,7 +76,7 @@ void CSocketNode::HandleConnection(void)
 			unsigned int len = sizeof(socket_address);
 
 			fd_set readfds;
-			
+		
 			FD_ZERO(&readfds);
 			FD_SET(socket_server,&readfds);
 			timeval timeout;
@@ -96,12 +92,13 @@ void CSocketNode::HandleConnection(void)
 				}	
 				int optval;
 				setsockopt(socket_conn, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-				
+			
 				int buff_size = BUFFER_SIZE;
 				setsockopt(socket_conn, SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
 				setsockopt(socket_conn, SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));
 				OnConnection();		
 			}
+			
 		}
 	}
 
@@ -111,49 +108,33 @@ void CSocketNode::HandleConnection(void)
 		{
 			//Aux socket to avoid sock_conn!=INVALID without connecting
 			int aux_sock = 0;
-			if(this->socket_type == SOCKET_TCP)
-			{
-				aux_sock=socket(AF_INET, SOCK_STREAM,0);
-				
-			} 
-			else{
-				aux_sock=socket(AF_INET, SOCK_DGRAM, 0);
-			}
-			
+			aux_sock=socket(AF_INET, SOCK_STREAM, 0);
 			if (aux_sock == INVALID_SOCKET) 
 			{
 				return;
 			}
-			
-			if(this->socket_type == SOCKET_TCP)
+		
+
+			int len= sizeof(socket_server_address);
+			if(connect(aux_sock,(const struct sockaddr *) &socket_server_address,len)!=0) 
 			{
-				int len= sizeof(socket_server_address);
-				if(connect(aux_sock,(const struct sockaddr *) &socket_server_address,len)!=0) 
-				{
-					shutdown(aux_sock,SD_BOTH);
-					closesocket(aux_sock);
-					return;
-				}
+				shutdown(aux_sock,SD_BOTH);
+				closesocket(aux_sock);
+				return;
 			}
-			else{
-				int len= sizeof(socket_server_address);
-				if (bind(aux_sock, (struct sockaddr *) &socket_server_address, len) < 0)
-				{
-					return;
-				}
-			}
-			
+		
 			socket_conn=aux_sock;
 			int buff_size = BUFFER_SIZE;
 			setsockopt(socket_conn, SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
 			setsockopt(socket_conn, SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));
-			
+		
 			OnConnection();
 		}
 	}	
 }
 void CSocketNode::Error(const char* cad)
 {
+	printf("%s\n", cad);
 	if(socket_conn!=INVALID_SOCKET)
 	{	
 		shutdown(socket_conn,SD_BOTH);
@@ -171,14 +152,24 @@ int CSocketNode::SendMsg(const char opr, const char* cad,int length)
 	Buffer_out[1] = 48; //12345 / 256;
 	Buffer_out[0] = 57; //12345 % 256;
 	length++;
-	Buffer_out[3] = length / 256;
-	Buffer_out[2] = length % 256;
-	Buffer_out[4] = opr;
-	memcpy(Buffer_out + 5, cad, length);
+	if((length / 256) >= 256)
+	{
+		int divi = length / 256;
+		Buffer_out[2] = length % 256;
+		Buffer_out[3] = divi % 256;
+		Buffer_out[4] = divi / 256;
+	}
+	else
+	{
+		Buffer_out[2] = length % 256;
+		Buffer_out[3] = 0;
+		Buffer_out[4] = length / 256;
+	}
+	Buffer_out[5] = opr;
+	memcpy(Buffer_out + 6, cad, length);
 	//Send it
-
-	int err = send(socket_conn, Buffer_out, length + 4, 0);
-
+	int err = send(socket_conn, Buffer_out, length + 5, 0);
+	printf("Bytes sent: %d\n", err);
 	//	delete[] cad_aux;
 	if (err == SOCKET_ERROR)
 	{
@@ -191,8 +182,7 @@ int CSocketNode::SendMsg(const char opr, const char* cad,int length)
 int CSocketNode::SendBytes(char *cad, int length)
 {
 	//Send it
-	int err=send(socket_conn, cad, length,0);
-
+	int err = send(socket_conn, cad, length,0);
 	if (err == SOCKET_ERROR )
 	{
 		Error("SendBytes Error");
@@ -205,7 +195,6 @@ int CSocketNode::ReceiveBytes(char *cad, int *length,int timeout)
 {
 	if (socket_conn == INVALID_SOCKET)
 		return -1;
-
 	fd_set readfds; FD_ZERO(&readfds); FD_SET(socket_conn, &readfds);
 	timeval tout; tout.tv_sec = 0; tout.tv_usec = 10000;
 	int ret = select(socket_conn + 1, &readfds, NULL, NULL, &tout);
@@ -231,13 +220,20 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout)
 	int ret;
 	int nChars;
 	int len;
-	char header[4];
-	nChars = 4;
+	char header[5];
+	nChars = 5;
         
 	if (0 != ReceiveBytes(header, &nChars, timeout))
 		return -1;//no header
-        
-	len = header[2] + header[3] * 256;
+        if(header[3] != 0)
+	{
+		len = header[2] + (header[3] + header[4] * 256) * 256;
+	}
+	else
+	{
+		len = header[2] + header[4] * 256;
+	}
+	
 	if (header[0] != 57 ||	// 12345 % 256
 		header[1] != 48 ||	// 12345 / 256
 		len <= 0)
@@ -273,12 +269,7 @@ int CSocketNode::IsConnected()
 		return 1;
 }
 
-
-//#ifdef SOCKET_NODE_WINDOWS
-//void LaunchThread(void* p)	
-//#else
 void* LaunchThread(void* p)
-//#endif
 {
 	
 	CSocketNode* node=(CSocketNode*) p;
@@ -297,17 +288,13 @@ void* LaunchThread(void* p)
 			int l=BUFFER_SIZE;
 			if(0==node->ReceiveMsg(msg,&l,0))
 			{
-				//printf("mensaje recibido\n");
 				node->OnMsg(msg,l);
-				//printf("mensaje procesado\n");
 			}
 		}
 		Sleep(10);
 	}
 	node->thread_status=0;
-//	#if	!defined SOCKET_NODE_WINDOWS
 	return NULL;
-//	#endif
 }
 
 void CSocketNode::StartThread()

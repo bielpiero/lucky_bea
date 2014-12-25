@@ -5,50 +5,40 @@
 #if !defined(AFX_SOCKETNODE_H__895095F5_AD65_4FF5_973F_0DD16E9BC2FE__INCLUDED_)
 #define AFX_SOCKETNODE_H__895095F5_AD65_4FF5_973F_0DD16E9BC2FE__INCLUDED_
 
-//#if _MSC_VER > 1000
-//#pragma once
-//#endif // _MSC_VER > 1000
+#include <sys/stat.h>
+#include <sys/time.h>   
+#include <sys/types.h>   
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <pthread.h>
+#include <errno.h>	
+#include <string.h>
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define SD_BOTH SHUT_RDWR
+#define closesocket(x) close(x)
+#define Sleep(x) usleep(x*1000)
 
-//#define SOCKET_NODE_WINDOWS
-
-//#ifdef SOCKET_NODE_WINDOWS
-//	#include <winsock2.h>
-//	#include <process.h>
-//	#pragma comment (lib, "ws2_32.lib") 
-//#else
-	#include<sys/stat.h>
-	#include <sys/time.h>   
-	#include <sys/types.h>   
-	#include <unistd.h>
-	#include <sys/socket.h>
-	#include <sys/select.h>
-	#include <arpa/inet.h>
-	#include <netinet/in.h>
-	#include <pthread.h>
-	#include <errno.h>	
-	#include <string.h>
-	#define INVALID_SOCKET -1
-	#define SOCKET_ERROR -1
-	#define SD_BOTH SHUT_RDWR
-	#define closesocket(x) close(x)
-	#define Sleep(x) usleep(x*1000)
-//#endif
 
 #define SOCKET_SERVER 0
 #define SOCKET_CLIENT 1
+
 #define BUFFER_SIZE 1048576
 
-#define SOCKET_DGRAM 0
+#define SOCKET_UDP 0
 #define SOCKET_TCP 1
 
 class CSocketNode 
 {
+
 public:
 	char* ip_address;
 	char	Buffer_in[BUFFER_SIZE];	  // Maximun buiffer to send
 	char	Buffer_out[BUFFER_SIZE];
 	CSocketNode();
-	CSocketNode(int socket_type);
 	virtual ~CSocketNode();	
 	int Init(const char* address, int port,int type);
 	int Close();
@@ -66,9 +56,6 @@ protected:
 	virtual void OnMsg(char* cad, int length);//callback for client and server
 protected:
 	void Error(const char* cad="");
-private:
-	int socket_type;
-	
 public:
 	int type;//server or client
 	int thread_status;//0 not started, 1 started, 2 waiting to finish
@@ -77,11 +64,7 @@ public:
 	int socket_server;
 	struct sockaddr_in socket_address, socket_server_address;
 
-//	#ifdef SOCKET_NODE_WINDOWS
-//	friend void LaunchThread(void* p);		
-//	#else
 	friend void* LaunchThread(void* p);
-//	#endif	
 };
 
 #endif // !defined(AFX_SOCKETNODE_H__895095F5_AD65_4FF5_973F_0DD16E9BC2FE__INCLUDED_)

@@ -591,7 +591,8 @@ void GeneralController::beginVideoStreaming(int videoDevice)
 	
 	pthread_t t1;
 	stopVideoStreaming();
-	videoCapture = cv::VideoCapture(videoDevice);
+	//videoCapture = cv::VideoCapture(videoDevice);
+	videoCapture.open(videoDevice);
 	if(videoCapture.isOpened())
 	{
 		std::cout << "Streaming from camera device: " << videoDevice << std::endl;
@@ -635,23 +636,30 @@ void GeneralController::GetNumberOfCamerasAvailable(int& count){
 void* GeneralController::streamingThread(void* object)
 {
 	
-	GeneralController* This = (GeneralController*)object;
-	This->streamingActive = YES;
+	GeneralController* self = (GeneralController*)object;
+	self->streamingActive = YES;
+
 	cv::Mat frame;
-	CSocketNode* udp_client = new CSocketNode(SOCKET_DGRAM);
-	udp_client->Init(This->getClientIPAddress(), 556, SOCKET_CLIENT);
-	udp_client->StartThread();
-	while(ros::ok() && This->streamingActive == YES)
+	std::vector<uchar> buff;
+	std::vector<int> params = vector<int>(2);
+	params[0] = CV_IMWRITE_JPEG_QUALITY;
+	params[1] = 90;
+
+	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), 14000);
+	//cv::namedWindow("Local", CV_WINDOW_AUTOSIZE);
+	while(ros::ok() && self->streamingActive == YES)
 	{
-		This->videoCapture >> frame;
-		frame = (frame.reshape(0,1));
-		int imgSize = frame.total()*frame.elemSize();
-		std::cout << "Image Size: " << imgSize << std::endl;
-		udp_client->SendMsg(0x21, (char*)frame.data, imgSize);
-		Sleep(30);
+		self->videoCapture >> frame;
+		cv::imencode(".jpg", frame, buff, params);
+		//cv::imshow("Local", frame);
+		std::cout << "Image Size: " << buff.size() << std::endl;
+		udp_client->sendData(&buff[0], buff.size());
+		if(cv::waitKey(30) >= 0) {}
 	}
-	udp_client->Close();
-	This->streamingActive = NO;
+	//cv::destroyAllWindow();
+	udp_client->closeConnection();
+	self->videoCapture.release();
+	self->streamingActive = NO;
 	return NULL;
 }
 
