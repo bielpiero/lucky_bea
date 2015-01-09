@@ -169,7 +169,6 @@ int CSocketNode::SendMsg(const char opr, const char* cad,int length)
 	memcpy(Buffer_out + 6, cad, length);
 	//Send it
 	int err = send(socket_conn, Buffer_out, length + 5, 0);
-	printf("Bytes sent: %d\n", err);
 	//	delete[] cad_aux;
 	if (err == SOCKET_ERROR)
 	{

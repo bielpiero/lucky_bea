@@ -49,14 +49,15 @@ int UDPClient::sendData(unsigned const char* buffer,int length){
 	return 0;
 }
 
-int UDPClient::receiveData(unsigned char* buffer, int size){
+int UDPClient::receiveData(unsigned char* buffer, int* size){
 	struct sockaddr_in source;
 	unsigned int sourceSize = sizeof(source);
-	long err = recvfrom(socket_conn, buffer, size, 0, (struct sockaddr*)&source, &sourceSize);
+	long err = recvfrom(socket_conn, buffer, *size, 0, (struct sockaddr*)&source, &sourceSize);
 	if(err < 0){
 		error("Receiving Data Error");
 		return -1;
 	}
+	*size = (int)err;
 	return 0;
 }	
 
@@ -74,7 +75,7 @@ void* UDPClient::launchThread(void* p)
 	{
 		unsigned char* msg = new unsigned char[BUFFER_SIZE];
 		int l=BUFFER_SIZE;
-		if(0==node->receiveData(msg,l))
+		if(0==node->receiveData(msg, &l))
 		{
 			node->OnMessageReceivedWithData(msg,l);
 		}

@@ -11,7 +11,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	
 	this->keepSpinning = true;
 	this->bumpersOk = true;
-	
+	this->streamingActive = NO;
 	xmlFaceFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_PATH;
 	cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel", 1);
 }
@@ -122,6 +122,10 @@ void GeneralController::OnMsg(char* cad,int length)//callback for client and ser
 		case 0x22:
 			stopVideoStreaming();
 			break;
+		default:
+			std::cout << "Command Not Recognized.." << std::endl;
+			break;
+			
 	}
 	
 }
@@ -638,25 +642,21 @@ void* GeneralController::streamingThread(void* object)
 	
 	GeneralController* self = (GeneralController*)object;
 	self->streamingActive = YES;
-
+	
+	
 	cv::Mat frame;
 	std::vector<uchar> buff;
 	std::vector<int> params = vector<int>(2);
 	params[0] = CV_IMWRITE_JPEG_QUALITY;
 	params[1] = 90;
-
-	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), 14000);
-	//cv::namedWindow("Local", CV_WINDOW_AUTOSIZE);
+	
+	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), 14005);
 	while(ros::ok() && self->streamingActive == YES)
 	{
 		self->videoCapture >> frame;
 		cv::imencode(".jpg", frame, buff, params);
-		//cv::imshow("Local", frame);
-		std::cout << "Image Size: " << buff.size() << std::endl;
 		udp_client->sendData(&buff[0], buff.size());
-		if(cv::waitKey(30) >= 0) {}
 	}
-	//cv::destroyAllWindow();
 	udp_client->closeConnection();
 	self->videoCapture.release();
 	self->streamingActive = NO;

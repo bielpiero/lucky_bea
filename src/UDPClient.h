@@ -39,7 +39,7 @@ public:
 	virtual ~UDPClient();	
 	void closeConnection();
 	int sendData(const unsigned char* cad,int length);
-	int receiveData(unsigned char* cad, int size);		
+	int receiveData(unsigned char* cad, int *size);		
 	
 	char* getClientIPAddress();
 	void startThread();//launch a 10 ms thread loop over the following actions
