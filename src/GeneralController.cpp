@@ -12,6 +12,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	this->keepSpinning = true;
 	this->bumpersOk = true;
 	this->streamingActive = NO;
+	this->udpPort = 0;
 	xmlFaceFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_PATH;
 	cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel", 1);
 }
@@ -116,7 +117,7 @@ void GeneralController::OnMsg(char* cad,int length)//callback for client and ser
 			SendMsg(0x20, (char*)local_buffer_out.c_str(), (int)local_buffer_out.length()); 
 			break;
 		case 0x21:
-			videoDevice = atoi(cad);
+			GetCameraDevicePort(cad, videoDevice, udpPort);
 			beginVideoStreaming(videoDevice);
 			break;
 		case 0x22:
@@ -128,6 +129,21 @@ void GeneralController::OnMsg(char* cad,int length)//callback for client and ser
 			
 	}
 	
+}
+
+void GeneralController::GetCameraDevicePort(char* cad, int& device, int& port){
+	char* current_number;
+	int values[6];
+	int index = 0;
+	current_number = strtok(cad, ":");
+	//
+	while(current_number != NULL)
+	{
+		values[index++] = atoi(current_number);
+		current_number = strtok(NULL, ":");
+	}
+	device = values[0];
+	port = values[1];
 }
 
 void GeneralController::GetPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value)
@@ -629,6 +645,7 @@ void GeneralController::GetNumberOfCamerasAvailable(int& count){
 		if(vc.isOpened())
 		{
 			value++;
+			vc.release();
 		}
 		else{
 			firstCrash = true;
@@ -648,9 +665,9 @@ void* GeneralController::streamingThread(void* object)
 	std::vector<uchar> buff;
 	std::vector<int> params = vector<int>(2);
 	params[0] = CV_IMWRITE_JPEG_QUALITY;
-	params[1] = 90;
+	params[1] = 85;
 	
-	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), 14005);
+	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), self->udpPort);
 	while(ros::ok() && self->streamingActive == YES)
 	{
 		self->videoCapture >> frame;

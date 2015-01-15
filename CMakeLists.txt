@@ -109,6 +109,7 @@ add_executable(lucky_bea
 	src/SocketNode2.cpp
 	src/GeneralController.cpp
 	src/SerialPort.cpp
+	src/Matrix.cpp
 )
 
 ## Add cmake target dependencies of the executable/library

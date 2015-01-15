@@ -117,6 +117,7 @@ public:
 private:
 	bool keepSpinning;
 	bool bumpersOk;
+	int udpPort;
 	unsigned char streamingActive;
 	std::string xmlFaceFullPath;
 	
@@ -124,6 +125,7 @@ private:
 	void moveRobot(double lin_vel, double angular_vel);
 	
 	void GetNumberOfCamerasAvailable(int& count);
+	void GetCameraDevicePort(char* cad, int& device, int& port);
 	void beginVideoStreaming(int videoDevice);
 	
 	static void* streamingThread(void*);
