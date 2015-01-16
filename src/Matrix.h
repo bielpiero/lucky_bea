@@ -35,7 +35,11 @@ class Matrix{
 		Matrix roots();
 		Matrix svd();
 		Matrix abs();
+		Matrix cofactor();
+		static Matrix eye(int dim);
+		
 		float det();
+		
 		
 		const size_t rows_size() const;
 		const size_t cols_size() const;

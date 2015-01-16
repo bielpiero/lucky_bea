@@ -11,6 +11,8 @@ Matrix::~Matrix(){
 }
 
 void Matrix::operator=(const Matrix& rhs){
+	this->rows = rhs.rows;
+	this->cols = rhs.cols;
 	data = rhs.data;
 }
 
@@ -116,8 +118,16 @@ Matrix Matrix::inv(){
 		throw std::invalid_argument("Invalid matrix dimension. Matrix must be square");
 	}
 	float determinant = det();
-	if(determinant == 0)
+	if(determinant == 0){
 		throw std::invalid_argument("This Matrix has no inverse");
+	}
+	Matrix result(this->rows_size(), this->cols_size());
+	Matrix cof = cofactor();
+	   
+	for(int i = 0; i < this->rows_size(); i++){
+		for(int j = 0; j < this->cols_size(); j++){
+			result(j, i) = cof(i, j) / determinant;
+		}
 	}
 }
 
@@ -128,6 +138,18 @@ Matrix Matrix::pInv(){
 
 Matrix Matrix::eig(){
 	
+}
+
+Matrix Matrix::eye(int dim){
+	Matrix result(dim, dim)
+	for(int i = 0; i < dim; i++){
+		for(int j = 0; j < dim; j++){
+			if(i == j){
+				result(i, j) = 1.0;
+			}
+		}
+	}
+	return result;
 }
 
 Matrix Matrix::roots(){
@@ -174,6 +196,82 @@ float Matrix::det(Matrix rhs){
 		}
 	}
 	return determinant;
+}
+
+Matrix Matrix::cofactor(){
+	Matrix result(this->rows, this->cols);
+	
+	if(result.rows_size() != result.cols_size()){
+		return result;
+	} else if(result.rows_size() < 2) {
+		return result;
+	} else if(result.rows_size() == 2) {
+		result(0, 0) = data[1][1];
+		result(0, 1) = -data[1][0];
+		result(1, 0) = -data[0][1];
+		result(1, 1) = data[0][0];
+		
+	} else {
+		
+		int DIM = result.rows_size();
+		Matrix ***temp = new Matrix**[DIM];
+		for(int i = 0; i < DIM; i++){
+			temp[i] = new Matrix*[DIM];
+		}
+		for(int i = 0; i < DIM; i++){
+			for(int j = 0; j < DIM; j++){
+				temp[i][j] = new Matrix(DIM - 1,DIM - 1);
+			}
+		}
+		 
+
+		
+		
+		for(int k1 = 0; k1 < DIM; k1++){  
+			for(int k2 = 0; k2 < DIM; k2++){
+				int i1 = 0;
+				for(int i = 0; i < DIM; i++){
+					int j1 = 0;
+					for(int j = 0; j < DIM; j++){
+						if(k1 == i || k2 == j){
+							continue;
+						}
+						temp[k1][k2]->data[i1][j1++] = data[i][j];
+					}
+					if(k1 != i){
+						i1++;
+					}
+				}
+			}
+		}
+
+		bool flagPositive = true;
+ 		for(int k1 = 0; k1 < DIM; k1++){  
+			flagPositive = ( (k1 % 2) == 0);
+
+			for(int k2 = 0; k2 < DIM; k2++){
+				if(flagPositive){
+					result(k1, k2) = temp[k1][k2]->det();
+					flagPositive = false;
+				} else {
+					result(k1, k2) = -temp[k1][k2]->det();
+					flagPositive = true;
+				}
+			}
+		   
+		}
+
+		for(int i = 0; i < DIM; i++)
+			for(int j = 0; j < DIM; j++)
+				delete temp[i][j];
+
+		for(int i = 0; i < DIM; i++)
+			delete [] temp[i];
+
+		delete [] temp;
+	}
+	
+	return result;
 }
 
 Matrix Matrix::abs(){
