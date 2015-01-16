@@ -141,7 +141,10 @@ Matrix Matrix::eig(){
 }
 
 Matrix Matrix::eye(int dim){
-	Matrix result(dim, dim)
+	if(dim < 2){
+		throw std::invalid_argument("Invalid matrix dimension. It must be higher or equal to two");
+	}
+	Matrix result(dim, dim);
 	for(int i = 0; i < dim; i++){
 		for(int j = 0; j < dim; j++){
 			if(i == j){
