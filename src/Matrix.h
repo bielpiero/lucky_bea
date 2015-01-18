@@ -33,13 +33,13 @@ class Matrix{
 		Matrix pInv();
 		Matrix eig();
 		Matrix roots();
-		Matrix svd();
 		Matrix abs();
 		Matrix cofactor();
 		static Matrix eye(int dim);
 		
 		float det();
 		
+		void svd(Matrix& u, Matrix& s, Matrix& v);
 		
 		const size_t rows_size() const;
 		const size_t cols_size() const;

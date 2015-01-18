@@ -159,8 +159,8 @@ Matrix Matrix::roots(){
 	return this->eig();
 }
 
-Matrix Matrix::svd(){
-	
+void Matrix::svd(Matrix& u, Matrix& s, Matrix& v){
+	u = (*this)*(this->transpose());
 }
 
 float Matrix::det(){
