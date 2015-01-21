@@ -1,11 +1,29 @@
 #include "stats.h"
 
 float stats::max(std::vector<float> values){
-
+	float max = std::numeric_limits<float>::quiet_NaN();
+	if(values.size() > 0){
+		max = values[0];
+		for(int i = 0; i < values.size(); i++){
+			if(values[i] > max){
+				max = values[i];
+			}
+		}
+	}
+	return max;
 }
 
 float stats::min(std::vector<float> values){
-
+	float min = std::numeric_limits<float>::quiet_NaN();
+	if(values.size() > 0){
+		min = values[0];
+		for(int i = 0; i < values.size(); i++){
+			if(values[i] < min){
+				min = values[i];
+			}
+		}
+	}
+	return min;
 }
 
 bool stats::isInf(float value){
@@ -21,7 +39,7 @@ float stats::expectation(std::vector<float> values){
 	if(values.size() > 0){
 		mean = 0;
 		for(int i = 0; i < values.size(); i++){
-			mean += values(i);
+			mean += values[i];
 		}
 		mean /= values.size();
 	}
@@ -37,7 +55,7 @@ float stats::variance(std::vector<float> values, float expect){
 	if(!isNaN(expect)){
 		var = 0;
 		for(int i = 0; i < values.size(); i++){
-			var += std::pow(values(i) - expect, 2);
+			var += std::pow(values[i] - expect, 2);
 		}
 		var /= (values.size() - 1);
 	}
@@ -51,7 +69,7 @@ float stats::covariance(std::vector<float> x, std::vector<float> y){
 	if(!isNaN(expX) && !isNaN(expY)){
 		cov = 0;
 		for(int i = 0; i < values.size(); i++){
-			cov += (x(i) - expX)*(y(i) - expY);
+			cov += (x[i] - expX)*(y[i] - expY);
 		}
 		
 	}
