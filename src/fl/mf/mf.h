@@ -5,7 +5,9 @@
 #include <vector>
 #include <string>
 
-#include "constants.h"
+#include "stats.h"
+#include "fl/constants.h"
+
 
 namespace fuzzy{
 	class mf{

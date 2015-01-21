@@ -10,7 +10,6 @@
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
 
-#include "stats.h"
 #include "fl/fuzzy.h"
 
 #define CONVERTER_BUFFER_SIZE 20

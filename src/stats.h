@@ -1,7 +1,12 @@
+#ifndef STATS_H
+#define STATS_H
+
 #include <iostream>
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <vector>
+#include <stdexcept>
 
 class stats{
 public:
@@ -18,3 +23,5 @@ public:
 	static float standarDeviation(std::vector<float> values);
 	static float correlationCoefficient(std::vector<float> x, std::vector<float> y);
 };
+
+#endif

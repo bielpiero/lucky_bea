@@ -1,9 +1,10 @@
 #include "stats.h"
 
+
 float stats::max(std::vector<float> values){
 	float max = std::numeric_limits<float>::quiet_NaN();
 	if(values.size() > 0){
-		max = values[0];
+ 		max = values[0];
 		for(int i = 0; i < values.size(); i++){
 			if(values[i] > max){
 				max = values[i];
@@ -67,9 +68,13 @@ float stats::covariance(std::vector<float> x, std::vector<float> y){
 	float expY = expectation(y);
 	float cov = std::numeric_limits<float>::quiet_NaN();
 	if(!isNaN(expX) && !isNaN(expY)){
-		cov = 0;
-		for(int i = 0; i < values.size(); i++){
-			cov += (x[i] - expX)*(y[i] - expY);
+		if(x.size() == y.size()){
+			cov = 0;
+			for(int i = 0; i < x.size(); i++){
+				cov += (x[i] - expX)*(y[i] - expY);
+			}
+		} else{
+			throw std::invalid_argument("Vectors must have same dimension");			
 		}
 		
 	}
@@ -80,7 +85,7 @@ float stats::standarDeviation(std::vector<float> values){
 	float var = variance(values);
 	float stdD = std::numeric_limits<float>::quiet_NaN();
 	if(!isNaN(var)){
-		stdD = std::sqrt(var)
+		stdD = std::sqrt(var);
 	}
 	return stdD;
 }

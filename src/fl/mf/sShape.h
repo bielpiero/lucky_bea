@@ -8,18 +8,23 @@ namespace fuzzy{
 	class sShape : public mf{
 	public:
 		sShape(std::string name="", 
-				float vertexA = fuzzy::inf, 
-				float vertexB = fuzzy::inf, 
-				float vertexC = fuzzy::inf, 
+				float start = fuzzy::inf, 
+				float end = fuzzy::inf, 
 				float height = 1.0);
 		virtual ~sShape();
+		
+		virtual void setStart(float start);
+        virtual float getStart() const;
+
+        virtual void setEnd(float end);
+        virtual float getEnd() const;
+		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
 		virtual sShape* clone() const;
 	private:
-		float vertexA;
-		float vertexB;
-		float vertexC;
+		float start;
+		float end;
 	};
 }
 #endif

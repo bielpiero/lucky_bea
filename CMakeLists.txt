@@ -108,6 +108,7 @@ file(GLOB_RECURSE lucky_bea_HEADERS src/*.h)
 
 set(lucky_bea_INCLUDE_DIRS "")
 foreach(_headerFile ${lucky_bea_HEADERS})
+	MESSAGE("Now Globbing.... ${lucky_bea_HEADERS}")
 	get_filename_component(_dir ${_headerFile} PATH)
 	list(APPEND lucky_bea_INCLUDE_DIRS ${_dir})
 endforeach()
