@@ -10,6 +10,9 @@
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
 
+#include "stats.h"
+#include "fl/fuzzy.h"
+
 #define CONVERTER_BUFFER_SIZE 20
 #define SERVOS_COUNT 16
 
@@ -41,7 +44,7 @@ class GeneralController;
 
 struct s_motor{
 	std::string idMotor;
-        std::string cardId;
+    std::string cardId;
 	std::string pos;
 	std::string speed;
 	std::string acceleration;

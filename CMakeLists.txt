@@ -103,13 +103,19 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 # add_library(lucky_bea_socketnode src/SocketNode2.cpp)
 
 ## Declare a cpp executable
+file(GLOB_RECURSE lucky_bea_SOURCES src/*.cpp)
+file(GLOB_RECURSE lucky_bea_HEADERS src/*.h)
+
+set(lucky_bea_INCLUDE_DIRS "")
+foreach(_headerFile ${lucky_bea_HEADERS})
+	get_filename_component(_dir ${_headerFile} PATH)
+	list(APPEND lucky_bea_INCLUDE_DIRS ${_dir})
+endforeach()
+list(REMOVE_DUPLICATES lucky_bea_INCLUDE_DIRS)
+
+include_directories(${lucky_bea_INCLUDE_DIRS})
 add_executable(lucky_bea 
-	src/lucky_bea.cpp
-	src/UDPClient.cpp
-	src/SocketNode2.cpp
-	src/GeneralController.cpp
-	src/SerialPort.cpp
-	src/Matrix.cpp
+	${lucky_bea_SOURCES}
 )
 
 ## Add cmake target dependencies of the executable/library
