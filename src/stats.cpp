@@ -46,13 +46,35 @@ float stats::variance(std::vector<float> values, float expect){
 
 float stats::covariance(std::vector<float> x, std::vector<float> y){
 	float expX = expectation(x);
+	float expY = expectation(y);
+	float cov = std::numeric_limits<float>::quiet_NaN();
+	if(!isNaN(expX) && !isNaN(expY)){
+		cov = 0;
+		for(int i = 0; i < values.size(); i++){
+			cov += (x(i) - expX)*(y(i) - expY);
+		}
+		
+	}
+	return cov;
 }
 
 float stats::standarDeviation(std::vector<float> values){
-	return std::sqrt(variance(values));
+	float var = variance(values);
+	float stdD = std::numeric_limits<float>::quiet_NaN();
+	if(!isNaN(var)){
+		stdD = std::sqrt(var)
+	}
+	return stdD;
 }
 
 
 float stats::correlationCoefficient(std::vector<float> x, std::vector<float> y){
-
+	float cov = covariance(x, y);
+	float stdX = standarDeviation(x);
+	float stdY = standarDeviation(y);
+	float cc = std::numeric_limits<float>::quiet_NaN();
+	if(!isNaN(cov) && !isNaN(stdX) && !isNaN(stdY)){
+		cc = cov / (stdX * stdY);
+	}
+	return cc;
 }
