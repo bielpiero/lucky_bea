@@ -8,18 +8,23 @@ namespace fuzzy{
 	class sigmoid : public mf{
 	public:
 		sigmoid(std::string name="", 
-				float vertexA = fuzzy::inf, 
-				float vertexB = fuzzy::inf, 
-				float vertexC = fuzzy::inf, 
+				float inflection = fuzzy::inf, 
+				float slope = fuzzy::inf, 
 				float height = 1.0);
 		virtual ~sigmoid();
+		
+		virtual void setInflection(float value);
+        virtual float getInflection() const;
+
+        virtual void setSlope(float value);
+        virtual float getSlope() const;
+		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
 		virtual sigmoid* clone() const;
 	private:
-		float vertexA;
-		float vertexB;
-		float vertexC;
+		float inflection;
+		float slope;
 	};
 }
 #endif

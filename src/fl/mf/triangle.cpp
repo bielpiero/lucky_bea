@@ -3,10 +3,11 @@
 namespace fuzzy{
 	triangle::triangle(std::string name, float vertexA, float vertexB, float vertexC, float height){
 		this->name = name;
+		this->height = height;
+		
 		this->vertexA = vertexA;
 		this->vertexB = vertexB;
 		this->vertexC = vertexC;
-		this->height = height;
 	}
 	
 	triangle::~triangle(){

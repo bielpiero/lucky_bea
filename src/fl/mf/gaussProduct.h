@@ -8,18 +8,33 @@ namespace fuzzy{
 	class gaussProduct : public mf{
 	public:
 		gaussProduct(std::string name="", 
-				float vertexA = fuzzy::inf, 
-				float vertexB = fuzzy::inf, 
-				float vertexC = fuzzy::inf, 
+				float meanA = fuzzy::inf, 
+				float standardDeviationA = fuzzy::inf, 
+				float meanB = fuzzy::inf, 
+				float standardDeviationB = fuzzy::inf, 
 				float height = 1.0);
 		virtual ~gaussProduct();
+		
+		virtual float getMeanA() const;
+		virtual void setMeanA(float value);
+		
+		virtual float getStandardDeviationA() const;
+		virtual void setStandardDeviationA(float value);
+		
+		virtual float getMeanB() const;
+		virtual void setMeanB(float value);
+		
+		virtual float getStandardDeviationB() const;
+		virtual void setStandardDeviationB(float value);
+		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
 		virtual gaussProduct* clone() const;
 	private:
-		float vertexA;
-		float vertexB;
-		float vertexC;
+		float meanA;
+		float standardDeviationA;
+		float meanB;
+		float standardDeviationB;
 	};
 }
 #endif
