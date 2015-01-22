@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="95">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df root="." name="0">
+      <df name="src">
+        <df name="fl">
+          <df name="mf">
+            <in>gaussBell.cpp</in>
+            <in>gaussProduct.cpp</in>
+            <in>gaussian.cpp</in>
+            <in>mf.cpp</in>
+            <in>piShape.cpp</in>
+            <in>sShape.cpp</in>
+            <in>sigmoid.cpp</in>
+            <in>sigmoidDifference.cpp</in>
+            <in>sigmoidProduct.cpp</in>
+            <in>trapezoid.cpp</in>
+            <in>triangle.cpp</in>
+            <in>zShape.cpp</in>
+          </df>
+          <df name="variable">
+            <in>inputVariable.cpp</in>
+            <in>outputVariable.cpp</in>
+            <in>variable.cpp</in>
+          </df>
+          <in>system.cpp</in>
+        </df>
+        <in>GeneralController.cpp</in>
+        <in>Matrix.cpp</in>
+        <in>SerialPort.cpp</in>
+        <in>SocketNode2.cpp</in>
+        <in>UDPClient.cpp</in>
+        <in>lucky_bea.cpp</in>
+        <in>stats.cpp</in>
+      </df>
+    </df>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>CMakeLists.txt</itemPath>
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceFolderFilter>^(nbproject)$</sourceFolderFilter>
+  <sourceRootList>
+    <Elem>.</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>false</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <codeAssistance>
+      </codeAssistance>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommand>${MAKE} -f Makefile</buildCommand>
+          <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
+          <executablePath></executablePath>
+        </makeTool>
+      </makefileType>
+      <folder path="0/src/fl/mf">
+        <ccTool>
+          <incDir>
+            <pElem>src/fl/mf</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+      <folder path="0/src/fl/variable">
+        <ccTool>
+          <incDir>
+            <pElem>src/fl/variable</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+      <item path="src/GeneralController.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>src</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="src/Matrix.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>src</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="src/SerialPort.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>src</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="src/SocketNode2.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>src</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="src/UDPClient.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>src</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="src/fl/mf/gaussBell.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/gaussProduct.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/gaussian.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/mf.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/piShape.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/sShape.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/sigmoid.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/sigmoidDifference.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/sigmoidProduct.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/trapezoid.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/triangle.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/zShape.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/system.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>src/fl</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="src/fl/variable/inputVariable.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/variable/outputVariable.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/variable/variable.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/lucky_bea.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>src</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="src/stats.cpp" ex="false" tool="1" flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>src</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>

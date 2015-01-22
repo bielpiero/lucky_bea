@@ -2,13 +2,28 @@
 
 namespace fuzzy{
 
-	variable::variable(const std::string name = "", float minRange = 0.0, float maxRange = 1.0){
+	variable::variable(const std::string name, float minRange, float maxRange){
 		this->name = name;
 		this->minRange = minRange;
 		this->maxRange = maxRange;
 	}		
 	
 	variable::~variable(){
+	}
+	
+	std::vector<float> variable::fuzzify(float value){
+		std::vector<float> result;
+		
+		if((value != fuzzy::nan) && (std::abs(value) != fuzzy::inf)){
+			for(int i = 0; i < this->items.size(); i++){
+				float eval = items[i]->evaluate(value);
+				if(eval != fuzzy::nan){
+					result.push_back(eval);
+				}
+			}
+		}
+		
+		return result;
 	}
 
 	void variable::setName(const std::string name){
@@ -25,7 +40,7 @@ namespace fuzzy{
 	}
 	
 	float variable::range() const{
-		return std::abs(std::abs(maximum) - std::abs(minimum));
+		return std::abs(std::abs(maxRange) - std::abs(minRange));
 	}
 
 	void variable::setMinimum(float minimum){
@@ -58,9 +73,9 @@ namespace fuzzy{
 	
 	mf* variable::getMFByName(const std::string name){
 		bool found = false;
-		mf* item = nullptr;
+		mf* item = NULL;
 		
-		for(int i = 0; i < this->items->size() && !found; i++){
+		for(int i = 0; i < this->items.size() && !found; i++){
 			if(items[i]->getName() == name){
 				found = true;
 				item = items[i];
@@ -70,11 +85,11 @@ namespace fuzzy{
 	}
 
 	void variable::removeMF(int index){
-		this->items->erase(this->items.begin() + index);
+		this->items.erase(this->items.begin() + index);
 	}
 	
 	void variable::removeAllMF(){
-		this->items->clear();
+		this->items.clear();
 	}
 	
 	int variable::numberOfTerms() const{

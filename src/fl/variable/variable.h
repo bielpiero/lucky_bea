@@ -4,7 +4,10 @@
 #include <iostream>
 #include <vector>
 #include <string>
+
+#include "stats.h"
 #include "fl/mf/mf.h"
+#include "fl/constants.h"
 
 namespace fuzzy{
 	class variable{
@@ -13,8 +16,10 @@ namespace fuzzy{
 		float minRange, maxRange;
 		std::vector<mf*> items;
 	public:
-		variable(const std::string name = "", float minRange = 0.0, float maxRange = 1.0);		
+		variable(const std::string name = "", float minRange = 0.0, float maxRange = 1.0);
 		virtual ~variable();
+		
+		virtual std::vector<float> fuzzify(float value);
 		
 		virtual void setName(const std::string name);
         virtual std::string getName() const;

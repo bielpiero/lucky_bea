@@ -1,4 +1,14 @@
 #include "constants.h"
+#include "system.h"
+
+#include "defuzzifier/defuzzifier.h"
+#include "defuzzifier/bisector.h"
+#include "defuzzifier/centroid.h"
+#include "defuzzifier/largestOfMaximum.h"
+#include "defuzzifier/meanOfMaximum.h"
+#include "defuzzifier/smallestOfMaximum.h"
+#include "defuzzifier/weightedAverage.h"
+#include "defuzzifier/weightedSum.h"
 
 #include "mf/mf.h"
 #include "mf/gaussBell.h"
@@ -16,3 +26,5 @@
 #include "rule/rule.h"
 
 #include "variable/variable.h"
+#include "variable/inputVariable.h"
+#include "variable/outputVariable.h"
