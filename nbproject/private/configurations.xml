@@ -29,6 +29,8 @@
             <in>gaussProduct.h</in>
             <in>gaussian.cpp</in>
             <in>gaussian.h</in>
+            <in>linear.cpp</in>
+            <in>linear.h</in>
             <in>mf.cpp</in>
             <in>mf.h</in>
             <in>piShape.cpp</in>
@@ -49,6 +51,7 @@
             <in>zShape.h</in>
           </df>
           <df name="rule">
+            <in>rule.cpp</in>
             <in>rule.h</in>
           </df>
           <df name="variable">

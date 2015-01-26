@@ -8,6 +8,8 @@
             <in>gaussBell.cpp</in>
             <in>gaussProduct.cpp</in>
             <in>gaussian.cpp</in>
+            <in>linear.cpp</in>
+            <in>linear.h</in>
             <in>mf.cpp</in>
             <in>piShape.cpp</in>
             <in>sShape.cpp</in>
@@ -118,6 +120,10 @@
       <item path="src/fl/mf/gaussProduct.cpp" ex="false" tool="1" flavor2="4">
       </item>
       <item path="src/fl/mf/gaussian.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="src/fl/mf/linear.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/fl/mf/linear.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/fl/mf/mf.cpp" ex="false" tool="1" flavor2="4">
       </item>
