@@ -108,12 +108,17 @@ private:
 	
 	/// ROS Functions
 public:
-	void batteryStateCallback(const std_msgs::Float32::ConstPtr& battery);
+	//void batteryStateCallback(const std_msgs::Float32::ConstPtr& battery); // when available
 	void bumperStateCallback(const rosaria::BumperState::ConstPtr& bumpers);
 	void poseStateCallback(const nav_msgs::Odometry::ConstPtr& pose);
-	void sonarStateCallback(const sensor_msgs::PointCloud::ConstPtr& sonar);
-	//void laserStateCallback(const sensor_msgs::PointCloud &laser);
 	void batteryVoltageCallback(const std_msgs::Float64::ConstPtr& battery);
+	
+	void sonarStateCallback(const sensor_msgs::PointCloud::ConstPtr& sonar);
+	void sonarPointCloud2StateCallback(const sensor_msgs::PointCloud2::ConstPtr& sonar);
+	
+	void laserScanStateCallback(const sensor_msgs::LaserScan::ConstPtr& laser);
+	void laserPointCloudStateCallback(const sensor_msgs::PointCloud::ConstPtr& laser);
+	
 	
 	void stopVideoStreaming();
 private:

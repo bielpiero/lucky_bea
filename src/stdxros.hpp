@@ -9,6 +9,7 @@
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/LaserScan.h>
 #include <nav_msgs/Odometry.h>
 #include <rosaria/BumperState.h>

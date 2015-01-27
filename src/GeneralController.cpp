@@ -594,15 +594,27 @@ void GeneralController::poseStateCallback(const nav_msgs::Odometry::ConstPtr& po
 	
 }
 
-void GeneralController::batteryStateCallback(const std_msgs::Float32::ConstPtr& battery){
-
-}
+//void GeneralController::batteryStateCallback(const std_msgs::Float32::ConstPtr& battery){
+	//TODO: When Available.
+//}
 
 void GeneralController::sonarStateCallback(const sensor_msgs::PointCloud::ConstPtr& sonar){
 
 }
 
+void GeneralController::sonarPointCloud2StateCallback(const sensor_msgs::PointCloud2::ConstPtr& sonar){
+
+}
+
 void GeneralController::batteryVoltageCallback(const std_msgs::Float64::ConstPtr& battery){
+
+}
+
+void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::ConstPtr& laser){
+
+}
+
+void GeneralController::laserPointCloudStateCallback(const sensor_msgs::PointCloud::ConstPtr& laser){
 
 }
 
