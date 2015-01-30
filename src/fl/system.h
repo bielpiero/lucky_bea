@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cmath>
 #include <string>
+#include <matio.h>
 
 #include "constants.h"
 #include "variable/inputVariable.h"
@@ -36,6 +37,10 @@ namespace fuzzy{
         virtual void setDefuzzificationType(fuzzy::defuzzificationType value);
         virtual fuzzy::defuzzificationType getDefuzzificationType() const;
         
+        virtual std::vector<std::vector<float> > identifyFromData(std::string filename, 
+                                                                  std::vector<float> na = std::vector<float>(1,1), 
+                                                                  std::vector<std::vector<float> > nb = std::vector<std::vector<float> >(1, std::vector<float>(1, 1)),
+                                                                  std::vector<std::vector<float> > nk = std::vector<std::vector<float> >(1, std::vector<float>(1, 0)));
         virtual void start();
 
         virtual void addInput(inputVariable* item);

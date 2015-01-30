@@ -9,14 +9,23 @@ namespace fuzzy{
     linear::~linear(){
         
     }
+    
+    void linear::setCoeffs(std::vector<float> coeffs){
+        this->coeffs = coeffs;
+    }
+    
+    std::vector<float> linear::getCoeffs() const{
+        return coeffs;
+    }
         
     std::string linear::className() const{
-        
+        return "linear";
     }
     float linear::evaluate(float value) const{
         
     }
+    
     linear* linear::clone() const{
-        
+        return new linear(*this);
     }
 }

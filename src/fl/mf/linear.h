@@ -19,6 +19,9 @@ namespace fuzzy{
         linear(std::string name = "", std::vector<float> coeffs = std::vector<float>());
         virtual ~linear();
         
+        virtual void setCoeffs(std::vector<float> coeffs);
+        virtual std::vector<float> getCoeffs() const;
+        
         virtual std::string className() const;
         virtual float evaluate(float value) const;
         virtual linear* clone() const;

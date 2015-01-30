@@ -4,10 +4,6 @@
     <df root="." name="0">
       <df name="CMakeFiles">
       </df>
-      <df name="include">
-        <df name="lucky_bea">
-        </df>
-      </df>
       <df name="src">
         <df name="conf">
         </df>

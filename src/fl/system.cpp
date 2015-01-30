@@ -47,6 +47,13 @@ namespace fuzzy{
     void system::start(){
         
     }
+    
+    std::vector<std::vector<float> > system::identifyFromData(std::string filename, 
+                                                                  std::vector<float> na, 
+                                                                  std::vector<std::vector<float> > nb,
+                                                                  std::vector<std::vector<float> > nk){
+        
+    }
 
     void system::addInput(inputVariable* item){
         this->inputs.push_back(item);
