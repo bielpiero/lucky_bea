@@ -10,6 +10,8 @@
             <in>largestOfMaximum.cpp</in>
             <in>meanOfMaximum.cpp</in>
             <in>smallestOfMaximum.cpp</in>
+            <in>weightedAverage.cpp</in>
+            <in>weightedSum.cpp</in>
           </df>
           <df name="mf">
             <in>gaussBell.cpp</in>
@@ -140,6 +142,13 @@
             ex="false"
             tool="1"
             flavor2="0">
+      </item>
+      <item path="src/fl/defuzzifier/weightedAverage.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="src/fl/defuzzifier/weightedSum.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="src/fl/mf/gaussBell.cpp" ex="false" tool="1" flavor2="4">
       </item>

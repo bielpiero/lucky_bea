@@ -20,7 +20,9 @@
             <in>meanOfMaximum.h</in>
             <in>smallestOfMaximum.cpp</in>
             <in>smallestOfMaximum.h</in>
+            <in>weightedAverage.cpp</in>
             <in>weightedAverage.h</in>
+            <in>weightedSum.cpp</in>
             <in>weightedSum.h</in>
           </df>
           <df name="mf">
