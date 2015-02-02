@@ -11,7 +11,7 @@ namespace fuzzy{
 	variable::~variable(){
 	}
 	
-	std::vector<float> variable::fuzzify(float value){
+	std::vector<float> variable::fuzzify(float value) const{
 		std::vector<float> result;
 		
 		if((value != fuzzy::nan) && (std::abs(value) != fuzzy::inf)){

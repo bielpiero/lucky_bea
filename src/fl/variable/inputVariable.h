@@ -13,7 +13,9 @@ namespace fuzzy{
 
         virtual void setInput(float value);
         virtual float getInput() const;
+        
+        virtual std::vector<float> fuzzyInput() const;
     };
 }
 
-#endifl
+#endif

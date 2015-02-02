@@ -11,9 +11,11 @@
 #include "defuzzifier/weightedSum.h"
 
 #include "mf/mf.h"
+#include "mf/constant.h"
 #include "mf/gaussBell.h"
 #include "mf/gaussian.h"
 #include "mf/gaussProduct.h"
+#include "mf/linear.h"
 #include "mf/piShape.h"
 #include "mf/sigmoid.h"
 #include "mf/sigmoidDifference.h"

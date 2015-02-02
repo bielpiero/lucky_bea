@@ -26,6 +26,8 @@
             <in>weightedSum.h</in>
           </df>
           <df name="mf">
+            <in>constant.cpp</in>
+            <in>constant.h</in>
             <in>gaussBell.cpp</in>
             <in>gaussBell.h</in>
             <in>gaussProduct.cpp</in>

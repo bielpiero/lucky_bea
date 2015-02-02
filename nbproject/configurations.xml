@@ -14,6 +14,8 @@
             <in>weightedSum.cpp</in>
           </df>
           <df name="mf">
+            <in>constant.cpp</in>
+            <in>constant.h</in>
             <in>gaussBell.cpp</in>
             <in>gaussProduct.cpp</in>
             <in>gaussian.cpp</in>
@@ -149,6 +151,10 @@
             flavor2="0">
       </item>
       <item path="src/fl/defuzzifier/weightedSum.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/fl/mf/constant.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/fl/mf/constant.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/fl/mf/gaussBell.cpp" ex="false" tool="1" flavor2="4">
       </item>

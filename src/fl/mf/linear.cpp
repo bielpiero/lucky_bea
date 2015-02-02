@@ -21,8 +21,9 @@ namespace fuzzy{
     std::string linear::className() const{
         return "linear";
     }
+    
     float linear::evaluate(float value) const{
-        
+        (void) value;
     }
     
     linear* linear::clone() const{
