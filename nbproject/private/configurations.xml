@@ -9,11 +9,16 @@
         </df>
         <df name="fl">
           <df name="defuzzifier">
+            <in>bisector.cpp</in>
             <in>bisector.h</in>
+            <in>centroid.cpp</in>
             <in>centroid.h</in>
             <in>defuzzifier.h</in>
+            <in>largestOfMaximum.cpp</in>
             <in>largestOfMaximum.h</in>
+            <in>meanOfMaximum.cpp</in>
             <in>meanOfMaximum.h</in>
+            <in>smallestOfMaximum.cpp</in>
             <in>smallestOfMaximum.h</in>
             <in>weightedAverage.h</in>
             <in>weightedSum.h</in>

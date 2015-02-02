@@ -7,6 +7,7 @@
 #include <sstream>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 
 namespace fuzzy{
 	const float nan = std::numeric_limits<float>::quiet_NaN();

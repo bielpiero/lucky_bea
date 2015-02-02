@@ -7,12 +7,18 @@
 #include <limits>
 #include <vector>
 #include <stdexcept>
+#include <functional>
 
 class stats{
 public:
 	static float max(std::vector<float> values);
 	static float min(std::vector<float> values);
 	
+        static float sum(std::vector<float> values);
+        static std::vector<int> findIndicesEqual(std::vector<float> values, float k);
+        static std::vector<int> findIndicesHigherThan(std::vector<float> values, float k);
+        static std::vector<int> findIndicesLessThan(std::vector<float> values, float k);
+        
 	static bool isInf(float value);
 	static bool isNaN(float value);
 	

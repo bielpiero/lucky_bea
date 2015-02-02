@@ -27,6 +27,47 @@ float stats::min(std::vector<float> values){
 	return min;
 }
 
+std::vector<int> stats::findIndicesEqual(std::vector<float> values, float k){
+    std::vector<int> indices;
+    for(int i = 0; i < values.size(); i++){
+        if(k == values[i]){
+            indices.push_back(i);
+        }
+    }
+    return indices;
+}
+
+std::vector<int> stats::findIndicesHigherThan(std::vector<float> values, float k){
+    std::vector<int> indices;
+    for(int i = 0; i < values.size(); i++){
+        if(k > values[i]){
+            indices.push_back(i);
+        }
+    }
+    return indices;
+}
+
+std::vector<int> stats::findIndicesLessThan(std::vector<float> values, float k){
+    std::vector<int> indices;
+    for(int i = 0; i < values.size(); i++){
+        if(k < values[i]){
+            indices.push_back(i);
+        }
+    }
+    return indices;
+}
+
+float stats::sum(std::vector<float> values){
+    float sum = std::numeric_limits<float>::quiet_NaN();
+    if(values.size() > 0){  
+        sum = 0;
+        for(int i = 0; i < values.size(); i++){
+            sum += values[i];
+        }
+    }
+    return sum;
+}
+
 bool stats::isInf(float value){
 	return (std::abs(value) == std::numeric_limits<float>::infinity());
 }

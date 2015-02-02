@@ -4,6 +4,13 @@
     <df root="." name="0">
       <df name="src">
         <df name="fl">
+          <df name="defuzzifier">
+            <in>bisector.cpp</in>
+            <in>centroid.cpp</in>
+            <in>largestOfMaximum.cpp</in>
+            <in>meanOfMaximum.cpp</in>
+            <in>smallestOfMaximum.cpp</in>
+          </df>
           <df name="mf">
             <in>gaussBell.cpp</in>
             <in>gaussProduct.cpp</in>
@@ -114,6 +121,25 @@
             <pElem>src</pElem>
           </incDir>
         </ccTool>
+      </item>
+      <item path="src/fl/defuzzifier/bisector.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/fl/defuzzifier/centroid.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/fl/defuzzifier/largestOfMaximum.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="src/fl/defuzzifier/meanOfMaximum.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="src/fl/defuzzifier/smallestOfMaximum.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="src/fl/mf/gaussBell.cpp" ex="false" tool="1" flavor2="4">
       </item>
