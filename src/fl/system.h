@@ -64,7 +64,6 @@ namespace fuzzy{
         virtual void removeRuleAt(int index);
         virtual void removeAllRules();
         virtual int numberOfRules();
-        virtual rule* getRuleByName(const std::string name);
         virtual rule* getRuleByIndex(int index);
     };
 }

@@ -26,19 +26,19 @@ namespace fuzzy{
         return this->weight;
     }
     
-    void rule::setAntecedents(std::vector<antecedent> antecedents){
+    void rule::setAntecedents(std::vector<antecedent*> antecedents){
         this->antecedents = antecedents;
     }
 
-    std::vector<antecedent> rule::getAntecedents() const{
+    std::vector<antecedent*> rule::getAntecedents() const{
         return this->antecedents;
     }
 
-    void rule::setConsequents(std::vector<consequent> consequents){
+    void rule::setConsequents(std::vector<consequent*> consequents){
         this->consequents = consequents;        
     }
     
-    std::vector<consequent> rule::setConsequents() const{
+    std::vector<consequent*> rule::getConsequents() const{
         return this->consequents;
     }
 }

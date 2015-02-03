@@ -159,19 +159,6 @@ namespace fuzzy{
         return this->rules.size();
     }
 
-    rule* system::getRuleByName(const std::string name){
-        bool found = false;
-        rule* item = NULL;
-
-        for(int i = 0; i < this->rules.size() && !found; i++){
-            if(rules[i]->getName() == name){
-                found = true;
-                item = rules[i];
-            }
-        }
-        return item;
-    }
-
     rule* system::getRuleByIndex(int index){
         return this->rules[index];
     }
