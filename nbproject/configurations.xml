@@ -184,6 +184,16 @@
       </item>
       <item path="src/fl/mf/zShape.cpp" ex="false" tool="1" flavor2="4">
       </item>
+      <item path="src/fl/rule/antecedent.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/fl/rule/antecedent.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/fl/rule/consequent.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/fl/rule/consequent.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/fl/rule/rule.cpp" ex="false" tool="1" flavor2="0">
+      </item>
       <item path="src/fl/system.cpp" ex="false" tool="1" flavor2="4">
         <ccTool>
           <incDir>

@@ -56,6 +56,10 @@ namespace fuzzy{
     }
 
     void system::addInput(inputVariable* item){
+        if(item->getName() == ""){
+            std::string name = "input" + this->inputs.size();
+            item->setName(name);
+        }
         this->inputs.push_back(item);
     }
 
@@ -94,6 +98,10 @@ namespace fuzzy{
 
 
     void system::addOutput(outputVariable* item){
+        if(item->getName() == ""){
+            std::string name = "output" + this->outputs.size();
+            item->setName(name);
+        }
         this->outputs.push_back(item);
     }
 

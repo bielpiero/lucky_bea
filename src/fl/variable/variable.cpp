@@ -60,7 +60,11 @@ namespace fuzzy{
 	}
 
 	void variable::addMF(mf* item){
-		this->items.push_back(item);
+            if (item->getName() == ""){
+                std::string name = "mf" + this->items.size();
+                item->setName(name);
+            }
+            this->items.push_back(item);
 	}
 	
 	void variable::addMFAt(mf* item, int index){

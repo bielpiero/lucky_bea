@@ -56,7 +56,6 @@
             <in>zShape.h</in>
           </df>
           <df name="rule">
-            <in>rule.cpp</in>
             <in>rule.h</in>
           </df>
           <df name="variable">
