@@ -41,8 +41,4 @@ namespace fuzzy{
     std::vector<consequent> rule::setConsequents() const{
         return this->consequents;
     }
-    
-    rule* rule::fromString(const std::string rule){
-        
-    }
 }
