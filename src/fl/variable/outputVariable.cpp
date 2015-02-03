@@ -39,7 +39,7 @@ namespace fuzzy{
     void outputVariable::defuzzify(){
         float result = fuzzy::nan;
         if(defuzz != NULL){
-            
+            //this->defuzz->defuzzify(, minRange, maxRange);
         } else {
             throw std::invalid_argument("Defuzzifier is null.");
         }
