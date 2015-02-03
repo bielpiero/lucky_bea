@@ -1,4 +1,6 @@
 #include "rule.h"
+#include "antecedent.h"
+#include "consequent.h"
 
 namespace fuzzy{
     rule::rule(const std::string text, float weight){

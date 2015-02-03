@@ -13,6 +13,10 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	this->bumpersOk = true;
 	this->streamingActive = NO;
 	this->udpPort = 0;
+	
+	possKalman = new fuzzy::system("possiblistic-kalman");
+	robotState = new Matrix(3, 1);
+	
 	xmlFaceFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_PATH;
 	cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel", 1);
 }
@@ -611,11 +615,45 @@ void GeneralController::batteryVoltageCallback(const std_msgs::Float64::ConstPtr
 }
 
 void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::ConstPtr& laser){
-
+	float angle_min = laser->angle_min;
+	float angle_max = laser->angle_max;
+	float angle_increment = laser->angle_increment;
+	std::vector<float> data = laser->ranges;
+	std::vector<int> dataIndices = stats::findIndicesLessThan(data, 11.6);
+	
+	landmarks.clear();
+	
+	std::vector<float> dataMean;
+	std::vector<float> dataAngles;
+	for(int i = 1; i < dataIndices.size(); i++){
+		if((dataIndices[i] - dataIndices[i - 1]) == 1){
+			dataMean.push_back(data[dataIndices[i - 1]]);
+			dataAngles.push_back((angle_min + ((float)dataIndices[i - 1] * angle_increment)));
+		} else {
+			s_landmark_data* temp = new s_landmark_data;
+			
+			float distMean = stats::expectation(dataMean);
+			float angleMean = stats::expectation(dataAngles);
+			
+			temp->x = distMean * cos(angleMean);
+			temp->y = distMean * sin(angleMean);
+			landmarks.push_back(temp);
+			dataMean.clear();
+			dataAngles.clear();
+		}
+	}
+	
+	std::cout << "Landamarks found: " << landmarks.size() << std::endl;
+	
+	Sleep(100);
 }
 
 void GeneralController::laserPointCloudStateCallback(const sensor_msgs::PointCloud::ConstPtr& laser){
 
+}
+
+void GeneralController::initializeKalmanVariables(){
+	//fuzzy::inputVariable* xKK = new fuzzy::inputVariable("", 
 }
 
 void GeneralController::beginVideoStreaming(int videoDevice)

@@ -1,11 +1,5 @@
-/* 
- * File:   consequent.cpp
- * Author: bpalvarado
- * 
- * Created on 3 de febrero de 2015, 03:03 PM
- */
-
 #include "consequent.h"
+#include "rule.h"
 
 namespace fuzzy{
     consequent::consequent() {
@@ -13,5 +7,10 @@ namespace fuzzy{
 
     consequent::~consequent() {
     }
+    
+    void consequent::parse(std::string expresion, rule* r){
+        
+    }
 }
+
 

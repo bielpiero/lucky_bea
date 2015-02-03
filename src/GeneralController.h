@@ -1,8 +1,11 @@
+#ifndef GENERAL_CONTROLLER_H
+#define GENERAL_CONTROLLER_H
 
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <cmath>
 #include "SocketNode2.h"
 #include "SerialPort.h"
 #include "stdxros.hpp"
@@ -10,6 +13,8 @@
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
 
+#include "Matrix.h"
+#include "stats.h"
 #include "fl/fuzzy.h"
 
 #define CONVERTER_BUFFER_SIZE 20
@@ -36,6 +41,12 @@
 #define YES 1
 #define NO 0
 #define MAYBE 2
+
+#define MAX_LANDMAKS 20;
+#define LASER_MAX_RANGE 11.6;
+
+#define STATE_RANGE_X 0
+#define STATE_RANGE_Y 10
 
 using namespace rapidxml;
 
@@ -67,6 +78,11 @@ struct dynamic_face_info{
 	GeneralController* object;
 };
 
+struct s_landmark_data{
+	float x;
+	float y;
+};
+
 
 class GeneralController : public CSocketNode // la clase GeneralController hereda de la clase CSocketNode
 {
@@ -77,6 +93,11 @@ private:
 	ros::NodeHandle nh;
 	ros::Publisher cmd_vel_pub;
 	cv::VideoCapture videoCapture;
+	
+	//possibilistic navigation
+	fuzzy::system* possKalman;
+	Matrix* robotState;
+	std::vector<s_landmark_data*> landmarks;
 public:
 	GeneralController(ros::NodeHandle nh_);
 	~GeneralController(void);
@@ -119,6 +140,7 @@ public:
 	void laserScanStateCallback(const sensor_msgs::LaserScan::ConstPtr& laser);
 	void laserPointCloudStateCallback(const sensor_msgs::PointCloud::ConstPtr& laser);
 	
+	void initializeKalmanVariables();
 	
 	void stopVideoStreaming();
 private:
@@ -138,4 +160,6 @@ private:
 	static void* streamingThread(void*);
 	
 };
+
+#endif
 

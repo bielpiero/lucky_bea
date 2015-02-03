@@ -40,7 +40,7 @@ std::vector<int> stats::findIndicesEqual(std::vector<float> values, float k){
 std::vector<int> stats::findIndicesHigherThan(std::vector<float> values, float k){
     std::vector<int> indices;
     for(int i = 0; i < values.size(); i++){
-        if(k > values[i]){
+        if(k < values[i]){
             indices.push_back(i);
         }
     }
@@ -50,7 +50,7 @@ std::vector<int> stats::findIndicesHigherThan(std::vector<float> values, float k
 std::vector<int> stats::findIndicesLessThan(std::vector<float> values, float k){
     std::vector<int> indices;
     for(int i = 0; i < values.size(); i++){
-        if(k < values[i]){
+        if(k > values[i]){
             indices.push_back(i);
         }
     }

@@ -8,13 +8,13 @@
 #include <string>
 
 #include "stats.h"
-
-#include "antecedent.h"
-#include "consequent.h"
 #include "fl/constants.h"
 
 
 namespace fuzzy{
+    class antecedent;
+    class consequent;
+    
     class rule{
     private:
         std::string text;
