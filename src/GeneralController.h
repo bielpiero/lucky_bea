@@ -163,6 +163,7 @@ private:
 	
 	void GetVelocities(char* cad, double& lin_vel, double& angular_vel);
 	void moveRobot(double lin_vel, double angular_vel);
+	void trackRobot();
 	
 	void GetNumberOfCamerasAvailable(int& count);
 	void GetCameraDevicePort(char* cad, int& device, int& port);

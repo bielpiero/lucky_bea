@@ -114,6 +114,9 @@ void GeneralController::OnMsg(char* cad,int length)//callback for client and ser
 			GetVelocities(cad, lin_vel, ang_vel);
 			moveRobot(lin_vel, ang_vel);
 			break;
+		case 0x11:
+			trackRobot();
+			break;
 		case 0x20:
 			GetNumberOfCamerasAvailable(cameraCount);
 			number_converter << cameraCount;
@@ -601,7 +604,7 @@ void GeneralController::poseStateCallback(const nav_msgs::Odometry::ConstPtr& po
 	robotEncoderPosition->y = pose->pose.pose.position.y;
 	robotEncoderPosition->z = pose->pose.pose.position.z;
 	robotEncoderPosition->theta = theta;
-	std::cout << "X: " << robotEncoderPosition->x << ", Y: "<< robotEncoderPosition->y << ", THETA: " <<  robotEncoderPosition->theta << std::endl;
+	
 	Sleep(100);
 }
 
@@ -659,7 +662,59 @@ void GeneralController::laserPointCloudStateCallback(const sensor_msgs::PointClo
 }
 
 void GeneralController::initializeKalmanVariables(){
-	fuzzy::inputVariable* xKK = new fuzzy::inputVariable("xKK"); 
+	fuzzy::inputVariable* xKK = new fuzzy::inputVariable("xKK", -9.0, 9.0); 
+	xKK->addMF(new fuzzy::trapezoid("", -fuzzy::inf, -9.0, -7.5, -6.0));
+	xKK->addMF(new fuzzy::trapezoid("", -7.5, -6.0, -3.0, -1.5));
+	xKK->addMF(new fuzzy::trapezoid("", -3.0, -1.5, 1.5, 3.0));
+	xKK->addMF(new fuzzy::trapezoid("", 1.5, 3.0, 6.0, 7.5));
+	xKK->addMF(new fuzzy::trapezoid("", 6.0, 7.5, 9.0, fuzzy::inf));
+	
+	fuzzy::inputVariable* yKK = new fuzzy::inputVariable("yKK", -3.0, 7.0); 
+	yKK->addMF(new fuzzy::trapezoid("", -fuzzy::inf, -3.0, -2.167, -1.333));
+	yKK->addMF(new fuzzy::trapezoid("", -2.167, -1.333, 0.333, 1.167));
+	yKK->addMF(new fuzzy::trapezoid("", 0.333, 1.167, 2.833, 3.667));
+	yKK->addMF(new fuzzy::trapezoid("", 2.833, 3.667, 5.333, 6.167));
+	yKK->addMF(new fuzzy::trapezoid("", 5.333, 6.167, 7.0, fuzzy::inf));
+	
+	
+	fuzzy::inputVariable* vxK1 = new fuzzy::inputVariable("vxK1", -0.5, 0.5); 
+	vxK1->addMF(new fuzzy::trapezoid("", -fuzzy::inf, -0.5252, -0.475, -0.275));
+	vxK1->addMF(new fuzzy::trapezoid("", -0.475, -0.275, -0.225, -0.025));
+	vxK1->addMF(new fuzzy::trapezoid("", -0.225, -0.025, 0.025, 0.225));
+	vxK1->addMF(new fuzzy::trapezoid("", 0.025, 0.225, 0.275, 0.475));
+	vxK1->addMF(new fuzzy::trapezoid("", 0.275, 0.475, 0.525, fuzzy::inf));
+	
+	fuzzy::inputVariable* vyK1 = new fuzzy::inputVariable("vyK1", -0.5, 0.5); 
+	vyK1->addMF(new fuzzy::trapezoid("", -fuzzy::inf, -0.5252, -0.475, -0.275));
+	vyK1->addMF(new fuzzy::trapezoid("", -0.475, -0.275, -0.225, -0.025));
+	vyK1->addMF(new fuzzy::trapezoid("", -0.225, -0.025, 0.025, 0.225));
+	vyK1->addMF(new fuzzy::trapezoid("", 0.025, 0.225, 0.275, 0.475));
+	vyK1->addMF(new fuzzy::trapezoid("", 0.275, 0.475, 0.525, fuzzy::inf));
+	
+	fuzzy::inputVariable* wxK1 = new fuzzy::inputVariable("wxK1", -0.5, 0.5); 
+	wxK1->addMF(new fuzzy::trapezoid("", -fuzzy::inf, -0.5252, -0.475, -0.275));
+	wxK1->addMF(new fuzzy::trapezoid("", -0.475, -0.275, -0.225, -0.025));
+	wxK1->addMF(new fuzzy::trapezoid("", -0.225, -0.025, 0.025, 0.225));
+	wxK1->addMF(new fuzzy::trapezoid("", 0.025, 0.225, 0.275, 0.475));
+	wxK1->addMF(new fuzzy::trapezoid("", 0.275, 0.475, 0.525, fuzzy::inf));
+	
+	fuzzy::inputVariable* vxK1 = new fuzzy::inputVariable("wyK1", -0.5, 0.5); 
+	wyK1->addMF(new fuzzy::trapezoid("", -fuzzy::inf, -0.5252, -0.475, -0.275));
+	wyK1->addMF(new fuzzy::trapezoid("", -0.475, -0.275, -0.225, -0.025));
+	wyK1->addMF(new fuzzy::trapezoid("", -0.225, -0.025, 0.025, 0.225));
+	wyK1->addMF(new fuzzy::trapezoid("", 0.025, 0.225, 0.275, 0.475));
+	wyK1->addMF(new fuzzy::trapezoid("", 0.275, 0.475, 0.525, fuzzy::inf));
+	
+	possKalman->addInput(xKK);
+	possKalman->addInput(yKK);
+	possKalman->addInput(vxK1);
+	possKalman->addInput(vyK1);
+	possKalman->addInput(wxK1);
+	possKalman->addInput(wyK1);
+}
+
+void GeneralController::trackRobot(){
+	initializeKalmanVariables();
 }
 
 void GeneralController::beginVideoStreaming(int videoDevice)
