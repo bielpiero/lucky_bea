@@ -115,28 +115,27 @@ public:
 	
 	virtual void OnConnection();//callback for client and server
 	virtual void OnMsg(char* cad,int length);//callback for client and server
-	void Define(void *_Dlg);
-	void StopDynamicGesture();
+	void stopDynamicGesture();
 private:
-	void GetPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value);
-	void GetGestures(std::string type, std::string& gestures);
-	void SetGesture(std::string id);
-	void SaveGesture(std::string token, int gesture_type);
-	void SaveStaticGesture(std::string name, s_motor servos[]);
-	void SaveDynamicGesture(std::string name, s_motor servos[]);
+	void getPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value);
+	void getGestures(std::string type, std::string& gestures);
+	void setGesture(std::string id);
+	void saveGesture(std::string token, int gesture_type);
+	void saveStaticGesture(std::string name, s_motor servos[]);
+	void saveDynamicGesture(std::string name, s_motor servos[]);
 	
-	void ModifyGesture(std::string token, int gesture_type);
-	void ModifyStaticGesture(std::string face_id, std::string name, s_motor servos[]);
+	void modifyGesture(std::string token, int gesture_type);
+	void modifyStaticGesture(std::string face_id, std::string name, s_motor servos[]);
 	
-	void RemoveGesture(std::string id);
+	void removeGesture(std::string id);
 	
-	void SetServoPosition(unsigned char card_id, unsigned char servo_id, int position);
-	void SetServoSpeed(unsigned char card_id, unsigned char servo_id, int speed);
-	void SetServoAcceleration(unsigned char card_id, unsigned char servo_id, int speed);
+	void setServoPosition(unsigned char card_id, unsigned char servo_id, int position);
+	void setServoSpeed(unsigned char card_id, unsigned char servo_id, int speed);
+	void setServoAcceleration(unsigned char card_id, unsigned char servo_id, int speed);
 
 	
 	
-	static void* DynamicFaceThread(void*);
+	static void* dynamicFaceThread(void*);
 	
 	/// ROS Functions
 public:
@@ -161,12 +160,12 @@ private:
 	unsigned char streamingActive;
 	std::string xmlFaceFullPath;
 	
-	void GetVelocities(char* cad, double& lin_vel, double& angular_vel);
+	void getVelocities(char* cad, double& lin_vel, double& angular_vel);
 	void moveRobot(double lin_vel, double angular_vel);
 	void trackRobot();
 	
-	void GetNumberOfCamerasAvailable(int& count);
-	void GetCameraDevicePort(char* cad, int& device, int& port);
+	void getNumberOfCamerasAvailable(int& count);
+	void getCameraDevicePort(char* cad, int& device, int& port);
 	void beginVideoStreaming(int videoDevice);
 	
 	static void* streamingThread(void*);

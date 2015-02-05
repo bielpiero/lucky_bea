@@ -25,25 +25,18 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 GeneralController::~GeneralController(void)
 {
 }
-void GeneralController::Define(void *_Dlg)
-{
-	//pDlg = _Dlg;
-}
+
 void GeneralController::OnConnection()//callback for client and server
 {
-	if(IsConnected())
-	{
+	if(IsConnected()) {
 		std::cout << "Client "<< this->getClientIPAddress() << " is Connected to Doris..." << std::endl;
-	}
-	else
-	{
+	} else {
 		std::cout << "Disconnected..." << std::endl;
-		StopDynamicGesture();
+		stopDynamicGesture();
 		stopVideoStreaming();
 	}
 }
-void GeneralController::OnMsg(char* cad,int length)//callback for client and server
-{
+void GeneralController::OnMsg(char* cad,int length){//callback for client and server
 	cad[length] = 0;
 	unsigned char function = *(cad++);
 	std::string local_buffer_out = "";
@@ -60,46 +53,45 @@ void GeneralController::OnMsg(char* cad,int length)//callback for client and ser
 	int cameraCount = 0;
 	int videoDevice = 0;
 	
-	switch (function)
-	{
+	switch (function){
 		case 0x00:
 			std::cout << "Command 0x00. Static Faces Requested" << std::endl;
-			GetGestures("0", gestures);
+			getGestures("0", gestures);
 			SendMsg(0x00, (char*)gestures.c_str(), (int)(gestures.length())); 
 			break;
 		case 0x01:
 			std::cout << "Command 0x01. Dynamic Faces Requested" << std::endl;
-			GetGestures("1", gestures);
+			getGestures("1", gestures);
 			SendMsg(0x01, (char*)gestures.c_str(), (int)(gestures.length()));
 			break;
 		case 0x02:
 			std::cout << "Command 0x02. Saving New Static Face" << std::endl;
-			SaveGesture(cad, 0);
+			saveGesture(cad, 0);
 			break;
 		case 0x03:
 			std::cout << "Command 0x03. Saving New Dynamic Face" << std::endl;
-			SaveGesture(cad, 1);
+			saveGesture(cad, 1);
 			break;
 		case 0x04:
 			std::cout << "Command 0x04. Modifying Static Face" << std::endl;
-			ModifyGesture(cad, 0);
+			modifyGesture(cad, 0);
 			break;
 		case 0x05:
 			std::cout << "Command 0x05. Modifying Dynamic Face" << std::endl;
-			ModifyGesture(cad, 1);
+			modifyGesture(cad, 1);
 			break;
 		case 0x06:
 			std::cout << "Command 0x06. Removing Face" << std::endl;
-			RemoveGesture(cad);
+			removeGesture(cad);
 			break;
 		case 0x07:
 			std::cout << "Command 0x07. Setting Gesture Id: " << cad << std::endl;
-			SetGesture(cad);
+			setGesture(cad);
 			break;
 		case 0x08:
-            GetPololuInstruction(cad, card_id, port, servo_position);            
+            getPololuInstruction(cad, card_id, port, servo_position);            
 			std::cout << "Command 0x08. Moving from CardId: " << (int)card_id << " Servo: " << (int)port << " To Position: " << servo_position << std::endl;
-			SetServoPosition(card_id, port, servo_position);
+			setServoPosition(card_id, port, servo_position);
 			break;
 		case 0x09:
 			std::cout << "Command 0x09. Sending current positions" << std::endl;
@@ -108,23 +100,23 @@ void GeneralController::OnMsg(char* cad,int length)//callback for client and ser
 			break;
 		case 0x0A:
 			std::cout << "Command 0x0A. Stopping any Dynamic Face" << std::endl;
-			StopDynamicGesture();
+			stopDynamicGesture();
 			break;
 		case 0x10:
-			GetVelocities(cad, lin_vel, ang_vel);
+			getVelocities(cad, lin_vel, ang_vel);
 			moveRobot(lin_vel, ang_vel);
 			break;
 		case 0x11:
 			trackRobot();
 			break;
 		case 0x20:
-			GetNumberOfCamerasAvailable(cameraCount);
+			getNumberOfCamerasAvailable(cameraCount);
 			number_converter << cameraCount;
 			local_buffer_out = number_converter.str();
 			SendMsg(0x20, (char*)local_buffer_out.c_str(), (int)local_buffer_out.length()); 
 			break;
 		case 0x21:
-			GetCameraDevicePort(cad, videoDevice, udpPort);
+			getCameraDevicePort(cad, videoDevice, udpPort);
 			beginVideoStreaming(videoDevice);
 			break;
 		case 0x22:
@@ -138,14 +130,13 @@ void GeneralController::OnMsg(char* cad,int length)//callback for client and ser
 	
 }
 
-void GeneralController::GetCameraDevicePort(char* cad, int& device, int& port){
+void GeneralController::getCameraDevicePort(char* cad, int& device, int& port){
 	char* current_number;
 	int values[6];
 	int index = 0;
 	current_number = strtok(cad, ":");
 	//
-	while(current_number != NULL)
-	{
+	while(current_number != NULL){
 		values[index++] = atoi(current_number);
 		current_number = strtok(NULL, ":");
 	}
@@ -153,15 +144,13 @@ void GeneralController::GetCameraDevicePort(char* cad, int& device, int& port){
 	port = values[1];
 }
 
-void GeneralController::GetPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value)
-{
+void GeneralController::getPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value){
 	char* current_number;
 	int values[6];
 	int index = 0;
 	current_number = strtok(cad, ",");
 	//
-	while(current_number != NULL)
-	{
+	while(current_number != NULL){
 		values[index++] = atoi(current_number);
 		current_number = strtok(NULL, ",");
 	}
@@ -170,15 +159,13 @@ void GeneralController::GetPololuInstruction(char* cad, unsigned char& card_id, 
 	value = values[2];
 }
 
-void GeneralController::GetVelocities(char* cad, double& lin_vel, double& ang_vel)
-{
+void GeneralController::getVelocities(char* cad, double& lin_vel, double& ang_vel){
 	char* current_number;
 	double values[6];
 	int index = 0;
 	current_number = strtok(cad, ",");
 	//
-	while(current_number != NULL)
-	{
+	while(current_number != NULL){
 		values[index++] = atof(current_number);
 		current_number = strtok(NULL, ",");
 	}
@@ -186,8 +173,7 @@ void GeneralController::GetVelocities(char* cad, double& lin_vel, double& ang_ve
 	ang_vel = values[1];
 }
 
-void GeneralController::GetGestures(std::string type, std::string& gestures)
-{
+void GeneralController::getGestures(std::string type, std::string& gestures){
     xml_document<> doc;
     xml_node<>* root_node;
 	
@@ -200,8 +186,7 @@ void GeneralController::GetGestures(std::string type, std::string& gestures)
 	
 	doc.parse<0>(&buffer[0]);
 	root_node = doc.first_node(XML_STATIC_GESTURES_STR);
-	if(root_node != NULL)
-	{
+	if(root_node != NULL){
 		for (xml_node<> * gesto_node = root_node->first_node(XML_ELEMENT_GESTURE_STR); gesto_node; gesto_node = gesto_node->next_sibling()){	
 			std::string nombre(gesto_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
 			
@@ -220,29 +205,27 @@ void GeneralController::GetGestures(std::string type, std::string& gestures)
 	
 }
 
-void GeneralController::SaveGesture(std::string token, int type)
-{
+void GeneralController::saveGesture(std::string token, int type){
     if(type == 0){
-	s_motor motor_positions[SERVOS_COUNT];
-	int i = 0;
-	std::string gesture_name(strtok((char*)token.c_str(), "|"));
-	std::string gesture_positions(strtok(NULL, "|"));
-	        
-	char* positions = strtok((char*)gesture_positions.c_str(), ",");
-	while (positions != 0)
-	{
-            std::ostringstream convert;
-            convert << i;
-                motor_positions[i].idMotor = convert.str();
-		motor_positions[i++].pos = std::string(positions);
-		positions = strtok(NULL, ",");
-	}
-	SaveStaticGesture(gesture_name, motor_positions);
+		s_motor motor_positions[SERVOS_COUNT];
+		int i = 0;
+		std::string gesture_name(strtok((char*)token.c_str(), "|"));
+		std::string gesture_positions(strtok(NULL, "|"));
+				
+		char* positions = strtok((char*)gesture_positions.c_str(), ",");
+		while (positions != 0){
+			std::ostringstream convert;
+			convert << i;
+			motor_positions[i].idMotor = convert.str();
+			motor_positions[i++].pos = std::string(positions);
+			positions = strtok(NULL, ",");
+		}
+		
+		saveStaticGesture(gesture_name, motor_positions);
     }
 }
 
-void GeneralController::ModifyGesture(std::string token, int type)
-{
+void GeneralController::modifyGesture(std::string token, int type){
     if(type == 0){
 	s_motor motor_positions[SERVOS_COUNT];
 	int i = 0;
@@ -259,12 +242,11 @@ void GeneralController::ModifyGesture(std::string token, int type)
 		motor_positions[i++].pos = std::string(positions);
 		positions = strtok(NULL, ",");
 	}
-	ModifyStaticGesture(gesture_id, gesture_name, motor_positions);
+	modifyStaticGesture(gesture_id, gesture_name, motor_positions);
     }
 }
 
-void GeneralController::ModifyStaticGesture(std::string gesture_id, std::string name, s_motor servos[])
-{
+void GeneralController::modifyStaticGesture(std::string gesture_id, std::string name, s_motor servos[]){
 	xml_document<> doc;
     xml_node<>* root_node;
 	
@@ -311,8 +293,7 @@ void GeneralController::ModifyStaticGesture(std::string gesture_id, std::string 
 	}       
 }
 
-void GeneralController::SaveStaticGesture(std::string name, s_motor servos[])
-{
+void GeneralController::saveStaticGesture(std::string name, s_motor servos[]){
 	xml_document<> doc;
     xml_node<>* root_node;
 	
@@ -359,13 +340,11 @@ void GeneralController::SaveStaticGesture(std::string name, s_motor servos[])
 	}
 }
 
-void GeneralController::SaveDynamicGesture(std::string name, s_motor servos[])
-{
+void GeneralController::saveDynamicGesture(std::string name, s_motor servos[]){
 
 }
 
-void GeneralController::RemoveGesture(std::string face_id)
-{
+void GeneralController::removeGesture(std::string face_id){
     xml_document<> doc;
     xml_node<>* root_node;
 	
@@ -378,18 +357,16 @@ void GeneralController::RemoveGesture(std::string face_id)
 	doc.parse<0>(&buffer[0]);
 	
 	root_node = doc.first_node(XML_STATIC_GESTURES_STR);
-	if(root_node != NULL)
-	{
+	if(root_node != NULL){
         xml_node<>* node_to_find;
         bool found = false;
 		for (xml_node<> * gesto_node = root_node->first_node(XML_ELEMENT_GESTURE_STR); gesto_node && !found; gesto_node = gesto_node->next_sibling()){	
 
 			std::string id(gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-					if(id == face_id)
-					{
-						node_to_find = gesto_node;
-						found = true;
-					}
+			if(id == face_id){
+				node_to_find = gesto_node;
+				found = true;
+			}
 		}
 			root_node->remove_node(node_to_find);
 		the_file.close();
@@ -400,8 +377,7 @@ void GeneralController::RemoveGesture(std::string face_id)
 	}
 }
 
-void GeneralController::SetGesture(std::string face_id)
-{
+void GeneralController::setGesture(std::string face_id){
     xml_document<> doc;
     xml_node<>* root_node;
 	
@@ -412,10 +388,9 @@ void GeneralController::SetGesture(std::string face_id)
 	buffer.push_back('\0');
 	
 	doc.parse<0>(&buffer[0]);
-	StopDynamicGesture();
+	stopDynamicGesture();
 	root_node = doc.first_node(XML_STATIC_GESTURES_STR);
-	if(root_node != NULL)
-	{
+	if(root_node != NULL){
 		for (xml_node<> * gesto_node = root_node->first_node(XML_ELEMENT_GESTURE_STR); gesto_node; gesto_node = gesto_node->next_sibling()){
 
 			std::string id(gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
@@ -424,21 +399,19 @@ void GeneralController::SetGesture(std::string face_id)
 			
 			if (face_id == id)
 			{
-				for(xml_node<> * motor_node = gesto_node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling())
-				{
-									unsigned char card_id = (unsigned char)atoi(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value());
+				for(xml_node<> * motor_node = gesto_node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling()){
+					unsigned char card_id = (unsigned char)atoi(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value());
 					unsigned char servo_id = (unsigned char)atoi(motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 					int position = atoi(motor_node->first_attribute(XML_ATTRIBUTE_POSITION_STR)->value());
 					int speed = atoi(motor_node->first_attribute(XML_ATTRIBUTE_SPEED_STR)->value());
 					int acceleration = atoi(motor_node->first_attribute(XML_ATTRIBUTE_ACCELERATION_STR)->value());
 					
-					SetServoPosition(card_id, servo_id, position);
-					SetServoSpeed(card_id, servo_id, speed);
-					SetServoAcceleration(card_id, servo_id, acceleration);
+					setServoPosition(card_id, servo_id, position);
+					setServoSpeed(card_id, servo_id, speed);
+					setServoAcceleration(card_id, servo_id, acceleration);
 				}	
 					
-				if(tipo == "1")
-				{
+				if(tipo == "1"){
 					std::cout << "This is a dynamic face" << std::endl;
 					dynamic_face_info *data = new dynamic_face_info;
 					data->object = this;
@@ -447,7 +420,7 @@ void GeneralController::SetGesture(std::string face_id)
 					pthread_t t1;
 					continue_dynamic_thread = true;
 					
-					pthread_create(&t1,NULL, GeneralController::DynamicFaceThread, (void *)(data));
+					pthread_create(&t1,NULL, GeneralController::dynamicFaceThread, (void *)(data));
 				}
 			}
 		}
@@ -455,31 +428,26 @@ void GeneralController::SetGesture(std::string face_id)
 	the_file.close();
 }
 
-void GeneralController::SetServoPosition(unsigned char card_id, unsigned char servo_id, int position)
-{
+void GeneralController::setServoPosition(unsigned char card_id, unsigned char servo_id, int position){
     this->maestroControllers->setTarget(card_id, servo_id, position);
     usleep(10000);
 }
 
-void GeneralController::SetServoSpeed(unsigned char card_id, unsigned char servo_id, int speed)
-{
+void GeneralController::setServoSpeed(unsigned char card_id, unsigned char servo_id, int speed){
     this->maestroControllers->setSpeed(card_id, servo_id, speed);
     usleep(10000);
 }
 
-void GeneralController::SetServoAcceleration(unsigned char card_id, unsigned char servo_id, int acceleration)
-{
+void GeneralController::setServoAcceleration(unsigned char card_id, unsigned char servo_id, int acceleration){
     this->maestroControllers->setAcceleration(card_id, servo_id, acceleration);
     usleep(10000);
 }
 
-void GeneralController::StopDynamicGesture()
-{
+void GeneralController::stopDynamicGesture(){
 	continue_dynamic_thread = false;
 }
 
-void* GeneralController::DynamicFaceThread(void* object)
-{
+void* GeneralController::dynamicFaceThread(void* object){
     dynamic_face_info* node = (dynamic_face_info*)object;
 	s_movement selected_dynamic_face;
 	xml_document<> doc;
@@ -551,9 +519,9 @@ void* GeneralController::DynamicFaceThread(void* object)
 				int speed = atoi(selected_dynamic_face.secuences[i].motors[j].speed.c_str());
 				int acceleration = atoi(selected_dynamic_face.secuences[i].motors[j].acceleration.c_str());
 				
-				node->object->SetServoPosition(card_id, servo_id, position);
-				node->object->SetServoSpeed(card_id, servo_id, speed);
-				node->object->SetServoAcceleration(card_id, servo_id, acceleration);
+				node->object->setServoPosition(card_id, servo_id, position);
+				node->object->setServoSpeed(card_id, servo_id, speed);
+				node->object->setServoAcceleration(card_id, servo_id, acceleration);
 			}
 			
 			usleep(1000*atoi(selected_dynamic_face.secuences[i].tsec.c_str()));
@@ -698,7 +666,7 @@ void GeneralController::initializeKalmanVariables(){
 	wxK1->addMF(new fuzzy::trapezoid("", 0.025, 0.225, 0.275, 0.475));
 	wxK1->addMF(new fuzzy::trapezoid("", 0.275, 0.475, 0.525, fuzzy::inf));
 	
-	fuzzy::inputVariable* vxK1 = new fuzzy::inputVariable("wyK1", -0.5, 0.5); 
+	fuzzy::inputVariable* wyK1 = new fuzzy::inputVariable("wyK1", -0.5, 0.5); 
 	wyK1->addMF(new fuzzy::trapezoid("", -fuzzy::inf, -0.5252, -0.475, -0.275));
 	wyK1->addMF(new fuzzy::trapezoid("", -0.475, -0.275, -0.225, -0.025));
 	wyK1->addMF(new fuzzy::trapezoid("", -0.225, -0.025, 0.025, 0.225));
@@ -717,60 +685,48 @@ void GeneralController::trackRobot(){
 	initializeKalmanVariables();
 }
 
-void GeneralController::beginVideoStreaming(int videoDevice)
-{
-	
+void GeneralController::beginVideoStreaming(int videoDevice){
 	pthread_t t1;
 	stopVideoStreaming();
 	//videoCapture = cv::VideoCapture(videoDevice);
 	videoCapture.open(videoDevice);
-	if(videoCapture.isOpened())
-	{
+	if(videoCapture.isOpened()){
 		std::cout << "Streaming from camera device: " << videoDevice << std::endl;
 		pthread_create(&t1, NULL, streamingThread, (void *)(this));
-	}
-	else
-	{
+	} else {
 		std::cout << "Could not open device: " << videoDevice << std::endl;
 	}	
 	 
 
 }
 
-void GeneralController::stopVideoStreaming()
-{
-	if(streamingActive == YES)
-	{
+void GeneralController::stopVideoStreaming(){
+	if(streamingActive == YES){
 		streamingActive = MAYBE;
 		std::cout << "Stopping video streaming" << std::endl;
 		while(streamingActive != NO) Sleep(100);
 	}
 }
 
-void GeneralController::GetNumberOfCamerasAvailable(int& count){
+void GeneralController::getNumberOfCamerasAvailable(int& count){
 	int value = 0;
 	bool firstCrash = false;
 	for(int i = 0; i < 10 && !firstCrash; i++)
 	{
 		cv::VideoCapture vc(i);
-		if(vc.isOpened())
-		{
+		if(vc.isOpened()){
 			value++;
 			vc.release();
-		}
-		else{
+		} else{
 			firstCrash = true;
 		}
 	}
 	count = value;
 }
 
-void* GeneralController::streamingThread(void* object)
-{
-	
+void* GeneralController::streamingThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	self->streamingActive = YES;
-	
 	
 	cv::Mat frame;
 	std::vector<uchar> buff;
@@ -779,8 +735,7 @@ void* GeneralController::streamingThread(void* object)
 	params[1] = 85;
 	
 	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), self->udpPort);
-	while(ros::ok() && self->streamingActive == YES)
-	{
+	while(ros::ok() && self->streamingActive == YES){
 		self->videoCapture >> frame;
 		cv::imencode(".jpg", frame, buff, params);
 		udp_client->sendData(&buff[0], buff.size());
