@@ -73,6 +73,8 @@
           </df>
           <in>constants.h</in>
           <in>fuzzy.h</in>
+          <in>fuzzyStats.cpp</in>
+          <in>fuzzyStats.h</in>
           <in>system.cpp</in>
           <in>system.h</in>
         </df>
