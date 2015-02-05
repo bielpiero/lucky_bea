@@ -1,4 +1,4 @@
-#inlucde "fuzzyStats.h"
+#include "fuzzyStats.h"
 #include "constants.h"
 #include "system.h"
 
