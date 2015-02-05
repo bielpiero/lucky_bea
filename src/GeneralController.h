@@ -78,9 +78,17 @@ struct dynamic_face_info{
 	GeneralController* object;
 };
 
-struct s_landmark_data{
+struct s_position{
 	float x;
 	float y;
+	float z;
+};
+
+struct s_oriented_position{
+	float x;
+	float y;
+	float z;
+	float theta;
 };
 
 
@@ -95,9 +103,12 @@ private:
 	cv::VideoCapture videoCapture;
 	
 	//possibilistic navigation
+	s_oriented_position* robotEncoderPosition;
 	fuzzy::system* possKalman;
 	Matrix* robotState;
-	std::vector<s_landmark_data*> landmarks;
+	
+	std::vector<s_position*> landmarks;
+	
 public:
 	GeneralController(ros::NodeHandle nh_);
 	~GeneralController(void);

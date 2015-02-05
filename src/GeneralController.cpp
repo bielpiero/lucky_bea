@@ -16,7 +16,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	
 	possKalman = new fuzzy::system("possiblistic-kalman");
 	robotState = new Matrix(3, 1);
-	
+	robotEncoderPosition = new s_oriented_position;
 	xmlFaceFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_PATH;
 	cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel", 1);
 }
@@ -561,9 +561,6 @@ void* GeneralController::DynamicFaceThread(void* object)
 void GeneralController::moveRobot(double lin_vel, double angular_vel){
 	geometry_msgs::Twist twist_msg;
 	
-	//keepSpinning = false;
-	//Sleep(200);
-
 	if (bumpersOk)
 	{
 		twist_msg.linear.x = lin_vel;
@@ -595,7 +592,17 @@ void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr
 }
 
 void GeneralController::poseStateCallback(const nav_msgs::Odometry::ConstPtr& pose){
+	float q3 = pose->pose.pose.orientation.z; //quaternion vector component z
+	float q0 = pose->pose.pose.orientation.w; //quaternion scalar component
 	
+	float theta = std::atan2((2*(q0 * q3)), (1 - 2 * (std::pow(q3, 2))));
+	
+	robotEncoderPosition->x = pose->pose.pose.position.x;
+	robotEncoderPosition->y = pose->pose.pose.position.y;
+	robotEncoderPosition->z = pose->pose.pose.position.z;
+	robotEncoderPosition->theta = theta;
+	std::cout << "X: " << robotEncoderPosition->x << ", Y: "<< robotEncoderPosition->y << ", THETA: " <<  robotEncoderPosition->theta << std::endl;
+	Sleep(100);
 }
 
 //void GeneralController::batteryStateCallback(const std_msgs::Float32::ConstPtr& battery){
@@ -626,25 +633,24 @@ void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::Con
 	std::vector<float> dataMean;
 	std::vector<float> dataAngles;
 	for(int i = 1; i < dataIndices.size(); i++){
-		if((dataIndices[i] - dataIndices[i - 1]) == 1){
+		if(((dataIndices[i] - dataIndices[i - 1]) == 1) && (i != (dataIndices.size() - 1))){
 			dataMean.push_back(data[dataIndices[i - 1]]);
 			dataAngles.push_back((angle_min + ((float)dataIndices[i - 1] * angle_increment)));
 		} else {
-			s_landmark_data* temp = new s_landmark_data;
+			s_position* temp = new s_position;
+			dataMean.push_back(data[dataIndices[i]]);
 			
 			float distMean = stats::expectation(dataMean);
 			float angleMean = stats::expectation(dataAngles);
 			
 			temp->x = distMean * cos(angleMean);
 			temp->y = distMean * sin(angleMean);
+			temp->z = 0;
 			landmarks.push_back(temp);
 			dataMean.clear();
 			dataAngles.clear();
 		}
 	}
-	
-	std::cout << "Landamarks found: " << landmarks.size() << std::endl;
-	
 	Sleep(100);
 }
 
@@ -653,7 +659,7 @@ void GeneralController::laserPointCloudStateCallback(const sensor_msgs::PointClo
 }
 
 void GeneralController::initializeKalmanVariables(){
-	//fuzzy::inputVariable* xKK = new fuzzy::inputVariable("", 
+	fuzzy::inputVariable* xKK = new fuzzy::inputVariable("xKK"); 
 }
 
 void GeneralController::beginVideoStreaming(int videoDevice)
