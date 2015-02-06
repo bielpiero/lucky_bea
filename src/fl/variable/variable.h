@@ -40,7 +40,7 @@ namespace fuzzy{
 
         virtual void removeMF(int index);
         virtual void removeAllMF();
-        virtual int numberOfTerms() const;
+        virtual int numberOfMFs() const;
     };
 }
 #endif

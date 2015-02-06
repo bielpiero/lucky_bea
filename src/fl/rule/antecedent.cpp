@@ -13,6 +13,12 @@ namespace fuzzy{
     void antecedent::parse(std::string expresion, rule* r){
         
     }
+	
+	float antecedent::getActivationDegree(){
+		float result = fuzzy::nan;
+		
+		return result;
+	}
 }
 
 

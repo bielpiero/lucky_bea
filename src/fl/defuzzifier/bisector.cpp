@@ -12,7 +12,7 @@ namespace fuzzy{
     }
     
     bisector* bisector::clone() const{
-        return new centroid(*this);
+        return new bisector(*this);
     }
     
     float bisector::defuzzify(const mf* membership, float minimum, float maximum) const{
@@ -24,7 +24,7 @@ namespace fuzzy{
             for (int i = 0; i < iterations; i++){
                 float value = minimum + (i * resolution);
                 float mfr = membership->evaluate(value);
-                values.push_back(values);
+                values.push_back(value);
                 mfrs.push_back(mfr);
             }
             float totalArea = stats::sum(mfrs);

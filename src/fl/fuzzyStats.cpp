@@ -16,7 +16,7 @@ namespace fuzzy{
 		float result = fuzzy::nan;
 		if(values.size() > 0 && evaluatedMembership.size() > 0 && values.size() == evaluatedMembership.size()){
 			float area = 0;
-			flaot valuesTotal = 0;
+			float valuesTotal = 0;
 			for(int i = 0; i < values.size(); i++){
 				area += evaluatedMembership[i];
 				valuesTotal += evaluatedMembership[i] * values[i];
@@ -41,16 +41,15 @@ namespace fuzzy{
 	
 	float stats::dependency(std::vector<float> evaluatedMembershipX, std::vector<float> x, std::vector<float> evaluatedMembershipY, std::vector<float> y){
 		float result = fuzzy::nan;
-		float result = fuzzy::nan;
 		if((x.size() > 0 && evaluatedMembershipX.size() > 0 && x.size() == evaluatedMembershipX.size()) &&
 			(y.size() > 0 && evaluatedMembershipY.size() > 0 && y.size() == evaluatedMembershipY.size()) &&
 			x.size() == y.size()){
 
 			std::vector<float> xy;
 			std::vector<float> evaluatedMembershipXY;
-			for(int i = 0; i < values.size(); i++){
+			for(int i = 0; i < x.size(); i++){
 				xy.push_back(x[i] * y[i]);
-				evaluatedMembershipXY.push_back(evaluatedMembershipX * evaluatedMembershipY);
+				evaluatedMembershipXY.push_back(evaluatedMembershipX[i] * evaluatedMembershipY[i]);
 			}
 						
 			float expectX = expectation(evaluatedMembershipX, x);

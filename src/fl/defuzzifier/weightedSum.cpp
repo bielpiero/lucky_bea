@@ -1,8 +1,8 @@
 #include "weightedSum.h"
 
 namespace fuzzy{
-    weightedSum::weightedSum(float resolution):defuzzifier(resolution){
-    
+    weightedSum::weightedSum(float resolution, fuzzy::systemType type):defuzzifier(resolution){
+		this->type = type;
     }
     weightedSum::~weightedSum(){
 

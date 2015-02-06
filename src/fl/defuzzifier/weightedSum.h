@@ -5,8 +5,10 @@
 
 namespace fuzzy{
     class weightedSum : defuzzifier {
+	private:
+		fuzzy::systemType type;
     public:
-        weightedSum(fuzzy::systemType type = TakagiSugeno);
+        weightedSum(float resolution = 0.1, fuzzy::systemType type = TakagiSugeno);
         virtual ~weightedSum();
         
         virtual std::string className() const;

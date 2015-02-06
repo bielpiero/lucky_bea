@@ -5,8 +5,10 @@
 
 namespace fuzzy{
     class weightedAverage : defuzzifier {
+	private:
+		fuzzy::systemType type;
     public:
-        weightedAverage(fuzzy::systemType type = TakagiSugeno);
+        weightedAverage(float resolution = 0.1, fuzzy::systemType type = TakagiSugeno);
         virtual ~weightedAverage();
         
         virtual std::string className() const;

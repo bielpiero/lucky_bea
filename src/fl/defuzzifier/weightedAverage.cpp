@@ -1,8 +1,8 @@
 #include "weightedAverage.h"
 
 namespace fuzzy{
-    weightedAverage::weightedAverage(float resolution):defuzzifier(resolution){
-    
+    weightedAverage::weightedAverage(float resolution, fuzzy::systemType type):defuzzifier(resolution){
+		this->type = type;
     }
     weightedAverage::~weightedAverage(){
 

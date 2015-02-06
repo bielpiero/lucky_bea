@@ -23,9 +23,9 @@ namespace fuzzy{
 		
 		if(value != fuzzy::nan){
 			result = 0;
-			if((vertexA == -fuzzy::nan) && (value < vertexB)){
+			if((vertexA == -fuzzy::inf) && (value <= vertexB)){
 				result = 1.0;
-			} else if((value > vertexB) && (vertexC == fuzzy::nan)){
+			} else if((value > vertexB) && (vertexC == fuzzy::inf)){
 				result = 1.0;
 			} else {
 				std::vector<float> minv(2);

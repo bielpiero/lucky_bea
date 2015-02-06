@@ -61,8 +61,9 @@ namespace fuzzy{
 
 	void variable::addMF(mf* item){
             if (item->getName() == ""){
-                std::string name = "mf" + this->items.size();
-                item->setName(name);
+				std::ostringstream ss;
+				ss << "mf" << this->items.size();
+                item->setName(ss.str());
             }
             this->items.push_back(item);
 	}
@@ -96,7 +97,7 @@ namespace fuzzy{
 		this->items.clear();
 	}
 	
-	int variable::numberOfTerms() const{
+	int variable::numberOfMFs() const{
 		return items.size();
 	}
 

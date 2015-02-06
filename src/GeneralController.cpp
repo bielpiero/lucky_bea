@@ -682,7 +682,26 @@ void GeneralController::initializeKalmanVariables(){
 }
 
 void GeneralController::trackRobot(){
+	std::vector<float> sampleX;
+	float min = -9;
+	float max = 9;
+	float spacing = 0.1;
+	
+	float iterations = (max - min) / spacing;
+	for (int i = 0; i <= iterations; i++){
+		sampleX.push_back(min + (i * spacing));
+	}
+	
 	initializeKalmanVariables();
+	for(int i = 0; i < 2; i++){
+		for(int j = 0; j < possKalman->getInputByIndex(i)->numberOfMFs(); j++){
+			std::vector<float> evaluatedMF = fuzzy::stats::evaluateMF(possKalman->getInputByIndex(i)->getMFByIndex(j), sampleX);
+			float expect = fuzzy::stats::expectation(evaluatedMF, sampleX);
+			
+			std::cout << "Expectation of input " << possKalman->getInputByIndex(i)->getName() << " and MF " << possKalman->getInputByIndex(i)->getMFByIndex(j)->getName() << " is: " << expect << std::endl;
+			
+		}
+	}
 }
 
 void GeneralController::beginVideoStreaming(int videoDevice){

@@ -14,7 +14,7 @@ namespace fuzzy{
     }
     
     meanOfMaximum* meanOfMaximum::clone() const{
-        return new smallestOfMaximum(*this);
+        return new meanOfMaximum(*this);
     }
     
     float meanOfMaximum::defuzzify(const mf* membership, float minimum, float maximum) const{
@@ -26,7 +26,7 @@ namespace fuzzy{
             for (int i = 0; i < iterations; i++){
                 float value = minimum + (i * resolution);
                 float mfr = membership->evaluate(value);
-                values.push_back(values);
+                values.push_back(value);
                 mfrs.push_back(mfr);
             }
             float maxMF = stats::max(mfrs);
