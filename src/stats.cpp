@@ -4,7 +4,6 @@
 float stats::max(std::vector<float> values){
 	float max = -std::numeric_limits<float>::infinity();
 	if(values.size() > 0){
- 		max = values[0];
 		for(int i = 0; i < values.size(); i++){
 			if(values[i] > max  && values[i] != std::numeric_limits<float>::quiet_NaN()){
 				max = values[i];
@@ -17,7 +16,6 @@ float stats::max(std::vector<float> values){
 float stats::min(std::vector<float> values){
 	float min = std::numeric_limits<float>::infinity();
 	if(values.size() > 0){
-		min = values[0];
 		for(int i = 0; i < values.size(); i++){
 			if(values[i] < min && values[i] != std::numeric_limits<float>::quiet_NaN()){
 				min = values[i];
