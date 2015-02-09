@@ -1,11 +1,11 @@
-#ifndef FUZZY_STATS_H
-#define FUZZY_STATS_H
+#ifndef FUZZY_FSTATS_H
+#define FUZZY_FSTATS_H
 
 #include "fl/mf/mf.h"
 
 namespace fuzzy{
 
-	class stats{
+	class fstats{
 	public:
 		
 		static std::vector<float> evaluateMF(mf* member, std::vector<float> values);

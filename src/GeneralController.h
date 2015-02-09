@@ -98,17 +98,9 @@ private:
 	SerialPort* maestroControllers;
 	bool continue_dynamic_thread;
 	
-	ros::NodeHandle nh;
-	ros::Publisher cmd_vel_pub;
-	cv::VideoCapture videoCapture;
+	std::string xmlFaceFullPath;
 	
-	//possibilistic navigation
-	s_oriented_position* robotEncoderPosition;
-	std::vector<fuzzy::variable*>* kalmanFuzzy;
-	Matrix* robotState;
-	
-	std::vector<s_position*> landmarks;
-	
+		
 public:
 	GeneralController(ros::NodeHandle nh_);
 	~GeneralController(void);
@@ -153,12 +145,26 @@ public:
 	void initializeKalmanVariables();
 	
 	void stopVideoStreaming();
+	void stopRobotTracking();
 private:
+	ros::NodeHandle nh;
+	ros::Publisher cmd_vel_pub;
+	cv::VideoCapture videoCapture;
+	
+	//possibilistic navigation
+	s_oriented_position* robotEncoderPosition;
+	std::vector<fuzzy::variable*>* kalmanFuzzy;
+	Matrix* robotState;
+	
+	std::vector<s_position*> landmarks;
+	
 	bool keepSpinning;
 	bool bumpersOk;
 	int udpPort;
 	unsigned char streamingActive;
-	std::string xmlFaceFullPath;
+	
+	unsigned char keepRobotTracking;
+	
 	
 	void getVelocities(char* cad, double& lin_vel, double& angular_vel);
 	void moveRobot(double lin_vel, double angular_vel);
@@ -169,6 +175,7 @@ private:
 	void beginVideoStreaming(int videoDevice);
 	
 	static void* streamingThread(void*);
+	static void* trackRobotThread(void*);
 	
 };
 

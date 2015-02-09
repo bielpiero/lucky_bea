@@ -637,11 +637,17 @@ void GeneralController::initializeKalmanVariables(){
 	fuzzy::variable* xyKK = new fuzzy::variable("Xy(k|k)", -3.0, 7.0); 
 	xyKK->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
 	
+	fuzzy::variable* xThKK = new fuzzy::variable("XTh(k|k)", -3.14152, 3.14152); 
+	xThKK->addMF(new fuzzy::trapezoid("", -2.38, -1.52, 1.94, 2.42));	
+	
 	fuzzy::variable* vxK1 = new fuzzy::variable("Vx(k + 1)", -0.5, 0.5); 
-	vxK1->addMF(new fuzzy::trapezoid("", -0.45, -0.2212, 0.2528, 0.4458));
+	vxK1->addMF(new fuzzy::trapezoid("", -0.25, -0.15, 0.15, 0.25));
 	
 	fuzzy::variable* vyK1 = new fuzzy::variable("Vy(k + 1)", -0.5, 0.5); 
-	vyK1->addMF(new fuzzy::trapezoid("", -0.225, -0.1106, 0.1264, 0.2229));
+	vyK1->addMF(new fuzzy::trapezoid("", -0.25, -0.15, 0.15, 0.25));
+	
+	fuzzy::variable* vThK1 = new fuzzy::variable("VTh(k + 1)", -0.2618, 0.2618); 
+	vThK1->addMF(new fuzzy::trapezoid("", -0.1309, -0.07855, 0.07855, 0.1309));	
 	
 	fuzzy::variable* xxK1K = new fuzzy::variable("Xx(k + 1|k)", -9.0, 9.0); 
 	xxK1K->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
@@ -649,11 +655,17 @@ void GeneralController::initializeKalmanVariables(){
 	fuzzy::variable* xyK1K = new fuzzy::variable("Xy(k + 1|k)", -3.0, 7.0); 
 	xyK1K->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
 	
+	fuzzy::variable* xThK1K = new fuzzy::variable("XTh(k + 1|k)", -3.14152, 3.14152); 
+	xThK1K->addMF(new fuzzy::trapezoid("", -2.38, -1.52, 1.94, 2.42));	
+	
 	fuzzy::variable* wxK1 = new fuzzy::variable("Wx(k + 1)", -0.5, 0.5); 
-	wxK1->addMF(new fuzzy::trapezoid("", -0.45, -0.2212, 0.2528, 0.4458));
+	wxK1->addMF(new fuzzy::trapezoid("", -0.25, -0.15, 0.15, 0.25));
 
 	fuzzy::variable* wyK1 = new fuzzy::variable("Wy(k + 1)", -0.5, 0.5); 
-	wyK1->addMF(new fuzzy::trapezoid("", -0.225, -0.1106, 0.1264, 0.2229));
+	wyK1->addMF(new fuzzy::trapezoid("", -0.25, -0.15, 0.15, 0.25));
+	
+	fuzzy::variable* wThK1 = new fuzzy::variable("WTh(k + 1)", -0.2618, 0.2618); 
+	wThK1->addMF(new fuzzy::trapezoid("", -0.1309, -0.07855, 0.07855, 0.1309));	
 	
 	fuzzy::variable* zxK1K = new fuzzy::variable("Zx(k + 1|k)", -9.0, 9.0); 
 	zxK1K->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
@@ -661,53 +673,102 @@ void GeneralController::initializeKalmanVariables(){
 	fuzzy::variable* zyK1K = new fuzzy::variable("Zy(k + 1|k)", -3.0, 7.0); 
 	zyK1K->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
 	
+	fuzzy::variable* zThK1K = new fuzzy::variable("ZTh(k + 1|k)", -3.14152, 3.14152); 
+	zThK1K->addMF(new fuzzy::trapezoid("", -2.38, -1.52, 1.94, 2.42));
+	
 	fuzzy::variable* xxK1K1 = new fuzzy::variable("Xx(k + 1|k + 1)", -9.0, 9.0); 
 	xxK1K1->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
 	
 	fuzzy::variable* xyK1K1 = new fuzzy::variable("Xy(k + 1|k + 1)", -3.0, 7.0); 
 	xyK1K1->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));
 	
+	fuzzy::variable* xThK1K1 = new fuzzy::variable("XTh(k + 1|k + 1)", -3.14152, 3.14152); 
+	xThK1K1->addMF(new fuzzy::trapezoid("", -2.38, -1.52, 1.94, 2.42));
+	
 	kalmanFuzzy->push_back(xxKK);
 	kalmanFuzzy->push_back(xyKK);
+	kalmanFuzzy->push_back(xThKK);
+	
 	kalmanFuzzy->push_back(vxK1);
 	kalmanFuzzy->push_back(vyK1);
+	kalmanFuzzy->push_back(vThK1);
+	
 	kalmanFuzzy->push_back(xxK1K);
 	kalmanFuzzy->push_back(xyK1K);
+	kalmanFuzzy->push_back(xThK1K);
+	
 	kalmanFuzzy->push_back(wxK1);
 	kalmanFuzzy->push_back(wyK1);
+	kalmanFuzzy->push_back(wThK1);
+	
 	kalmanFuzzy->push_back(zxK1K);
 	kalmanFuzzy->push_back(zyK1K);
+	kalmanFuzzy->push_back(zThK1K);
+	
 	kalmanFuzzy->push_back(xxK1K1);
 	kalmanFuzzy->push_back(xyK1K1);
+	kalmanFuzzy->push_back(xThK1K1);
 }
 
 void GeneralController::trackRobot(){
-	std::vector<float> sampleX;
-	float min = -9;
-	float max = 9;
+	pthread_t trackThread;
+	stopRobotTracking();
+	initializeKalmanVariables();
+	std::cout << "Tracking Doris..." << std::endl;
+	pthread_create(&trackThread, NULL, trackRobotThread, (void *)(this));
+	
+}
+
+void* GeneralController::trackRobotThread(void* object){
+	GeneralController* self = (GeneralController*)object;
+	Matrix* P = new Matrix(3, 3);
+	Matrix* Q = new Matrix(3, 3);
+	Matrix* R = new Matrix(3, 3);
+	
+	std::vector<float> sampleXY;
+	std::vector<float> sampleTh;
+
+	float minXY = -9;
+	float maxXY = 9;
+	float minTh = -3.14152;
+	float maxTh = 3.14152;
 	float spacing = 0.1;
 	
-	float iterations = (max - min) / spacing;
+	float iterations = (maxXY - minXY) / spacing;
 	for (int i = 0; i <= iterations; i++){
-		sampleX.push_back(min + (i * spacing));
+		sampleXY.push_back(maxXY + (i * spacing));
 	}
 	
-	initializeKalmanVariables();
-	for(int i = 0; i < 2; i++){
-		for(int j = 0; j < kalmanFuzzy->at(i)->numberOfMFs(); j++){
-			std::vector<float> evaluatedMF = fuzzy::stats::evaluateMF(kalmanFuzzy->at(i)->getMFByIndex(j), sampleX);
-			float expect = fuzzy::stats::expectation(evaluatedMF, sampleX);
-			
-			std::cout << "Expectation of input " << kalmanFuzzy->at(i)->getName() << " and MF " << kalmanFuzzy->at(i)->getMFByIndex(j)->getName() << " is: " << expect << std::endl;
-			
-		}
+	spacing = 0.01;
+	iterations = (minTh - maxTh) / spacing;
+	for (int i = 0; i <= iterations; i++){
+		sampleTh.push_back(minTh + (i * spacing));
+	}
+	
+
+	std::vector<float> evaluatedMFX = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(0)->getMFByIndex(0), sampleXY);
+	std::vector<float> evaluatedMFY = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(1)->getMFByIndex(0), sampleXY);
+	std::vector<float> evaluatedMFTh = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(2)->getMFByIndex(0), sampleTh);
+	
+	while(self->keepRobotTracking == YES){
+		
+	}
+	self->streamingActive = NO;
+	return NULL;
+}
+
+void GeneralController::stopRobotTracking(){
+	if(keepRobotTracking == YES){
+		keepRobotTracking = MAYBE;
+		std::cout << "Stopping Robot Tracking" << std::endl;
+		while(keepRobotTracking != NO) Sleep(100);
 	}
 }
 
 void GeneralController::beginVideoStreaming(int videoDevice){
 	pthread_t t1;
 	stopVideoStreaming();
-	//videoCapture = cv::VideoCapture(videoDevice);
+
 	videoCapture.open(videoDevice);
 	if(videoCapture.isOpened()){
 		std::cout << "Streaming from camera device: " << videoDevice << std::endl;

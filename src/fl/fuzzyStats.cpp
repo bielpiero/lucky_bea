@@ -1,7 +1,7 @@
 #include "fuzzyStats.h"
 
 namespace fuzzy{
-	std::vector<float> stats::evaluateMF(mf* member, std::vector<float> values){
+	std::vector<float> fstats::evaluateMF(mf* member, std::vector<float> values){
 		std::vector<float> result;
 		if(values.size() > 0 && member != NULL){
 			for(int i = 0; i < values.size(); i++){
@@ -12,7 +12,7 @@ namespace fuzzy{
 		return result;
 	}
 	
-	float stats::expectation(std::vector<float> evaluatedMembership, std::vector<float> values){
+	float fstats::expectation(std::vector<float> evaluatedMembership, std::vector<float> values){
 		float result = fuzzy::nan;
 		if(values.size() > 0 && evaluatedMembership.size() > 0 && values.size() == evaluatedMembership.size()){
 			float area = 0;
@@ -26,7 +26,7 @@ namespace fuzzy{
 		return result;
 	}
 	
-	float stats::uncertainty(std::vector<float> evaluatedMembership, std::vector<float> values){
+	float fstats::uncertainty(std::vector<float> evaluatedMembership, std::vector<float> values){
 		float result = fuzzy::nan;
 		if(values.size() > 0 && evaluatedMembership.size() > 0 && values.size() == evaluatedMembership.size()){
 			float expect = expectation(evaluatedMembership, values);
@@ -39,7 +39,7 @@ namespace fuzzy{
 		return result;
 	}
 	
-	float stats::dependency(std::vector<float> evaluatedMembershipX, std::vector<float> x, std::vector<float> evaluatedMembershipY, std::vector<float> y){
+	float fstats::dependency(std::vector<float> evaluatedMembershipX, std::vector<float> x, std::vector<float> evaluatedMembershipY, std::vector<float> y){
 		float result = fuzzy::nan;
 		if((x.size() > 0 && evaluatedMembershipX.size() > 0 && x.size() == evaluatedMembershipX.size()) &&
 			(y.size() > 0 && evaluatedMembershipY.size() > 0 && y.size() == evaluatedMembershipY.size()) &&
@@ -48,8 +48,11 @@ namespace fuzzy{
 			std::vector<float> xy;
 			std::vector<float> evaluatedMembershipXY;
 			for(int i = 0; i < x.size(); i++){
+				std::vector<float> mini(2);
 				xy.push_back(x[i] * y[i]);
-				evaluatedMembershipXY.push_back(evaluatedMembershipX[i] * evaluatedMembershipY[i]);
+				mini[0] = evaluatedMembershipX[i];
+				mini[1] = evaluatedMembershipY[i];
+				evaluatedMembershipXY.push_back(stats::max(mini));
 			}
 						
 			float expectX = expectation(evaluatedMembershipX, x);
@@ -63,7 +66,7 @@ namespace fuzzy{
 		return result;
 	}
 	
-	float stats::standarDeviation(std::vector<float> evaluatedMembership, std::vector<float> values){
+	float fstats::standarDeviation(std::vector<float> evaluatedMembership, std::vector<float> values){
 		float result = fuzzy::nan;
 		if(values.size() > 0 && evaluatedMembership.size() > 0 && values.size() == evaluatedMembership.size()){
 			float vari = uncertainty(evaluatedMembership, values);
@@ -74,7 +77,7 @@ namespace fuzzy{
 		return result;
 	}
 	
-	float stats::correlationCoefficient(std::vector<float> evaluatedMembershipX, std::vector<float> x, std::vector<float> evaluatedMembershipY, std::vector<float> y){
+	float fstats::correlationCoefficient(std::vector<float> evaluatedMembershipX, std::vector<float> x, std::vector<float> evaluatedMembershipY, std::vector<float> y){
 		float result = fuzzy::nan;
 		if((x.size() > 0 && evaluatedMembershipX.size() > 0 && x.size() == evaluatedMembershipX.size()) &&
 			(y.size() > 0 && evaluatedMembershipY.size() > 0 && y.size() == evaluatedMembershipY.size())){
