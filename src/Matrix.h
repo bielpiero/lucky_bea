@@ -13,7 +13,7 @@ class Matrix{
 		float det(Matrix rhs);
 	public:
 		Matrix(unsigned int rows, unsigned int cols = 1);
-		~Matrix();
+		virtual ~Matrix();
 		void operator=(const Matrix& rhs);
 		Matrix operator+(const Matrix& rhs);
 		Matrix operator-(const Matrix& rhs);

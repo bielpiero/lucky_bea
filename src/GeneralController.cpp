@@ -721,9 +721,11 @@ void GeneralController::trackRobot(){
 
 void* GeneralController::trackRobotThread(void* object){
 	GeneralController* self = (GeneralController*)object;
-	Matrix* P = new Matrix(3, 3);
-	Matrix* Q = new Matrix(3, 3);
-	Matrix* R = new Matrix(3, 3);
+	
+	Matrix A = Matrix::eye(3);
+	Matrix P = Matrix(3, 3);
+	Matrix Q = Matrix(3, 3);
+	Matrix R = Matrix(3, 3);
 	
 	std::vector<float> sampleXY;
 	std::vector<float> sampleTh;
