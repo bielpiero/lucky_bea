@@ -155,6 +155,9 @@ private:
 	s_oriented_position* robotEncoderPosition;
 	std::vector<fuzzy::variable*>* kalmanFuzzy;
 	Matrix* robotState;
+	Matrix P;
+	Matrix Q;
+	Matrix R;
 	
 	std::vector<s_position*> landmarks;
 	

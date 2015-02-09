@@ -12,7 +12,7 @@ class Matrix{
 
 		float det(Matrix rhs);
 	public:
-		Matrix(unsigned int rows, unsigned int cols = 1);
+		Matrix(unsigned int rows = 1, unsigned int cols = 1);
 		virtual ~Matrix();
 		void operator=(const Matrix& rhs);
 		Matrix operator+(const Matrix& rhs);

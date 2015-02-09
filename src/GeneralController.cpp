@@ -18,6 +18,11 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	
 	robotState = new Matrix(3, 1);
 	robotEncoderPosition = new s_oriented_position;
+	
+	P = Matrix(3, 3);
+	Q = Matrix(3, 3);
+	R = Matrix(3, 3);
+	
 	xmlFaceFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_PATH;
 	cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel", 1);
 }
@@ -631,6 +636,22 @@ void GeneralController::laserPointCloudStateCallback(const sensor_msgs::PointClo
 }
 
 void GeneralController::initializeKalmanVariables(){
+	
+	float uX, uY, uTh, depXY, depXTh, depYTh;
+	
+	std::vector<float> sampleXY;
+	std::vector<float> sampleTh;
+	
+	std::vector<float> evaluatedMFX;
+	std::vector<float> evaluatedMFY;
+	std::vector<float> evaluatedMFTh;
+
+	float minXY = -9;
+	float maxXY = 9;
+	float minTh = -3.14152;
+	float maxTh = 3.14152;
+	float spacing = 0.1;
+
 	fuzzy::variable* xxKK = new fuzzy::variable("Xx(k|k)", -9.0, 9.0); 
 	xxKK->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
 	
@@ -693,13 +714,13 @@ void GeneralController::initializeKalmanVariables(){
 	kalmanFuzzy->push_back(vyK1);
 	kalmanFuzzy->push_back(vThK1);
 	
-	kalmanFuzzy->push_back(xxK1K);
-	kalmanFuzzy->push_back(xyK1K);
-	kalmanFuzzy->push_back(xThK1K);
-	
 	kalmanFuzzy->push_back(wxK1);
 	kalmanFuzzy->push_back(wyK1);
 	kalmanFuzzy->push_back(wThK1);
+
+	kalmanFuzzy->push_back(xxK1K);
+	kalmanFuzzy->push_back(xyK1K);
+	kalmanFuzzy->push_back(xThK1K);
 	
 	kalmanFuzzy->push_back(zxK1K);
 	kalmanFuzzy->push_back(zyK1K);
@@ -708,6 +729,67 @@ void GeneralController::initializeKalmanVariables(){
 	kalmanFuzzy->push_back(xxK1K1);
 	kalmanFuzzy->push_back(xyK1K1);
 	kalmanFuzzy->push_back(xThK1K1);
+	
+		
+	float iterations = (maxXY - minXY) / spacing;
+	for (int i = 0; i <= iterations; i++){
+		sampleXY.push_back(maxXY + (i * spacing));
+	}
+	
+	spacing = 0.01;
+	iterations = (minTh - maxTh) / spacing;
+	for (int i = 0; i <= iterations; i++){
+		sampleTh.push_back(minTh + (i * spacing));
+	}
+	
+	// Variances and Covariances Matrix of Estimation P
+	evaluatedMFX = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(0)->getMFByIndex(0), sampleXY);
+	evaluatedMFY = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(1)->getMFByIndex(0), sampleXY);
+	evaluatedMFTh = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(2)->getMFByIndex(0), sampleTh);
+
+	uX = fuzzy::fstats::uncertainty(evaluatedMFX, sampleXY);
+	uY = fuzzy::fstats::uncertainty(evaluatedMFY, sampleXY);
+	uTh = fuzzy::fstats::uncertainty(evaluatedMFTh, sampleTh);
+	
+	depXY = fuzzy::fstats::dependency(evaluatedMFX, sampleXY, evaluatedMFY, sampleXY);
+	depXTh = fuzzy::fstats::dependency(evaluatedMFX, sampleXY, evaluatedMFTh, sampleTh);
+	depYTh = fuzzy::fstats::dependency(evaluatedMFY, sampleXY, evaluatedMFTh, sampleTh);
+	P(0, 0) = uX; 		P(0, 1) = depXY; 	P(0, 2) = depXTh;
+	P(1, 0) = depXY; 	P(1, 1) = uY;		P(1, 2) = depYTh;
+	P(2, 0) = depXTh;	P(2, 1) = depYTh;	P(2, 2) = uTh;
+	
+	// Variances and Covariances Matrix of Process noise Q
+	evaluatedMFX = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(3)->getMFByIndex(0), sampleXY);
+	evaluatedMFY = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(4)->getMFByIndex(0), sampleXY);
+	evaluatedMFTh = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(5)->getMFByIndex(0), sampleTh);
+
+	uX = fuzzy::fstats::uncertainty(evaluatedMFX, sampleXY);
+	uY = fuzzy::fstats::uncertainty(evaluatedMFY, sampleXY);
+	uTh = fuzzy::fstats::uncertainty(evaluatedMFTh, sampleTh);
+	
+	depXY = fuzzy::fstats::dependency(evaluatedMFX, sampleXY, evaluatedMFY, sampleXY);
+	depXTh = fuzzy::fstats::dependency(evaluatedMFX, sampleXY, evaluatedMFTh, sampleTh);
+	depYTh = fuzzy::fstats::dependency(evaluatedMFY, sampleXY, evaluatedMFTh, sampleTh);
+	Q(0, 0) = uX; 		Q(0, 1) = depXY; 	Q(0, 2) = depXTh;
+	Q(1, 0) = depXY; 	Q(1, 1) = uY;		Q(1, 2) = depYTh;
+	Q(2, 0) = depXTh;	Q(2, 1) = depYTh;	Q(2, 2) = uTh;
+	
+	// Variances and Covariances Matrix of Measurement noise R
+	evaluatedMFX = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(6)->getMFByIndex(0), sampleXY);
+	evaluatedMFY = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(7)->getMFByIndex(0), sampleXY);
+	evaluatedMFTh = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(8)->getMFByIndex(0), sampleTh);
+
+	uX = fuzzy::fstats::uncertainty(evaluatedMFX, sampleXY);
+	uY = fuzzy::fstats::uncertainty(evaluatedMFY, sampleXY);
+	uTh = fuzzy::fstats::uncertainty(evaluatedMFTh, sampleTh);
+	
+	depXY = fuzzy::fstats::dependency(evaluatedMFX, sampleXY, evaluatedMFY, sampleXY);
+	depXTh = fuzzy::fstats::dependency(evaluatedMFX, sampleXY, evaluatedMFTh, sampleTh);
+	depYTh = fuzzy::fstats::dependency(evaluatedMFY, sampleXY, evaluatedMFTh, sampleTh);
+	R(0, 0) = uX; 		R(0, 1) = depXY; 	R(0, 2) = depXTh;
+	R(1, 0) = depXY; 	R(1, 1) = uY;		R(1, 2) = depYTh;
+	R(2, 0) = depXTh;	R(2, 1) = depYTh;	R(2, 2) = uTh;
+	
 }
 
 void GeneralController::trackRobot(){
@@ -723,34 +805,7 @@ void* GeneralController::trackRobotThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	
 	Matrix A = Matrix::eye(3);
-	Matrix P = Matrix(3, 3);
-	Matrix Q = Matrix(3, 3);
-	Matrix R = Matrix(3, 3);
 	
-	std::vector<float> sampleXY;
-	std::vector<float> sampleTh;
-
-	float minXY = -9;
-	float maxXY = 9;
-	float minTh = -3.14152;
-	float maxTh = 3.14152;
-	float spacing = 0.1;
-	
-	float iterations = (maxXY - minXY) / spacing;
-	for (int i = 0; i <= iterations; i++){
-		sampleXY.push_back(maxXY + (i * spacing));
-	}
-	
-	spacing = 0.01;
-	iterations = (minTh - maxTh) / spacing;
-	for (int i = 0; i <= iterations; i++){
-		sampleTh.push_back(minTh + (i * spacing));
-	}
-	
-
-	std::vector<float> evaluatedMFX = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(0)->getMFByIndex(0), sampleXY);
-	std::vector<float> evaluatedMFY = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(1)->getMFByIndex(0), sampleXY);
-	std::vector<float> evaluatedMFTh = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(2)->getMFByIndex(0), sampleTh);
 	
 	while(self->keepRobotTracking == YES){
 		
