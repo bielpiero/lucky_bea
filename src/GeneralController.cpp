@@ -632,10 +632,10 @@ void GeneralController::laserPointCloudStateCallback(const sensor_msgs::PointClo
 
 void GeneralController::initializeKalmanVariables(){
 	fuzzy::variable* xxKK = new fuzzy::variable("Xx(k|k)", -9.0, 9.0); 
-	xKK->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
+	xxKK->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
 	
 	fuzzy::variable* xyKK = new fuzzy::variable("Xy(k|k)", -3.0, 7.0); 
-	yKK->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
+	xyKK->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
 	
 	fuzzy::variable* vxK1 = new fuzzy::variable("Vx(k + 1)", -0.5, 0.5); 
 	vxK1->addMF(new fuzzy::trapezoid("", -0.45, -0.2212, 0.2528, 0.4458));
@@ -644,10 +644,10 @@ void GeneralController::initializeKalmanVariables(){
 	vyK1->addMF(new fuzzy::trapezoid("", -0.225, -0.1106, 0.1264, 0.2229));
 	
 	fuzzy::variable* xxK1K = new fuzzy::variable("Xx(k + 1|k)", -9.0, 9.0); 
-	xKK->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
+	xxK1K->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
 	
 	fuzzy::variable* xyK1K = new fuzzy::variable("Xy(k + 1|k)", -3.0, 7.0); 
-	yKK->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
+	xyK1K->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
 	
 	fuzzy::variable* wxK1 = new fuzzy::variable("Wx(k + 1)", -0.5, 0.5); 
 	wxK1->addMF(new fuzzy::trapezoid("", -0.45, -0.2212, 0.2528, 0.4458));
@@ -656,16 +656,16 @@ void GeneralController::initializeKalmanVariables(){
 	wyK1->addMF(new fuzzy::trapezoid("", -0.225, -0.1106, 0.1264, 0.2229));
 	
 	fuzzy::variable* zxK1K = new fuzzy::variable("Zx(k + 1|k)", -9.0, 9.0); 
-	xKK->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
+	zxK1K->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
 	
 	fuzzy::variable* zyK1K = new fuzzy::variable("Zy(k + 1|k)", -3.0, 7.0); 
-	yKK->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
+	zyK1K->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
 	
 	fuzzy::variable* xxK1K1 = new fuzzy::variable("Xx(k + 1|k + 1)", -9.0, 9.0); 
-	xKK->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
+	xxK1K1->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
 	
 	fuzzy::variable* xyK1K1 = new fuzzy::variable("Xy(k + 1|k + 1)", -3.0, 7.0); 
-	yKK->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));
+	xyK1K1->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));
 	
 	kalmanFuzzy->push_back(xxKK);
 	kalmanFuzzy->push_back(xyKK);
