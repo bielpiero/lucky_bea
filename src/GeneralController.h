@@ -104,7 +104,7 @@ private:
 	
 	//possibilistic navigation
 	s_oriented_position* robotEncoderPosition;
-	fuzzy::system* possKalman;
+	std::vector<fuzzy::variable*>* kalmanFuzzy;
 	Matrix* robotState;
 	
 	std::vector<s_position*> landmarks;

@@ -14,7 +14,8 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	this->streamingActive = NO;
 	this->udpPort = 0;
 	
-	possKalman = new fuzzy::system("possiblistic-kalman");
+	kalmanFuzzy = new std::vector<fuzzy::variable*>();
+	
 	robotState = new Matrix(3, 1);
 	robotEncoderPosition = new s_oriented_position;
 	xmlFaceFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_PATH;
@@ -630,30 +631,54 @@ void GeneralController::laserPointCloudStateCallback(const sensor_msgs::PointClo
 }
 
 void GeneralController::initializeKalmanVariables(){
-	fuzzy::inputVariable* xKK = new fuzzy::inputVariable("xKK", -9.0, 9.0); 
+	fuzzy::variable* xxKK = new fuzzy::variable("Xx(k|k)", -9.0, 9.0); 
 	xKK->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
 	
-	fuzzy::inputVariable* yKK = new fuzzy::inputVariable("yKK", -3.0, 7.0); 
+	fuzzy::variable* xyKK = new fuzzy::variable("Xy(k|k)", -3.0, 7.0); 
 	yKK->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
 	
-	fuzzy::inputVariable* vxK1 = new fuzzy::inputVariable("vxK1", -0.5, 0.5); 
+	fuzzy::variable* vxK1 = new fuzzy::variable("Vx(k + 1)", -0.5, 0.5); 
 	vxK1->addMF(new fuzzy::trapezoid("", -0.45, -0.2212, 0.2528, 0.4458));
 	
-	fuzzy::inputVariable* vyK1 = new fuzzy::inputVariable("vyK1", -0.5, 0.5); 
+	fuzzy::variable* vyK1 = new fuzzy::variable("Vy(k + 1)", -0.5, 0.5); 
 	vyK1->addMF(new fuzzy::trapezoid("", -0.225, -0.1106, 0.1264, 0.2229));
 	
-	fuzzy::inputVariable* wxK1 = new fuzzy::inputVariable("wxK1", -0.5, 0.5); 
+	fuzzy::variable* xxK1K = new fuzzy::variable("Xx(k + 1|k)", -9.0, 9.0); 
+	xKK->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
+	
+	fuzzy::variable* xyK1K = new fuzzy::variable("Xy(k + 1|k)", -3.0, 7.0); 
+	yKK->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
+	
+	fuzzy::variable* wxK1 = new fuzzy::variable("Wx(k + 1)", -0.5, 0.5); 
 	wxK1->addMF(new fuzzy::trapezoid("", -0.45, -0.2212, 0.2528, 0.4458));
 
-	fuzzy::inputVariable* wyK1 = new fuzzy::inputVariable("wyK1", -0.5, 0.5); 
+	fuzzy::variable* wyK1 = new fuzzy::variable("Wy(k + 1)", -0.5, 0.5); 
 	wyK1->addMF(new fuzzy::trapezoid("", -0.225, -0.1106, 0.1264, 0.2229));
 	
-	possKalman->addInput(xKK);
-	possKalman->addInput(yKK);
-	possKalman->addInput(vxK1);
-	possKalman->addInput(vyK1);
-	possKalman->addInput(wxK1);
-	possKalman->addInput(wyK1);
+	fuzzy::variable* zxK1K = new fuzzy::variable("Zx(k + 1|k)", -9.0, 9.0); 
+	xKK->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
+	
+	fuzzy::variable* zyK1K = new fuzzy::variable("Zy(k + 1|k)", -3.0, 7.0); 
+	yKK->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
+	
+	fuzzy::variable* xxK1K1 = new fuzzy::variable("Xx(k + 1|k + 1)", -9.0, 9.0); 
+	xKK->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
+	
+	fuzzy::variable* xyK1K1 = new fuzzy::variable("Xy(k + 1|k + 1)", -3.0, 7.0); 
+	yKK->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));
+	
+	kalmanFuzzy->push_back(xxKK);
+	kalmanFuzzy->push_back(xyKK);
+	kalmanFuzzy->push_back(vxK1);
+	kalmanFuzzy->push_back(vyK1);
+	kalmanFuzzy->push_back(xxK1K);
+	kalmanFuzzy->push_back(xyK1K);
+	kalmanFuzzy->push_back(wxK1);
+	kalmanFuzzy->push_back(wyK1);
+	kalmanFuzzy->push_back(zxK1K);
+	kalmanFuzzy->push_back(zyK1K);
+	kalmanFuzzy->push_back(xxK1K1);
+	kalmanFuzzy->push_back(xyK1K1);
 }
 
 void GeneralController::trackRobot(){
@@ -669,11 +694,11 @@ void GeneralController::trackRobot(){
 	
 	initializeKalmanVariables();
 	for(int i = 0; i < 2; i++){
-		for(int j = 0; j < possKalman->getInputByIndex(i)->numberOfMFs(); j++){
-			std::vector<float> evaluatedMF = fuzzy::stats::evaluateMF(possKalman->getInputByIndex(i)->getMFByIndex(j), sampleX);
+		for(int j = 0; j < kalmanFuzzy->at(i)->numberOfMFs(); j++){
+			std::vector<float> evaluatedMF = fuzzy::stats::evaluateMF(kalmanFuzzy->at(i)->getMFByIndex(j), sampleX);
 			float expect = fuzzy::stats::expectation(evaluatedMF, sampleX);
 			
-			std::cout << "Expectation of input " << possKalman->getInputByIndex(i)->getName() << " and MF " << possKalman->getInputByIndex(i)->getMFByIndex(j)->getName() << " is: " << expect << std::endl;
+			std::cout << "Expectation of input " << kalmanFuzzy->at(i)->getName() << " and MF " << kalmanFuzzy->at(i)->getMFByIndex(j)->getName() << " is: " << expect << std::endl;
 			
 		}
 	}
