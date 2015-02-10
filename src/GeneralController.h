@@ -78,19 +78,6 @@ struct dynamic_face_info{
 	GeneralController* object;
 };
 
-struct s_position{
-	float x;
-	float y;
-	float z;
-};
-
-struct s_oriented_position{
-	float x;
-	float y;
-	float z;
-	float theta;
-};
-
 
 class GeneralController : public CSocketNode // la clase GeneralController hereda de la clase CSocketNode
 {
@@ -152,14 +139,15 @@ private:
 	cv::VideoCapture videoCapture;
 	
 	//possibilistic navigation
-	s_oriented_position* robotEncoderPosition;
+	Matrix robotVelocity;
+	Matrix robotEncoderPosition;
 	std::vector<fuzzy::variable*>* kalmanFuzzy;
-	Matrix* robotState;
+	Matrix robotState;
 	Matrix P;
 	Matrix Q;
 	Matrix R;
 	
-	std::vector<s_position*> landmarks;
+	std::vector<Matrix> landmarks;
 	
 	bool keepSpinning;
 	bool bumpersOk;

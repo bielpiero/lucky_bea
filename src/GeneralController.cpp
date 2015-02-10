@@ -16,8 +16,9 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	
 	kalmanFuzzy = new std::vector<fuzzy::variable*>();
 	
-	robotState = new Matrix(3, 1);
-	robotEncoderPosition = new s_oriented_position;
+	robotState = Matrix(3, 1);
+	robotEncoderPosition = Matrix(3, 1);
+	robotVelocity = Matrix (2, 1);
 	
 	P = Matrix(3, 3);
 	Q = Matrix(3, 3);
@@ -565,7 +566,7 @@ void GeneralController::moveRobot(double lin_vel, double angular_vel){
 }
 
 void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr& bumpers){
-
+	
 }
 
 void GeneralController::poseStateCallback(const nav_msgs::Odometry::ConstPtr& pose){
@@ -574,11 +575,13 @@ void GeneralController::poseStateCallback(const nav_msgs::Odometry::ConstPtr& po
 	
 	float theta = std::atan2((2*(q0 * q3)), (1 - 2 * (std::pow(q3, 2))));
 	
-	robotEncoderPosition->x = pose->pose.pose.position.x;
-	robotEncoderPosition->y = pose->pose.pose.position.y;
-	robotEncoderPosition->z = pose->pose.pose.position.z;
-	robotEncoderPosition->theta = theta;
+	robotEncoderPosition(0, 0) = pose->pose.pose.position.x;
+	robotEncoderPosition(1, 0) = pose->pose.pose.position.y;
+	robotEncoderPosition(2, 0) = theta;
 	
+	robotVelocity(0, 0) = pose->twist.twist.linear.x;
+	robotVelocity(1, 0) = pose->twist.twist.angular.z;
+
 	Sleep(100);
 }
 
@@ -614,15 +617,15 @@ void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::Con
 			dataMean.push_back(data[dataIndices[i - 1]]);
 			dataAngles.push_back((angle_min + ((float)dataIndices[i - 1] * angle_increment)));
 		} else {
-			s_position* temp = new s_position;
+			Matrix temp = Matrix(3, 1);
 			dataMean.push_back(data[dataIndices[i]]);
 			
 			float distMean = stats::expectation(dataMean);
 			float angleMean = stats::expectation(dataAngles);
 			
-			temp->x = distMean * cos(angleMean);
-			temp->y = distMean * sin(angleMean);
-			temp->z = 0;
+			temp(0, 0) = distMean * cos(angleMean);
+			temp(1, 0) = distMean * sin(angleMean);
+			temp(2, 1) = 0;
 			landmarks.push_back(temp);
 			dataMean.clear();
 			dataAngles.clear();
@@ -804,10 +807,23 @@ void GeneralController::trackRobot(){
 void* GeneralController::trackRobotThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	
-	Matrix A = Matrix::eye(3);
-	
+	Matrix Ak = Matrix::eye(3);
+	Matrix Bk = Matrix(3, 1);
+	Matrix pk1;
+	Matrix Pk = Matrix(3, 3);
+	Pk(0, 0) = self->robotEncoderPosition(0, 0);
+	Pk(1, 1) = self->robotEncoderPosition(1, 0);
+	Pk(2, 2) = self->robotEncoderPosition(2, 0);
 	
 	while(self->keepRobotTracking == YES){
+		// 1 - Prediction
+		pk1 = Pk;
+		Pk = Ak * pk1 * Ak.transpose() + Bk * self->Q * Bk.transpose();
+		// 2 - Observation [z(k + 1)]
+		
+		// 3 - Matching
+		
+		// 4 - Correction
 		
 	}
 	self->streamingActive = NO;
