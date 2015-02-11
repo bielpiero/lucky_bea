@@ -80,28 +80,13 @@ float& Matrix::operator() (const int row, const int col){
 	return data[row][col];
 }
 
-
-//const std::vector<float>& operator() (const int row) const{
-//	if(row < 0 && row >= data.size()){
-//		throw std::invalid_argument("Invalid subscripting dimension");
-//	}
-//	return (data[row]);
-//}
-
-std::vector<float>& operator() (const int row) const{
-	if(row < 0 && row >= data.size()){
-		throw std::invalid_argument("Invalid subscripting dimension");
+Matrix Matrix::operator() (const int row) const{
+	Matrix rowData(1, data[0].size());
+	if(row > -1 && row < data.size()){
+		rowData.data[0] = data[row];
 	}
-	return (data[row]);
+	return rowData;
 }
-
-//Matrix Matrix::operator() (const int row) const{
-//	Matrix rowData(1, data[0].size());
-//	if(row > -1 && row < data.size()){
-//		rowData.data[0] = data[row];
-//	}
-//	return rowData;
-//}
 
 Matrix Matrix::operator*(const float& rhs){
 	Matrix result(this->rows, this->cols);

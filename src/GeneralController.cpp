@@ -840,10 +840,13 @@ void* GeneralController::trackRobotThread(void* object){
 		Matrix Wk = Pk * Hk.transpose() * Sk.inv();		
 		
 		// 3 - Matching
-		
-		std::vector<float> evaluatedMFX = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(12)->getMFByIndex(0), zk(0));
-		std::vector<float> evaluatedMFY = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(13)->getMFByIndex(0), zk(1));
-		std::vector<float> evaluatedMFTh = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(14)->getMFByIndex(0), zk(2));
+		std::vector<float> sample(1);
+		sample[0] = zk(0, 0);
+		std::vector<float> evaluatedMFX = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(12)->getMFByIndex(0), sample);
+		sample[0] = zk(1, 0);
+		std::vector<float> evaluatedMFY = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(13)->getMFByIndex(0), sample);
+		sample[0] = zk(2, 0);
+		std::vector<float> evaluatedMFTh = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(14)->getMFByIndex(0), sample);
 		
 		if(evaluatedMFX[0] >= 0.9 && evaluatedMFY[0] >= 0.9 && evaluatedMFTh[0] >= 0.9){
 		// 4 - Correction
