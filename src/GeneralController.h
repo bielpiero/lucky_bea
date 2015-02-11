@@ -136,6 +136,7 @@ public:
 private:
 	ros::NodeHandle nh;
 	ros::Publisher cmd_vel_pub;
+	ros::Publisher pose2d_pub;
 	cv::VideoCapture videoCapture;
 	
 	//possibilistic navigation
@@ -159,6 +160,7 @@ private:
 	
 	void getVelocities(char* cad, double& lin_vel, double& angular_vel);
 	void moveRobot(double lin_vel, double angular_vel);
+	void moveRobotTo(Matrix pose);
 	void trackRobot();
 	
 	void getNumberOfCamerasAvailable(int& count);

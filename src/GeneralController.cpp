@@ -26,6 +26,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	
 	xmlFaceFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_PATH;
 	cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel", 1);
+	pose2d_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/pose_2D", 1);
 }
 
 
@@ -565,6 +566,15 @@ void GeneralController::moveRobot(double lin_vel, double angular_vel){
 	keepSpinning = true;
 }
 
+void GeneralController::moveRobotTo(Matrix Xk){
+	geometry_msgs::Pose2D msg;
+	
+	msg.x = Xk(0, 0);
+	msg.y = Xk(2, 0);
+	msg.theta = Xk(2, 0);
+	pose2d_pub.publish(msg);
+}
+
 void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr& bumpers){
 	
 }
@@ -776,22 +786,7 @@ void GeneralController::initializeKalmanVariables(){
 	Q(0, 0) = uX; 		Q(0, 1) = depXY; 	Q(0, 2) = depXTh;
 	Q(1, 0) = depXY; 	Q(1, 1) = uY;		Q(1, 2) = depYTh;
 	Q(2, 0) = depXTh;	Q(2, 1) = depYTh;	Q(2, 2) = uTh;
-	
-	// Variances and Covariances Matrix of Measurement noise R
-	evaluatedMFX = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(6)->getMFByIndex(0), sampleXY);
-	evaluatedMFY = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(7)->getMFByIndex(0), sampleXY);
-	evaluatedMFTh = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(8)->getMFByIndex(0), sampleTh);
 
-	uX = fuzzy::fstats::uncertainty(evaluatedMFX, sampleXY);
-	uY = fuzzy::fstats::uncertainty(evaluatedMFY, sampleXY);
-	uTh = fuzzy::fstats::uncertainty(evaluatedMFTh, sampleTh);
-	
-	depXY = fuzzy::fstats::dependency(evaluatedMFX, sampleXY, evaluatedMFY, sampleXY);
-	depXTh = fuzzy::fstats::dependency(evaluatedMFX, sampleXY, evaluatedMFTh, sampleTh);
-	depYTh = fuzzy::fstats::dependency(evaluatedMFY, sampleXY, evaluatedMFTh, sampleTh);
-	R(0, 0) = uX; 		R(0, 1) = depXY; 	R(0, 2) = depXTh;
-	R(1, 0) = depXY; 	R(1, 1) = uY;		R(1, 2) = depYTh;
-	R(2, 0) = depXTh;	R(2, 1) = depYTh;	R(2, 2) = uTh;
 	
 }
 
@@ -808,25 +803,56 @@ void* GeneralController::trackRobotThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	
 	Matrix Ak = Matrix::eye(3);
-	Matrix Bk = Matrix(3, 1);
 	Matrix pk1;
-	Matrix Pk = Matrix(3, 3);
-	Pk(0, 0) = self->robotEncoderPosition(0, 0);
-	Pk(1, 1) = self->robotEncoderPosition(1, 0);
-	Pk(2, 2) = self->robotEncoderPosition(2, 0);
+	Matrix Hk;
+	Matrix zkl;
+	Matrix Pk = self->P;
+	Matrix Xk = self->robotEncoderPosition;
 	
 	while(self->keepRobotTracking == YES){
 		// 1 - Prediction
 		pk1 = Pk;
-		Pk = Ak * pk1 * Ak.transpose() + Bk * self->Q * Bk.transpose();
-		// 2 - Observation [z(k + 1)]
+		Pk = Ak * pk1 * Ak.transpose() + self->Q;
+		zk = Matrix(self->landmarks.size(), 1);
+		self->R = Matrix(self->landmarks.size(), self->landmarks.size());
+		for(int i = 0; i < self->landmarks.size(); i++){
+			zk(i, 0) = std::atan2(self->landmarks.at(i)(1, 0), self->landmarks.at(i)(0, 0)) - Xk(3, 0);
+			
+			// Variances and Covariances Matrix of Measurement noise R
+			std::vector<float> sample;
+			sample.push_back(std::atan2(self->landmarks.at(i)(1, 0), self->landmarks.at(i)(0, 0)));
+			
+			std::vector<float> evaluatedMFX = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(8)->getMFByIndex(0), sample);
+
+			float uX = fuzzy::fstats::uncertainty(evaluatedMFX, sample);
+
+			self->R(i, i) = uX;
+		}
+		
+		Hk = Matrix(self->landmarks.size(), 3);
+		for(int i = 0; i < self->landmarks.size(); i++){
+			Hk(i, 0) = self->landmarks.at(i)(1, 0)/(std::pow(self->landmarks.at(i)(0, 0), 2) + std::pow(self->landmarks.at(i)(1, 0), 2));
+			Hk(i, 1) = -self->landmarks.at(i)(0, 0)/(std::pow(self->landmarks.at(i)(0, 0), 2) + std::pow(self->landmarks.at(i)(1, 0), 2));
+			Hk(i, 2) = -1;
+		}
+		
+		Matrix Sk = Hk * Pk * Hk.transpose() + self->R;
+		Matrix Wk = Pk * Hk.transpose() * Sk.inv();		
 		
 		// 3 - Matching
 		
-		// 4 - Correction
+		std::vector<float> evaluatedMFX = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(12)->getMFByIndex(0), zk(0));
+		std::vector<float> evaluatedMFY = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(13)->getMFByIndex(0), zk(1));
+		std::vector<float> evaluatedMFTh = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(14)->getMFByIndex(0), zk(2));
 		
+		if(evaluatedMFX[0] >= 0.9 && evaluatedMFY[0] >= 0.9 && evaluatedMFTh[0] >= 0.9){
+		// 4 - Correction
+			Xk = (Matrix::eye(3) - Wk * Hk) * Xk - Wk * zkl;
+			Pk = Pk - (Wk * Sk * Wk.transpose());
+			self->moveRobotTo(Xk);
+		}
 	}
-	self->streamingActive = NO;
+	self->keepRobotTracking = NO;
 	return NULL;
 }
 
