@@ -23,7 +23,7 @@ class Matrix{
 		
 		//Matrix operator() (const int row) const;
 		
-		std::vector<float>& operator() (const int row);
+		std::vector<float>& operator() (const int row) const;
 		//const std::vector<float>& operator() (const int row) const;
 		
 		float& operator() (const int row, const int col);
