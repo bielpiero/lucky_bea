@@ -94,13 +94,13 @@ const std::vector<float>& operator() (const int row) const{
 	return (data[row]);
 }
 
-Matrix Matrix::operator() (const int row) const{
-	Matrix rowData(1, data[0].size());
-	if(row > -1 && row < data.size()){
-		rowData.data[0] = data[row];
-	}
-	return rowData;
-}
+//Matrix Matrix::operator() (const int row) const{
+//	Matrix rowData(1, data[0].size());
+//	if(row > -1 && row < data.size()){
+//		rowData.data[0] = data[row];
+//	}
+//	return rowData;
+//}
 
 Matrix Matrix::operator*(const float& rhs){
 	Matrix result(this->rows, this->cols);
