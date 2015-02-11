@@ -805,7 +805,7 @@ void* GeneralController::trackRobotThread(void* object){
 	Matrix Ak = Matrix::eye(3);
 	Matrix pk1;
 	Matrix Hk;
-	Matrix zkl;
+	Matrix zk;
 	Matrix Pk = self->P;
 	Matrix Xk = self->robotEncoderPosition;
 	
@@ -835,15 +835,15 @@ void* GeneralController::trackRobotThread(void* object){
 			Hk(i, 1) = -self->landmarks.at(i)(0, 0)/(std::pow(self->landmarks.at(i)(0, 0), 2) + std::pow(self->landmarks.at(i)(1, 0), 2));
 			Hk(i, 2) = -1;
 		}
-		
+		Matrix zkl = Hk * Xk;
 		Matrix Sk = Hk * Pk * Hk.transpose() + self->R;
 		Matrix Wk = Pk * Hk.transpose() * Sk.inv();		
 		
 		// 3 - Matching
 		
-		std::vector<float> evaluatedMFX = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(12)->getMFByIndex(0), zk(0));
-		std::vector<float> evaluatedMFY = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(13)->getMFByIndex(0), zk(1));
-		std::vector<float> evaluatedMFTh = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(14)->getMFByIndex(0), zk(2));
+		std::vector<float> evaluatedMFX = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(12)->getMFByIndex(0), zk(0));
+		std::vector<float> evaluatedMFY = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(13)->getMFByIndex(0), zk(1));
+		std::vector<float> evaluatedMFTh = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(14)->getMFByIndex(0), zk(2));
 		
 		if(evaluatedMFX[0] >= 0.9 && evaluatedMFY[0] >= 0.9 && evaluatedMFTh[0] >= 0.9){
 		// 4 - Correction
