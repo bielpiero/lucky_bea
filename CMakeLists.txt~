@@ -96,7 +96,6 @@ find_package(PkgConfig REQUIRED)
 pkg_search_module(LIBUSB_1 REQUIRED libusb-1.0)
 include_directories(include ${LIBUSB_1_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories("/usr/local/Aria/include")
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 
@@ -109,14 +108,13 @@ file(GLOB_RECURSE lucky_bea_HEADERS src/*.h)
 
 set(lucky_bea_INCLUDE_DIRS "")
 foreach(_headerFile ${lucky_bea_HEADERS})
-	#MESSAGE("Now Globbing.... ${lucky_bea_HEADERS}")
+	MESSAGE("Now Globbing.... ${lucky_bea_HEADERS}")
 	get_filename_component(_dir ${_headerFile} PATH)
 	list(APPEND lucky_bea_INCLUDE_DIRS ${_dir})
 endforeach()
 list(REMOVE_DUPLICATES lucky_bea_INCLUDE_DIRS)
 
 include_directories(${lucky_bea_INCLUDE_DIRS})
-add_definitions(-lAria)
 add_executable(lucky_bea 
 	${lucky_bea_SOURCES}
 )
@@ -126,12 +124,10 @@ add_executable(lucky_bea
 add_dependencies(lucky_bea lucky_bea_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-link_directories("/usr/local/Aria/lib")
 target_link_libraries(lucky_bea
   ${catkin_LIBRARIES}
   ${LIBUSB_1_LIBRARIES}
   ${OpenCV_LIBS}
-  libAria.so
 )
 
 #############

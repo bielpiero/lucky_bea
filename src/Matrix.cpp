@@ -126,9 +126,10 @@ Matrix Matrix::inv(){
 	   
 	for(int i = 0; i < this->rows_size(); i++){
 		for(int j = 0; j < this->cols_size(); j++){
-			result(j, i) = cof(i, j) / determinant;
+			result(i, j) = cof(i, j) / determinant;
 		}
 	}
+	return result;
 }
 
 Matrix Matrix::pInv(){
@@ -167,113 +168,59 @@ float Matrix::det(){
 	if(this->rows_size() != this->cols_size()){
 		throw std::invalid_argument("Invalid matrix dimension. Matrix must be square");
 	}
+	Matrix self = *this;
 	
 	return this->det(*this);
 }
 
 float Matrix::det(Matrix rhs){
-	Matrix minor(rhs.rows_size() - 1, rhs.cols_size() - 1);
+
 	float determinant = 0;
-	if(rhs.cols_size() == 1){
-		return rhs(0, 0);
+	if(rhs.rows_size() == 1){
+		determinant = rhs(0, 0);
+	} else if(rhs.rows_size() == 2){
+		determinant = (rhs(0, 0) * rhs(1, 1)) - (rhs(0, 1) * rhs(1, 0));
 	} else {
-		float s = 1;
-		for (int i = 0; i < rhs.cols_size(); i++){
-			int mIndex = 0, nIndex = 0;
-			for(int j = 0; j < rhs.rows_size(); j++){
-				for(int k = 0; k < rhs.cols_size(); k++){
-					minor(j, k) = 0;
-					if(j != 0 && k != i){
-						minor(mIndex, nIndex) = rhs(j, k);
-						if(nIndex < (rhs.rows_size() - 2)){
-							nIndex++;
-						} else {
-							nIndex = 0;
-							mIndex++;
-						}
-					}
+
+		Matrix minor(rhs.rows_size() - 1, rhs.cols_size() - 1);
+		for(int x = 0; x < rhs.rows_size(); x++){
+			for(int i = 1; i < rhs.rows_size(); i++){
+				int j2 = 0;
+				for(int j = 0; j < rhs.rows_size(); j++){
+					if(j == x){ continue; }
+					minor(i - 1, j2) = rhs(i, j);
+					j2++;
 				}
 			}
-			determinant += s * (rhs(0, i) * det(minor));
-			s = -1 * s;
+			determinant += std::pow(-1.0, x + 2) * rhs(0, x) * det(minor);
 		}
 	}
 	return determinant;
 }
 
 Matrix Matrix::cofactor(){
+	Matrix self = *this;
+	Matrix bMat(this->rows - 1, this->cols - 1);
 	Matrix result(this->rows, this->cols);
-	
-	if(result.rows_size() != result.cols_size()){
-		return result;
-	} else if(result.rows_size() < 2) {
-		return result;
-	} else if(result.rows_size() == 2) {
-		result(0, 0) = data[1][1];
-		result(0, 1) = -data[1][0];
-		result(1, 0) = -data[0][1];
-		result(1, 1) = data[0][0];
-		
-	} else {
-		
-		int DIM = result.rows_size();
-		Matrix ***temp = new Matrix**[DIM];
-		for(int i = 0; i < DIM; i++){
-			temp[i] = new Matrix*[DIM];
-		}
-		for(int i = 0; i < DIM; i++){
-			for(int j = 0; j < DIM; j++){
-				temp[i][j] = new Matrix(DIM - 1,DIM - 1);
-			}
-		}
-		 
-
-		
-		
-		for(int k1 = 0; k1 < DIM; k1++){  
-			for(int k2 = 0; k2 < DIM; k2++){
-				int i1 = 0;
-				for(int i = 0; i < DIM; i++){
+	for (int j = 0; j < this->cols; j++){
+		for (int i = 0; i < this->rows; i++){
+			int i1 = 0;
+			for(int ii = 0; ii < this->rows; ii++){
+				if(ii != i) {
 					int j1 = 0;
-					for(int j = 0; j < DIM; j++){
-						if(k1 == i || k2 == j){
-							continue;
+					for (int jj = 0; jj < this->cols; jj++){
+						if(jj != j){
+							bMat(i1, j1) = self(ii, jj);
+							j1++;
 						}
-						temp[k1][k2]->data[i1][j1++] = data[i][j];
 					}
-					if(k1 != i){
-						i1++;
-					}
+					i1++;
 				}
 			}
+			float deter = det(bMat);
+			result(i, j) = std::pow(-1.0, i + j + 2.0) * deter;
 		}
-
-		bool flagPositive = true;
- 		for(int k1 = 0; k1 < DIM; k1++){  
-			flagPositive = ( (k1 % 2) == 0);
-
-			for(int k2 = 0; k2 < DIM; k2++){
-				if(flagPositive){
-					result(k1, k2) = temp[k1][k2]->det();
-					flagPositive = false;
-				} else {
-					result(k1, k2) = -temp[k1][k2]->det();
-					flagPositive = true;
-				}
-			}
-		   
-		}
-
-		for(int i = 0; i < DIM; i++)
-			for(int j = 0; j < DIM; j++)
-				delete temp[i][j];
-
-		for(int i = 0; i < DIM; i++)
-			delete [] temp[i];
-
-		delete [] temp;
 	}
-	
 	return result;
 }
 

@@ -12,6 +12,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	this->keepSpinning = true;
 	this->bumpersOk = true;
 	this->streamingActive = NO;
+	this->keepRobotTracking = NO;
 	this->udpPort = 0;
 	
 	kalmanFuzzy = new std::vector<fuzzy::variable*>();
@@ -26,7 +27,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	
 	xmlFaceFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_PATH;
 	cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel", 1);
-	pose2d_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/pose_2D", 1);
+	pose2d_pub = nh.advertise<geometry_msgs::Pose2D>("/RosAria/pose_2D", 1);
 }
 
 
@@ -42,6 +43,7 @@ void GeneralController::OnConnection()//callback for client and server
 		std::cout << "Disconnected..." << std::endl;
 		stopDynamicGesture();
 		stopVideoStreaming();
+		stopRobotTracking();
 	}
 }
 void GeneralController::OnMsg(char* cad,int length){//callback for client and server
@@ -591,7 +593,7 @@ void GeneralController::poseStateCallback(const nav_msgs::Odometry::ConstPtr& po
 	
 	robotVelocity(0, 0) = pose->twist.twist.linear.x;
 	robotVelocity(1, 0) = pose->twist.twist.angular.z;
-
+	
 	Sleep(100);
 }
 
@@ -801,6 +803,7 @@ void GeneralController::trackRobot(){
 
 void* GeneralController::trackRobotThread(void* object){
 	GeneralController* self = (GeneralController*)object;
+	self->keepRobotTracking = YES;
 	
 	Matrix Ak = Matrix::eye(3);
 	Matrix pk1;
@@ -809,18 +812,18 @@ void* GeneralController::trackRobotThread(void* object){
 	Matrix Pk = self->P;
 	Matrix Xk = self->robotEncoderPosition;
 	
-	while(self->keepRobotTracking == YES){
+	while(ros::ok() && self->keepRobotTracking == YES){
 		// 1 - Prediction
 		pk1 = Pk;
 		Pk = Ak * pk1 * Ak.transpose() + self->Q;
+		
 		zk = Matrix(self->landmarks.size(), 1);
 		self->R = Matrix(self->landmarks.size(), self->landmarks.size());
 		for(int i = 0; i < self->landmarks.size(); i++){
-			zk(i, 0) = std::atan2(self->landmarks.at(i)(1, 0), self->landmarks.at(i)(0, 0)) - Xk(3, 0);
-			
+			zk(i, 0) = std::atan2(self->landmarks.at(i)(1, 0), self->landmarks.at(i)(0, 0))*(3.1415/180) - Xk(2, 0);
 			// Variances and Covariances Matrix of Measurement noise R
 			std::vector<float> sample;
-			sample.push_back(std::atan2(self->landmarks.at(i)(1, 0), self->landmarks.at(i)(0, 0)));
+			sample.push_back(std::atan2(self->landmarks.at(i)(1, 0), self->landmarks.at(i)(0, 0))*(3.1415/180));
 			
 			std::vector<float> evaluatedMFX = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(8)->getMFByIndex(0), sample);
 
@@ -834,11 +837,17 @@ void* GeneralController::trackRobotThread(void* object){
 			Hk(i, 0) = self->landmarks.at(i)(1, 0)/(std::pow(self->landmarks.at(i)(0, 0), 2) + std::pow(self->landmarks.at(i)(1, 0), 2));
 			Hk(i, 1) = -self->landmarks.at(i)(0, 0)/(std::pow(self->landmarks.at(i)(0, 0), 2) + std::pow(self->landmarks.at(i)(1, 0), 2));
 			Hk(i, 2) = -1;
-		}
+		}	
+		
 		Matrix zkl = Hk * Xk;
 		Matrix Sk = Hk * Pk * Hk.transpose() + self->R;
+		for(int i = 0; i < Sk.rows_size(); i++){
+			for(int j = 0; j < Sk.cols_size(); j++){
+				std::cout << "Sk (" << i << ", " << j << "): " << Sk(i, j) << std::endl;
+			}
+		}
 		Matrix Wk = Pk * Hk.transpose() * Sk.inv();		
-		
+		std::cout << "Calculado zkl y Sk y Wk..0." << std::endl;
 		// 3 - Matching
 		std::vector<float> sample(1);
 		sample[0] = zk(0, 0);
@@ -847,12 +856,13 @@ void* GeneralController::trackRobotThread(void* object){
 		std::vector<float> evaluatedMFY = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(13)->getMFByIndex(0), sample);
 		sample[0] = zk(2, 0);
 		std::vector<float> evaluatedMFTh = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(14)->getMFByIndex(0), sample);
-		
+		std::cout << "Position Zx: " << zk(0,0) << ", Zy: " << zk(1,0) << ", ZTh: " << zk(2,0) << std:: endl;
 		if(evaluatedMFX[0] >= 0.9 && evaluatedMFY[0] >= 0.9 && evaluatedMFTh[0] >= 0.9){
 		// 4 - Correction
 			Xk = (Matrix::eye(3) - Wk * Hk) * Xk - Wk * zkl;
 			Pk = Pk - (Wk * Sk * Wk.transpose());
 			self->moveRobotTo(Xk);
+			std::cout << "Position X: " << Xk(0,0) << ", Y: " << Xk(1,0) << ", Th: " << Xk(2,0) << std:: endl;
 		}
 	}
 	self->keepRobotTracking = NO;
