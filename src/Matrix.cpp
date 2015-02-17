@@ -24,7 +24,7 @@ Matrix Matrix::operator+(const Matrix& rhs){
 	
 	for(int i = 0; i < data.size(); i++){
 		for (int j = 0; j < data[i].size(); j++){
-			result(i,j) = rhs(i, j) + data[i][j];
+			result(i,j) = data[i][j] + rhs(i, j);
 		}
 	}
 	
@@ -40,7 +40,7 @@ Matrix Matrix::operator-(const Matrix& rhs){
 	
 	for(int i = 0; i < data.size(); i++){
 		for (int j = 0; j < data[i].size(); j++){
-			result(i,j) = rhs(i, j) - data[i][j];
+			result(i,j) = data[i][j] - rhs(i, j);
 		}
 	}
 	

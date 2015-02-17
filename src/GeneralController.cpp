@@ -572,9 +572,12 @@ void GeneralController::moveRobotTo(Matrix Xk){
 	geometry_msgs::Pose2D msg;
 	
 	msg.x = Xk(0, 0);
-	msg.y = Xk(2, 0);
+	msg.y = Xk(1, 0);
 	msg.theta = Xk(2, 0);
 	pose2d_pub.publish(msg);
+	
+	Sleep(100);
+	ros::spinOnce();
 }
 
 void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr& bumpers){
@@ -843,7 +846,7 @@ void* GeneralController::trackRobotThread(void* object){
 			Hk = Matrix(1, 3);
 		}
 		std::cout << "Hx: " << std::endl << Hk;
-		std::cout << "Position zx: " << std::endl << zk;
+		std::cout << "Position zk: " << std::endl << zk;
 		
 		Matrix zkl = Hk * Xk;
 		std::cout << "Position zxl: " << std::endl << zkl;
