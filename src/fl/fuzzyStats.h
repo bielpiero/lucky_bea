@@ -8,6 +8,7 @@ namespace fuzzy{
 	class fstats{
 	public:
 		
+		static float evaluateMF(mf* member, float value);
 		static std::vector<float> evaluateMF(mf* member, std::vector<float> values);
 		
 		static float expectation(std::vector<float> evaluatedMembership, std::vector<float> values);

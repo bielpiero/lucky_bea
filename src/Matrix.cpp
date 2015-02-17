@@ -200,25 +200,34 @@ float Matrix::det(Matrix rhs){
 
 Matrix Matrix::cofactor(){
 	Matrix self = *this;
-	Matrix bMat(this->rows - 1, this->cols - 1);
-	Matrix result(this->rows, this->cols);
-	for (int j = 0; j < this->cols; j++){
-		for (int i = 0; i < this->rows; i++){
-			int i1 = 0;
-			for(int ii = 0; ii < this->rows; ii++){
-				if(ii != i) {
-					int j1 = 0;
-					for (int jj = 0; jj < this->cols; jj++){
-						if(jj != j){
-							bMat(i1, j1) = self(ii, jj);
-							j1++;
+	Matrix result = Matrix(this->rows, this->cols);
+	
+	for(int i = 0; i < this->rows; i++){
+		for(int j = 0; j < this->cols; j++){
+			result(i, j) = 1;
+		}
+	}
+		
+	if(self.rows_size() > 1){
+		Matrix bMat(this->rows - 1, this->cols - 1);
+		for (int j = 0; j < this->cols; j++){
+			for (int i = 0; i < this->rows; i++){
+				int i1 = 0;
+				for(int ii = 0; ii < this->rows; ii++){
+					if(ii != i) {
+						int j1 = 0;
+						for (int jj = 0; jj < this->cols; jj++){
+							if(jj != j){
+								bMat(i1, j1) = self(ii, jj);
+								j1++;
+							}
 						}
+						i1++;
 					}
-					i1++;
 				}
+				float deter = det(bMat);
+				result(i, j) = std::pow(-1.0, i + j + 2.0) * deter;
 			}
-			float deter = det(bMat);
-			result(i, j) = std::pow(-1.0, i + j + 2.0) * deter;
 		}
 	}
 	return result;
@@ -234,11 +243,21 @@ Matrix Matrix::abs(){
 	return result;
 }
 
-
 const size_t Matrix::rows_size() const{
 	return rows;
 }
 
 const size_t Matrix::cols_size() const{
 	return cols;
+}
+
+std::ostream& operator<<(std::ostream& osObj, const Matrix& rhs){
+
+	for(int i = 0; i < rhs.rows_size(); i++){
+		for(int j = 0; j < rhs.cols_size(); j++){
+			osObj << "(" << i << ", " << j << "): " << rhs(i, j) << "\t";
+		}
+			osObj << std::endl;
+	}
+	return osObj;
 }

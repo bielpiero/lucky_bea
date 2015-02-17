@@ -1,6 +1,13 @@
 #include "fuzzyStats.h"
 
 namespace fuzzy{
+	float fstats::evaluateMF(mf* member, float value){
+		float result;
+		if(member != NULL){
+			result = member->evaluate(value);			
+		}
+		return result;
+	}
 	std::vector<float> fstats::evaluateMF(mf* member, std::vector<float> values){
 		std::vector<float> result;
 		if(values.size() > 0 && member != NULL){
