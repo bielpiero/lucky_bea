@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/timeb.h>
+#include <iostream>
 	
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -52,7 +53,7 @@ int CSocketNode::Init(const char *address,int port, int t)
 			return -1;
 		}
 		// Damos como mximo 5 puertos de conexin.
-		if (listen(socket_server,5) < 0)
+		if (listen(socket_server, 5) < 0)
 		{
 			return -1;
 		}
@@ -82,17 +83,18 @@ void CSocketNode::HandleConnection(void)
 			timeval timeout;
 			timeout.tv_sec=0;
 			timeout.tv_usec=10;//10000;
-			int ret=select (socket_server+1,&readfds,NULL,NULL,&timeout );
+			int ret=select(socket_server + 1, &readfds, NULL, NULL, &timeout);
 			if(ret==1)
 			{
 				socket_conn = accept(socket_server,(struct sockaddr *)&socket_address, &len);
+				
+				//socket_conn = accept(socket_server, 0, 0);
 				if(socket_conn==INVALID_SOCKET)
 				{
 					return;
 				}	
 				int optval;
 				setsockopt(socket_conn, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-			
 				int buff_size = BUFFER_SIZE;
 				setsockopt(socket_conn, SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
 				setsockopt(socket_conn, SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));
@@ -167,13 +169,19 @@ int CSocketNode::SendMsg(const char opr, const char* cad,int length)
 	}
 	Buffer_out[5] = opr;
 	memcpy(Buffer_out + 6, cad, length);
-	//Send it
-	int err = send(socket_conn, Buffer_out, length + 5, 0);
-	//	delete[] cad_aux;
-	if (err == SOCKET_ERROR)
-	{
-		Error("SendMsg Error");
-		return -1;
+	
+	fd_set readfds; FD_ZERO(&readfds); FD_SET(socket_conn, &readfds);
+	timeval tout; tout.tv_sec = 0; tout.tv_usec = 10000;
+	int ret = select(socket_conn + 1, &readfds, NULL, NULL, &tout);
+	if(ret == 1){
+		//Send it
+		int err = send(socket_conn, Buffer_out, length + 5, 0);
+		//	delete[] cad_aux;
+		if (err == SOCKET_ERROR)
+		{
+			Error("SendMsg Error");
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -181,6 +189,10 @@ int CSocketNode::SendMsg(const char opr, const char* cad,int length)
 int CSocketNode::SendBytes(char *cad, int length)
 {
 	//Send it
+	fd_set readfds; FD_ZERO(&readfds); FD_SET(socket_conn, &readfds);
+	timeval tout; tout.tv_sec = 0; tout.tv_usec = 10000;
+	int ret = select(socket_conn + 1, &readfds, NULL, NULL, &tout);
+	
 	int err = send(socket_conn, cad, length,0);
 	if (err == SOCKET_ERROR )
 	{
@@ -268,25 +280,17 @@ int CSocketNode::IsConnected()
 		return 1;
 }
 
-void* LaunchThread(void* p)
-{
-	
+void* LaunchThread(void* p){
 	CSocketNode* node=(CSocketNode*) p;
 
 	node->thread_status=1;
-	while(node->thread_status==1)
-	{
-		if(!node->IsConnected())
-		{
-			
+	while(node->thread_status==1) {
+		if(!node->IsConnected()){
 			node->HandleConnection();
-		}
-		else
-		{	
+		} else {	
 			char msg[BUFFER_SIZE];
 			int l=BUFFER_SIZE;
-			if(0==node->ReceiveMsg(msg,&l,0))
-			{
+			if(0==node->ReceiveMsg(msg, &l, 0)){
 				node->OnMsg(msg,l);
 			}
 		}
@@ -296,17 +300,14 @@ void* LaunchThread(void* p)
 	return NULL;
 }
 
-void CSocketNode::StartThread()
-{
+void CSocketNode::StartThread(){
 	pthread_t t1;
 	pthread_create(&t1,NULL,LaunchThread, (void *) (this)  );
 }
 
 
-int CSocketNode::Close()
-{
-	if(thread_status==1)
-	{
+int CSocketNode::Close(){
+	if(thread_status==1){
 		//wait until thread terminates
 		thread_status=2;
 		while(thread_status!=0)Sleep(100);
@@ -319,8 +320,7 @@ int CSocketNode::Close()
 	return 1;
 }
 
-char* CSocketNode::getClientIPAddress()
-{
+char* CSocketNode::getClientIPAddress(){
 	char* ip_address = new char[15];
 	socklen_t len;
 	struct sockaddr_in addr;
@@ -328,7 +328,20 @@ char* CSocketNode::getClientIPAddress()
 
 	len = sizeof(addr);
 	getpeername(socket_conn, (struct sockaddr*)&addr, &len);
-	sprintf(ip_address, "%d.%d.%d.%d", int(addr.sin_addr.s_addr&0xFF), int((addr.sin_addr.s_addr&0xFF00)>>8), int		 ((addr.sin_addr.s_addr&0xFF0000)>>16), int((addr.sin_addr.s_addr&0xFF000000)>>24));
+	sprintf(ip_address, "%d.%d.%d.%d", int(addr.sin_addr.s_addr&0xFF), int((addr.sin_addr.s_addr&0xFF00)>>8), int ((addr.sin_addr.s_addr&0xFF0000)>>16), int((addr.sin_addr.s_addr&0xFF000000)>>24));
 
 	return ip_address;
+}
+
+int CSocketNode::getClientPort(){
+
+	socklen_t len;
+	struct sockaddr_in addr;
+
+
+	len = sizeof(addr);
+	getpeername(socket_conn, (struct sockaddr*)&addr, &len);
+	
+	return addr.sin_port;
+
 }

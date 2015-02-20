@@ -49,6 +49,7 @@ public:
 	int ReceiveBytes(char* cad,int* length, int timeout);
 	
 	char* getClientIPAddress();
+	int getClientPort();
 	void StartThread();//launch a 10 ms thread loop over the following actions
 	void HandleConnection();//manages all connection and reconnection
 protected:

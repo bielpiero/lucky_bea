@@ -39,7 +39,7 @@ UDPClient::~UDPClient()
 {
 }
 
-int UDPClient::sendData(unsigned const char* buffer,int length){
+int UDPClient::sendData(const unsigned char* buffer,int length){
 	long err = sendto(socket_conn, buffer, length, 0, (struct sockaddr*)&socket_dest_address, sizeof(socket_dest_address));
 	if(err < 0){
 		perror("send");

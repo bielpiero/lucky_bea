@@ -134,6 +134,7 @@ public:
 	void stopVideoStreaming();
 	void stopRobotTracking();
 private:
+	UDPClient* spdUDPClient;
 	ros::NodeHandle nh;
 	ros::Publisher cmd_vel_pub;
 	ros::Publisher pose2d_pub;
@@ -153,10 +154,12 @@ private:
 	bool keepSpinning;
 	bool bumpersOk;
 	int udpPort;
+	int spdUDPPort;
 	unsigned char streamingActive;
 	
 	unsigned char keepRobotTracking;
 	
+	void initializeSPDPort(char* cad);
 	
 	void getVelocities(char* cad, double& lin_vel, double& angular_vel);
 	void moveRobot(double lin_vel, double angular_vel);
