@@ -718,15 +718,6 @@ void GeneralController::initializeKalmanVariables(){
 	fuzzy::variable* vThK1 = new fuzzy::variable("VTh(k + 1)", -0.0043633, 0.0043633); 
 	vThK1->addMF(new fuzzy::trapezoid("", -0.02309, -0.001855, 0.001855, 0.002309));	
 	
-	fuzzy::variable* xxK1K = new fuzzy::variable("Xx(k + 1|k)", -9.0, 9.0); 
-	xxK1K->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
-	
-	fuzzy::variable* xyK1K = new fuzzy::variable("Xy(k + 1|k)", -3.0, 7.0); 
-	xyK1K->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
-	
-	fuzzy::variable* xThK1K = new fuzzy::variable("XTh(k + 1|k)", -3.14152, 3.14152); 
-	xThK1K->addMF(new fuzzy::trapezoid("", -2.38, -1.52, 1.94, 2.42));	
-	
 	fuzzy::variable* wxK1 = new fuzzy::variable("Wx(k + 1)", -0.1, 0.1); 
 	wxK1->addMF(new fuzzy::trapezoid("", -0.09, -0.05, 0.05, 0.07));
 
@@ -745,14 +736,6 @@ void GeneralController::initializeKalmanVariables(){
 	fuzzy::variable* zThK1K = new fuzzy::variable("ZTh(k + 1)", -0.02618, 0.02618); 
 	zThK1K->addMF(new fuzzy::trapezoid("", -0.01309, -0.007855, 0.007855, 0.01309));
 	
-	fuzzy::variable* xxK1K1 = new fuzzy::variable("Xx(k + 1|k + 1)", -0.5, 0.5); 
-	xxK1K1->addMF(new fuzzy::trapezoid("", -0.45, -0.35, 0.4, 0.45));
-	
-	fuzzy::variable* xyK1K1 = new fuzzy::variable("Xy(k + 1|k + 1)", -0.2, 0.2); 
-	xyK1K1->addMF(new fuzzy::trapezoid("", -0.15, -0.10, 0.10, 0.15));
-	
-	fuzzy::variable* xThK1K1 = new fuzzy::variable("XTh(k + 1|k + 1)", -0.02618, 0.02618); 
-	xThK1K1->addMF(new fuzzy::trapezoid("", -0.01309, -0.007855, 0.007855, 0.01309));
 	
 	kalmanFuzzy->push_back(xxKK);
 	kalmanFuzzy->push_back(xyKK);
@@ -765,19 +748,10 @@ void GeneralController::initializeKalmanVariables(){
 	kalmanFuzzy->push_back(wxK1);
 	kalmanFuzzy->push_back(wyK1);
 	kalmanFuzzy->push_back(wThK1);
-
-	kalmanFuzzy->push_back(xxK1K);
-	kalmanFuzzy->push_back(xyK1K);
-	kalmanFuzzy->push_back(xThK1K);
 	
 	//kalmanFuzzy->push_back(zxK1K);
 	//kalmanFuzzy->push_back(zyK1K);
-	kalmanFuzzy->push_back(zThK1K);
-	
-	kalmanFuzzy->push_back(xxK1K1);
-	kalmanFuzzy->push_back(xyK1K1);
-	kalmanFuzzy->push_back(xThK1K1);
-	
+	kalmanFuzzy->push_back(zThK1K);	
 		
 	float iterations = (maxXY - minXY) / spacing;
 	for (int i = 0; i <= (int)iterations; i++){
@@ -841,11 +815,11 @@ void* GeneralController::trackRobotThread(void* object){
 	Matrix Hk;
 	Matrix zk;
 	Matrix Pk = self->P;
-	Matrix Xk = self->robotEncoderPosition;
-	
+	Matrix Xk;
 	while(ros::ok() && self->keepRobotTracking == YES){
 		// 1 - Prediction
-		std::cout << "X(k + 1|k): " << std::endl << self->robotEncoderPosition;
+		Xk = self->robotEncoderPosition;
+		std::cout << "X(k + 1|k): " << std::endl << Xk;
 		pk1 = Pk;
 		Pk = Ak * pk1 * Ak.transpose() + self->Q;
 		std::cout << "New Pk(k+1|k): " << std::endl << Pk;
@@ -866,7 +840,7 @@ void* GeneralController::trackRobotThread(void* object){
 			for(int i = 0; i < self->landmarks.size(); i++){
 				Hk(i, 0) = self->landmarks.at(i)(1, 0)/(std::pow(self->landmarks.at(i)(0, 0), 2) + std::pow(self->landmarks.at(i)(1, 0), 2));
 				Hk(i, 1) = -self->landmarks.at(i)(0, 0)/(std::pow(self->landmarks.at(i)(0, 0), 2) + std::pow(self->landmarks.at(i)(1, 0), 2));
-				Hk(i, 2) = -1;
+			    Hk(i, 2) = -1;
 			}	
 		} else {
 			zk = Matrix(1, 1);
@@ -890,7 +864,7 @@ void* GeneralController::trackRobotThread(void* object){
 		std::cout << "Evaluated Zk:";
 		std::vector<float> evaluatedMF(self->landmarks.size());
 		for(int i = 0; i < self->landmarks.size(); i++){		
-			evaluatedMF.push_back(fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(12)->getMFByIndex(0), zk(i, 0)));
+			evaluatedMF.push_back(fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(9)->getMFByIndex(0), zk(i, 0)));
 			std::cout << evaluatedMF[0] << "\t";
 		}
 		std::cout << std::endl;
