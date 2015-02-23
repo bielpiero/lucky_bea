@@ -32,13 +32,13 @@ namespace fuzzy{
 		return new gaussian(*this);
 	}
 	
-	gaussian* gaussian::operator+(const gaussian* rhs) const{
-		return new gaussian("", this->mean + rhs->mean, this->standardDeviation + rhs->standardDeviation);
+	gaussian* gaussian::operator+(const gaussian& rhs) const{
+		return new gaussian("", this->mean + rhs.mean, this->standardDeviation + rhs.standardDeviation);
 		
 	}
 	
-	gaussian* gaussian::operator-(const gaussian* rhs) const{
-		return new gaussian("", this->mean - rhs->mean, this->standardDeviation - rhs->standardDeviation);
+	gaussian* gaussian::operator-(const gaussian& rhs) const{
+		return new gaussian("", this->mean - rhs.mean, this->standardDeviation - rhs.standardDeviation);
 	}
 	
 	gaussian* gaussian::operator*(const float& rhs) const{

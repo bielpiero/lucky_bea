@@ -18,8 +18,8 @@ namespace fuzzy {
         constant(const std::string name = "", float value = fuzzy::nan);
         virtual ~constant();
 		
-		virtual constant* operator+(const constant* rhs) const;
-		virtual constant* operator-(const constant* rhs) const;
+		virtual constant* operator+(const constant& rhs) const;
+		virtual constant* operator-(const constant& rhs) const;
 		
 		virtual constant* operator*(const float& rhs) const;
         

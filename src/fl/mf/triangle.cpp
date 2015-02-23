@@ -47,13 +47,13 @@ namespace fuzzy{
 		return new triangle(*this);
 	}
 	
-	triangle* triangle::operator+(const triangle* rhs) const{
-		return new triangle("", this->vertexA + rhs->vertexA, this->vertexB + rhs->vertexB, this->vertexC + rhs->vertexC);
+	triangle* triangle::operator+(const triangle& rhs) const{
+		return new triangle("", this->vertexA + rhs.vertexA, this->vertexB + rhs.vertexB, this->vertexC + rhs.vertexC);
 		
 	}
 	
-	triangle* triangle::operator-(const triangle* rhs) const{
-		return new triangle("", this->vertexA - rhs->vertexA, this->vertexB - rhs->vertexB, this->vertexC - rhs->vertexC);
+	triangle* triangle::operator-(const triangle& rhs) const{
+		return new triangle("", this->vertexA - rhs.vertexA, this->vertexB - rhs.vertexB, this->vertexC - rhs.vertexC);
 	}
 	
 	triangle* triangle::operator*(const float& rhs) const{

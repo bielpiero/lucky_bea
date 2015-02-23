@@ -30,13 +30,13 @@ namespace fuzzy{
 		return new sigmoid(*this);
 	}
 	
-	sigmoid* sigmoid::operator+(const sigmoid* rhs) const{
-		return new sigmoid("", this->inflection+ rhs->inflection, this->slope + rhs->slope);
+	sigmoid* sigmoid::operator+(const sigmoid& rhs) const{
+		return new sigmoid("", this->inflection+ rhs.inflection, this->slope + rhs.slope);
 		
 	}
 	
-	sigmoid* sigmoid::operator-(const sigmoid* rhs) const{
-		return new sigmoid("", this->inflection - rhs->inflection, this->slope - rhs->slope);
+	sigmoid* sigmoid::operator-(const sigmoid& rhs) const{
+		return new sigmoid("", this->inflection - rhs.inflection, this->slope - rhs.slope);
 	}
 	
 	sigmoid* sigmoid::operator*(const float& rhs) const{

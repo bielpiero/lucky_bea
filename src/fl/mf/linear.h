@@ -22,8 +22,8 @@ namespace fuzzy{
         virtual void setCoeffs(std::vector<float> coeffs);
         virtual std::vector<float> getCoeffs() const;
 		
-		virtual linear* operator+(const linear* rhs) const;
-		virtual linear* operator-(const linear* rhs) const;
+		virtual linear* operator+(const linear& rhs) const;
+		virtual linear* operator-(const linear& rhs) const;
 		
 		virtual linear* operator*(const float& rhs) const;
         

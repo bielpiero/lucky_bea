@@ -27,8 +27,8 @@ namespace fuzzy{
         virtual float getStandardDeviationB() const;
         virtual void setStandardDeviationB(float value);
 		
-		virtual gaussProduct* operator+(const gaussProduct* rhs) const;
-		virtual gaussProduct* operator-(const gaussProduct* rhs) const;
+		virtual gaussProduct* operator+(const gaussProduct& rhs) const;
+		virtual gaussProduct* operator-(const gaussProduct& rhs) const;
 		
 		virtual gaussProduct* operator*(const float& rhs) const;
 

@@ -28,13 +28,13 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
-	gaussBell* gaussBell::operator+(const gaussBell* rhs) const{
-		return new gaussBell("", this->center + rhs->center, this->width + rhs->width, this->slope + rhs->slope);
+	gaussBell* gaussBell::operator+(const gaussBell& rhs) const{
+		return new gaussBell("", this->center + rhs.center, this->width + rhs.width, this->slope + rhs.slope);
 		
 	}
 	
-	gaussBell* gaussBell::operator-(const gaussBell* rhs) const{
-		return new gaussBell("", this->center - rhs->center, this->width - rhs->width, this->slope - rhs->slope);
+	gaussBell* gaussBell::operator-(const gaussBell& rhs) const{
+		return new gaussBell("", this->center - rhs.center, this->width - rhs.width, this->slope - rhs.slope);
 	}
 	
 	gaussBell* gaussBell::operator*(const float& rhs) const{

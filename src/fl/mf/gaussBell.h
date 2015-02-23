@@ -25,8 +25,8 @@ namespace fuzzy{
         virtual float getSlope() const;
         virtual void setSlope(float value);
 		
-		virtual gaussBell* operator+(const gaussBell* rhs) const;
-		virtual gaussBell* operator-(const gaussBell* rhs) const;
+		virtual gaussBell* operator+(const gaussBell& rhs) const;
+		virtual gaussBell* operator-(const gaussBell& rhs) const;
 		
 		virtual gaussBell* operator*(const float& rhs) const;
 
