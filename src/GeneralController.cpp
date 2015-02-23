@@ -3,6 +3,10 @@
 #include "GeneralController.h"
 
 
+const float GeneralController::LASER_MAX_RANGE = 11.6;
+const float GeneralController::MIN_RAND = -2.0;
+const float GeneralController::MAX_RAND = 2.0;
+
 GeneralController::GeneralController(ros::NodeHandle nh_)
 {
 	this->nh = nh_;
@@ -647,11 +651,12 @@ void GeneralController::batteryVoltageCallback(const std_msgs::Float64::ConstPtr
 }
 
 void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::ConstPtr& laser){
+	float range = MAX_RAND - MIN_RAND;
 	float angle_min = laser->angle_min;
 	float angle_max = laser->angle_max;
 	float angle_increment = laser->angle_increment;
 	std::vector<float> data = laser->ranges;
-	std::vector<int> dataIndices = stats::findIndicesLessThan(data, 11.6);
+	std::vector<int> dataIndices = stats::findIndicesLessThan(data, LASER_MAX_RANGE);
 	
 	landmarks.clear();
 	
@@ -701,40 +706,40 @@ void GeneralController::initializeKalmanVariables(){
 	float spacing = 0.1;
 
 	fuzzy::variable* xxKK = new fuzzy::variable("Xx(k|k)", -0.5, 0.5); 
-	xxKK->addMF(new fuzzy::trapezoid("", -0.45, -0.35, 0.4, 0.45));
+	xxKK->addMF(new fuzzy::trapezoid("Xx(k|k)", -0.45, -0.35, 0.4, 0.45));
 	
 	fuzzy::variable* xyKK = new fuzzy::variable("Xy(k|k)", -0.2, 0.2); 
-	xyKK->addMF(new fuzzy::trapezoid("", -0.15, -0.10, 0.10, 0.15));	
+	xyKK->addMF(new fuzzy::trapezoid("Xy(k|k)", -0.15, -0.10, 0.10, 0.15));	
 	
 	fuzzy::variable* xThKK = new fuzzy::variable("XTh(k|k)", -0.02618, 0.02618); 
-	xThKK->addMF(new fuzzy::trapezoid("", -0.01309, -0.007855, 0.007855, 0.01309));	
+	xThKK->addMF(new fuzzy::trapezoid("XTh(k|k)", -0.01309, -0.007855, 0.007855, 0.01309));	
 	
 	fuzzy::variable* vxK1 = new fuzzy::variable("Vx(k + 1)", -0.1, 0.1); 
-	vxK1->addMF(new fuzzy::trapezoid("", -0.09, -0.05, 0.05, 0.07));
+	vxK1->addMF(new fuzzy::trapezoid("Vx(k + 1)", -0.09, -0.05, 0.05, 0.07));
 	
 	fuzzy::variable* vyK1 = new fuzzy::variable("Vy(k + 1)", -0.1, 0.1); 
-	vyK1->addMF(new fuzzy::trapezoid("", -0.09, -0.05, 0.05, 0.07));
+	vyK1->addMF(new fuzzy::trapezoid("Vy(k + 1)", -0.09, -0.05, 0.05, 0.07));
 	
 	fuzzy::variable* vThK1 = new fuzzy::variable("VTh(k + 1)", -0.0043633, 0.0043633); 
-	vThK1->addMF(new fuzzy::trapezoid("", -0.02309, -0.001855, 0.001855, 0.002309));	
+	vThK1->addMF(new fuzzy::trapezoid("VTh(k + 1)", -0.02309, -0.001855, 0.001855, 0.002309));	
 	
 	fuzzy::variable* wxK1 = new fuzzy::variable("Wx(k + 1)", -0.1, 0.1); 
-	wxK1->addMF(new fuzzy::trapezoid("", -0.09, -0.05, 0.05, 0.07));
+	wxK1->addMF(new fuzzy::trapezoid("Wx(k + 1)", -0.09, -0.05, 0.05, 0.07));
 
 	fuzzy::variable* wyK1 = new fuzzy::variable("Wy(k + 1)", -0.1, 0.1); 
-	wyK1->addMF(new fuzzy::trapezoid("", -0.09, -0.05, 0.05, 0.07));
+	wyK1->addMF(new fuzzy::trapezoid("Wy(k + 1)", -0.09, -0.05, 0.05, 0.07));
 	
 	fuzzy::variable* wThK1 = new fuzzy::variable("WTh(k + 1)", -0.0043633, 0.0043633); 
-	wThK1->addMF(new fuzzy::trapezoid("", -0.02309, -0.001855, 0.001855, 0.002309));	
+	wThK1->addMF(new fuzzy::trapezoid("WTh(k + 1)", -0.02309, -0.001855, 0.001855, 0.002309));	
 	
-	//fuzzy::variable* zxK1K = new fuzzy::variable("Zx(k + 1)", -9.0, 9.0); 
-	//zxK1K->addMF(new fuzzy::trapezoid("", -8.0, -4.0, 4.5, 8.0));
+	fuzzy::variable* zxK1K = new fuzzy::variable("Zx(k + 1)", -0.5, 0.5); 
+	zxK1K->addMF(new fuzzy::trapezoid("Zx(k + 1)", -0.45, -0.35, 0.4, 0.45));
 	
-	//fuzzy::variable* zyK1K = new fuzzy::variable("Zy(k + 1)", -3.0, 7.0); 
-	//zyK1K->addMF(new fuzzy::trapezoid("", -2.7, -1.327, 1.517, 2.675));	
+	fuzzy::variable* zyK1K = new fuzzy::variable("Zy(k + 1)", -0.2, 0.2); 
+	zyK1K->addMF(new fuzzy::trapezoid("Zy(k + 1)", -0.15, -0.10, 0.10, 0.15));	
 	
 	fuzzy::variable* zThK1K = new fuzzy::variable("ZTh(k + 1)", -0.02618, 0.02618); 
-	zThK1K->addMF(new fuzzy::trapezoid("", -0.01309, -0.007855, 0.007855, 0.01309));
+	zThK1K->addMF(new fuzzy::trapezoid("ZTh(k + 1)", -0.01309, -0.007855, 0.007855, 0.01309));
 	
 	
 	kalmanFuzzy->push_back(xxKK);
@@ -749,8 +754,8 @@ void GeneralController::initializeKalmanVariables(){
 	kalmanFuzzy->push_back(wyK1);
 	kalmanFuzzy->push_back(wThK1);
 	
-	//kalmanFuzzy->push_back(zxK1K);
-	//kalmanFuzzy->push_back(zyK1K);
+	kalmanFuzzy->push_back(zxK1K);
+	kalmanFuzzy->push_back(zyK1K);
 	kalmanFuzzy->push_back(zThK1K);	
 		
 	float iterations = (maxXY - minXY) / spacing;
@@ -777,7 +782,7 @@ void GeneralController::initializeKalmanVariables(){
 
 	P(0, 0) = uX; 		P(0, 1) = depXY; 	P(0, 2) = 0;
 	P(1, 0) = depXY; 	P(1, 1) = uY;		P(1, 2) = 0;
-	P(2, 0) = 0;	P(2, 1) = 0;	P(2, 2) = uTh;
+	P(2, 0) = 0;		P(2, 1) = 0;		P(2, 2) = uTh;
 	
 	// Variances and Covariances Matrix of Process noise Q
 	evaluatedMFX = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(3)->getMFByIndex(0), sampleXY);
@@ -792,7 +797,7 @@ void GeneralController::initializeKalmanVariables(){
 	
 	Q(0, 0) = uX; 		Q(0, 1) = depXY; 	Q(0, 2) = 0;
 	Q(1, 0) = depXY; 	Q(1, 1) = uY;		Q(1, 2) = 0;
-	Q(2, 0) = 0;	Q(2, 1) = 0;	Q(2, 2) = uTh;
+	Q(2, 0) = 0;		Q(2, 1) = 0;		Q(2, 2) = uTh;
 
 	
 }
@@ -819,21 +824,21 @@ void* GeneralController::trackRobotThread(void* object){
 	while(ros::ok() && self->keepRobotTracking == YES){
 		// 1 - Prediction
 		Xk = self->robotEncoderPosition;
+		for(int i = 0; i < 3; i++){
+			self->kalmanFuzzy[i]->getMFByIndex(0) = Ak(i,i) * self->kalmanFuzzy[i]->getMFByIndex(0) + self->kalmanFuzzy[i + 3]->getMFByIndex(0);
+		}
 		std::cout << "X(k + 1|k): " << std::endl << Xk;
 		pk1 = Pk;
 		Pk = Ak * pk1 * Ak.transpose() + self->Q;
 		std::cout << "New Pk(k+1|k): " << std::endl << Pk;
 		if(self->landmarks.size() > 0){
-			zk = Matrix(self->landmarks.size(), 1);
+			zk = Matrix(2 * self->landmarks.size(), 1);
 			self->R = Matrix(self->landmarks.size(), self->landmarks.size());
 			for(int i = 0; i < self->landmarks.size(); i++){
-				zk(i, 0) = std::atan2(self->landmarks.at(i)(1, 0), self->landmarks.at(i)(0, 0))*(3.1415/180) - Xk(2, 0);
-				// Variances and Covariances Matrix of Measurement noise R
+				zk(2 * i, 0) = (self->landmarks.at(i)(0, 0) * cos(Xk(2, 0))) + (self->landmarks.at(i)(1, 0) * sin(Xk(2, 0)));
+				zk((2 * i) + 1, 0) = (self->landmarks.at(i)(0, 0) * -sin(Xk(2, 0))) + (self->landmarks.at(i)(1, 0) * cos(Xk(2, 0)));
 				
-				//float evalMF = fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(8)->getMFByIndex(0), zk(i, 0));
-
-				//float uX = fuzzy::fstats::uncertainty(evaluatedMFX, sample);
-
+	
 				self->R(i, i) = 0.001;
 			}
 			Hk = Matrix(self->landmarks.size(), 3);
@@ -843,7 +848,7 @@ void* GeneralController::trackRobotThread(void* object){
 			    Hk(i, 2) = -1;
 			}	
 		} else {
-			zk = Matrix(1, 1);
+			zk = Matrix(2, 1);
 			self->R = Matrix(1, 1);
 			self->R(0, 0) = 0.001;
 			Hk = Matrix(1, 3);
@@ -860,11 +865,12 @@ void* GeneralController::trackRobotThread(void* object){
 		std::cout << "Position yx: " << std::endl << yk;
 		std::cout << "Sk: " << std::endl << Sk;
 		std::cout << "Wk: " << std::endl << Wk;
+		
 		// 3 - Matching
 		std::cout << "Evaluated Zk:";
 		std::vector<float> evaluatedMF(self->landmarks.size());
 		for(int i = 0; i < self->landmarks.size(); i++){		
-			evaluatedMF.push_back(fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(9)->getMFByIndex(0), zk(i, 0)));
+			evaluatedMF.push_back(fuzzy::fstats::evaluateMF(self->kalmanFuzzy->at(11)->getMFByIndex(0), zk(i, 0)));
 			std::cout << evaluatedMF[0] << "\t";
 		}
 		std::cout << std::endl;

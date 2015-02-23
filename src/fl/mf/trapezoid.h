@@ -15,6 +15,11 @@ namespace fuzzy{
 				float height = 1.0);
 		virtual ~trapezoid();
 		
+		virtual trapezoid* operator+(const trapezoid* rhs);
+		virtual trapezoid* operator-(const trapezoid* rhs);
+		
+		virtual trapezoid* operator*(const float& rhs);
+		
 		virtual float getVertexA() const;
 		virtual void setVertexA(float value);
 		

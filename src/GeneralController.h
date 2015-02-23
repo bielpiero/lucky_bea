@@ -43,7 +43,6 @@
 #define MAYBE 2
 
 #define MAX_LANDMAKS 20;
-#define LASER_MAX_RANGE 11.6;
 
 #define STATE_RANGE_X 0
 #define STATE_RANGE_Y 10
@@ -134,6 +133,9 @@ public:
 	void stopVideoStreaming();
 	void stopRobotTracking();
 private:
+	const float LASER_MAX_RANGE;
+	const float MIN_RAND;
+	const float MAX_RAND;
 	UDPClient* spdUDPClient;
 	ros::NodeHandle nh;
 	ros::Publisher cmd_vel_pub;

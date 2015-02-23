@@ -48,6 +48,19 @@ namespace fuzzy{
 		return new trapezoid(*this);
 	}
 	
+	trapezoid* trapezoid::operator+(const trapezoid* rhs){
+		return new trapezoid("", this->vertexA + rhs->vertexA, this->vertexB + rhs->vertexB, this->vertexC + rhs->vertexC, this->vertexD + rhs->vertexD);
+		
+	}
+	
+	trapezoid* trapezoid::operator-(const trapezoid* rhs){
+		return new trapezoid("", this->vertexA - rhs->vertexA, this->vertexB - rhs->vertexB, this->vertexC - rhs->vertexC, this->vertexD - rhs->vertexD);
+	}
+	
+	trapezoid* trapezoid::operator*(const float& rhs){
+		return new trapezoid("", this->vertexA * rhs, this->vertexB * rhs, this->vertexC * rhs, this->vertexD * rhs);
+	}
+	
 	float trapezoid::getVertexA() const{
 		return vertexA;
 	}
