@@ -15,8 +15,8 @@ namespace fuzzy{
 				float height = 1.0);
 		virtual ~trapezoid();
 		
-		virtual trapezoid* operator+(const trapezoid* rhs) const;
-		virtual trapezoid* operator-(const trapezoid* rhs) const;
+		virtual trapezoid* operator+(const trapezoid* &rhs) const;
+		virtual trapezoid* operator-(const trapezoid* &rhs) const;
 		
 		virtual trapezoid* operator*(const float& rhs) const;
 		

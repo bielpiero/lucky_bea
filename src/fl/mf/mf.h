@@ -21,8 +21,8 @@ namespace fuzzy{
         virtual float getHeight() const;
         virtual void setHeight(float height);
 		
-		virtual mf* operator+(const mf* rhs) const = 0;
-		virtual mf* operator-(const mf* rhs) const = 0;
+		virtual mf* operator+(const mf* &rhs) const = 0;
+		virtual mf* operator-(const mf* &rhs) const = 0;
 		
 		virtual mf* operator*(const float& rhs) const = 0;
 
