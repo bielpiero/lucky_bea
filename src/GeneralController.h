@@ -133,9 +133,9 @@ public:
 	void stopVideoStreaming();
 	void stopRobotTracking();
 private:
-	const float LASER_MAX_RANGE;
-	const float MIN_RAND;
-	const float MAX_RAND;
+	static const float LASER_MAX_RANGE;
+	static const float MIN_RAND;
+	static const float MAX_RAND;
 	UDPClient* spdUDPClient;
 	ros::NodeHandle nh;
 	ros::Publisher cmd_vel_pub;
