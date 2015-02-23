@@ -13,6 +13,7 @@ namespace fuzzy{
                         float slope = fuzzy::inf, 
                         float height = 1.0);
         virtual ~gaussBell();
+		
 
 
         virtual float getCenter() const;
@@ -23,6 +24,11 @@ namespace fuzzy{
 
         virtual float getSlope() const;
         virtual void setSlope(float value);
+		
+		virtual gaussBell* operator+(const gaussBell* rhs) const;
+		virtual gaussBell* operator-(const gaussBell* rhs) const;
+		
+		virtual gaussBell* operator*(const float& rhs) const;
 
         virtual std::string className() const;
         virtual float evaluate(float value) const;

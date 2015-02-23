@@ -34,6 +34,19 @@ namespace fuzzy{
 		return new sigmoidDifference(*this);
 	}
 	
+	sigmoidDifference* sigmoidDifference::operator+(const sigmoidDifference* rhs) const{
+		return new sigmoidDifference("", this->left + rhs->left, this->rising + rhs->rising, this->falling + rhs->falling, this->right + rhs->right);
+		
+	}
+	
+	sigmoidDifference* sigmoidDifference::operator-(const sigmoidDifference* rhs) const{
+		return new sigmoidDifference("", this->left - rhs->left, this->rising - rhs->rising, this->falling - rhs->falling, this->right - rhs->right);
+	}
+	
+	sigmoidDifference* sigmoidDifference::operator*(const float& rhs) const{
+		return new sigmoidDifference("", this->left * rhs, this->rising * rhs, this->falling * rhs, this->right * rhs);
+	}
+	
 	void sigmoidDifference::setLeft(float value) {
         this->left = value;
     }

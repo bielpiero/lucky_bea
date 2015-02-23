@@ -23,6 +23,11 @@ namespace fuzzy{
 		virtual float getVertexC() const;
 		virtual void setVertexC(float value);
 		
+		virtual triangle* operator+(const sigmoidProduct* rhs) const;
+		virtual triangle* operator-(const sigmoidProduct* rhs) const;
+		
+		virtual triangle* operator*(const float& rhs) const;
+		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
 		virtual triangle* clone() const;

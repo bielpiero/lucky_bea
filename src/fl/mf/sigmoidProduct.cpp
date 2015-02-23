@@ -30,6 +30,19 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
+	sigmoidProduct* sigmoidProduct::operator+(const sigmoidProduct* rhs) const{
+		return new sigmoidProduct("", this->left + rhs->left, this->rising + rhs->rising, this->falling + rhs->falling, this->right + rhs->right);
+		
+	}
+	
+	sigmoidProduct* sigmoidProduct::operator-(const sigmoidProduct* rhs) const{
+		return new sigmoidProduct("", this->left - rhs->left, this->rising - rhs->rising, this->falling - rhs->falling, this->right - rhs->right);
+	}
+	
+	sigmoidProduct* sigmoidProduct::operator*(const float& rhs) const{
+		return new sigmoidProduct("", this->left * rhs, this->rising * rhs, this->falling * rhs, this->right * rhs);
+	}
+	
 	sigmoidProduct* sigmoidProduct::clone() const{
 		return new sigmoidProduct(*this);
 	}

@@ -25,6 +25,19 @@ namespace fuzzy{
     float linear::evaluate(float value) const{
         (void) value;
     }
+	
+	trapezoid* trapezoid::operator+(const trapezoid* rhs) const{
+		(void) rhs;
+		
+	}
+	
+	trapezoid* trapezoid::operator-(const trapezoid* rhs) const{
+		(void) rhs;
+	}
+	
+	trapezoid* trapezoid::operator*(const float& rhs) const{
+		(void) rhs;
+	}
     
     linear* linear::clone() const{
         return new linear(*this);

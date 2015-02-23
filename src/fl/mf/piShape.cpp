@@ -33,6 +33,19 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
+	piShape* piShape::operator+(const piShape* rhs) const{
+		return new piShape("", this->bottomLeft + rhs->bottomLeft, this->topLeft + rhs->topLeft, this->bottomRight + rhs->bottomRight, this->topRight + rhs->topRight);
+		
+	}
+	
+	piShape* piShape::operator-(const piShape* rhs) const{
+		return new piShape("", this->bottomLeft - rhs->bottomLeft, this->topLeft - rhs->topLeft, this->bottomRight - rhs->bottomRight, this->topRight - rhs->topRight);
+	}
+	
+	piShape* piShape::operator*(const float& rhs) const{
+		return new piShape("", this->bottomLeft * rhs, this->topLeft * rhs, this->bottomRight * rhs, this->topRight * rhs);
+	}
+	
 	piShape* piShape::clone() const{
 		return new piShape(*this);
 	}

@@ -40,7 +40,7 @@ namespace fuzzy{
 		
 	}
 	
-	zShape* zShape::operator-(const zShape* rhs) cont{
+	zShape* zShape::operator-(const zShape* rhs) const{
 		return new zShape("", this->start - rhs->start, this->end - rhs->end);
 	}
 	

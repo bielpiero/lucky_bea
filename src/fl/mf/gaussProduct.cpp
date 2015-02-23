@@ -33,6 +33,19 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
+	gaussProduct* gaussProduct::operator+(const gaussProduct* rhs) const{
+		return new gaussProduct("", this->meanA + rhs->meanA, this->standardDeviationA + rhs->standardDeviationA, this->meanB + rhs->meanB, this->standardDeviationB + rhs->standardDeviationB);
+		
+	}
+	
+	gaussProduct* gaussProduct::operator-(const gaussProduct* rhs) const{
+		return new gaussProduct("", this->meanA - rhs->meanA, this->standardDeviationA - rhs->standardDeviationA, this->meanB - rhs->meanB, this->standardDeviationB - rhs->standardDeviationB);
+	}
+	
+	gaussProduct* gaussProduct::operator*(const float& rhs) const{
+		return new gaussProduct("", this->meanA * rhs, this->standardDeviationA * rhs, this->meanB * rhs, this->standardDeviationB * rhs);
+	}
+	
 	gaussProduct* gaussProduct::clone() const{
 		return new gaussProduct(*this);
 	}

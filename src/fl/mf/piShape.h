@@ -29,6 +29,11 @@ namespace fuzzy{
 		virtual float getTopRight() const;
 		virtual void setTopRight(float value);
 		
+		virtual piShape* operator+(const piShape* rhs) const;
+		virtual piShape* operator-(const piShape* rhs) const;
+		
+		virtual piShape* operator*(const float& rhs) const;
+		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
 		virtual piShape* clone() const;

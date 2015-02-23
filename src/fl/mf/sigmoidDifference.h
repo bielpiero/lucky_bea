@@ -27,6 +27,11 @@ namespace fuzzy{
         virtual void setRight(float value);
         virtual float getRight() const;
 		
+		virtual sigmoidDifference* operator+(const sigmoidDifference* rhs) const;
+		virtual sigmoidDifference* operator-(const sigmoidDifference* rhs) const;
+		
+		virtual sigmoidDifference* operator*(const float& rhs) const;
+		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
 		virtual sigmoidDifference* clone() const;

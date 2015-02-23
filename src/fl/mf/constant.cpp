@@ -19,6 +19,19 @@ namespace fuzzy{
     std::string constant::className() const{
         return "constant";
     }
+	
+	constant* constant::operator+(const constant* rhs) const{
+		(void) rhs;
+		
+	}
+	
+	constant* constant::operator-(const constant* rhs) const{
+		(void) rhs;
+	}
+	
+	constant* constant::operator*(const float& rhs) const{
+		(void) rhs;
+	}
     
     float constant::evaluate(float value) const{
         (void) value;
