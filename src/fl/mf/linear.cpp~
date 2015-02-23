@@ -26,12 +26,12 @@ namespace fuzzy{
         (void) value;
     }
 	
-	linear* linear::operator+(const linear& rhs) const{
+	linear* linear::operator+(const linear* rhs) const{
 		(void) rhs;
 	
 	}
 
-	linear* linear::operator-(const linear& rhs) const{
+	linear* linear::operator-(const linear* rhs) const{
 		(void) rhs;
 	}
 

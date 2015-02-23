@@ -35,12 +35,12 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
-	sShape* sShape::operator+(const sShape& rhs) const{
+	sShape* zShape::operator+(const sShape& rhs) const{
 		return new sShape("", this->start + rhs.start, this->end + rhs.end);
 		
 	}
 	
-	sShape* sShape::operator-(const sShape& rhs) const{
+	sShape* zShape::operator-(const sShape& rhs) const{
 		return new sShape("", this->start - rhs.start, this->end - rhs.end);
 	}
 	

@@ -20,12 +20,12 @@ namespace fuzzy{
         return "constant";
     }
 	
-	constant* constant::operator+(const constant& rhs) const{
+	constant* constant::operator+(const constant* rhs) const{
 		(void) rhs;
 		
 	}
 	
-	constant* constant::operator-(const constant& rhs) const{
+	constant* constant::operator-(const constant* rhs) const{
 		(void) rhs;
 	}
 	

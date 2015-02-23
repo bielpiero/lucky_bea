@@ -21,13 +21,13 @@ namespace fuzzy{
 		return this->height;
 	}
 
-	mf* mf::operator+(const mf &rhs) const{
+	virtual mf* operator+(const mf &rhs) const{
 	}
 
-	mf* mf::operator-(const mf &rhs) const{
+	virtual mf* operator-(const mf &rhs) const{
 	}
 	
-	mf* mf::operator*(const float& rhs) const{
+	virtual mf* operator*(const float& rhs) const{
 	}
 	
 	void mf::setHeight(float height){
