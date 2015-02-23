@@ -35,6 +35,19 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
+	zShape* zShape::operator+(const zShape* rhs) const{
+		return new zShape("", this->start + rhs->start, this->end + rhs->end);
+		
+	}
+	
+	zShape* zShape::operator-(const zShape* rhs) cont{
+		return new zShape("", this->start - rhs->start, this->end - rhs->end);
+	}
+	
+	zShape* zShape::operator*(const float& rhs) const{
+		return new zShape("", this->start * rhs, this->end * rhs);
+	}
+	
 	zShape* zShape::clone() const{
 		return new zShape(*this);
 	}

@@ -19,6 +19,11 @@ namespace fuzzy{
         virtual void setEnd(float end);
         virtual float getEnd() const;
 		
+		virtual zShape* operator+(const zShape* rhs) const;
+		virtual zShape* operator-(const zShape* rhs) const;
+		
+		virtual zShape* operator*(const float& rhs) const;
+		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
 		virtual zShape* clone() const;
