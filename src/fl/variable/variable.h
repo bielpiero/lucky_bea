@@ -35,6 +35,7 @@ namespace fuzzy{
 
         virtual void addMF(mf* item);
         virtual void addMFAt(mf* item, int index);
+		virtual void setMFAt(mf* item, int index);
         virtual mf* getMFByIndex(int index);
         virtual mf* getMFByName(const std::string name);
 

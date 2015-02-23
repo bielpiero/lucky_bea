@@ -825,7 +825,7 @@ void* GeneralController::trackRobotThread(void* object){
 		// 1 - Prediction
 		Xk = self->robotEncoderPosition;
 		for(int i = 0; i < 3; i++){
-			self->kalmanFuzzy[i]->getMFByIndex(0) = Ak(i,i) * self->kalmanFuzzy[i]->getMFByIndex(0) + self->kalmanFuzzy[i + 3]->getMFByIndex(0);
+			self->kalmanFuzzy.at(i)->setMFat(Ak(i,i) * self->kalmanFuzzy.at(i)->getMFByIndex(0) + self->kalmanFuzzy.at(i + 3)->getMFByIndex(0), 0);
 		}
 		std::cout << "X(k + 1|k): " << std::endl << Xk;
 		pk1 = Pk;

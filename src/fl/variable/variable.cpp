@@ -72,6 +72,10 @@ namespace fuzzy{
 		this->items.insert(this->items.begin() + index, item);
 	}
 	
+	void variable::setMFAt(mf* item, int index){
+		this->items[index] = item;
+	}
+	
 	mf* variable::getMFByIndex(int index){
 		return this->items[index];
 	}
