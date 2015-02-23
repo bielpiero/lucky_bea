@@ -21,10 +21,10 @@ namespace fuzzy{
         virtual float getHeight() const;
         virtual void setHeight(float height);
 		
-		virtual mf* operator+(const mf* rhs) const = 0;
-		virtual mf* operator-(const mf* rhs) const = 0;
+		virtual mf* operator+(const mf* rhs) = 0;
+		virtual mf* operator-(const mf* rhs) = 0;
 		
-		virtual mf* operator*(const float& rhs) const = 0;
+		virtual mf* operator*(const float& rhs) = 0;
 
         virtual std::string className() const = 0;
         virtual float evaluate(float value) const = 0;
