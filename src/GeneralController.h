@@ -42,10 +42,17 @@
 #define NO 0
 #define MAYBE 2
 
+#define STATE_VARIABLES 3
+
 #define MAX_LANDMAKS 20;
 
 #define STATE_RANGE_X 0
 #define STATE_RANGE_Y 10
+
+#define X_INDEX 0
+#define V_INDEX 3
+#define W_INDEX 6
+#define Z_INDEX 9
 
 using namespace rapidxml;
 
@@ -166,6 +173,8 @@ private:
 	void getVelocities(char* cad, double& lin_vel, double& angular_vel);
 	void moveRobot(double lin_vel, double angular_vel);
 	void moveRobotTo(Matrix pose);
+	void moveRobotTo(float x, float y, float theta);
+	void getPositions(char* cad, float& x, float& y, float& theta);
 	void trackRobot();
 	
 	void getNumberOfCamerasAvailable(int& count);

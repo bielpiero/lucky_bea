@@ -4,8 +4,8 @@
 
 
 const float GeneralController::LASER_MAX_RANGE = 11.6;
-const float GeneralController::MIN_RAND = -2.0;
-const float GeneralController::MAX_RAND = 2.0;
+const float GeneralController::MIN_RAND = -1;
+const float GeneralController::MAX_RAND = 1;
 
 GeneralController::GeneralController(ros::NodeHandle nh_)
 {
@@ -72,6 +72,7 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 	double lin_vel = 0, ang_vel = 0;
 	int cameraCount = 0;
 	int videoDevice = 0;
+	float x, y, theta;
 	
 	switch (function){
 		case 0x00:
@@ -129,6 +130,13 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 		case 0x11:
 			trackRobot();
 			break;
+		case 0x12:
+			stopRobotTracking();
+			break;
+		case 0x13:
+			getPositions(cad, x, y, theta);
+			moveRobotTo(x, y, theta);
+			break;
 		case 0x20:
 			getNumberOfCamerasAvailable(cameraCount);
 			number_converter << cameraCount;
@@ -159,6 +167,21 @@ void GeneralController::initializeSPDPort(char* cad){
 		throw std::invalid_argument("Error!!! Could not initialize SPD streaming");
 	}
 	spdUDPClient = new UDPClient(this->getClientIPAddress(), this->spdUDPPort);
+}
+
+void GeneralController::getPositions(char* cad, float& x, float& y, float& theta){
+	char* current_number;
+	int values[6];
+	int index = 0;
+	current_number = strtok(cad, ",");
+
+	while(current_number != NULL){
+		values[index++] = atoi(current_number);
+		current_number = strtok(NULL, ",");
+	}
+	x = values[0];
+	y = values[1];
+	theta = values[2];
 }
 
 void GeneralController::getCameraDevicePort(char* cad, int& device, int& port){
@@ -589,6 +612,16 @@ void GeneralController::moveRobot(double lin_vel, double angular_vel){
 	keepSpinning = true;
 }
 
+void GeneralController::moveRobotTo(float x, float y, float theta){
+	Matrix Xk(3);
+	
+	Xk(0, 0) = x;
+	Xk(1, 0) = y;
+	Xk(2, 0) = theta;
+	
+	moveRobotTo(Xk);	
+}
+
 void GeneralController::moveRobotTo(Matrix Xk){
 	geometry_msgs::Pose2D msg;
 	
@@ -607,7 +640,7 @@ void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr
 			bumpers->rear_bumpers[0], bumpers->rear_bumpers[1], bumpers->rear_bumpers[2], bumpers->rear_bumpers[3], bumpers->rear_bumpers[4], bumpers->rear_bumpers[5]);
 	int dataLen = strlen(bump);
 	if(spdUDPClient != NULL){
-		spdUDPClient->sendData((unsigned char*)bump, dataLen);
+		//spdUDPClient->sendData((unsigned char*)bump, dataLen);
 	}
 }
 
@@ -770,9 +803,9 @@ void GeneralController::initializeKalmanVariables(){
 	}
 	
 	// Variances and Covariances Matrix of Estimation P
-	evaluatedMFX = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(0)->getMFByIndex(0), sampleXY);
-	evaluatedMFY = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(1)->getMFByIndex(0), sampleXY);
-	evaluatedMFTh = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(2)->getMFByIndex(0), sampleTh);
+	evaluatedMFX = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(X_INDEX)->getMFByIndex(0), sampleXY);
+	evaluatedMFY = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(X_INDEX + 1)->getMFByIndex(0), sampleXY);
+	evaluatedMFTh = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(X_INDEX + 2)->getMFByIndex(0), sampleTh);
 	
 	uX = fuzzy::fstats::uncertainty(evaluatedMFX, sampleXY);
 	uY = fuzzy::fstats::uncertainty(evaluatedMFY, sampleXY);
@@ -785,9 +818,9 @@ void GeneralController::initializeKalmanVariables(){
 	P(2, 0) = 0;		P(2, 1) = 0;		P(2, 2) = uTh;
 	
 	// Variances and Covariances Matrix of Process noise Q
-	evaluatedMFX = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(3)->getMFByIndex(0), sampleXY);
-	evaluatedMFY = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(4)->getMFByIndex(0), sampleXY);
-	evaluatedMFTh = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(5)->getMFByIndex(0), sampleTh);
+	evaluatedMFX = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(V_INDEX)->getMFByIndex(0), sampleXY);
+	evaluatedMFY = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(V_INDEX + 1)->getMFByIndex(0), sampleXY);
+	evaluatedMFTh = fuzzy::fstats::evaluateMF(kalmanFuzzy->at(V_INDEX + 2)->getMFByIndex(0), sampleTh);
 
 	uX = fuzzy::fstats::uncertainty(evaluatedMFX, sampleXY);
 	uY = fuzzy::fstats::uncertainty(evaluatedMFY, sampleXY);
@@ -813,6 +846,9 @@ void GeneralController::trackRobot(){
 
 void* GeneralController::trackRobotThread(void* object){
 	GeneralController* self = (GeneralController*)object;
+	std::vector<fuzzy::variable*> zkl;
+	srand(time(NULL));
+	
 	self->keepRobotTracking = YES;
 	
 	Matrix Ak = Matrix::eye(3);
@@ -821,52 +857,70 @@ void* GeneralController::trackRobotThread(void* object){
 	Matrix zk;
 	Matrix Pk = self->P;
 	Matrix Xk;
+	
 	while(ros::ok() && self->keepRobotTracking == YES){
 		// 1 - Prediction
+		zkl.clear();
 		Xk = self->robotEncoderPosition;
-		for(int i = 0; i < 3; i++){
-			fuzzy::trapezoid *trapa = (fuzzy::trapezoid*)self->kalmanFuzzy->at(i)->getMFByIndex(0);
-			fuzzy::trapezoid *trapb = (fuzzy::trapezoid*)self->kalmanFuzzy->at(i + 3)->getMFByIndex(0);
-			fuzzy::trapezoid *trapc = (*trapa) * Ak(i, i);
-			fuzzy::trapezoid *trapResult = *trapb + *trapc; 
-			self->kalmanFuzzy->at(i)->setMFAt(trapResult, 0);
+		for(int i = 0; i < STATE_VARIABLES; i++){
+			fuzzy::trapezoid *trapa = (fuzzy::trapezoid*)self->kalmanFuzzy->at(X_INDEX + i)->getMFByIndex(0);
+			fuzzy::trapezoid *trapb = (fuzzy::trapezoid*)self->kalmanFuzzy->at(V_INDEX + i)->getMFByIndex(0);
+			self->kalmanFuzzy->at(i)->setMFAt(*trapb + *((*trapa) * Ak(i, i)), 0);
 		}
 		std::cout << "X(k + 1|k): " << std::endl << Xk;
 		pk1 = Pk;
 		Pk = Ak * pk1 * Ak.transpose() + self->Q;
 		std::cout << "New Pk(k+1|k): " << std::endl << Pk;
+		
+		// 2 - Observation
 		if(self->landmarks.size() > 0){
 			zk = Matrix(2 * self->landmarks.size(), 1);
-			self->R = Matrix(self->landmarks.size(), self->landmarks.size());
+			self->R = Matrix::eye(2 * self->landmarks.size()) * 0.001;
+			Hk = Matrix(2 * self->landmarks.size(), STATE_VARIABLES);
+			
 			for(int i = 0; i < self->landmarks.size(); i++){
-				zk(2 * i, 0) = (self->landmarks.at(i)(0, 0) * cos(Xk(2, 0))) + (self->landmarks.at(i)(1, 0) * sin(Xk(2, 0)));
-				zk((2 * i) + 1, 0) = (self->landmarks.at(i)(0, 0) * -sin(Xk(2, 0))) + (self->landmarks.at(i)(1, 0) * cos(Xk(2, 0)));
+				float noise_x = ((float)rand() / self->MAX_RAND) * (self->MAX_RAND - self->MIN_RAND) + self->MIN_RAND;
+				float noise_y = ((float)rand() / self->MAX_RAND) * (self->MAX_RAND - self->MIN_RAND) + self->MIN_RAND;
 				
-	
-				self->R(i, i) = 0.001;
-			}
-			Hk = Matrix(self->landmarks.size(), 3);
-			for(int i = 0; i < self->landmarks.size(); i++){
-				Hk(i, 0) = self->landmarks.at(i)(1, 0)/(std::pow(self->landmarks.at(i)(0, 0), 2) + std::pow(self->landmarks.at(i)(1, 0), 2));
-				Hk(i, 1) = -self->landmarks.at(i)(0, 0)/(std::pow(self->landmarks.at(i)(0, 0), 2) + std::pow(self->landmarks.at(i)(1, 0), 2));
-			    Hk(i, 2) = -1;
+				zk(2 * i, 0) = ((self->landmarks.at(i)(0, 0) - Xk(0, 0)) * std::cos(Xk(2, 0))) + ((self->landmarks.at(i)(1, 0) - Xk(1, 0)) * std::sin(Xk(2, 0))) + noise_x;
+				zk((2 * i) + 1, 0) = ((self->landmarks.at(i)(0, 0) - Xk(0, 0)) * -std::sin(Xk(2, 0))) + ((self->landmarks.at(i)(1, 0) - Xk(1, 0)) * std::cos(Xk(2, 0))) + noise_y;
+							
+				
+				Hk(2 * i, 0) = -std::cos(Xk(2, 0));
+				Hk(2 * i, 1) = -std::sin(Xk(2, 0));
+				Hk(2 * i, 2) = ((self->landmarks.at(i)(0, 0) - Xk(0, 0)) * -std::sin(Xk(2, 0))) + ((self->landmarks.at(i)(1, 0) - Xk(1, 0)) * std::cos(Xk(2, 0)));
+				
+				Hk(2 * i + 1, 0) = std::sin(Xk(2, 0));
+				Hk(2 * i + 1, 1) = -std::cos(Xk(2, 0));
+				Hk(2 * i + 1, 2) = ((self->landmarks.at(i)(0, 0) - Xk(0, 0)) * -std::cos(Xk(2, 0))) + ((self->landmarks.at(i)(1, 0) - Xk(1, 0)) * -std::sin(Xk(2, 0)));
 			}	
 		} else {
 			zk = Matrix(2, 1);
-			self->R = Matrix(1, 1);
-			self->R(0, 0) = 0.001;
-			Hk = Matrix(1, 3);
+			self->R = Matrix::eye(2) * 0.001;
+			Hk = Matrix(2, 3);
 		}
 		std::cout << "Hx: " << std::endl << Hk;
 		std::cout << "Matrix R: " << std::endl << self->R;
 		std::cout << "Position zk: " << std::endl << zk;
 		
-		Matrix zkl = Hk * Xk;
-		std::cout << "Position zxl: " << std::endl << zkl;
-		Matrix yk = zkl - zk;
+		//for(int i = 0; i < Hk.rows_size(); i++){
+			//for(int j = 0; j < STATE_VARIABLES; j++){
+				//fuzzy::trapezoid *trapa = (fuzzy::trapezoid*)self->kalmanFuzzy->at(X_INDEX + i)->getMFByIndex(0);
+				//fuzzy::trapezoid *trapb = (fuzzy::trapezoid*)self->kalmanFuzzy->at(W_INDEX + i)->getMFByIndex(0);
+				
+				//fuzzy::variable* ZK1 = new fuzzy::variable;
+				//fuzzy::trapezoid* temp_trap = *trapb + *((*trapa) * Hk(i, j)); 			
+				
+				//ZK1->addMF(temp_trap);				
+				//zkl->push_back(ZK1);
+			//}
+		//}
+		
+								
+		Matrix yk;// = zkl - zk;
 		Matrix Sk = Hk * Pk * Hk.transpose() + self->R;
 		Matrix Wk = Pk * Hk.transpose() * Sk.inv();		
-		std::cout << "Position yx: " << std::endl << yk;
+		
 		std::cout << "Sk: " << std::endl << Sk;
 		std::cout << "Wk: " << std::endl << Wk;
 		
@@ -884,7 +938,7 @@ void* GeneralController::trackRobotThread(void* object){
 		Xk = Xk + Wk * yk;
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		std::cout << "New Pk(k+1|k+1): " << std::endl << Pk;
-		self->moveRobotTo(Xk);
+		//self->moveRobotTo(Xk);
 		std::cout << "Position Xk: " << std::endl << Xk;
 
 	}
