@@ -135,7 +135,7 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 			break;
 		case 0x13:
 			getPositions(cad, x, y, theta);
-			moveRobotTo(x, y, theta);
+			setRobotPosition(x, y, theta);
 			break;
 		case 0x20:
 			getNumberOfCamerasAvailable(cameraCount);
@@ -612,7 +612,7 @@ void GeneralController::moveRobot(double lin_vel, double angular_vel){
 	keepSpinning = true;
 }
 
-void GeneralController::moveRobotTo(float x, float y, float theta){
+void GeneralController::setRobotPosition(float x, float y, float theta){
 	Matrix Xk(3);
 	
 	Xk(0, 0) = x;
@@ -622,7 +622,7 @@ void GeneralController::moveRobotTo(float x, float y, float theta){
 	moveRobotTo(Xk);	
 }
 
-void GeneralController::moveRobotTo(Matrix Xk){
+void GeneralController::setRobotPosition(Matrix Xk){
 	geometry_msgs::Pose2D msg;
 	
 	msg.x = Xk(0, 0);
@@ -938,7 +938,7 @@ void* GeneralController::trackRobotThread(void* object){
 		Xk = Xk + Wk * yk;
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		std::cout << "New Pk(k+1|k+1): " << std::endl << Pk;
-		//self->moveRobotTo(Xk);
+		//self->setRobotPosition(Xk);
 		std::cout << "Position Xk: " << std::endl << Xk;
 
 	}

@@ -172,8 +172,8 @@ private:
 	
 	void getVelocities(char* cad, double& lin_vel, double& angular_vel);
 	void moveRobot(double lin_vel, double angular_vel);
-	void moveRobotTo(Matrix pose);
-	void moveRobotTo(float x, float y, float theta);
+	void setRobotPosition(Matrix pose);
+	void setRobotPosition(float x, float y, float theta);
 	void getPositions(char* cad, float& x, float& y, float& theta);
 	void trackRobot();
 	
