@@ -52,7 +52,8 @@
 #define X_INDEX 0
 #define V_INDEX 3
 #define W_INDEX 6
-#define Z_INDEX 9
+
+#define TRAP_VERTEX 4
 
 using namespace rapidxml;
 
@@ -152,7 +153,7 @@ private:
 	//possibilistic navigation
 	Matrix robotVelocity;
 	Matrix robotEncoderPosition;
-	std::vector<fuzzy::variable*>* kalmanFuzzy;
+	std::vector<fuzzy::trapezoid*>* kalmanFuzzy;
 	Matrix robotState;
 	Matrix P;
 	Matrix Q;
@@ -176,6 +177,7 @@ private:
 	void setRobotPosition(float x, float y, float theta);
 	void getPositions(char* cad, float& x, float& y, float& theta);
 	void trackRobot();
+	std::vector<fuzzy::trapezoid*> getStateTrapezoids(Matrix m);
 	
 	void getNumberOfCamerasAvailable(int& count);
 	void getCameraDevicePort(char* cad, int& device, int& port);

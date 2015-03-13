@@ -31,6 +31,20 @@ Matrix Matrix::operator+(const Matrix& rhs){
 	return result;
 }
 
+Matrix Matrix::operator+(const float& rhs){
+	Matrix result(this->rows, this->cols);
+	for(int i = 0; i < result.rows_size(); i++){
+		for (int j = 0; j < result.cols_size(); j++){
+			result(i,j) = rhs + data[i][j];
+		}
+	}
+	return result;
+}
+
+Matrix operator+(const float& scalar, Matrix rhs){
+	return (rhs + scalar);
+}
+
 
 Matrix Matrix::operator-(const Matrix& rhs){
 	if(this->rows != rhs.rows || this->cols != rhs.cols){
@@ -45,6 +59,20 @@ Matrix Matrix::operator-(const Matrix& rhs){
 	}
 	
 	return result;
+}
+
+Matrix Matrix::operator-(const float& rhs){
+	Matrix result(this->rows, this->cols);
+	for(int i = 0; i < result.rows_size(); i++){
+		for (int j = 0; j < result.cols_size(); j++){
+			result(i,j) = data[i][j] - rhs;
+		}
+	}
+	return result;
+}
+
+Matrix operator-(const float& scalar, Matrix rhs){
+	return (scalar + (-1 * rhs));
 }
 
 
@@ -63,6 +91,28 @@ Matrix Matrix::operator*(const Matrix& rhs){
 	}
 	
 	return result;
+}
+
+Matrix Matrix::operator*(const float& rhs){
+	Matrix result(this->rows, this->cols);
+	for(int i = 0; i < result.rows_size(); i++){
+		for (int j = 0; j < result.cols_size(); j++){
+			result(i,j) = rhs*data[i][j];
+		}
+	}
+	return result;
+}
+
+Matrix operator*(const float& scalar, Matrix rhs){
+	return (rhs*scalar);
+}
+
+Matrix operator!(Matrix rhs){
+	return rhs.inv();
+}
+
+Matrix operator~(Matrix rhs){
+	return rhs.transpose();
 }
 
 const float& Matrix::operator() (const int row, const int col) const{
@@ -86,16 +136,6 @@ Matrix Matrix::operator() (const int row) const{
 		rowData.data[0] = data[row];
 	}
 	return rowData;
-}
-
-Matrix Matrix::operator*(const float& rhs){
-	Matrix result(this->rows, this->cols);
-	for(int i = 0; i < result.rows_size(); i++){
-		for (int j = 0; j < result.cols_size(); j++){
-			result(i,j) = rhs*data[i][j];
-		}
-	}
-	return result;
 }
 
 Matrix Matrix::mlDivide(const Matrix& rhs){
@@ -139,6 +179,59 @@ Matrix Matrix::pInv(){
 
 Matrix Matrix::eig(){
 	
+}
+
+Matrix Matrix::sort(int mode){
+	Matrix self = *this;
+	Matrix result = self;
+	for(int j = 0; j < this->cols; j++){
+		bool change = true;
+		while(change){
+			change = false;
+			for(int i = 0; i < this->rows - 1; i++){
+				if(mode == MATRIX_ASCENDING){
+					if(result(i, j) > result(i + 1, j)){
+						float tempValue = result(i + 1, j);
+						result(i + 1, j) = result(i, j);
+						result(i, j) = tempValue;
+						change = true;
+					}
+				} else {
+					if(result(i, j) < result(i + 1, j)){
+						float tempValue = result(i + 1, j);
+						result(i + 1, j) = result(i, j);
+						result(i, j) = tempValue;
+						change = true;
+					}
+				}
+			}
+		}
+	}
+	
+	for(int i = 0; i < this->rows; i++){
+		bool change = true;
+		while(change){
+			change = false;
+			for(int j = 0; j < this->cols - 1; j++){
+				if(mode == MATRIX_ASCENDING){
+					if(result(i, j) > result(i, j + 1)){
+						float tempValue = result(i, j + 1);
+						result(i, j + 1) = result(i, j);
+						result(i, j) = tempValue;
+						change = true;
+					}
+				} else {
+					if(result(i, j) < result(i, j + 1)){
+						float tempValue = result(i, j + 1);
+						result(i, j + 1) = result(i, j);
+						result(i, j) = tempValue;
+						change = true;
+					}
+				}
+			}
+		}
+	}
+	return result;
 }
 
 Matrix Matrix::eye(int dim){

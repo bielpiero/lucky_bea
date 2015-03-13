@@ -4,6 +4,9 @@
 #include <limits>
 #include <stdexcept>
 
+#define MATRIX_ASCENDING 0
+#define MATRIX_DESCENDING 1
+
 class Matrix{
 	private:
 		unsigned int rows;
@@ -16,10 +19,19 @@ class Matrix{
 		virtual ~Matrix();
 		void operator=(const Matrix& rhs);
 		Matrix operator+(const Matrix& rhs);
-		Matrix operator-(const Matrix& rhs);
-		Matrix operator*(const Matrix& rhs);
+		Matrix operator+(const float& rhs);
+		friend Matrix operator+(const float& scalar, Matrix rhs);
 		
+		Matrix operator-(const Matrix& rhs);
+		Matrix operator-(const float& rhs);
+		friend Matrix operator-(const float& scalar, Matrix rhs);
+		
+		Matrix operator*(const Matrix& rhs);
 		Matrix operator*(const float& rhs);
+		friend Matrix operator*(const float& scalar, Matrix rhs);
+
+		friend Matrix  operator !(Matrix m);
+		friend Matrix  operator ~(Matrix m);
 		
 		Matrix operator() (const int row) const;
 		
@@ -35,6 +47,9 @@ class Matrix{
 		Matrix roots();
 		Matrix abs();
 		Matrix cofactor();
+		
+		Matrix sort(int mode = MATRIX_ASCENDING);
+		
 		static Matrix eye(int dim);
 		
 		float det();
