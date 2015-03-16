@@ -634,8 +634,34 @@ void GeneralController::setRobotPosition(Matrix Xk){
 	ros::spinOnce();
 }
 
+void GeneralController::goToPosition(float x, float y, float theta){
+	
+}
+
 void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr& bumpers){
 	char* bump = new char[256];
+
+	bumpersOk = true;
+
+	for (int i = 0; i < bumpers->front_bumpers_length; i++)
+	{
+		if (bumpers->front_bumpers[i] && bumpersOk)
+		{
+			bumpersOk = false;
+		}
+	}
+
+	if (bumpersOk)
+	{
+		for (int i = 0; i < bumpers->rear_bumpers_length; i++)
+		{
+			if (bumpers->rear_bumpers[i] && bumpersOk)
+			{
+				bumpersOk = false;
+			}
+		}
+	}
+
 	sprintf(bump, "$BUMPERS|%d,%d,%d,%d,%d,%d|%d,%d,%d,%d,%d,%d",bumpers->front_bumpers[0], bumpers->front_bumpers[1], bumpers->front_bumpers[2], bumpers->front_bumpers[3], bumpers->front_bumpers[4], bumpers->front_bumpers[5],
 			bumpers->rear_bumpers[0], bumpers->rear_bumpers[1], bumpers->rear_bumpers[2], bumpers->rear_bumpers[3], bumpers->rear_bumpers[4], bumpers->rear_bumpers[5]);
 	int dataLen = strlen(bump);

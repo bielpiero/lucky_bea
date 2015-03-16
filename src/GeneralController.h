@@ -173,8 +173,10 @@ private:
 	
 	void getVelocities(char* cad, double& lin_vel, double& angular_vel);
 	void moveRobot(double lin_vel, double angular_vel);
+
 	void setRobotPosition(Matrix pose);
 	void setRobotPosition(float x, float y, float theta);
+	void goToPosition(float x, float y, float th);
 	void getPositions(char* cad, float& x, float& y, float& theta);
 	void trackRobot();
 	std::vector<fuzzy::trapezoid*> getStateTrapezoids(Matrix m);
