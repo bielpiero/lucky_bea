@@ -635,7 +635,7 @@ void GeneralController::setRobotPosition(Matrix Xk){
 }
 
 void GeneralController::goToPosition(float x, float y, float theta){
-	
+
 }
 
 void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr& bumpers){
@@ -643,7 +643,7 @@ void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr
 
 	bumpersOk = true;
 
-	for (int i = 0; i < bumpers->front_bumpers_length; i++)
+	for (int i = 0; i < bumpers->front_bumpers.size(); i++)
 	{
 		if (bumpers->front_bumpers[i] && bumpersOk)
 		{
@@ -653,7 +653,7 @@ void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr
 
 	if (bumpersOk)
 	{
-		for (int i = 0; i < bumpers->rear_bumpers_length; i++)
+		for (int i = 0; i < bumpers->rear_bumpers.size(); i++)
 		{
 			if (bumpers->rear_bumpers[i] && bumpersOk)
 			{
