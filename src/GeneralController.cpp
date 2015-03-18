@@ -14,7 +14,8 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	this->maestroControllers = new SerialPort();
 	
 	this->keepSpinning = true;
-	this->bumpersOk = true;
+	this->frontBumpersOk = true;
+	this->rearBumpersOk = true;
 	this->streamingActive = NO;
 	this->keepRobotTracking = NO;
 	this->udpPort = 0;
@@ -586,7 +587,16 @@ void* GeneralController::dynamicFaceThread(void* object){
 
 void GeneralController::moveRobot(double lin_vel, double angular_vel){
 	geometry_msgs::Twist twist_msg;
-	
+	bool bumpersOk = false;
+	if(frontBumpersOk && rearBumpersOk){
+		bumpersOk = true;
+	} else if(!frontBumpersOk && lin_vel < 0){
+		bumpersOk = true;
+	} else if(!rearBumpersOk && lin_vel > 0){
+		bumpersOk = true;
+	} else {
+		bumpersOk = false;
+	}
 	if (bumpersOk)
 	{
 		twist_msg.linear.x = lin_vel;
@@ -642,24 +652,22 @@ void GeneralController::goToPosition(float x, float y, float theta){
 void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr& bumpers){
 	char* bump = new char[256];
 
-	bumpersOk = true;
+	frontBumpersOk = true;
+	rearBumpersOk = true;
 
 	for (int i = 0; i < bumpers->front_bumpers.size(); i++)
 	{
-		if (bumpers->front_bumpers[i] && bumpersOk)
+		if (bumpers->front_bumpers[i] && frontBumpersOk)
 		{
-			bumpersOk = false;
+			frontBumpersOk = false;
 		}
 	}
 
-	if (bumpersOk)
+	for (int i = 0; i < bumpers->rear_bumpers.size(); i++)
 	{
-		for (int i = 0; i < bumpers->rear_bumpers.size(); i++)
+		if (bumpers->rear_bumpers[i] && rearBumpersOk)
 		{
-			if (bumpers->rear_bumpers[i] && bumpersOk)
-			{
-				bumpersOk = false;
-			}
+			rearBumpersOk = false;
 		}
 	}
 

@@ -163,7 +163,8 @@ private:
 	std::vector<Matrix> landmarks;
 	
 	bool keepSpinning;
-	bool bumpersOk;
+	bool frontBumpersOk;
+	bool rearBumpersOk;
 	int udpPort;
 	int spdUDPPort;
 	unsigned char streamingActive;
