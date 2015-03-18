@@ -20,7 +20,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	this->udpPort = 0;
 	this->spdUDPPort = 0;
 	
-	kalmanFuzzy = new std::vector<fuzzy::trapezoid*>();
+	//kalmanFuzzy = new std::vector<fuzzy::trapezoid*>();
 	
 	robotState = Matrix(3, 1);
 	robotEncoderPosition = Matrix(3, 1);
@@ -32,7 +32,8 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	spdUDPClient = NULL;
 	xmlFaceFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_PATH;
 	cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel", 1);
-	pose2d_pub = nh.advertise<geometry_msgs::Pose2D>("/RosAria/pose_2D", 1);
+	cmd_goto_pub = nh.advertise<geometry_msgs::Pose2D>("/RosAria/cmd_goto", 1);
+	pose2d_pub = nh.advertise<geometry_msgs::Pose2D>("/RosAria/cmd_set_pose", 1);
 }
 
 
@@ -1059,7 +1060,6 @@ std::vector<fuzzy::trapezoid*> GeneralController::getStateTrapezoids(Matrix m){
 		}
 		index+=2;
 	}
-
 
 	for(int i = 0; i < zklt.rows_size(); i++){
 		Matrix currentSorted = zklt(i).sort();
