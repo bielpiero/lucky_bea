@@ -139,6 +139,10 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 			getPositions(cad, x, y, theta);
 			setRobotPosition(x, y, theta);
 			break;
+		case 0x14:
+			getPositions(cad, x, y, theta);
+			goToPosition(x, y, theta);
+			break;
 		case 0x20:
 			getNumberOfCamerasAvailable(cameraCount);
 			number_converter << cameraCount;
@@ -646,7 +650,19 @@ void GeneralController::setRobotPosition(Matrix Xk){
 }
 
 void GeneralController::goToPosition(float x, float y, float theta){
+	geometry_msgs::Pose2D msg;
+	Matrix Xk(3);
+	
+	Xk(0, 0) = x;
+	Xk(1, 0) = y;
+	Xk(2, 0) = theta;
 
+	msg.x = Xk(0, 0);
+	msg.y = Xk(1, 0);
+	msg.theta = Xk(2, 0);
+	cmd_goto_pub.publish(msg);
+	Sleep(100);
+	ros::spinOnce();
 }
 
 void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr& bumpers){
