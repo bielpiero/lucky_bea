@@ -6,6 +6,8 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include <string>
+#include <cstring>
 #include "SocketNode2.h"
 #include "SerialPort.h"
 #include "stdxros.hpp"
@@ -173,8 +175,8 @@ private:
 	
 	void initializeSPDPort(char* cad);
 	
-	void getVelocities(char* cad, double& lin_vel, double& angular_vel);
-	void moveRobot(double lin_vel, double angular_vel);
+	void getVelocities(char* cad, float& lin_vel, float& angular_vel);
+	void moveRobot(float lin_vel, float angular_vel);
 
 	void setRobotPosition(Matrix pose);
 	void setRobotPosition(float x, float y, float theta);

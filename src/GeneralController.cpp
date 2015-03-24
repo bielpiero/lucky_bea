@@ -71,7 +71,7 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 
 	int servo_position = 0;
 	int face_id, k=0;
-	double lin_vel = 0, ang_vel = 0;
+	float lin_vel = 0, ang_vel = 0;
 	int cameraCount = 0;
 	int videoDevice = 0;
 	float x, y, theta;
@@ -179,11 +179,12 @@ void GeneralController::getPositions(char* cad, float& x, float& y, float& theta
 	char* current_number;
 	int values[6];
 	int index = 0;
-	current_number = strtok(cad, ",");
+	current_number = std::strtok(cad, ",");
 
 	while(current_number != NULL){
-		values[index++] = atoi(current_number);
-		current_number = strtok(NULL, ",");
+		int cValue = std::atoi(current_number);
+		values[index++] = (float)((float)cValue/1000.0);
+		current_number = std::strtok(NULL, ",");
 	}
 	x = values[0];
 	y = values[1];
@@ -194,11 +195,11 @@ void GeneralController::getCameraDevicePort(char* cad, int& device, int& port){
 	char* current_number;
 	int values[6];
 	int index = 0;
-	current_number = strtok(cad, ":");
+	current_number = std::strtok(cad, ":");
 	//
 	while(current_number != NULL){
-		values[index++] = atoi(current_number);
-		current_number = strtok(NULL, ":");
+		values[index++] = std::atoi(current_number);
+		current_number = std::strtok(NULL, ":");
 	}
 	device = values[0];
 	port = values[1];
@@ -208,26 +209,27 @@ void GeneralController::getPololuInstruction(char* cad, unsigned char& card_id, 
 	char* current_number;
 	int values[6];
 	int index = 0;
-	current_number = strtok(cad, ",");
+	current_number = std::strtok(cad, ",");
 	//
 	while(current_number != NULL){
-		values[index++] = atoi(current_number);
-		current_number = strtok(NULL, ",");
+		values[index++] = std::atoi(current_number);
+		current_number = std::strtok(NULL, ",");
 	}
 	card_id = (unsigned char)values[0];
 	servo_id = (unsigned char)values[1];
 	value = values[2];
 }
 
-void GeneralController::getVelocities(char* cad, double& lin_vel, double& ang_vel){
+void GeneralController::getVelocities(char* cad, float& lin_vel, float& ang_vel){
 	char* current_number;
-	double values[6];
+	float values[6];
 	int index = 0;
-	current_number = strtok(cad, ",");
-	//
+	current_number = std::strtok(cad, ",");
+	
 	while(current_number != NULL){
-		values[index++] = atof(current_number);
-		current_number = strtok(NULL, ",");
+		int cValue = std::atoi(current_number);
+		values[index++] = (float)((float)cValue/1000.0);
+		current_number = std::strtok(NULL, ",");
 	}
 	lin_vel = values[0];
 	ang_vel = values[1];
@@ -589,7 +591,7 @@ void* GeneralController::dynamicFaceThread(void* object){
 	}
 }
 
-void GeneralController::moveRobot(double lin_vel, double angular_vel){
+void GeneralController::moveRobot(float lin_vel, float angular_vel){
 	geometry_msgs::Twist twist_msg;
 	bool bumpersOk = false;
 	if(frontBumpersOk && rearBumpersOk){
@@ -1108,11 +1110,12 @@ void GeneralController::beginVideoStreaming(int videoDevice){
 	pthread_t t1;
 	stopVideoStreaming();
 
-	videoCapture.open(videoDevice);
+	videoCapture = cv::VideoCapture(videoDevice);
 	if(videoCapture.isOpened()){
 		std::cout << "Streaming from camera device: " << videoDevice << std::endl;
 		pthread_create(&t1, NULL, streamingThread, (void *)(this));
 	} else {
+		videoCapture.release();
 		std::cout << "Could not open device: " << videoDevice << std::endl;
 	}	
 	 
@@ -1124,6 +1127,7 @@ void GeneralController::stopVideoStreaming(){
 		streamingActive = MAYBE;
 		std::cout << "Stopping video streaming" << std::endl;
 		while(streamingActive != NO) Sleep(100);
+		videoCapture.release();
 	}
 }
 
