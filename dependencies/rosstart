@@ -1,0 +1,34 @@
+#! /bin/bash
+#
+# /etc/init.d/rosstart
+#
+# Author:
+#	Biel Piero Alvarado Vasquez <biel.piero@gmail.com>
+#
+### BEGIN INIT INFO
+# Provides:		rosstart
+# Required-Start:	$local_fs $remote_fs $network
+# Required-Stop:
+# Should-Start:		$named
+# Should-Stop:		$named
+# Default-Start:	2 3 4 5
+# Default-Stop:		0 1 6
+# Short-Description: Starts ROBOT kernel Applications.
+# Description: Starts ROS core services, and other applications.
+### END INIT INFO
+
+source /opt/ros/hydro/setup.bash
+source /home/bielpiero/catkin_ws/devel/setup.bash
+
+export ROS_HOSTNAME=ros_machine
+export ROS_IP=192.168.1.103
+export ROS_MAIN_URI=http://ros_machine:11311
+
+roscore&
+sleep 5
+
+rosrun rosaria RosAria&
+sleep 50
+rosrun lucky_bea lucky_bea&
+
+exit 0
