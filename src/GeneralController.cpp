@@ -1110,7 +1110,9 @@ void GeneralController::beginVideoStreaming(int videoDevice){
 	pthread_t t1;
 	stopVideoStreaming();
 
-	videoCapture = cv::VideoCapture(videoDevice);
+	cv::VideoCapture vc(0);
+	
+	videoCapture = vc;
 	if(videoCapture.isOpened()){
 		std::cout << "Streaming from camera device: " << videoDevice << std::endl;
 		pthread_create(&t1, NULL, streamingThread, (void *)(this));

@@ -50,7 +50,10 @@ int main(int argc, char** argv){
 	
 	ros::spin();
 	
-    while(continue_execution){
-    }
+    /*while(continue_execution){
+    }*/
+
+    delete robot;
+    ROS_INFO( "Lucky Bea: Quitting... \n" );
     return 0;
 }
