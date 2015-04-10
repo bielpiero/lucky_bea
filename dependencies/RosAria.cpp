@@ -680,13 +680,19 @@ void RosAriaNode::publish(){
         // PointCloud
         if(publish_laser_pointcloud){
           geometry_msgs::Point32 p;
+          sensor_msgs::ChannelFloat32 channel;
           double xCoord = (currentReadings->at(it).getRange() / 1000.0) * cos(currentReadings->at(it).getSensorTh() * M_PI / 180.0);
           double yCoord = (currentReadings->at(it).getRange() / 1000.0) * sin(currentReadings->at(it).getSensorTh() * M_PI / 180.0);
 
           p.x = xCoord;
           p.y = yCoord;
-          p.z = currentReadings->at(it).getExtraInt();
+          p.z = 0;
+
+          channel.name = "intensity";
+          channel.values.push_back(currentReadings->at(it).getExtraInt());
+
           laserDataPointCloud.points.push_back(p);
+          laserDataPointCloud.channels.push_back(channel);
         }
         if(publish_laser){
           laserData.ranges.push_back(currentReadings->at(it).getRange() / 1000.0);
