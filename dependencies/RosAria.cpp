@@ -164,6 +164,7 @@ void RosAriaNode::readParameters(){
     n_.setParam( "RevCount", RevCount);
     ROS_INFO("Setting RevCount from robot controller stored configuration: %d", RevCount);
   }
+
   robot->unlock();
 }
 
