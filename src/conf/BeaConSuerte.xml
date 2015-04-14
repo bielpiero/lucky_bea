@@ -1,5 +1,5 @@
 <GestosEstaticos>
-	<Gesto nombre="Alegre" id="0" tipo="0">
+	<Gesto name="Alegre" id="0" tipo="0">
 		<Motor cardId="1" id="0" pos="8285" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="8285" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="8285" speed="0" acceleration="0"/>
@@ -17,7 +17,7 @@
 		<Motor cardId="1" id="14" pos="4735" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="5852" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Asombro" id="1" tipo="0">
+	<Gesto name="Asombro" id="1" tipo="0">
 		<Motor cardId="1" id="0" pos="5270" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="5073" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -35,7 +35,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Cantando" id="2" tipo="1">
+	<Gesto name="Cantando" id="2" tipo="1">
 		<Motor cardId="1" id="0" pos="1500" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="1500" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="1500" speed="0" acceleration="0"/>
@@ -53,7 +53,7 @@
 		<Motor cardId="1" id="14" pos="1500" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="1500" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Desesperacion" id="3" tipo="0">
+	<Gesto name="Desesperacion" id="3" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -71,7 +71,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Desprecio" id="4" tipo="0">
+	<Gesto name="Desprecio" id="4" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -89,7 +89,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Disimulo" id="5" tipo="0">
+	<Gesto name="Disimulo" id="5" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -107,7 +107,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Dolor" id="6" tipo="0">
+	<Gesto name="Dolor" id="6" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -125,7 +125,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Dormida" id="7" tipo="0">
+	<Gesto name="Dormida" id="7" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -143,7 +143,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Enfado" id="8" tipo="0">
+	<Gesto name="Enfado" id="8" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -161,7 +161,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Felices sue�os" id="9" tipo="0">
+	<Gesto name="Felices sueños" id="9" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -179,7 +179,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Gritando" id="10" tipo="0">
+	<Gesto name="Gritando" id="10" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -197,7 +197,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Hablando" id="11" tipo="1">
+	<Gesto name="Hablando" id="11" tipo="1">
 		<Motor cardId="1" id="0" pos="4595" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="8182" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="7424" speed="0" acceleration="0"/>
@@ -215,7 +215,7 @@
 		<Motor cardId="1" id="14" pos="1500" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="1500" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Hipnotica" id="12" tipo="0">
+	<Gesto name="Hipnotica" id="12" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -233,7 +233,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Maldad" id="13" tipo="0">
+	<Gesto name="Maldad" id="13" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -251,7 +251,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Miedo" id="14" tipo="0">
+	<Gesto name="Miedo" id="14" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -269,7 +269,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Neutra" id="15" tipo="1">
+	<Gesto name="Neutra" id="15" tipo="1">
 		<Motor cardId="1" id="0" pos="3584" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="3584" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="3584" speed="0" acceleration="0"/>
@@ -287,7 +287,7 @@
 		<Motor cardId="1" id="14" pos="3584" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="3584" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Neutra guiño 1" id="16" tipo="0">
+	<Gesto name="Neutra guiño 1" id="16" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -305,7 +305,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Neutra guiño 2" id="17" tipo="0">
+	<Gesto name="Neutra guiño 2" id="17" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -323,7 +323,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Neutra guiño 3" id="18" tipo="0">
+	<Gesto name="Neutra guiño 3" id="18" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -341,7 +341,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Pena" id="19" tipo="0">
+	<Gesto name="Pena" id="19" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -359,7 +359,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Pensativa" id="20" tipo="0">
+	<Gesto name="Pensativa" id="20" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -377,7 +377,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Piripi" id="21" tipo="0">
+	<Gesto name="Piripi" id="21" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -395,7 +395,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Preocupada" id="22" tipo="0">
+	<Gesto name="Preocupada" id="22" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -413,7 +413,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Pucheros" id="23" tipo="1">
+	<Gesto name="Pucheros" id="23" tipo="1">
 		<Motor cardId="1" id="0" pos="2000" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="2000" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="2000" speed="0" acceleration="0"/>
@@ -431,7 +431,7 @@
 		<Motor cardId="1" id="14" pos="2000" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="2000" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Reojo" id="24" tipo="1">
+	<Gesto name="Reojo" id="24" tipo="1">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -449,7 +449,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Seria" id="25" tipo="0">
+	<Gesto name="Seria" id="25" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -467,7 +467,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Simpatia" id="26" tipo="0">
+	<Gesto name="Simpatia" id="26" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -485,7 +485,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Sonrisa media" id="27" tipo="0">
+	<Gesto name="Sonrisa media" id="27" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -503,7 +503,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Sonrisa grande" id="28" tipo="0">
+	<Gesto name="Sonrisa grande" id="28" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -521,7 +521,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Sonrisa maliciosa" id="29" tipo="0">
+	<Gesto name="Sonrisa maliciosa" id="29" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -539,7 +539,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Temor" id="30" tipo="0">
+	<Gesto name="Temor" id="30" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -557,7 +557,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Tranquila" id="31" tipo="0">
+	<Gesto name="Tranquila" id="31" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>
@@ -575,7 +575,7 @@
 		<Motor cardId="1" id="14" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="15" pos="" speed="0" acceleration="0"/>
 	</Gesto>
-	<Gesto nombre="Triste" id="32" tipo="0">
+	<Gesto name="Triste" id="32" tipo="0">
 		<Motor cardId="1" id="0" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="" speed="0" acceleration="0"/>

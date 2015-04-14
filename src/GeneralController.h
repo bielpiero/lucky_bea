@@ -14,6 +14,8 @@
 #include "UDPClient.h"
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
+#include "xmldefs.h"
+#include "semdefs.h"
 
 #include "Matrix.h"
 #include "stats.h"
@@ -25,20 +27,7 @@
 #define PACKAGE_NAME "lucky_bea"
 
 #define XML_FILE_PATH "/src/conf/BeaConSuerte.xml"
-
-#define XML_STATIC_GESTURES_STR "GestosEstaticos"
-#define XML_DYNAMIC_GESTURES_STR "GestosDinamicos"
-
-#define XML_ATTRIBUTE_ID_STR "id"
-#define XML_ATTRIBUTE_CARD_ID_STR "cardId"
-#define XML_ATTRIBUTE_POSITION_STR "pos"
-#define XML_ATTRIBUTE_SPEED_STR "speed"
-#define XML_ATTRIBUTE_ACCELERATION_STR "acceleration"
-#define XML_ATTRIBUTE_TYPE_STR "tipo"
-#define XML_ATTRIBUTE_NAME_STR "nombre"
-
-#define XML_ELEMENT_GESTURE_STR "Gesto"
-#define XML_ELEMENT_MOTOR_STR "Motor"
+#define XML_FILE_SECTORS_PATH "/src/conf/BeaSectors.xml"
 
 #define YES 1
 #define NO 0
@@ -87,6 +76,40 @@ struct dynamic_face_info{
 	GeneralController* object;
 };
 
+struct s_landmark{
+	int id;
+	int var;
+	int xpos;
+	int ypos;
+};
+
+struct s_feature{
+	int id;
+	std::string name;
+	int var;
+	int xpos;
+	int ypos;
+};
+
+struct s_site{
+	int id;
+	std::string name;
+	int tsec;
+	int var;
+	int xpos;
+	int ypos;
+};
+
+struct s_sector{
+	int id;
+	std::string name;
+	int width;
+	int height;
+	std::vector<s_landmark*> *landmarks;
+	std::vector<s_feature*> *features;
+	std::vector<s_site*> *sites;
+};
+
 
 class GeneralController : public CSocketNode // la clase GeneralController hereda de la clase CSocketNode
 {
@@ -95,6 +118,7 @@ private:
 	bool continue_dynamic_thread;
 	
 	std::string xmlFaceFullPath;
+	std::string xmlSectorsFullPath;
 	
 		
 public:
@@ -120,8 +144,6 @@ private:
 	void setServoPosition(unsigned char card_id, unsigned char servo_id, int position);
 	void setServoSpeed(unsigned char card_id, unsigned char servo_id, int speed);
 	void setServoAcceleration(unsigned char card_id, unsigned char servo_id, int speed);
-
-	
 	
 	static void* dynamicFaceThread(void*);
 	
@@ -131,6 +153,7 @@ public:
 	void bumperStateCallback(const rosaria::BumperState::ConstPtr& bumpers);
 	void poseStateCallback(const nav_msgs::Odometry::ConstPtr& pose);
 	void batteryVoltageCallback(const std_msgs::Float64::ConstPtr& battery);
+	void batteryRechargeStateCallback(const std_msgs::Int8::ConstPtr& battery);
 	
 	void sonarStateCallback(const sensor_msgs::PointCloud::ConstPtr& sonar);
 	void sonarPointCloud2StateCallback(const sensor_msgs::PointCloud2::ConstPtr& sonar);
@@ -164,6 +187,7 @@ private:
 	
 	std::vector<Matrix> landmarks;
 	
+	bool setChargerPosition;
 	bool keepSpinning;
 	bool frontBumpersOk;
 	bool rearBumpersOk;
@@ -172,6 +196,9 @@ private:
 	unsigned char streamingActive;
 	
 	unsigned char keepRobotTracking;
+	s_sector* navSector;
+
+	void loadSector(int sectorId);
 	
 	void initializeSPDPort(char* cad);
 	

@@ -1,6 +1,11 @@
 #include "fuzzyStats.h"
 
 namespace fuzzy{
+
+	float fstats::area(float x1, float x2, float x3, float x4){
+		return (x4 + x3 - x2 - x1)/2.0;
+	}
+
 	float fstats::evaluateMF(mf* member, float value){
 		float result;
 		if(member != NULL){
@@ -18,6 +23,15 @@ namespace fuzzy{
 		}
 		return result;
 	}
+
+	float fstats::expectation(float x1, float x2, float x3, float x4){
+		float a = area(x1, x2, x3, x4);
+		float result = x1;
+		if(a > 0){
+			result = ((x4*x4 + x4*x3 + x3*x3) - (x2*x2 + x2*x1 + x1*x1))/(6 * a);
+		}
+		return result;
+	}
 	
 	float fstats::expectation(std::vector<float> evaluatedMembership, std::vector<float> values){
 		float result = fuzzy::nan;
@@ -29,6 +43,16 @@ namespace fuzzy{
 				valuesTotal += evaluatedMembership[i] * values[i];
 			}
 			result = valuesTotal / area;
+		}
+		return result;
+	}
+
+	float fstats::uncertainty(float x1, float x2, float x3, float x4){
+		float a = area(x1, x2, x3, x4);
+		float cent = expectation(x1, x2, x3, x4);
+		float result = 0;
+		if(a > 0){
+			result = (1/a) * (((1/(x2 - x1))*(((std::pow(x2, 4) - std::pow(x1, 4))/4) - ((x1*std::pow(x2, 3) - std::pow(x1, 4))/3))) + ((std::pow(x3, 3) - std::pow(x2, 3))/3) + ((1/(x4 - x3))*(((std::pow(x4, 4) - x4*std::pow(x3, 3))/3)-((std::pow(x4, 4) - std::pow(x3, 4))/4)))) - (cent*cent);
 		}
 		return result;
 	}

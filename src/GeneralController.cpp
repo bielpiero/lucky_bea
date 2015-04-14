@@ -16,6 +16,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	this->keepSpinning = true;
 	this->frontBumpersOk = true;
 	this->rearBumpersOk = true;
+	this->setChargerPosition = false;
 	this->streamingActive = NO;
 	this->keepRobotTracking = NO;
 	this->udpPort = 0;
@@ -31,7 +32,12 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	Q = Matrix(3, 3);
 	R = Matrix(3, 3);
 	spdUDPClient = NULL;
+
 	xmlFaceFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_PATH;
+	xmlSectorsFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_SECTORS_PATH;
+	navSector = NULL;
+	loadSector(0);
+
 	cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel", 1);
 	cmd_goto_pub = nh.advertise<geometry_msgs::Pose2D>("/RosAria/cmd_goto", 1);
 	pose2d_pub = nh.advertise<geometry_msgs::Pose2D>("/RosAria/cmd_set_pose", 1);
@@ -591,6 +597,88 @@ void* GeneralController::dynamicFaceThread(void* object){
 	}
 }
 
+void GeneralController::loadSector(int sectorId){
+	xml_document<> doc;
+    xml_node<>* root_node;
+	
+	std::string buffer_str = "";
+	
+    std::ifstream the_file(xmlSectorsFullPath.c_str());
+	
+    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+	buffer.push_back('\0');
+
+	doc.parse<0>(&buffer[0]);
+	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+
+	if(navSector != NULL){
+		delete navSector->landmarks;
+		delete navSector->features;
+		delete navSector->sites;
+		delete navSector;
+	}
+	navSector = new s_sector;
+
+	if(root_node != NULL){
+		for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){	
+
+			int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+			if(xmlSectorId == sectorId){
+				navSector->id = xmlSectorId;
+				navSector->name = std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+				navSector->width = atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value());
+				navSector->height = atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value());
+
+				navSector->landmarks = new std::vector<s_landmark*>();
+				navSector->features = new std::vector<s_feature*>();
+				navSector->sites = new std::vector<s_site*>();
+
+				xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
+				for(xml_node<>* landmark_node = landmarks_root_node->first_node(XML_ELEMENT_LANDMARK_STR); landmark_node; landmark_node = landmark_node->next_sibling()){
+					s_landmark* tempLandmark = new s_landmark;
+
+					tempLandmark->id = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+					tempLandmark->var = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_STR)->value());
+					tempLandmark->xpos = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value());
+					tempLandmark->ypos = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value());
+
+					navSector->landmarks->push_back(tempLandmark);
+				}
+
+				xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
+				for(xml_node<>* features_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); features_node; features_node = features_node->next_sibling()){
+					s_feature* tempFeature = new s_feature;
+
+					tempFeature->id = atoi(features_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+					tempFeature->name = std::string(features_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+					tempFeature->var = atoi(features_node->first_attribute(XML_ATTRIBUTE_VARIANCE_STR)->value());
+					tempFeature->xpos = atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value());
+					tempFeature->ypos = atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value());
+
+					navSector->features->push_back(tempFeature);
+					
+				}
+
+				xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+				for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
+					s_site* tempSite = new s_site;
+
+					tempSite->id = atoi(site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+					tempSite->name = std::string(site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+					tempSite->var = atoi(site_node->first_attribute(XML_ATTRIBUTE_VARIANCE_STR)->value());
+					tempSite->tsec = atoi(site_node->first_attribute(XML_ATTRIBUTE_TIME_STR)->value());
+					tempSite->xpos = atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value());
+					tempSite->ypos = atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value());
+
+					navSector->sites->push_back(tempSite);
+				}
+				
+			}
+		}
+	}
+	the_file.close();
+}
+
 void GeneralController::moveRobot(float lin_vel, float angular_vel){
 	geometry_msgs::Twist twist_msg;
 	bool bumpersOk = false;
@@ -736,32 +824,56 @@ void GeneralController::batteryVoltageCallback(const std_msgs::Float64::ConstPtr
 
 }
 
+void GeneralController::batteryRechargeStateCallback(const std_msgs::Int8::ConstPtr& battery){
+	if(!setChargerPosition && ((int)battery->data) > 0){
+		if(navSector != NULL){
+			setChargerPosition = true;
+			for(int i = 0; i< navSector->features->size(); i++){
+				if(navSector->features->at(i)->name == SEMANTIC_FEATURE_CHARGER_STR){
+					int xpos = navSector->features->at(i)->xpos * 10;
+					int ypos = navSector->features->at(i)->ypos * 10;
+					setRobotPosition(xpos, ypos, 0);
+				}
+			}
+		}
+	}
+}
+
 void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::ConstPtr& laser){
 	float range = MAX_RAND - MIN_RAND;
 	float angle_min = laser->angle_min;
 	float angle_max = laser->angle_max;
 	float angle_increment = laser->angle_increment;
 	std::vector<float> data = laser->ranges;
-	std::vector<int> dataIndices = stats::findIndicesLessThan(data, LASER_MAX_RANGE);
+	std::vector<float> dataIntensities = laser->intensities;
+
+	std::vector<int> dataIndices = stats::findIndicesHigherThan(dataIntensities, 0);
 	
 	landmarks.clear();
 	
 	std::vector<float> dataMean;
 	std::vector<float> dataAngles;
 	for(int i = 1; i < dataIndices.size(); i++){
-		if(((dataIndices[i] - dataIndices[i - 1]) == 1) && (i != (dataIndices.size() - 1))){
+		if(((dataIndices[i] - dataIndices[i - 1]) <= 2) && (i != (dataIndices.size() - 1))){
 			dataMean.push_back(data[dataIndices[i - 1]]);
 			dataAngles.push_back((angle_min + ((float)dataIndices[i - 1] * angle_increment)));
 		} else {
-			Matrix temp = Matrix(3, 1);
-			dataMean.push_back(data[dataIndices[i]]);
+			Matrix temp = Matrix(2, 1);
+			if(i != (dataIndices.size() - 1)){
+				dataMean.push_back(data[dataIndices[i - 1]]);
+				dataAngles.push_back((angle_min + ((float)dataIndices[i - 1] * angle_increment)));
+			} else {
+				dataMean.push_back(data[dataIndices[i]]);
+				dataAngles.push_back((angle_min + ((float)dataIndices[i] * angle_increment)));
+			}
 			
 			float distMean = stats::expectation(dataMean);
 			float angleMean = stats::expectation(dataAngles);
 			
-			temp(0, 0) = distMean * cos(angleMean);
-			temp(1, 0) = distMean * sin(angleMean);
-			temp(2, 1) = 0;
+			//temp(0, 0) = distMean * cos(angleMean);
+			//temp(1, 0) = distMean * sin(angleMean);
+			temp(0, 0) = distMean;
+			temp(1, 0) = angleMean;
 			landmarks.push_back(temp);
 			dataMean.clear();
 			dataAngles.clear();

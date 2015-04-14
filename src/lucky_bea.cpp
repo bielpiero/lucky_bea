@@ -41,6 +41,7 @@ int main(int argc, char** argv){
 	ros::Subscriber bumper_state = nh.subscribe("/RosAria/bumper_state", 100, &GeneralController::bumperStateCallback, robot);
 	ros::Subscriber pose_state = nh.subscribe("/RosAria/pose", 1, &GeneralController::poseStateCallback, robot);
 	ros::Subscriber battery_voltage_state = nh.subscribe("/RosAria/battery_voltage", 1, &GeneralController::batteryVoltageCallback, robot);
+	ros::Subscriber battery_recharge_state = nh.subscribe("/RosAria/battery_recharge_state", 1, &GeneralController::batteryRechargeStateCallback, robot);
 	
 	ros::Subscriber sonar_state = nh.subscribe("/RosAria/sonar", 1, &GeneralController::sonarStateCallback, robot);
 	ros::Subscriber sonar_pointcloud2_state = nh.subscribe("/RosAria/sonar_pointcloud2", 1, &GeneralController::sonarPointCloud2StateCallback, robot);
@@ -50,9 +51,6 @@ int main(int argc, char** argv){
 	
 	ros::spin();
 	
-    /*while(continue_execution){
-    }*/
-
     delete robot;
     ROS_INFO( "Lucky Bea: Quitting... \n" );
     return 0;
