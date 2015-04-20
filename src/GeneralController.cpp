@@ -17,6 +17,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	this->frontBumpersOk = true;
 	this->rearBumpersOk = true;
 	this->setChargerPosition = false;
+	this->hasAchievedGoal = false;
 	this->streamingActive = NO;
 	this->keepRobotTracking = NO;
 	this->udpPort = 0;
@@ -37,7 +38,6 @@ GeneralController::GeneralController(ros::NodeHandle nh_)
 	xmlSectorsFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_SECTORS_PATH;
 	navSector = NULL;
 	loadSector(0);
-
 	cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel", 1);
 	cmd_goto_pub = nh.advertise<geometry_msgs::Pose2D>("/RosAria/cmd_goto", 1);
 	pose2d_pub = nh.advertise<geometry_msgs::Pose2D>("/RosAria/cmd_set_pose", 1);
@@ -62,6 +62,7 @@ void GeneralController::OnConnection()//callback for client and server
 		stopDynamicGesture();
 		stopVideoStreaming();
 		stopRobotTracking();
+		stopCurrentTour();
 	}
 }
 void GeneralController::OnMsg(char* cad,int length){//callback for client and server
@@ -136,11 +137,8 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 			moveRobot(lin_vel, ang_vel);
 			break;
 		case 0x11:
-			trackRobot();
-			break;
-		case 0x12:
-			stopRobotTracking();
-			break;
+			startSitesTour();
+			break;	
 		case 0x13:
 			getPositions(cad, x, y, theta);
 			setRobotPosition(x, y, theta);
@@ -618,7 +616,7 @@ void GeneralController::loadSector(int sectorId){
 		delete navSector;
 	}
 	navSector = new s_sector;
-
+	navSector->sitesCyclic = false;
 	if(root_node != NULL){
 		for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){	
 
@@ -660,6 +658,10 @@ void GeneralController::loadSector(int sectorId){
 				}
 
 				xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+				std::string cyclic(sites_root_node->first_attribute(XML_ATTRIBUTE_CYCLIC_STR)->value());
+				if(cyclic == "yes"){
+					navSector->sitesCyclic = true;
+				}
 				for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
 					s_site* tempSite = new s_site;
 
@@ -691,8 +693,7 @@ void GeneralController::moveRobot(float lin_vel, float angular_vel){
 	} else {
 		bumpersOk = false;
 	}
-	if (bumpersOk)
-	{
+	if (bumpersOk){
 		twist_msg.linear.x = lin_vel;
 		twist_msg.linear.y = 0;
 		twist_msg.linear.z = 0;
@@ -700,9 +701,7 @@ void GeneralController::moveRobot(float lin_vel, float angular_vel){
 		twist_msg.angular.y = 0;
 		twist_msg.angular.z = angular_vel;
 		cmd_vel_pub.publish(twist_msg);
-	}
-	else
-	{
+	} else {
 		twist_msg.linear.x = 0;
 		twist_msg.linear.y = 0;
 		twist_msg.linear.z = 0;
@@ -710,7 +709,6 @@ void GeneralController::moveRobot(float lin_vel, float angular_vel){
 		twist_msg.angular.y = 0;
 		twist_msg.angular.z = 0;
 		cmd_vel_pub.publish(twist_msg);
-		
 	}
 	Sleep(100);
 	ros::spinOnce();
@@ -761,18 +759,14 @@ void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr
 	frontBumpersOk = true;
 	rearBumpersOk = true;
 
-	for (int i = 0; i < bumpers->front_bumpers.size(); i++)
-	{
-		if (bumpers->front_bumpers[i] && frontBumpersOk)
-		{
+	for (int i = 0; i < bumpers->front_bumpers.size(); i++){
+		if (bumpers->front_bumpers[i] && frontBumpersOk){
 			frontBumpersOk = false;
 		}
 	}
 
-	for (int i = 0; i < bumpers->rear_bumpers.size(); i++)
-	{
-		if (bumpers->rear_bumpers[i] && rearBumpersOk)
-		{
+	for (int i = 0; i < bumpers->rear_bumpers.size(); i++){
+		if (bumpers->rear_bumpers[i] && rearBumpersOk){
 			rearBumpersOk = false;
 		}
 	}
@@ -827,16 +821,27 @@ void GeneralController::batteryVoltageCallback(const std_msgs::Float64::ConstPtr
 void GeneralController::batteryRechargeStateCallback(const std_msgs::Int8::ConstPtr& battery){
 	if(!setChargerPosition && ((int)battery->data) > 0){
 		if(navSector != NULL){
-			setChargerPosition = true;
+			
 			for(int i = 0; i< navSector->features->size(); i++){
 				if(navSector->features->at(i)->name == SEMANTIC_FEATURE_CHARGER_STR){
-					int xpos = navSector->features->at(i)->xpos * 10;
-					int ypos = navSector->features->at(i)->ypos * 10;
-					setRobotPosition(xpos, ypos, 0);
+					setChargerPosition = true;
+					float xpos = (float)navSector->features->at(i)->xpos / 100;
+					float ypos = (float)navSector->features->at(i)->ypos / 100;
+					Sleep(100);
+					setRobotPosition(xpos, ypos, M_PI/2);
 				}
 			}
 		}
 	}
+}
+
+void GeneralController::goalAchievementStateCallback(const std_msgs::Int8::ConstPtr& hasAchieved){
+	if(((int)hasAchieved->data) == 0){
+		this->hasAchievedGoal = false;
+	} else {
+		this->hasAchievedGoal = true;
+	}
+
 }
 
 void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::ConstPtr& laser){
@@ -880,11 +885,52 @@ void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::Con
 		}
 	}
 	Sleep(100);
+
+	//for(int i = 0; i < landmarks.size(); i++){
+	//	std::cout << "landmarks [" << i << "]: " << landmarks[i] << std::endl;
+	//}
 }
 
 void GeneralController::laserPointCloudStateCallback(const sensor_msgs::PointCloud::ConstPtr& laser){
 
 }
+
+void GeneralController::startSitesTour(){
+	pthread_t tourThread;
+	stopCurrentTour();
+	
+	std::cout << "Starting tour in current sector..." << std::endl;
+	pthread_create(&tourThread, NULL, sitesTourThread, (void *)(this));
+}
+
+void* GeneralController::sitesTourThread(void* object){
+	GeneralController* self = (GeneralController*)object;
+	self->keepTourAlive = YES;
+	int goalIndex = 0;
+	//self->goToPosition(self->robotEncoderPosition(0, 0), self->robotEncoderPosition(1, 0), self->robotEncoderPosition(2, 0));
+	//Sleep(100);
+	while(ros::ok() && self->keepTourAlive == YES){
+		float xpos = (float)self->navSector->sites->at(goalIndex)->xpos / 100;
+		float ypos = (float)self->navSector->sites->at(goalIndex)->ypos / 100;
+		Sleep(100);
+		self->goToPosition(xpos, ypos, 0.0);
+		goalIndex++;
+		if(goalIndex == self->navSector->sites->size()) goalIndex = 0;
+		while(!self->hasAchievedGoal && self->keepTourAlive == YES) Sleep(100);
+	}
+	self->keepTourAlive = NO;
+	return NULL;
+}
+
+void GeneralController::stopCurrentTour(){
+	if(keepTourAlive == YES){
+		keepTourAlive = MAYBE;
+		std::cout << "Stopping all tours..." << std::endl;
+		while(keepTourAlive != NO) Sleep(100);
+		ROS_INFO("All tours stopped...");
+	}
+}
+
 
 void GeneralController::initializeKalmanVariables(){
 	

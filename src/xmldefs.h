@@ -21,6 +21,7 @@
 #define XML_ELEMENT_SITES_STR "sites"
 #define XML_ELEMENT_SITE_STR "site"
 
+#define XML_ATTRIBUTE_CYCLIC_STR "cyclic"
 #define XML_ATTRIBUTE_VARIANCE_STR "var"
 #define XML_ATTRIBUTE_WIDTH_STR "width"
 #define XML_ATTRIBUTE_HEIGHT_STR "height"

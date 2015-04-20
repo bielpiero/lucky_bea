@@ -105,6 +105,7 @@ struct s_sector{
 	std::string name;
 	int width;
 	int height;
+	bool sitesCyclic;
 	std::vector<s_landmark*> *landmarks;
 	std::vector<s_feature*> *features;
 	std::vector<s_site*> *sites;
@@ -160,11 +161,14 @@ public:
 	
 	void laserScanStateCallback(const sensor_msgs::LaserScan::ConstPtr& laser);
 	void laserPointCloudStateCallback(const sensor_msgs::PointCloud::ConstPtr& laser);
+
+	void goalAchievementStateCallback(const std_msgs::Int8::ConstPtr& hasAchieved);
 	
 	void initializeKalmanVariables();
 	
 	void stopVideoStreaming();
 	void stopRobotTracking();
+	void stopCurrentTour();
 private:
 	static const float LASER_MAX_RANGE;
 	static const float MIN_RAND;
@@ -188,6 +192,7 @@ private:
 	std::vector<Matrix> landmarks;
 	
 	bool setChargerPosition;
+	bool hasAchievedGoal;
 	bool keepSpinning;
 	bool frontBumpersOk;
 	bool rearBumpersOk;
@@ -196,6 +201,7 @@ private:
 	unsigned char streamingActive;
 	
 	unsigned char keepRobotTracking;
+	unsigned char keepTourAlive;
 	s_sector* navSector;
 
 	void loadSector(int sectorId);
@@ -210,14 +216,16 @@ private:
 	void goToPosition(float x, float y, float th);
 	void getPositions(char* cad, float& x, float& y, float& theta);
 	void trackRobot();
+	void startSitesTour();
 	std::vector<fuzzy::trapezoid*> getStateTrapezoids(Matrix m);
-	
+
 	void getNumberOfCamerasAvailable(int& count);
 	void getCameraDevicePort(char* cad, int& device, int& port);
 	void beginVideoStreaming(int videoDevice);
 	
 	static void* streamingThread(void*);
 	static void* trackRobotThread(void*);
+	static void* sitesTourThread(void*);
 	
 };
 

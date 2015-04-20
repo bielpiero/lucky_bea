@@ -42,6 +42,8 @@ int main(int argc, char** argv){
 	ros::Subscriber pose_state = nh.subscribe("/RosAria/pose", 1, &GeneralController::poseStateCallback, robot);
 	ros::Subscriber battery_voltage_state = nh.subscribe("/RosAria/battery_voltage", 1, &GeneralController::batteryVoltageCallback, robot);
 	ros::Subscriber battery_recharge_state = nh.subscribe("/RosAria/battery_recharge_state", 1, &GeneralController::batteryRechargeStateCallback, robot);
+
+	ros::Subscriber goal_achievement_state = nh.subscribe("/RosAria/goal_achived", 1, &GeneralController::goalAchievementStateCallback, robot);
 	
 	ros::Subscriber sonar_state = nh.subscribe("/RosAria/sonar", 1, &GeneralController::sonarStateCallback, robot);
 	ros::Subscriber sonar_pointcloud2_state = nh.subscribe("/RosAria/sonar_pointcloud2", 1, &GeneralController::sonarPointCloud2StateCallback, robot);
