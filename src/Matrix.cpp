@@ -286,7 +286,6 @@ float Matrix::det(){
 		diagL = diagL * L(i, i);
 		diagU = diagU * U(i, i);
 	}
-	std::cout << "diagL: "<< diagL << std::endl;
 	determinant = diagL * diagU;
 	
 	return determinant;
