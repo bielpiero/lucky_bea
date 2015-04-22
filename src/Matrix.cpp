@@ -157,18 +157,32 @@ Matrix Matrix::inv(){
 	if(this->rows_size() != this->cols_size()){
 		throw std::invalid_argument("Invalid matrix dimension. Matrix must be square");
 	}
-	float determinant = det();
-	if(determinant == 0){
-		throw std::invalid_argument("This Matrix has no inverse");
-	}
+	Matrix self = *this;
+	Matrix I = eye(this->rows_size());
 	Matrix result(this->rows_size(), this->cols_size());
-	Matrix cof = cofactor();
-	   
-	for(int i = 0; i < this->rows_size(); i++){
-		for(int j = 0; j < this->cols_size(); j++){
-			result(i, j) = cof(i, j) / determinant;
+	Matrix L;
+	Matrix U;
+	self.factorizationLU(L, U);
+
+	for (int i = 0; i < this->rows_size(); i++){
+		Matrix Z(this->rows_size(), 1);
+		for (int j = 0; j < this->rows_size(); j++){
+			float sum = 0;
+			for (int k = 0; k < j; k++){
+				sum += L(j, k) * Z(k, 0);
+			}
+			Z(j, 0) = (I(i, j) - sum) / L(j, j);
+		}
+		
+		for (int j = this->rows_size() - 1; j >= 0; j--){
+			float sum = 0;
+			for (int k = j + 1; k < this->rows_size(); k++){
+				sum += U(j, k) * result(k, i);
+			}
+			result(j, i) = (Z(j, 0) - sum) / U(j, j);
 		}
 	}
+
 	return result;
 }
 
@@ -261,69 +275,47 @@ float Matrix::det(){
 	if(this->rows_size() != this->cols_size()){
 		throw std::invalid_argument("Invalid matrix dimension. Matrix must be square");
 	}
-	Matrix self = *this;
-	
-	return this->det(*this);
-}
-
-float Matrix::det(Matrix rhs){
-
 	float determinant = 0;
-	if(rhs.rows_size() == 1){
-		determinant = rhs(0, 0);
-	} else if(rhs.rows_size() == 2){
-		determinant = (rhs(0, 0) * rhs(1, 1)) - (rhs(0, 1) * rhs(1, 0));
-	} else {
+	Matrix self = *this;
+	Matrix L;
+	Matrix U;
+	self.factorizationLU(L, U);
 
-		Matrix minor(rhs.rows_size() - 1, rhs.cols_size() - 1);
-		for(int x = 0; x < rhs.rows_size(); x++){
-			for(int i = 1; i < rhs.rows_size(); i++){
-				int j2 = 0;
-				for(int j = 0; j < rhs.rows_size(); j++){
-					if(j == x){ continue; }
-					minor(i - 1, j2) = rhs(i, j);
-					j2++;
-				}
-			}
-			determinant += std::pow(-1.0, x + 2) * rhs(0, x) * det(minor);
-		}
+	float diagL = 1, diagU = 1;
+	for(int i = 0; i < self.rows_size(); i++){
+		diagL = diagL * L(i, i);
+		diagU = diagU * U(i, i);
 	}
+	std::cout << "diagL: "<< diagL << std::endl;
+	determinant = diagL * diagU;
+	
 	return determinant;
 }
 
-Matrix Matrix::cofactor(){
-	Matrix self = *this;
-	Matrix result = Matrix(this->rows, this->cols);
-	
-	for(int i = 0; i < this->rows; i++){
-		for(int j = 0; j < this->cols; j++){
-			result(i, j) = 1;
-		}
-	}
-		
-	if(self.rows_size() > 1){
-		Matrix bMat(this->rows - 1, this->cols - 1);
-		for (int j = 0; j < this->cols; j++){
-			for (int i = 0; i < this->rows; i++){
-				int i1 = 0;
-				for(int ii = 0; ii < this->rows; ii++){
-					if(ii != i) {
-						int j1 = 0;
-						for (int jj = 0; jj < this->cols; jj++){
-							if(jj != j){
-								bMat(i1, j1) = self(ii, jj);
-								j1++;
-							}
-						}
-						i1++;
-					}
-				}
-				float deter = det(bMat);
-				result(i, j) = std::pow(-1.0, i + j + 2.0) * deter;
+void Matrix::factorizationLU(Matrix& L, Matrix& U){
+	Matrix rhs = *this;
+
+	L = Matrix(rhs.rows_size(), rhs.cols_size());
+	U = eye(rhs.rows_size());	
+	float sum = 0;
+
+	for(int j = 0; j < rhs.rows_size(); j++){
+		for(int i = j; i < rhs.rows_size(); i++){
+			sum = 0;
+			for(int k = 0; k < j; k++){
+				sum += L(i, k) * U(k, j);
 			}
+			L(i, j) = rhs(i, j) - sum;
+		}
+
+		for(int i = j; i < rhs.rows_size(); i++){
+			sum = 0;
+			for(int k = 0; k < j; k++){
+				sum += L(j, k) * U(k, i);
+			}
+			U(j, i) = (rhs(j, i) - sum) / L(j, j);
 		}
 	}
-	return result;
 }
 
 Matrix Matrix::abs(){

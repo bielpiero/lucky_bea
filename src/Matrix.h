@@ -13,7 +13,6 @@ class Matrix{
 		unsigned int cols;
 		std::vector<std::vector<float> > data;
 
-		float det(Matrix rhs);
 	public:
 		Matrix(unsigned int rows = 1, unsigned int cols = 1);
 		virtual ~Matrix();
@@ -46,14 +45,13 @@ class Matrix{
 		Matrix eig();
 		Matrix roots();
 		Matrix abs();
-		Matrix cofactor();
 		
 		Matrix sort(int mode = MATRIX_ASCENDING);
 		
 		static Matrix eye(int dim);
 		
 		float det();
-		
+		void factorizationLU(Matrix& L, Matrix& U);
 		void svd(Matrix& u, Matrix& s, Matrix& v);
 		
 		friend std::ostream& operator<< (std::ostream& osObj, const Matrix& rhs);

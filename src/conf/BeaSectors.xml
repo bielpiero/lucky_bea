@@ -1,15 +1,15 @@
 <sectors>
 	<sector id="0" name="Mobile Robots" width="900" height="410">
 		<landmarks>
-			<landmark id="0" var="12" xpos="48" ypos="150"/>
+			<landmark id="0" var="12" xpos="50" ypos="150"/>
 			<landmark id="1" var="12" xpos="105" ypos="350"/>
 			<landmark id="2" var="12" xpos="250" ypos="400"/>
 			<landmark id="3" var="12" xpos="260" ypos="50"/>
-			<landmark id="4" var="12" xpos="380" ypos="310"/>
-			<landmark id="5" var="12" xpos="425" ypos="110"/>
-			<landmark id="6" var="12" xpos="575" ypos="310"/>
-			<landmark id="7" var="12" xpos="600" ypos="110"/>
-			<landmark id="8" var="12" xpos="700" ypos="205"/>
+			<landmark id="4" var="12" xpos="375" ypos="310"/>
+			<landmark id="5" var="12" xpos="410" ypos="110"/>
+			<landmark id="6" var="12" xpos="530" ypos="310"/>
+			<landmark id="7" var="12" xpos="575" ypos="110"/>
+			<landmark id="8" var="12" xpos="700" ypos="210"/>
 		</landmarks>
 		<features>
 			<feature id="0" name="charger" var="25" xpos="640" ypos="350"/>
