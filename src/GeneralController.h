@@ -28,6 +28,7 @@
 
 #define XML_FILE_PATH "/src/conf/BeaConSuerte.xml"
 #define XML_FILE_SECTORS_PATH "/src/conf/BeaSectors.xml"
+#define XML_FILE_ROBOT_CONFIG_PATH "/src/conf/BeaRobotConfig.xml"
 
 #define YES 1
 #define NO 0
@@ -36,9 +37,6 @@
 #define STATE_VARIABLES 3
 
 #define MAX_LANDMAKS 20;
-
-#define STATE_RANGE_X 0
-#define STATE_RANGE_Y 10
 
 #define X_INDEX 0
 #define V_INDEX 3
@@ -74,6 +72,35 @@ struct s_movement{
 struct dynamic_face_info{
 	std::string id_gesto;
 	GeneralController* object;
+};
+
+struct s_trapezoid{
+	float x1;
+	float x2;
+	float x3;
+	float x4;
+};
+
+struct s_position{
+	s_trapezoid* xZone;
+	s_trapezoid* yZone;
+	s_trapezoid* thZone;
+};
+
+struct s_obs_dth{
+	s_trapezoid* dZone;
+	s_trapezoid* thZone;
+};
+
+struct s_navigation_params{
+	float alpha;
+	s_position* initialPosition;
+	s_position* processNoise;
+	s_obs_dth* observationNoise;
+};
+
+struct s_robot{
+	s_navigation_params* navParams;
 };
 
 struct s_landmark{
@@ -120,7 +147,7 @@ private:
 	
 	std::string xmlFaceFullPath;
 	std::string xmlSectorsFullPath;
-	
+	std::string xmlRobotConfigFullPath;
 		
 public:
 	GeneralController(ros::NodeHandle nh_);
@@ -169,6 +196,7 @@ public:
 	void stopVideoStreaming();
 	void stopRobotTracking();
 	void stopCurrentTour();
+	void trackRobot();
 private:
 	static const float LASER_MAX_RANGE;
 	static const float MIN_RAND;
@@ -203,8 +231,10 @@ private:
 	unsigned char keepRobotTracking;
 	unsigned char keepTourAlive;
 	s_sector* navSector;
+	s_robot* robotConfig;
 
 	void loadSector(int sectorId);
+	void loadRobotConfig();
 	
 	void initializeSPDPort(char* cad);
 	
@@ -215,9 +245,12 @@ private:
 	void setRobotPosition(float x, float y, float theta);
 	void goToPosition(float x, float y, float th);
 	void getPositions(char* cad, float& x, float& y, float& theta);
-	void trackRobot();
+	
 	void startSitesTour();
-	std::vector<fuzzy::trapezoid*> getStateTrapezoids(Matrix m);
+	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
+	std::vector<fuzzy::trapezoid*> getObservationsTrapezoids();
+	Matrix normalizeAngles(Matrix trap);
+	Matrix denormalizeAngles(Matrix trap);
 
 	void getNumberOfCamerasAvailable(int& count);
 	void getCameraDevicePort(char* cad, int& device, int& port);

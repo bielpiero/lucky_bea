@@ -21,6 +21,16 @@
 #define XML_ELEMENT_SITES_STR "sites"
 #define XML_ELEMENT_SITE_STR "site"
 
+#define XML_ELEMENT_ROBOT_STR "robot"
+#define XML_ELEMENT_NAV_PARAMS_STR "navigation-params"
+#define XML_ELEMENT_INITIAL_POS_STR "initial-position"
+#define XML_ELEMENT_PROCESS_NOISE_STR "process-noise"
+#define XML_ELEMENT_OBSERV_NOISE_STR "observation-noise"
+#define XML_ELEMENT_POS_X_ZONE_STR "x-zone"
+#define XML_ELEMENT_POS_Y_ZONE_STR "y-zone"
+#define XML_ELEMENT_POS_TH_ZONE_STR "th-zone"
+#define XML_ELEMENT_POS_D_ZONE_STR "d-zone"
+
 #define XML_ATTRIBUTE_CYCLIC_STR "cyclic"
 #define XML_ATTRIBUTE_VARIANCE_STR "var"
 #define XML_ATTRIBUTE_WIDTH_STR "width"
@@ -28,3 +38,9 @@
 #define XML_ATTRIBUTE_TIME_STR "tsec"
 #define XML_ATTRIBUTE_X_POSITION_STR "xpos"
 #define XML_ATTRIBUTE_Y_POSITION_STR "ypos"
+
+#define XML_ATTRIBUTE_ALPHA_STR "alpha"
+#define XML_ATTRIBUTE_TRAP_X1_STR "x1"
+#define XML_ATTRIBUTE_TRAP_X2_STR "x2"
+#define XML_ATTRIBUTE_TRAP_X3_STR "x3"
+#define XML_ATTRIBUTE_TRAP_X4_STR "x4"

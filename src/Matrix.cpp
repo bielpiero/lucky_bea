@@ -248,6 +248,64 @@ Matrix Matrix::sort(int mode){
 	return result;
 }
 
+Matrix Matrix::sort_rows(int mode){
+	Matrix self = *this;
+	Matrix result = self;
+	for(int j = 0; j < this->cols; j++){
+		bool change = true;
+		while(change){
+			change = false;
+			for(int i = 0; i < this->rows - 1; i++){
+				if(mode == MATRIX_ASCENDING){
+					if(result(i, j) > result(i + 1, j)){
+						float tempValue = result(i + 1, j);
+						result(i + 1, j) = result(i, j);
+						result(i, j) = tempValue;
+						change = true;
+					}
+				} else {
+					if(result(i, j) < result(i + 1, j)){
+						float tempValue = result(i + 1, j);
+						result(i + 1, j) = result(i, j);
+						result(i, j) = tempValue;
+						change = true;
+					}
+				}
+			}
+		}
+	}
+	return result;
+}
+
+Matrix Matrix::sort_cols(int mode){
+	Matrix self = *this;
+	Matrix result = self;
+	for(int i = 0; i < this->rows; i++){
+		bool change = true;
+		while(change){
+			change = false;
+			for(int j = 0; j < this->cols - 1; j++){
+				if(mode == MATRIX_ASCENDING){
+					if(result(i, j) > result(i, j + 1)){
+						float tempValue = result(i, j + 1);
+						result(i, j + 1) = result(i, j);
+						result(i, j) = tempValue;
+						change = true;
+					}
+				} else {
+					if(result(i, j) < result(i, j + 1)){
+						float tempValue = result(i, j + 1);
+						result(i, j + 1) = result(i, j);
+						result(i, j) = tempValue;
+						change = true;
+					}
+				}
+			}
+		}
+	}
+	return result;
+}
+
 Matrix Matrix::eye(int dim){
 	if(dim < 2){
 		throw std::invalid_argument("Invalid matrix dimension. It must be higher or equal to two");

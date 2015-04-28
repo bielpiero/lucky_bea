@@ -47,6 +47,8 @@ class Matrix{
 		Matrix abs();
 		
 		Matrix sort(int mode = MATRIX_ASCENDING);
+		Matrix sort_cols(int mode = MATRIX_ASCENDING);
+		Matrix sort_rows(int mode = MATRIX_ASCENDING);
 		
 		static Matrix eye(int dim);
 		

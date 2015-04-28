@@ -3,7 +3,7 @@
 		<landmarks>
 			<landmark id="0" var="12" xpos="50" ypos="150"/>
 			<landmark id="1" var="12" xpos="105" ypos="350"/>
-			<landmark id="2" var="12" xpos="250" ypos="400"/>
+			<landmark id="2" var="12" xpos="245" ypos="400"/>
 			<landmark id="3" var="12" xpos="260" ypos="50"/>
 			<landmark id="4" var="12" xpos="375" ypos="310"/>
 			<landmark id="5" var="12" xpos="410" ypos="110"/>

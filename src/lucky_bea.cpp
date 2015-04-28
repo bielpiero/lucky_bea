@@ -51,6 +51,7 @@ int main(int argc, char** argv){
 	ros::Subscriber laser_state = nh.subscribe("/RosAria/laser", 1, &GeneralController::laserScanStateCallback, robot);
 	ros::Subscriber laser_pointcloud_state = nh.subscribe("/RosAria/laser_pointcloud", 1, &GeneralController::laserPointCloudStateCallback, robot);
 	
+	
 	ros::spin();
 	
     delete robot;

@@ -1,0 +1,18 @@
+<robot>
+	<navigation-params alpha="50">
+		<initial-position>
+			<x-zone x1="-30" x2="-25" x3="25" x4="30"/> <!-- centimeters -->
+			<y-zone x1="-30" x2="-25" x3="25" x4="30"/> <!-- centimeters -->
+			<th-zone x1="-80" x2="-70" x3="70" x4="80"/> <!-- milliradians -->
+		</initial-position>
+		<process-noise>
+			<x-zone x1="-15" x2="-10" x3="10" x4="15"/>
+			<y-zone x1="-15" x2="-10" x3="10" x4="15"/>
+			<th-zone x1="-15" x2="-10" x3="10" x4="15"/> <!-- milliradians -->
+		</process-noise>
+		<observation-noise mode="d-th">
+			<d-zone x1="-100" x2="-50" x3="50" x4="100"/>
+			<th-zone x1="-200" x2="-175" x3="175" x4="200"/> <!-- milliradians -->
+		</observation-noise>
+	</navigation-params>
+</robot>
