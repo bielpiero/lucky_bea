@@ -91,8 +91,8 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-find_package(OpenCV REQUIRED)
 find_package(PkgConfig REQUIRED)
+find_package(OpenCV REQUIRED)
 pkg_search_module(LIBUSB_1 REQUIRED libusb-1.0)
 include_directories(include ${LIBUSB_1_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})

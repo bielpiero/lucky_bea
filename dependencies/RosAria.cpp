@@ -62,6 +62,9 @@ class RosAriaNode{
     ros::Publisher sonar_pointcloud2_pub;
     ros::Publisher voltage_pub;
 
+    ros::Publisher goal_achived_pub;
+    std_msgs::Int8 haveAchievedGoal;;
+
     ros::Publisher recharge_state_pub;
     std_msgs::Int8 recharge_state;
 
@@ -287,6 +290,8 @@ sonar_enabled(false), publish_sonar(false), publish_sonar_pointcloud2(false), pu
   frame_id_sonar = tf::resolve(tf_prefix, "sonar_frame");
   frame_id_laser = tf::resolve(tf_prefix, "laser_frame");
 
+  gotoPoseAction = NULL;
+
   // advertise services for data topics
   // second argument to advertise() is queue size.
   // other argmuments (optional) are callbacks, or a boolean "latch" flag (whether to send current data to new
@@ -312,6 +317,7 @@ sonar_enabled(false), publish_sonar(false), publish_sonar_pointcloud2(false), pu
   recharge_state_pub = n.advertise<std_msgs::Int8>("battery_recharge_state", 5, true /*latch*/ );
   recharge_state.data = -2;
   state_of_charge_pub = n.advertise<std_msgs::Float32>("battery_state_of_charge", 100);
+  goal_achived_pub= n.advertise<std_msgs::Int8>("goal_achived", 100);
 
   motors_state_pub = n.advertise<std_msgs::Bool>("motors_state", 5, true /*latch*/ );
   motors_state.data = false;
@@ -474,6 +480,10 @@ int RosAriaNode::Setup(){
   // Run ArRobot background processing thread
   robot->runAsync(true);
 
+  // Added Goto Actions
+  gotoPoseAction = new ArActionGoto("goto", ArPose(0.0, 0.0, 0.0), 100, 100, 100);
+  robot->addAction(gotoPoseAction, 89);
+
   //added laser range device
   laserConnector = new ArLaserConnector(argparser, robot, conn);
   if(!laserConnector->connectLasers(false, false, true)){
@@ -490,8 +500,7 @@ int RosAriaNode::Setup(){
     ROS_INFO("Connected to SICK LMS200 laser.");
   }
 
-  gotoPoseAction = new ArActionGoto("goto", ArPose(0.0, 0.0, 0.0), 100, 100, 100);
-  robot->addAction(gotoPoseAction, 89);
+  
   return 0;
 }
 
@@ -574,6 +583,13 @@ void RosAriaNode::publish(){
     soc.data = robot->getStateOfCharge()/100.0;
     state_of_charge_pub.publish(soc);
   }
+
+  //Publish current goal achivement
+  haveAchievedGoal.data = 0;
+  if(gotoPoseAction != NULL && gotoPoseAction->haveAchievedGoal()){
+    haveAchievedGoal.data = 1;
+  }
+  goal_achived_pub.publish(haveAchievedGoal);
 
   // publish recharge state if changed
   char s = robot->getChargeState();
