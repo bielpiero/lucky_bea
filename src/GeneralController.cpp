@@ -1601,13 +1601,18 @@ void GeneralController::stopRobotTracking(){
 void GeneralController::beginVideoStreaming(int videoDevice){
 	pthread_t t1;
 	stopVideoStreaming();
-	
-	videoCapture = cv::VideoCapture(videoDevice);
-	if(videoCapture.isOpened()){
+
+	try{
+		vc = cv::VideoCapture(videoDevice);
+	} catch(cv::Exception& e){
+		std::cout << "Exception caught: " << e.what() << std::endl;
+	}
+
+	if(vc.isOpened()){
 		std::cout << "Streaming from camera device: " << videoDevice << std::endl;
 		pthread_create(&t1, NULL, streamingThread, (void *)(this));
 	} else {
-		videoCapture.release();
+		vc.release();
 		std::cout << "Could not open device: " << videoDevice << std::endl;
 	}	
 	 
@@ -1619,7 +1624,7 @@ void GeneralController::stopVideoStreaming(){
 		streamingActive = MAYBE;
 		std::cout << "Stopping video streaming" << std::endl;
 		while(streamingActive != NO) Sleep(100);
-		videoCapture.release();
+		vc.release();
 	}
 }
 
@@ -1628,13 +1633,13 @@ void GeneralController::getNumberOfCamerasAvailable(int& count){
 	bool firstCrash = false;
 	for(int i = 0; i < 10 && !firstCrash; i++)
 	{
-		cv::VideoCapture vc(i);
+		/*cv::VideoCapture vc(i);
 		if(vc.isOpened()){
 			value++;
 			vc.release();
 		} else{
 			firstCrash = true;
-		}
+		}*/
 	}
 	count = value;
 }
@@ -1647,16 +1652,17 @@ void* GeneralController::streamingThread(void* object){
 	std::vector<uchar> buff;
 	std::vector<int> params = vector<int>(2);
 	params[0] = CV_IMWRITE_JPEG_QUALITY;
-	params[1] = 85;
+	params[1] = 95;
 	
 	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), self->udpPort);
 	while(ros::ok() && self->streamingActive == YES){
-		self->videoCapture >> frame;
+		self->vc >> frame;
 		cv::imencode(".jpg", frame, buff, params);
 		udp_client->sendData(&buff[0], buff.size());
+		Sleep(30);
 	}
 	udp_client->closeConnection();
-	self->videoCapture.release();
+	self->vc.release();
 	self->streamingActive = NO;
 	return NULL;
 }

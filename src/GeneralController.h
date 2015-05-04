@@ -206,8 +206,8 @@ private:
 	ros::Publisher cmd_vel_pub;
 	ros::Publisher cmd_goto_pub;
 	ros::Publisher pose2d_pub;
-	cv::VideoCapture videoCapture;
-	
+	//OpenCV
+	cv::VideoCapture vc;
 	//possibilistic navigation
 	Matrix robotVelocity;
 	Matrix robotEncoderPosition;

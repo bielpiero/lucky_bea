@@ -41,6 +41,8 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>opencv2</build_depend>
+  <build_depend>opencv</build_depend>
+  <build_depend>OpenCV</build_depend>
   <build_depend>rosaria</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>roslib</build_depend>

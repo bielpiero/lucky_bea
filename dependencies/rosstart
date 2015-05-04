@@ -18,17 +18,24 @@
 ### END INIT INFO
 
 source /opt/ros/hydro/setup.bash
-source /home/bielpiero/catkin_ws/devel/setup.bash
+source /home/doris/catkin_ws/devel/setup.bash
 
 export ROS_HOSTNAME=ros_machine
-export ROS_IP=192.168.1.103
+export ROS_IP=192.168.1.101
 export ROS_MAIN_URI=http://ros_machine:11311
+
+sudo chmod a+rw -R /dev/video0
+sudo chmod a+rw -R /dev/video1
+sudo chmod 777 /dev/ttyS2
+stty -F /dev/ttyS2 19200
+sudo setserial /dev/ttyS2 irq 10
+sudo setserial /dev/ttyS3 irq 5
 
 roscore&
 sleep 5
 
 rosrun rosaria RosAria&
 sleep 50
-rosrun lucky_bea lucky_bea&
+#rosrun lucky_bea lucky_bea&
 
 exit 0

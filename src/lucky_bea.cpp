@@ -8,10 +8,9 @@ bool continue_execution = true;
 void signalHandler(int s){
 	printf("Shutdown application Requested. Stopping Services...\n");
 	continue_execution = false;
-	robot->stopVideoStreaming();
-	robot->Close();
-	if(ros::ok())
-	{
+	//robot->stopVideoStreaming();
+	//robot->Close();
+	if(ros::ok()){
 		ros::shutdown();
 	}
 	printf("Succesfully closed...\n");
@@ -28,11 +27,12 @@ int main(int argc, char** argv){
 
     sigaction(SIGINT, &sigIntHandler, NULL);
     sigaction(SIGTERM, &sigIntHandler, NULL);
-	std::cout << "Lucky Bea for Doris. To control the IC Group Robot named Doris" << std::endl << std::endl << "Press Ctrl+Z to exit." << std::endl;
+	
 	ros::init(argc, argv, "bea_con_suerte");
 	ros::start();
 	ros::NodeHandle nh;
-	
+	ROS_INFO("Lucky Bea for Doris. To control the IC Group Robot named Doris");
+	ROS_INFO("Press Ctrl+C to exit");
     robot = new GeneralController(nh);
     robot->Init("", 14004, SOCKET_SERVER);
     robot->StartThread();
@@ -61,7 +61,7 @@ int main(int argc, char** argv){
 	robot->OnConnection();
 	ros::spin();
 	
-    delete robot;
+    //delete robot;
     ROS_INFO( "Lucky Bea: Quitting... \n" );
     return 0;
 }
