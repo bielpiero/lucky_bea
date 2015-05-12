@@ -901,6 +901,11 @@ void GeneralController::poseStateCallback(const nav_msgs::Odometry::ConstPtr& po
 	float q0 = pose->pose.pose.orientation.w; //quaternion scalar component
 	
 	float theta = std::atan2((2*(q0 * q3)), (1 - 2 * (std::pow(q3, 2))));
+    if(theta < 0){
+        theta = theta + 2 * M_PI;
+    } else if(theta >= (2 * M_PI)){
+        theta = theta - 2 * M_PI;
+    }
 	
 	robotEncoderPosition(0, 0) = pose->pose.pose.position.x;
 	robotEncoderPosition(1, 0) = pose->pose.pose.position.y;
@@ -991,6 +996,12 @@ void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::Con
 			
 			float distMean = stats::expectation(dataMean);
 			float angleMean = stats::expectation(dataAngles);
+            
+            if(angleMean < 0){
+                angleMean = angleMean + 2 * M_PI;
+            } else if(angleMean >= (2 * M_PI)){
+                angleMean = angleMean - 2 * M_PI;
+            }
 			
 			//temp(0, 0) = distMean * cos(angleMean);
 			//temp(1, 0) = distMean * sin(angleMean);
@@ -1111,19 +1122,6 @@ void GeneralController::initializeKalmanVariables(){
 			R(i, i) = uX;
 		}
 	}
-
-	Matrix matXk(1, TRAP_VERTEX);
-	matXk(0, 0) = xThKK->getVertexA();
-	matXk(0, 1) = xThKK->getVertexB();
-	matXk(0, 2) = xThKK->getVertexC();
-	matXk(0, 3) = xThKK->getVertexD();
-
-	matXk = normalizeAngles(matXk);
-	xThKK->setVertexA(matXk(0, 0));
-	xThKK->setVertexB(matXk(0, 1));
-	xThKK->setVertexC(matXk(0, 2));
-	xThKK->setVertexD(matXk(0, 3));
-
 }
 
 void GeneralController::trackRobot(){
@@ -1289,6 +1287,15 @@ void* GeneralController::trackRobotThread(void* object){
 		matThk(0, 1) = matXk(2, 1);
 		matThk(0, 2) = matXk(2, 2);
 		matThk(0, 3) = matXk(2, 3);
+        
+        float xkn = fuzzy::fstats::expectation(matXk(0, 0), matXk(0, 1), matXk(0, 2), matXk(0, 3));
+        float ykn = fuzzy::fstats::expectation(matXk(1, 0), matXk(1, 1), matXk(1, 2), matXk(1, 3));
+        float thkn = fuzzy::fstats::expectation(matThk(0, 0), matThk(0, 1), matThk(0, 2), matThk(0, 3));
+        
+        if(thkn > M_PI){
+            thkn = thkn - 2 * M_PI;
+        }
+        
 
 		matThk = self->normalizeAngles(matThk);
 		std::cout << "normalizeAngles:" << std::endl << matThk;	
@@ -1299,10 +1306,6 @@ void* GeneralController::trackRobotThread(void* object){
 		matXk(2, 1) = matThk(0, 1);
 		matXk(2, 2) = matThk(0, 2);
 		matXk(2, 3) = matThk(0, 3);
-
-		float xkn = fuzzy::fstats::expectation(matXk(0, 0), matXk(0, 1), matXk(0, 2), matXk(0, 3));
-		float ykn = fuzzy::fstats::expectation(matXk(1, 0), matXk(1, 1), matXk(1, 2), matXk(1, 3));
-		float thkn = fuzzy::fstats::expectation(matThk(0, 0), matThk(0, 1), matThk(0, 2), matThk(0, 3));
 
 
 		self->kalmanFuzzy->at(X_INDEX)->setVertexA(matXk(0, 0));
@@ -1544,120 +1547,15 @@ Matrix GeneralController::normalizeAngles(Matrix trap){
 	Matrix result(1, TRAP_VERTEX);
 
 	for(int j = 0; j < TRAP_VERTEX; j++){
-		if(tempTrap(0, j) > M_PI){
+		if(tempTrap(0, j) >= 2*M_PI){
 			tempTrap(0, j) = tempTrap(0, j) - 2 * M_PI;
 		}
-		if(tempTrap(0, j) < -M_PI){
+		if(tempTrap(0, j) < 0){
 			tempTrap(0, j) = tempTrap(0, j) + 2 * M_PI;	
 		}
 	}
-
-	if(((tempTrap(0, 0) > (M_PI / 2)) && (tempTrap(0, 0) < M_PI)) &&
-		((tempTrap(0, 1) > -M_PI) && (tempTrap(0, 1) < (-M_PI / 2))) &&
-		((tempTrap(0, 2) > -M_PI) && (tempTrap(0, 2) < (-M_PI / 2))) &&
-		((tempTrap(0, 3) > -M_PI) && (tempTrap(0, 3) < (-M_PI / 2)))){
-		
-		Matrix tempSort(1, 3);
-		tempSort(0, 0) = tempTrap(0, 1);
-		tempSort(0, 1) = tempTrap(0, 2);
-		tempSort(0, 2) = tempTrap(0, 3);
-
-		tempSort = tempSort.sort_cols();
-		result(0, 0) = tempTrap(0, 0);
-		result(0, 1) = tempSort(0, 0);
-		result(0, 2) = tempSort(0, 1);
-		result(0, 3) = tempSort(0, 2);
-
-	} else if(((tempTrap(0, 0) > -M_PI) && (tempTrap(0, 0) < (-M_PI / 2))) &&
-		((tempTrap(0, 1) > -M_PI) && (tempTrap(0, 1) < (-M_PI / 2))) &&
-		((tempTrap(0, 2) > -M_PI) && (tempTrap(0, 2) < (-M_PI / 2))) &&
-		((tempTrap(0, 3) < M_PI) && (tempTrap(0, 3) > (M_PI / 2)))){
-
-		Matrix tempSort(1, 3);
-		tempSort(0, 0) = tempTrap(0, 0);
-		tempSort(0, 1) = tempTrap(0, 1);
-		tempSort(0, 2) = tempTrap(0, 2);
-
-		tempSort = tempSort.sort_cols();
-		result(0, 0) = tempTrap(0, 0);
-		result(0, 1) = tempSort(0, 0);
-		result(0, 2) = tempSort(0, 1);
-		result(0, 3) = tempSort(0, 2);
-
-			
-	} else if(((tempTrap(0, 0) > (M_PI / 2)) && (tempTrap(0, 0) < M_PI)) &&
-		((tempTrap(0, 1) > (M_PI / 2)) && (tempTrap(0, 1) < M_PI)) &&
-		((tempTrap(0, 2) > (M_PI / 2)) && (tempTrap(0, 2) < M_PI)) &&
-		((tempTrap(0, 3) > -M_PI) && (tempTrap(0, 3) < (-M_PI / 2)))){
-		Matrix tempSort(1, 3);
-		tempSort(0, 0) = tempTrap(0, 0);
-		tempSort(0, 1) = tempTrap(0, 1);
-		tempSort(0, 2) = tempTrap(0, 2);
-
-		tempSort = tempSort.sort_cols();
-		result(0, 0) = tempSort(0, 0);
-		result(0, 1) = tempSort(0, 1);
-		result(0, 2) = tempSort(0, 2);
-		result(0, 3) = tempTrap(0, 3);
-
-	} else if(((tempTrap(0, 0) > -M_PI) && (tempTrap(0, 0) < (-M_PI / 2))) &&
-		((tempTrap(0, 1) > M_PI) && (tempTrap(0, 1) < (M_PI / 2))) &&
-		((tempTrap(0, 2) > M_PI) && (tempTrap(0, 2) < (M_PI / 2))) &&
-		((tempTrap(0, 3) > M_PI) && (tempTrap(0, 3) < (M_PI / 2)))){
-
-		Matrix tempSort(1, 3);
-		tempSort(0, 0) = tempTrap(0, 1);
-		tempSort(0, 1) = tempTrap(0, 2);
-		tempSort(0, 2) = tempTrap(0, 3);
-
-		tempSort = tempSort.sort_cols();
-		result(0, 0) = tempSort(0, 0);
-		result(0, 1) = tempSort(0, 1);
-		result(0, 2) = tempSort(0, 2);
-		result(0, 3) = tempTrap(0, 0);
-			
-	} else if(((tempTrap(0, 0) > -M_PI) && (tempTrap(0, 0) < (-M_PI / 2))) &&
-		((tempTrap(0, 1) > -M_PI) && (tempTrap(0, 1) < (-M_PI / 2))) &&
-		((tempTrap(0, 2) > M_PI) && (tempTrap(0, 2) < (M_PI / 2))) &&
-		((tempTrap(0, 3) > M_PI) && (tempTrap(0, 3) < (M_PI / 2)))){
-
-		Matrix tempSort(1, 2);
-		tempSort(0, 0) = tempTrap(0, 0);
-		tempSort(0, 1) = tempTrap(0, 1);
-		tempSort = tempSort.sort_cols();
-		result(0, 2) = tempSort(0, 0);
-		result(0, 3) = tempSort(0, 1);
-
-
-		tempSort(0, 0) = tempTrap(0, 2);
-		tempSort(0, 1) = tempTrap(0, 3);
-		tempSort = tempSort.sort_cols();
-		result(0, 0) = tempSort(0, 0);
-		result(0, 1) = tempSort(0, 1);
-
-
-	} else if (((tempTrap(0, 0) < M_PI) && (tempTrap(0, 0) > (M_PI / 2))) &&
-		((tempTrap(0, 1) < M_PI) && (tempTrap(0, 1) > (M_PI / 2))) &&
-		((tempTrap(0, 2) > -M_PI) && (tempTrap(0, 2) < (-M_PI / 2))) &&
-		((tempTrap(0, 3) > -M_PI) && (tempTrap(0, 3) < (-M_PI / 2)))){
-
-		Matrix tempSort(1, 2);
-		tempSort(0, 0) = tempTrap(0, 0);
-		tempSort(0, 1) = tempTrap(0, 1);
-		tempSort = tempSort.sort_cols();
-		result(0, 0) = tempSort(0, 0);
-		result(0, 1) = tempSort(0, 1);
-
-
-		tempSort(0, 0) = tempTrap(0, 2);
-		tempSort(0, 1) = tempTrap(0, 3);
-		tempSort = tempSort.sort_cols();
-		result(0, 2) = tempSort(0, 0);
-		result(0, 3) = tempSort(0, 1);
-	} else {
-		result = tempTrap.sort_cols();
-	}
-	
+    
+    result = tempTrap.sort_cols();
 
 	return result;
 }
@@ -1666,17 +1564,28 @@ Matrix GeneralController::denormalizeAngles(Matrix trap){
 	Matrix tempTrap = trap;
 	Matrix result(TRAP_VERTEX, 1);
 
-	if((tempTrap(0, 0) > 0) && (tempTrap(0, 1) < 0) && (tempTrap(0, 2) < 0) && (tempTrap(0, 3) < 0)){
-		tempTrap(0, 0) = tempTrap(0, 0) - 2 * M_PI;
+	if(((tempTrap(0, 0) >= 0) && (tempTrap(0, 0) <= (M_PI/4))) &&
+       ((tempTrap(0, 1) >= (7/4*M_PI)) && (tempTrap(0, 1) <= (2*M_PI))) &&
+       ((tempTrap(0, 2) >= (7/4*M_PI)) && (tempTrap(0, 2) <= (2*M_PI))) &&
+       ((tempTrap(0, 3) >= (7/4*M_PI)) && (tempTrap(0, 3) <= (2*M_PI)))){
+		tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
 		result = tempTrap.sort_cols();
 
-	} else if((tempTrap(0, 0) > 0) && (tempTrap(0, 1) > 0) && (tempTrap(0, 2) < 0) && (tempTrap(0, 3) < 0)){
-		tempTrap(0, 0) = tempTrap(0, 0) - 2 * M_PI;
-		tempTrap(0, 1) = tempTrap(0, 1) - 2 * M_PI;
+    } else if(((tempTrap(0, 0) >= 0) && (tempTrap(0, 0) <= (M_PI/4))) &&
+              ((tempTrap(0, 1) >= 0) && (tempTrap(0, 1) <= (M_PI/4))) &&
+              ((tempTrap(0, 2) >= (7/4*M_PI)) && (tempTrap(0, 2) <= (2*M_PI))) &&
+              ((tempTrap(0, 3) >= (7/4*M_PI)) && (tempTrap(0, 3) <= (2*M_PI)))){
+		tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
+		tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
 		result = tempTrap.sort_cols();
 
-	} else if((tempTrap(0, 0) > 0) && (tempTrap(0, 1) > 0) && (tempTrap(0, 2) > 0) && (tempTrap(0, 3) < 0)){
-		tempTrap(0, 3) = tempTrap(0, 3) + 2 * M_PI;
+    } else if(((tempTrap(0, 0) >= 0) && (tempTrap(0, 0) <= (M_PI/4))) &&
+              ((tempTrap(0, 1) >= 0) && (tempTrap(0, 1) <= (M_PI/4))) &&
+              ((tempTrap(0, 2) >= 0) && (tempTrap(0, 2) <= (M_PI/4))) &&
+              ((tempTrap(0, 3) >= (7/4*M_PI)) && (tempTrap(0, 3) <= (2*M_PI)))){
+        tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
+        tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
+		tempTrap(0, 2) = tempTrap(0, 2) + 2 * M_PI;
 		
 		result = tempTrap.sort_cols();
 	} else {
