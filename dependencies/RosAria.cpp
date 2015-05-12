@@ -408,6 +408,10 @@ int RosAriaNode::Setup(){
 
   readParameters();
 
+  //robot->setAbsoluteMaxRotAccel(8);
+  robot->setRotVelMax(25);
+  ROS_INFO("RotVelMax: %f, TransVelMax: %f", robot->getRotVelMax(), robot->getTransVelMax());
+
   // Start dynamic_reconfigure server
   dynamic_reconfigure_server = new dynamic_reconfigure::Server<rosaria::RosAriaConfig>;
 
@@ -482,7 +486,7 @@ int RosAriaNode::Setup(){
 
   // Added Goto Actions
   gotoPoseAction = new ArActionGoto("goto", ArPose(0.0, 0.0, 0.0), 100, 100, 100);
-  robot->addAction(gotoPoseAction, 89);
+  robot->addAction(gotoPoseAction, 89); 
 
   //added laser range device
   laserConnector = new ArLaserConnector(argparser, robot, conn);
@@ -491,7 +495,7 @@ int RosAriaNode::Setup(){
   }
 
 
-  ArUtil::sleep(500);
+  //ArUtil::sleep(500);
   laser = robot->findLaser(1);
 
   if(!laser){

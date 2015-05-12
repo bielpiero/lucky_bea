@@ -105,33 +105,33 @@ struct s_robot{
 
 struct s_landmark{
 	int id;
-	int var;
-	int xpos;
-	int ypos;
+	float var;
+	float xpos;
+	float ypos;
 };
 
 struct s_feature{
 	int id;
 	std::string name;
-	int var;
-	int xpos;
-	int ypos;
+	float var;
+	float xpos;
+	float ypos;
 };
 
 struct s_site{
 	int id;
 	std::string name;
-	int tsec;
-	int var;
-	int xpos;
-	int ypos;
+	float tsec;
+	float var;
+	float xpos;
+	float ypos;
 };
 
 struct s_sector{
 	int id;
 	std::string name;
-	int width;
-	int height;
+	float width;
+	float height;
 	bool sitesCyclic;
 	std::vector<s_landmark*> *landmarks;
 	std::vector<s_feature*> *features;
@@ -233,6 +233,8 @@ private:
 	s_sector* navSector;
 	s_robot* robotConfig;
 
+	pthread_mutex_t mutexLandmarkLocker;
+
 	void loadSector(int sectorId);
 	void loadRobotConfig();
 	
@@ -251,6 +253,7 @@ private:
 	std::vector<fuzzy::trapezoid*> getObservationsTrapezoids();
 	Matrix normalizeAngles(Matrix trap);
 	Matrix denormalizeAngles(Matrix trap);
+	Matrix sortVariation(Matrix variation);
 
 	void getNumberOfCamerasAvailable(int& count);
 	void getCameraDevicePort(char* cad, int& device, int& port);

@@ -45,19 +45,19 @@ int main(int argc, char** argv){
 
 	ros::Subscriber goal_achievement_state = nh.subscribe("/RosAria/goal_achived", 1, &GeneralController::goalAchievementStateCallback, robot);
 	
-	ros::Subscriber sonar_state = nh.subscribe("/RosAria/sonar", 1, &GeneralController::sonarStateCallback, robot);
-	ros::Subscriber sonar_pointcloud2_state = nh.subscribe("/RosAria/sonar_pointcloud2", 1, &GeneralController::sonarPointCloud2StateCallback, robot);
+	//ros::Subscriber sonar_state = nh.subscribe("/RosAria/sonar", 1, &GeneralController::sonarStateCallback, robot);
+	//ros::Subscriber sonar_pointcloud2_state = nh.subscribe("/RosAria/sonar_pointcloud2", 1, &GeneralController::sonarPointCloud2StateCallback, robot);
 	
 	ros::Subscriber laser_state = nh.subscribe("/RosAria/laser", 1, &GeneralController::laserScanStateCallback, robot);
 	ros::Subscriber laser_pointcloud_state = nh.subscribe("/RosAria/laser_pointcloud", 1, &GeneralController::laserPointCloudStateCallback, robot);
 
-	int i = 10;
+	/*int i = 10;
 	while (i > 0){
 		ros::spinOnce();
 		Sleep(100);
 		i--;
-	}
-	robot->trackRobot();
+	}*/
+	//robot->trackRobot();
 	robot->OnConnection();
 	ros::spin();
 	

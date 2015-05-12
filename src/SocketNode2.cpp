@@ -236,12 +236,9 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout)
         
 	if (0 != ReceiveBytes(header, &nChars, timeout))
 		return -1;//no header
-        if(header[3] != 0)
-	{
+    if(header[3] != 0){
 		len = header[2] + (header[3] + header[4] * 256) * 256;
-	}
-	else
-	{
+	} else {
 		len = header[2] + header[4] * 256;
 	}
 	

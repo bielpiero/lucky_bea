@@ -9,10 +9,10 @@
 			<landmark id="5" var="12" xpos="410" ypos="110"/>
 			<landmark id="6" var="12" xpos="530" ypos="310"/>
 			<landmark id="7" var="12" xpos="575" ypos="110"/>
-			<landmark id="8" var="12" xpos="700" ypos="210"/>
+			<landmark id="8" var="12" xpos="695" ypos="210"/>
 		</landmarks>
 		<features>
-			<feature id="0" name="charger" var="25" xpos="640" ypos="350"/>
+			<feature id="0" name="charger" var="25" xpos="645" ypos="340"/>
 		</features>
 		<sites cyclic="yes">
 			<site id="0" name="site a" var="10" tsec="10" xpos="200" ypos="110"/>
