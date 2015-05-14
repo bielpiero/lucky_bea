@@ -252,7 +252,7 @@ private:
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
 	std::vector<fuzzy::trapezoid*> getObservationsTrapezoids();
 	Matrix normalizeAngles(Matrix trap);
-	Matrix denormalizeAngles(Matrix trap);
+	Matrix denormalizeAngles(Matrix trap, int mode = 0);
 	Matrix sortVariation(Matrix variation);
 
 	void getNumberOfCamerasAvailable(int& count);

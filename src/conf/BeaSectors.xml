@@ -9,7 +9,7 @@
 			<landmark id="5" var="12" xpos="410" ypos="110"/>
 			<landmark id="6" var="12" xpos="530" ypos="310"/>
 			<landmark id="7" var="12" xpos="575" ypos="110"/>
-			<landmark id="8" var="12" xpos="695" ypos="210"/>
+			<landmark id="8" var="12" xpos="695" ypos="192"/>
 		</landmarks>
 		<features>
 			<feature id="0" name="charger" var="25" xpos="645" ypos="340"/>

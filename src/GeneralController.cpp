@@ -69,7 +69,6 @@ void GeneralController::OnConnection()//callback for client and server
 		}
 		stopDynamicGesture();
 		stopVideoStreaming();
-		stopRobotTracking();
 		stopCurrentTour();
 	}
 }
@@ -145,8 +144,8 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 			moveRobot(lin_vel, ang_vel);
 			break;
 		case 0x11:
-			trackRobot();
-			//startSitesTour();
+			//trackRobot();
+			startSitesTour();
 			break;	
 		case 0x13:
 			getPositions(cad, x, y, theta);
@@ -1145,7 +1144,8 @@ void* GeneralController::trackRobotThread(void* object){
 	Matrix Xk;
 	
 	while(ros::ok() && self->keepRobotTracking == YES){
-		// 1 - Prediction
+		//1 - Prediction
+		//ROS_INFO("1 - Prediction");
 		Xk = self->robotEncoderPosition;
 		bool isMoving = false;
 		if(std::abs(self->robotVelocity(0, 0)) > 0.01 || std::abs(self->robotVelocity(1, 0)) > 0.01){
@@ -1160,8 +1160,9 @@ void* GeneralController::trackRobotThread(void* object){
 		} else {
 			Pk = Ak * pk1 * ~Ak;
 		}
-		
+
 		// 2 - Observation
+		//ROS_INFO("2 - Observation");
 		Hk = Matrix(2 * self->navSector->landmarks->size(), STATE_VARIABLES);
 		for(int i = 0, zIndex = 0; i < self->navSector->landmarks->size(); i++, zIndex += 2){
 			Hk(zIndex, 0) = -((self->navSector->landmarks->at(i)->xpos) - Xk(0, 0))/std::sqrt(std::pow((self->navSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->navSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
@@ -1175,23 +1176,25 @@ void* GeneralController::trackRobotThread(void* object){
 
 		std::vector<fuzzy::trapezoid*> zkl = self->getObservationsTrapezoids();
 
-		/*for(int i = 0; i < zkl.size(); i++){
+		for(int i = 0; i < zkl.size(); i++){
 			std::cout << "Zkl Trap " << i  << ": (";
 			std::cout << zkl.at(i)->getVertexA() << ", ";
 			std::cout << zkl.at(i)->getVertexB() << ", ";
 			std::cout << zkl.at(i)->getVertexC() << ", ";
 			std::cout << zkl.at(i)->getVertexD() << ")" << std::endl;
-		}*/
-										
+		}
+							
 		Matrix Sk = Hk * Pk * ~Hk + self->R;
+
 		Matrix Wk = Pk * ~Hk * !Sk;		
-		
-		Matrix yk(2 * self->navSector->landmarks->size(), TRAP_VERTEX);
 		// 3 - Matching
-		std::cout << "Seen landmarks: " << self->landmarks.size() << std::endl;
+		//ROS_INFO("3 - Matching");
+		ROS_INFO("Seen landmarks: %d", self->landmarks.size());
 		pthread_mutex_lock(&self->mutexLandmarkLocker);
+		Matrix yk(2 * self->navSector->landmarks->size(), TRAP_VERTEX);
 		for (int i = 0; i < self->landmarks.size(); i++){
 			Matrix l = self->landmarks.at(i);
+			int mode = 0;
 			ROS_INFO("landmarks {d: %f, a: %f}", l(0, 0), l(1, 0));
 
 			for (int j = 0; j < zkl.size(); j+=2){
@@ -1203,8 +1206,11 @@ void* GeneralController::trackRobotThread(void* object){
 				tempZkl(0, 2) = zkl.at(j+1)->getVertexC();
 				tempZkl(0, 3) = zkl.at(j+1)->getVertexD();
 
-				tempZkl = self->denormalizeAngles(tempZkl);
+				if(l(1, 0) > 0 && l(1, 0) < (M_PI/4)){
+					mode = 1;
+				}
 
+				tempZkl = self->denormalizeAngles(tempZkl, mode);
 				fuzzy::trapezoid* tempTrap = new fuzzy::trapezoid("", tempZkl(0, 0), tempZkl(0, 1), tempZkl(0, 2), tempZkl(0, 3));
 				float mdAngle = tempTrap->evaluate(l(1, 0));
 				//ROS_INFO("Membership %d {d: %f, a: %f}", j, mdDistance, mdAngle);
@@ -1216,7 +1222,7 @@ void* GeneralController::trackRobotThread(void* object){
 					tempY(0, 1) = l(0,0) - zkl.at(j)->getVertexB();
 					tempY(0, 2) = l(0,0) - zkl.at(j)->getVertexC();
 					tempY(0, 3) = l(0,0) - zkl.at(j)->getVertexD();
-					tempY.sort();
+					//tempY = tempY.sort_cols();
 
 					for (int k = 0; k < tempY.cols_size(); k++){
 						yk(j, k) = tempY(0, k);
@@ -1226,7 +1232,8 @@ void* GeneralController::trackRobotThread(void* object){
 					tempY(0, 1) = l(1,0) - tempZkl(0, 1);
 					tempY(0, 2) = l(1,0) - tempZkl(0, 2);
 					tempY(0, 3) = l(1,0) - tempZkl(0, 3);
-					tempY = self->normalizeAngles(tempY);
+
+					//tempY = self->normalizeAngles(tempY);
 
 					for (int k = 0; k < tempY.cols_size(); k++){
 						yk(j+1, k) = tempY(0, k);
@@ -1236,6 +1243,7 @@ void* GeneralController::trackRobotThread(void* object){
 		}
 		pthread_mutex_unlock(&self->mutexLandmarkLocker);
 		// 4 - Correction
+		//ROS_INFO("4 - Correction");
 		fuzzy::trapezoid *trapX = self->kalmanFuzzy->at(X_INDEX);
 		fuzzy::trapezoid *trapY = self->kalmanFuzzy->at(X_INDEX + 1);
 		fuzzy::trapezoid *trapTh = self->kalmanFuzzy->at(X_INDEX + 2);
@@ -1258,7 +1266,7 @@ void* GeneralController::trackRobotThread(void* object){
 		matXk(2, 3) = trapTh->getVertexD();
 
 		//if(isMoving){
-			std::cout << "trap Xk:" << std::endl << matXk;
+			//std::cout << "trap Xk:" << std::endl << matXk;
 		//}
 		Matrix matThk(1, TRAP_VERTEX);
 		matThk(0, 0) = matXk(2, 0);
@@ -1267,26 +1275,29 @@ void* GeneralController::trackRobotThread(void* object){
 		matThk(0, 3) = matXk(2, 3);
 
 		matThk = self->denormalizeAngles(matThk);
-		std::cout << "denormalizeAngles:" << std::endl << matThk;	
+		//std::cout << "denormalizeAngles:" << std::endl << matThk;	
 		matXk(2, 0) = matThk(0, 0);
 		matXk(2, 1) = matThk(0, 1);
 		matXk(2, 2) = matThk(0, 2);
 		matXk(2, 3) = matThk(0, 3);
 
+		//std::cout << "trap yk:" << std::endl << yk;
 		
 		Matrix stateVariation = Wk*yk;
 		stateVariation = self->sortVariation(stateVariation);
 		//if(isMoving){
-			std::cout << "stateVariation:" << std::endl << stateVariation;
+			//std::cout << "stateVariation:" << std::endl << stateVariation;
 		//}
 		matXk = matXk + stateVariation;
 
-		std::cout << "New State:" << std::endl << matXk;
+		//std::cout << "New State:" << std::endl << matXk;
 
 		matThk(0, 0) = matXk(2, 0);
 		matThk(0, 1) = matXk(2, 1);
 		matThk(0, 2) = matXk(2, 2);
 		matThk(0, 3) = matXk(2, 3);
+
+		matXk = matXk.sort_cols();
         
         float xkn = fuzzy::fstats::expectation(matXk(0, 0), matXk(0, 1), matXk(0, 2), matXk(0, 3));
         float ykn = fuzzy::fstats::expectation(matXk(1, 0), matXk(1, 1), matXk(1, 2), matXk(1, 3));
@@ -1296,11 +1307,8 @@ void* GeneralController::trackRobotThread(void* object){
             thkn = thkn - 2 * M_PI;
         }
         
-
 		matThk = self->normalizeAngles(matThk);
-		std::cout << "normalizeAngles:" << std::endl << matThk;	
-
-		matXk = matXk.sort_cols();
+		//std::cout << "normalizeAngles:" << std::endl << matThk;	
 
 		matXk(2, 0) = matThk(0, 0);
 		matXk(2, 1) = matThk(0, 1);
@@ -1404,6 +1412,23 @@ std::vector<fuzzy::trapezoid*> GeneralController::getObservationsTrapezoids(){
 	matXk(2, 2) = trapTh->getVertexC();
 	matXk(2, 3) = trapTh->getVertexD();
 
+	Matrix matThk(1, TRAP_VERTEX);
+	matThk(0, 0) = matXk(2, 0);
+	matThk(0, 1) = matXk(2, 1);
+	matThk(0, 2) = matXk(2, 2);
+	matThk(0, 3) = matXk(2, 3);
+
+	matThk = denormalizeAngles(matThk);
+	if(fuzzy::fstats::expectation(matThk(0, 0), matThk(0, 1), matThk(0, 2), matThk(0, 3)) >= (2*M_PI)){
+		matThk = normalizeAngles(matThk);
+		matThk = denormalizeAngles(matThk, 1);
+	}
+	
+	matXk(2, 0) = matThk(0, 0);
+	matXk(2, 1) = matThk(0, 1);
+	matXk(2, 2) = matThk(0, 2);
+	matXk(2, 3) = matThk(0, 3);
+
 	Matrix var(STATE_VARIABLES, 1);
 	var(0, 0) = (matXk(0, 3) - matXk(0, 0)) / 4;
 	var(1, 0) = (matXk(1, 3) - matXk(1, 0)) / 4;
@@ -1426,9 +1451,9 @@ std::vector<fuzzy::trapezoid*> GeneralController::getObservationsTrapezoids(){
 
 	}
 
-	for(float x = matXk(0, 0); x <= (matXk(0, 3) + var(0, 0)/4); x+=var(0, 0)){
-		for(float y = matXk(1, 0); y <= (matXk(1, 3) + var(1, 0)/4); y+=var(1, 0)){
-			for(float th = matXk(2, 0); th <= (matXk(2, 3) + var(2, 0)/4); th+=var(2, 0)){
+	for(float x = matXk(0, 0); x < (matXk(0, 3) + var(0, 0)/4); x+=var(0, 0)){
+		for(float y = matXk(1, 0); y < (matXk(1, 3) + var(1, 0)/4); y+=var(1, 0)){
+			for(float th = matXk(2, 0); th < (matXk(2, 3) + var(2, 0)/4); th+=var(2, 0)){
 				for(int k = 0; k < navSector->landmarks->size(); k++){
 					s_landmark* landmark = navSector->landmarks->at(k);
 					Matrix state(STATE_VARIABLES, 1);
@@ -1474,12 +1499,10 @@ std::vector<fuzzy::trapezoid*> GeneralController::getObservationsTrapezoids(){
 		zklt(2*k + 1, 2) = angle;
 
 	}
-
-	//std::cout << "PorAhora: " << zklt;
-
-	for(float x = matXk(0, 1); x <= (matXk(0, 2) + var(0, 0)/4); x+=var(0, 0)){
-		for(float y = matXk(1, 1); y <= (matXk(1, 2) + var(1, 0)/4); y+=var(1, 0)){
-			for(float th = matXk(2, 1); th <= (matXk(2, 2) + var(2, 0)/4); th+=var(2, 0)){
+	
+	for(float x = matXk(0, 1); x < (matXk(0, 2) + var(0, 0)/4); x+=var(0, 0)){
+		for(float y = matXk(1, 1); y < (matXk(1, 2) + var(1, 0)/4); y+=var(1, 0)){
+			for(float th = matXk(2, 1); th < (matXk(2, 2) + var(2, 0)/4); th+=var(2, 0)){
 				for(int k = 0; k < navSector->landmarks->size(); k++){
 					s_landmark* landmark = navSector->landmarks->at(k);
 					Matrix state(STATE_VARIABLES, 1);
@@ -1504,9 +1527,7 @@ std::vector<fuzzy::trapezoid*> GeneralController::getObservationsTrapezoids(){
 			}
 		}
 	}
-
-	//std::cout << "PorAhora: " << zklt;
-
+	
 	for(int i = 0; i < zklt.rows_size(); i++){
 		Matrix results(1, TRAP_VERTEX);
 		results(0, 0) = zklt(i, 0);
@@ -1560,7 +1581,7 @@ Matrix GeneralController::normalizeAngles(Matrix trap){
 	return result;
 }
 
-Matrix GeneralController::denormalizeAngles(Matrix trap){
+Matrix GeneralController::denormalizeAngles(Matrix trap, int mode){
 	Matrix tempTrap = trap;
 	Matrix result(TRAP_VERTEX, 1);
 
@@ -1568,24 +1589,40 @@ Matrix GeneralController::denormalizeAngles(Matrix trap){
        ((tempTrap(0, 1) >= (7/4*M_PI)) && (tempTrap(0, 1) <= (2*M_PI))) &&
        ((tempTrap(0, 2) >= (7/4*M_PI)) && (tempTrap(0, 2) <= (2*M_PI))) &&
        ((tempTrap(0, 3) >= (7/4*M_PI)) && (tempTrap(0, 3) <= (2*M_PI)))){
-		tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
+       	if(mode != 1){
+			tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
+		} else {
+			tempTrap(0, 1) = tempTrap(0, 1) - 2 * M_PI;
+			tempTrap(0, 2) = tempTrap(0, 2) - 2 * M_PI;
+			tempTrap(0, 3) = tempTrap(0, 3) - 2 * M_PI;
+		}
 		result = tempTrap.sort_cols();
 
     } else if(((tempTrap(0, 0) >= 0) && (tempTrap(0, 0) <= (M_PI/4))) &&
               ((tempTrap(0, 1) >= 0) && (tempTrap(0, 1) <= (M_PI/4))) &&
               ((tempTrap(0, 2) >= (7/4*M_PI)) && (tempTrap(0, 2) <= (2*M_PI))) &&
               ((tempTrap(0, 3) >= (7/4*M_PI)) && (tempTrap(0, 3) <= (2*M_PI)))){
-		tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
-		tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
+    	if(mode != 1){
+			tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
+			tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
+		} else {
+			tempTrap(0, 2) = tempTrap(0, 2) - 2 * M_PI;
+			tempTrap(0, 3) = tempTrap(0, 3) - 2 * M_PI;
+		}
 		result = tempTrap.sort_cols();
 
     } else if(((tempTrap(0, 0) >= 0) && (tempTrap(0, 0) <= (M_PI/4))) &&
               ((tempTrap(0, 1) >= 0) && (tempTrap(0, 1) <= (M_PI/4))) &&
               ((tempTrap(0, 2) >= 0) && (tempTrap(0, 2) <= (M_PI/4))) &&
               ((tempTrap(0, 3) >= (7/4*M_PI)) && (tempTrap(0, 3) <= (2*M_PI)))){
-        tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
-        tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
-		tempTrap(0, 2) = tempTrap(0, 2) + 2 * M_PI;
+
+    	if(mode != 1){
+			tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
+			tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
+			tempTrap(0, 2) = tempTrap(0, 2) + 2 * M_PI;
+		} else {
+			tempTrap(0, 3) = tempTrap(0, 3) - 2 * M_PI;
+		}
 		
 		result = tempTrap.sort_cols();
 	} else {
