@@ -170,29 +170,20 @@ int CSocketNode::SendMsg(const char opr, const char* cad,int length)
 	Buffer_out[5] = opr;
 	memcpy(Buffer_out + 6, cad, length);
 	
-	fd_set readfds; FD_ZERO(&readfds); FD_SET(socket_conn, &readfds);
-	timeval tout; tout.tv_sec = 0; tout.tv_usec = 10000;
-	int ret = select(socket_conn + 1, &readfds, NULL, NULL, &tout);
-	if(ret == 1){
-		//Send it
-		int err = send(socket_conn, Buffer_out, length + 5, 0);
-		//	delete[] cad_aux;
-		if (err == SOCKET_ERROR)
-		{
-			Error("SendMsg Error");
-			return -1;
-		}
+	//Send it
+	int err = send(socket_conn, Buffer_out, length + 5, 0);
+	//	delete[] cad_aux;
+	if (err == SOCKET_ERROR){
+		Error("SendMsg Error");
+		return -1;
 	}
+
 	return 0;
 }
 
 int CSocketNode::SendBytes(char *cad, int length)
 {
 	//Send it
-	fd_set readfds; FD_ZERO(&readfds); FD_SET(socket_conn, &readfds);
-	timeval tout; tout.tv_sec = 0; tout.tv_usec = 10000;
-	int ret = select(socket_conn + 1, &readfds, NULL, NULL, &tout);
-	
 	int err = send(socket_conn, cad, length,0);
 	if (err == SOCKET_ERROR )
 	{

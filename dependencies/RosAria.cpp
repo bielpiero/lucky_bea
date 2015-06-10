@@ -45,6 +45,9 @@ class RosAriaNode{
     void cmdvel_cb( const geometry_msgs::TwistConstPtr &);
     void cmd_goto_cb( const geometry_msgs::Pose2D::ConstPtr &);
     void cmd_set_pose( const geometry_msgs::Pose2D::ConstPtr &);
+    //void cmd_move(const std_msgs::Float64::ConstPtr &);
+    //void cmd_rotate(const std_msgs::Float64::ConstPtr &);
+
     //void cmd_enable_motors_cb();
     //void cmd_disable_motors_cb();
     void spin();
@@ -80,6 +83,9 @@ class RosAriaNode{
     ros::Subscriber cmdvel_sub;
     ros::Subscriber cmd_goto_sub;
     ros::Subscriber position_sub;
+
+    //ros::Subscriber distance_sub;
+    //ros::Subscriber rotation_sub;
 
     ros::ServiceServer enable_srv;
     ros::ServiceServer disable_srv;
@@ -125,6 +131,10 @@ class RosAriaNode{
 
     // Debug Aria
     bool debug_aria;
+    bool isDirectMotion;
+    bool isGoingForward;
+    bool wasDeactivated;
+    bool doNotMove;
     std::string aria_log_filename;
 
     // Robot Parameters
@@ -332,12 +342,22 @@ sonar_enabled(false), publish_sonar(false), publish_sonar_pointcloud2(false), pu
 
   position_sub = n.subscribe( "cmd_set_pose", 1, (boost::function <void(const geometry_msgs::Pose2DConstPtr&)>)
   boost::bind(&RosAriaNode::cmd_set_pose, this, _1 ));
+/*
+  distance_sub = n.subscribe( "cmd_move", 1, (boost::function <void(const std_msgs::Float64::ConstPtr&)>)
+  boost::bind(&RosAriaNode::cmd_move, this, _1 ));
 
+  rotation_sub = n.subscribe( "cmd_rotate", 1, (boost::function <void(const std_msgs::Float64::ConstPtr&)>)
+  boost::bind(&RosAriaNode::cmd_rotate, this, _1 ));
+*/
   // advertise enable/disable services
   enable_srv = n.advertiseService("enable_motors", &RosAriaNode::enable_motors_cb, this);
   disable_srv = n.advertiseService("disable_motors", &RosAriaNode::disable_motors_cb, this);
 
   veltime = ros::Time::now();
+  isDirectMotion = false;
+  isGoingForward = false;
+  wasDeactivated = false;
+  doNotMove = false;
 }
 
 RosAriaNode::~RosAriaNode(){
@@ -409,8 +429,8 @@ int RosAriaNode::Setup(){
   readParameters();
 
   //robot->setAbsoluteMaxRotAccel(8);
-  robot->setRotVelMax(25);
-  ROS_INFO("RotVelMax: %f, TransVelMax: %f", robot->getRotVelMax(), robot->getTransVelMax());
+  robot->setTransVelMax(100);
+  robot->setRotVelMax(5);
 
   // Start dynamic_reconfigure server
   dynamic_reconfigure_server = new dynamic_reconfigure::Server<rosaria::RosAriaConfig>;
@@ -697,8 +717,48 @@ void RosAriaNode::publish(){
       laser->lockDevice();
 
       std::vector<ArSensorReading> *currentReadings = sickLaser->getRawReadingsAsVector();
+
       for(int it = 0; it != currentReadings->size(); it++){
         // PointCloud
+        if(sickLaser->getDegrees() == ArSick::DEGREES180){
+          if(sickLaser->getIncrement() == ArSick::INCREMENT_HALF){
+            if(it > 80 && it < 280){
+              if((currentReadings->at(it).getRange() / 1000.0) < 0.5){
+                if(isDirectMotion && isGoingForward && !doNotMove){
+                  doNotMove = true;
+                  robot->stop();
+                } else if(gotoPoseAction->isActive()){
+                  gotoPoseAction->deactivate();
+                  wasDeactivated = true;
+                }
+              } else { 
+                doNotMove = false;
+                if(wasDeactivated){
+                  wasDeactivated = false;
+                  gotoPoseAction->activate();
+                }
+              }
+            }
+          } else{
+            if(it > 40 && it < 140){
+              if((currentReadings->at(it).getRange() / 1000.0) < 0.5){
+                if(isDirectMotion && isGoingForward && !doNotMove){
+                  doNotMove = true;
+                  robot->stop();
+                } else if(gotoPoseAction->isActive()){
+                  gotoPoseAction->deactivate();
+                  wasDeactivated = true;
+                }
+              } else { 
+                doNotMove = false;
+                if(wasDeactivated){
+                  wasDeactivated = false;
+                  gotoPoseAction->activate();
+                }
+              }
+            }
+          }
+        }
         if(publish_laser_pointcloud){
           geometry_msgs::Point32 p;
           sensor_msgs::ChannelFloat32 channel;
@@ -759,6 +819,7 @@ void RosAriaNode::cmd_set_pose( const geometry_msgs::Pose2DConstPtr &msg){
   ArPose newPose(msg->x *1000, msg->y * 1000);
   newPose.setThRad(msg->theta);
   robot->lock();
+  robot->clearDirectMotion();
   robot->moveTo(newPose);
   robot->unlock();
   ROS_DEBUG("RosAria: sent pose to aria (time %f): x pose %f mm, y pose %f mm, theta pose %f rad", veltime.toSec(),
@@ -771,7 +832,7 @@ void RosAriaNode::cmd_goto_cb( const geometry_msgs::Pose2DConstPtr &msg){
   ArPose newPose(msg->x *1000, msg->y * 1000);
   newPose.setThRad(msg->theta);
   robot->lock();
-
+  isDirectMotion = false;
   robot->clearDirectMotion();
 
   if(msg->x == 0.0 && msg->y == 0.0 && msg->theta != 0.0){
@@ -789,13 +850,20 @@ void RosAriaNode::cmd_goto_cb( const geometry_msgs::Pose2DConstPtr &msg){
 void RosAriaNode::cmdvel_cb( const geometry_msgs::TwistConstPtr &msg){
   veltime = ros::Time::now();
   ROS_INFO( "new speed: [%0.2f,%0.2f](%0.3f)", msg->linear.x*1e3, msg->angular.z, veltime.toSec() );
-
+  isDirectMotion = true;
+  isGoingForward = false;
   robot->lock();
   gotoPoseAction->cancelGoal();
   if(msg->linear.x == 0.0 && msg->angular.z == 0.0){
     robot->stop();
+    isDirectMotion = false;
   } else {
+    if(msg->linear.x > 0.0){
+      isGoingForward = true;
+    }
+    
     robot->setVel(msg->linear.x*1e3);
+        
     if(robot->hasLatVel()){
       robot->setLatVel(msg->linear.y*1e3);
     }
@@ -806,6 +874,39 @@ void RosAriaNode::cmdvel_cb( const geometry_msgs::TwistConstPtr &msg){
   ROS_DEBUG("RosAria: sent vels to aria (time %f): x vel %f mm/s, y vel %f mm/s, ang vel %f deg/s", veltime.toSec(),
   (double) msg->linear.x * 1e3, (double) msg->linear.y * 1.3, (double) msg->angular.z * 180/M_PI);
 }
+
+/*void RosAriaNode::cmd_move(const std_msgs::Float64::ConstPtr& msg){
+  veltime = ros::Time::now();
+  ROS_INFO( "Moving: %0.2fmm from current pose(%0.3f)", msg->data*1e3, veltime.toSec() );
+
+  robot->lock();
+
+  isDirectMotion = true;
+  isGoingForward = false;
+
+  gotoPoseAction->cancelGoal();
+  if(msg->data > 0.0){
+    isGoingForward = true;
+  }
+
+  robot->move(msg->data*1e3);
+  robot->unlock();
+}
+
+void RosAriaNode::cmd_rotate(const std_msgs::Float64::ConstPtr& msg){
+  veltime = ros::Time::now();
+  ROS_INFO( "Rotating: %0.2fº from current pose(%0.3f)", msg->data, veltime.toSec() );
+
+  robot->lock();
+
+  isDirectMotion = true;
+  isGoingForward = false;
+
+  gotoPoseAction->cancelGoal();
+  
+  robot->setHeading(msg->data);
+  robot->unlock();
+}*/
 
 
 int main( int argc, char** argv ){

@@ -4,6 +4,7 @@
 #include <limits>
 #include <stdexcept>
 #include <iomanip>
+#include <stdio.h>
 
 #define MATRIX_ASCENDING 0
 #define MATRIX_DESCENDING 1
@@ -58,6 +59,8 @@ class Matrix{
 		void svd(Matrix& u, Matrix& s, Matrix& v);
 		
 		friend std::ostream& operator<< (std::ostream& osObj, const Matrix& rhs);
+
+		void print();
 		
 		const size_t rows_size() const;
 		const size_t cols_size() const;

@@ -31,8 +31,8 @@ class SerialPort
 	public:
 		SerialPort();
 		~SerialPort();
-                void setTarget(uint8_t cardId, uint8_t servo, uint16_t value);
-                void setSpeed(uint8_t cardId, uint8_t servo, uint16_t value);
-                void setAcceleration(uint8_t cardId, uint8_t servo, uint16_t value);
+        void setTarget(uint8_t cardId, uint8_t servo, uint16_t value);
+        void setSpeed(uint8_t cardId, uint8_t servo, uint16_t value);
+        void setAcceleration(uint8_t cardId, uint8_t servo, uint16_t value);
 };
 #endif

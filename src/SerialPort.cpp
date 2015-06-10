@@ -4,8 +4,7 @@ const uint16_t SerialPort::vendorId = 0x1ffb;
 const size_t SerialPort::nProductIds = 4;
 const uint16_t SerialPort::productIds[] = { 0x0089, 0x008a, 0x008b, 0x008c };
 
-SerialPort::SerialPort()
-{
+SerialPort::SerialPort(){
     bool found = false;
 	libusb_init(&ctx);
 	libusb_device** list;
@@ -16,32 +15,30 @@ SerialPort::SerialPort()
                 
 		struct libusb_device_descriptor desc;
 		libusb_get_device_descriptor(device, &desc);
-		if (isMaestroDevice(desc)) 
-		{
-                    //printdev(device);
-                    std::cout << "Pololu Maestro device detected..." << std::endl;
-                    found = true;
-                    libusb_device_handle* current_device;
-                    int ret = libusb_open(device, &current_device);
-                    device_handle.push_back(current_device);                        
+		if (isMaestroDevice(desc)) {
+            //printdev(device);
+            std::cout << "Pololu Maestro device detected..." << std::endl;
+            found = true;
+            libusb_device_handle* current_device;
+            int ret = libusb_open(device, &current_device);
+            device_handle.push_back(current_device);                        
 		}
 	}
-        libusb_free_device_list(list, 1);
-        if(!found)
-        {
-            std::cout << "No Pololu Maestro Device Detected..." << std::endl;
-            libusb_exit(ctx);
-        }
+    libusb_free_device_list(list, 1);
+    if(!found){
+        std::cout << "No Pololu Maestro Device Detected..." << std::endl;
+        libusb_exit(ctx);
+    }
 }
 
-SerialPort::~SerialPort()
-{
-    for(int i = 0; i< device_handle.size(); i++)
-    {
+SerialPort::~SerialPort(){
+    for(int i = 0; i< device_handle.size(); i++){
         libusb_close(device_handle[i]);
     }
     libusb_exit(ctx);
 }
+
+
 void SerialPort::printdev(libusb_device *dev) {
     libusb_device_descriptor desc;
     int r = libusb_get_device_descriptor(dev, &desc);
@@ -95,6 +92,9 @@ int SerialPort::controlTransfer(uint8_t cardId, uint8_t request, uint16_t value,
     device_handle[cardId], 0x40, request,
     value, index,
     (unsigned char*) 0, 0, 5000);
+
+  
+
   return 0;
 }
 

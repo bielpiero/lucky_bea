@@ -57,7 +57,7 @@ int main(int argc, char** argv){
 		Sleep(100);
 		i--;
 	}
-	robot->trackRobot();
+	//robot->trackRobot();
 	robot->OnConnection();
 	ros::spin();
 	

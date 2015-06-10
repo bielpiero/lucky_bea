@@ -250,10 +250,14 @@ private:
 	
 	void startSitesTour();
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
-	std::vector<fuzzy::trapezoid*> getObservationsTrapezoids();
+	void getObservationsTrapezoids(std::vector<fuzzy::trapezoid*> &obsWithNoise, std::vector<fuzzy::trapezoid*> &obsWONoise);
 	Matrix normalizeAngles(Matrix trap);
 	Matrix denormalizeAngles(Matrix trap, int mode = 0);
-	Matrix sortVariation(Matrix variation);
+	Matrix multTrapMatrix(Matrix mat, Matrix trap);
+	bool isFirstQuadrant(float angle);
+	bool isSecondQuadrant(float angle);
+	bool isThirdQuadrant(float angle);
+	bool isFouthQuadrant(float angle);
 
 	void getNumberOfCamerasAvailable(int& count);
 	void getCameraDevicePort(char* cad, int& device, int& port);

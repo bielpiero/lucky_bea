@@ -127,7 +127,7 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 			break;
 		case 0x08:
             getPololuInstruction(cad, card_id, port, servo_position);            
-			std::cout << "Command 0x08. Moving from CardId: " << (int)card_id << " Servo: " << (int)port << " To Position: " << servo_position << std::endl;
+			//std::cout << "Command 0x08. Moving from CardId: " << (int)card_id << " Servo: " << (int)port << " To Position: " << servo_position << std::endl;
 			setServoPosition(card_id, port, servo_position);
 			break;
 		case 0x09:
@@ -275,7 +275,6 @@ void GeneralController::getGestures(std::string type, std::string& gestures){
 		}
 	}
 	gestures = buffer_str;
-	std::cout << gestures << std::endl;
 	the_file.close();
 	
 }
@@ -480,10 +479,10 @@ void GeneralController::setGesture(std::string face_id){
 					int position = atoi(motor_node->first_attribute(XML_ATTRIBUTE_POSITION_STR)->value());
 					int speed = atoi(motor_node->first_attribute(XML_ATTRIBUTE_SPEED_STR)->value());
 					int acceleration = atoi(motor_node->first_attribute(XML_ATTRIBUTE_ACCELERATION_STR)->value());
-					
+
 					setServoPosition(card_id, servo_id, position);
-					setServoSpeed(card_id, servo_id, speed);
-					setServoAcceleration(card_id, servo_id, acceleration);
+					//setServoSpeed(card_id, servo_id, speed);
+					//setServoAcceleration(card_id, servo_id, acceleration);
 				}	
 					
 				if(tipo == "1"){
@@ -505,17 +504,17 @@ void GeneralController::setGesture(std::string face_id){
 
 void GeneralController::setServoPosition(unsigned char card_id, unsigned char servo_id, int position){
     this->maestroControllers->setTarget(card_id, servo_id, position);
-    usleep(10000);
+    Sleep(500);
 }
 
 void GeneralController::setServoSpeed(unsigned char card_id, unsigned char servo_id, int speed){
     this->maestroControllers->setSpeed(card_id, servo_id, speed);
-    usleep(10000);
+    Sleep(500);
 }
 
 void GeneralController::setServoAcceleration(unsigned char card_id, unsigned char servo_id, int acceleration){
     this->maestroControllers->setAcceleration(card_id, servo_id, acceleration);
-    usleep(10000);
+    Sleep(500);
 }
 
 void GeneralController::stopDynamicGesture(){
@@ -554,13 +553,13 @@ void* GeneralController::dynamicFaceThread(void* object){
 					std::string idSecuencia(secuencia_node->first_attribute("idSecuencia")->value());	
 					secuence.idSecuence = idSecuencia;
 
-					std::string tsec(secuencia_node->first_attribute("tsec")->value());	
+					std::string tsec(secuencia_node->first_attribute("tsec")->value());
 					secuence.tsec = tsec;
 					
 					for(xml_node<>* motor_node = secuencia_node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling()){
 						s_motor motor;
-											std::string cardId(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value());
-											motor.cardId = cardId;
+						std::string cardId(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value());
+						motor.cardId = cardId;
 											
 						std::string idMotor(motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 						motor.idMotor = idMotor; //el indice j no se corresponde con el numero de motor, ya que podria estar modificando el motor 3 y 4 y se guardarian en los indices 0 y 1 respectivamente
@@ -778,10 +777,10 @@ void GeneralController::loadRobotConfig(){
 	xml_node<>* observation_noise_root_node = nav_root_node->first_node(XML_ELEMENT_OBSERV_NOISE_STR);
 	pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_D_ZONE_STR);
 	s_trapezoid* d_zone = new s_trapezoid;
-	d_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
-	d_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
-	d_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
-	d_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
+	d_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 1000;
+	d_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 1000;
+	d_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 1000;
+	d_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 1000;
 
 	pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
 	s_trapezoid* th2_zone = new s_trapezoid;
@@ -1081,17 +1080,6 @@ void GeneralController::initializeKalmanVariables(){
 	
 	fuzzy::trapezoid* wThK1 = new fuzzy::trapezoid("WTh(k + 1)", robotConfig->navParams->observationNoise->thZone->x1, robotConfig->navParams->observationNoise->thZone->x2, robotConfig->navParams->observationNoise->thZone->x3, robotConfig->navParams->observationNoise->thZone->x4);	
 	
-	kalmanFuzzy->push_back(xxKK);
-	kalmanFuzzy->push_back(xyKK);
-	kalmanFuzzy->push_back(xThKK);
-	
-	kalmanFuzzy->push_back(vxK1);
-	kalmanFuzzy->push_back(vyK1);
-	kalmanFuzzy->push_back(vThK1);
-	
-	kalmanFuzzy->push_back(wdK1);
-	kalmanFuzzy->push_back(wThK1);
-
 	uX = fuzzy::fstats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
 	uY = fuzzy::fstats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
 	uTh = fuzzy::fstats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
@@ -1121,6 +1109,29 @@ void GeneralController::initializeKalmanVariables(){
 			R(i, i) = uX;
 		}
 	}
+
+	Matrix matXk(1, TRAP_VERTEX);
+	matXk(0, 0) = xThKK->getVertexA();
+	matXk(0, 1) = xThKK->getVertexB();
+	matXk(0, 2) = xThKK->getVertexC();
+	matXk(0, 3) = xThKK->getVertexD();
+
+	matXk = normalizeAngles(matXk);
+	xThKK->setVertexA(matXk(0, 0));
+	xThKK->setVertexB(matXk(0, 1));
+	xThKK->setVertexC(matXk(0, 2));
+	xThKK->setVertexD(matXk(0, 3));
+	
+	kalmanFuzzy->push_back(xxKK);
+	kalmanFuzzy->push_back(xyKK);
+	kalmanFuzzy->push_back(xThKK);
+	
+	kalmanFuzzy->push_back(vxK1);
+	kalmanFuzzy->push_back(vyK1);
+	kalmanFuzzy->push_back(vThK1);
+	
+	kalmanFuzzy->push_back(wdK1);
+	kalmanFuzzy->push_back(wThK1);
 }
 
 void GeneralController::trackRobot(){
@@ -1163,6 +1174,7 @@ void* GeneralController::trackRobotThread(void* object){
 
 		// 2 - Observation
 		//ROS_INFO("2 - Observation");
+		
 		Hk = Matrix(2 * self->navSector->landmarks->size(), STATE_VARIABLES);
 		for(int i = 0, zIndex = 0; i < self->navSector->landmarks->size(); i++, zIndex += 2){
 			Hk(zIndex, 0) = -((self->navSector->landmarks->at(i)->xpos) - Xk(0, 0))/std::sqrt(std::pow((self->navSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->navSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
@@ -1174,39 +1186,38 @@ void* GeneralController::trackRobotThread(void* object){
 			Hk(zIndex + 1, 2) = -1;
 		}
 
-		std::vector<fuzzy::trapezoid*> zkl = self->getObservationsTrapezoids();
+		std::vector<fuzzy::trapezoid*> zklWNoise;
+		std::vector<fuzzy::trapezoid*> zklWONoise;
+		self->getObservationsTrapezoids(zklWNoise, zklWONoise);
 
-		for(int i = 0; i < zkl.size(); i++){
+		/*for(int i = 0; i < zklWONoise.size(); i++){
 			std::cout << "Zkl Trap " << i  << ": (";
-			std::cout << zkl.at(i)->getVertexA() << ", ";
-			std::cout << zkl.at(i)->getVertexB() << ", ";
-			std::cout << zkl.at(i)->getVertexC() << ", ";
-			std::cout << zkl.at(i)->getVertexD() << ")" << std::endl;
-		}
-							
-		Matrix Sk = Hk * Pk * ~Hk + self->R;
-
-		Matrix Wk = Pk * ~Hk * !Sk;		
+			std::cout << zklWONoise.at(i)->getVertexA() << ", ";
+			std::cout << zklWONoise.at(i)->getVertexB() << ", ";
+			std::cout << zklWONoise.at(i)->getVertexC() << ", ";
+			std::cout << zklWONoise.at(i)->getVertexD() << ")" << std::endl;
+		}*/
+		
 		// 3 - Matching
 		//ROS_INFO("3 - Matching");
-		ROS_INFO("Seen landmarks: %d", self->landmarks.size());
+		//ROS_INFO("Seen landmarks: %d", self->landmarks.size());
 		pthread_mutex_lock(&self->mutexLandmarkLocker);
-		Matrix yk(2 * self->navSector->landmarks->size(), TRAP_VERTEX);
+		Matrix zl(2 * self->navSector->landmarks->size(), TRAP_VERTEX);
 		for (int i = 0; i < self->landmarks.size(); i++){
 			Matrix l = self->landmarks.at(i);
 			int mode = 0;
-			ROS_INFO("landmarks {d: %f, a: %f}", l(0, 0), l(1, 0));
+			//ROS_INFO("landmarks {d: %f, a: %f}", l(0, 0), l(1, 0));
 
-			for (int j = 0; j < zkl.size(); j+=2){
-				float mdDistance = zkl.at(j)->evaluate(l(0, 0));
+			for (int j = 0; j < zklWONoise.size(); j+=2){
+				float mdDistance = zklWONoise.at(j)->evaluate(l(0, 0));
 
 				Matrix tempZkl(1, TRAP_VERTEX);
-				tempZkl(0, 0) = zkl.at(j+1)->getVertexA();
-				tempZkl(0, 1) = zkl.at(j+1)->getVertexB();
-				tempZkl(0, 2) = zkl.at(j+1)->getVertexC();
-				tempZkl(0, 3) = zkl.at(j+1)->getVertexD();
+				tempZkl(0, 0) = zklWONoise.at(j+1)->getVertexA();
+				tempZkl(0, 1) = zklWONoise.at(j+1)->getVertexB();
+				tempZkl(0, 2) = zklWONoise.at(j+1)->getVertexC();
+				tempZkl(0, 3) = zklWONoise.at(j+1)->getVertexD();
 
-				if(l(1, 0) > 0 && l(1, 0) < (M_PI/4)){
+				if(self->isFirstQuadrant(l(1, 0))){
 					mode = 1;
 				}
 
@@ -1215,28 +1226,22 @@ void* GeneralController::trackRobotThread(void* object){
 				float mdAngle = tempTrap->evaluate(l(1, 0));
 				//ROS_INFO("Membership %d {d: %f, a: %f}", j, mdDistance, mdAngle);
 				if(mdDistance >= alpha && mdAngle >= alpha){
-					ROS_INFO("Matched landmark: {d: %d, a: %d}", j, j+1);
+					//ROS_INFO("Matched landmark: {d: %d, a: %d}", j, j+1);
 					
 					Matrix tempY(1, TRAP_VERTEX);
-					tempY(0, 0) = l(0,0) - zkl.at(j)->getVertexA();
-					tempY(0, 1) = l(0,0) - zkl.at(j)->getVertexB();
-					tempY(0, 2) = l(0,0) - zkl.at(j)->getVertexC();
-					tempY(0, 3) = l(0,0) - zkl.at(j)->getVertexD();
-					//tempY = tempY.sort_cols();
+					tempY(0, 0) = l(0, 0) - zklWONoise.at(j)->getVertexA();
+					tempY(0, 1) = l(0, 0) - zklWONoise.at(j)->getVertexB();
+					tempY(0, 2) = l(0, 0) - zklWONoise.at(j)->getVertexC();
+					tempY(0, 3) = l(0, 0) - zklWONoise.at(j)->getVertexD();
 
 					for (int k = 0; k < tempY.cols_size(); k++){
-						yk(j, k) = tempY(0, k);
+						zl(j, k) = tempY(0, k);
 					}
 
-					tempY(0, 0) = l(1,0) - tempZkl(0, 0);
-					tempY(0, 1) = l(1,0) - tempZkl(0, 1);
-					tempY(0, 2) = l(1,0) - tempZkl(0, 2);
-					tempY(0, 3) = l(1,0) - tempZkl(0, 3);
-
-					//tempY = self->normalizeAngles(tempY);
+					tempY = l(1, 0) - tempZkl;
 
 					for (int k = 0; k < tempY.cols_size(); k++){
-						yk(j+1, k) = tempY(0, k);
+						zl(j+1, k) = tempY(0, k);
 					}
 				}
 			}
@@ -1265,9 +1270,6 @@ void* GeneralController::trackRobotThread(void* object){
 		matXk(2, 2) = trapTh->getVertexC();
 		matXk(2, 3) = trapTh->getVertexD();
 
-		//if(isMoving){
-			//std::cout << "trap Xk:" << std::endl << matXk;
-		//}
 		Matrix matThk(1, TRAP_VERTEX);
 		matThk(0, 0) = matXk(2, 0);
 		matThk(0, 1) = matXk(2, 1);
@@ -1275,30 +1277,29 @@ void* GeneralController::trackRobotThread(void* object){
 		matThk(0, 3) = matXk(2, 3);
 
 		matThk = self->denormalizeAngles(matThk);
-		//std::cout << "denormalizeAngles:" << std::endl << matThk;	
+		
 		matXk(2, 0) = matThk(0, 0);
 		matXk(2, 1) = matThk(0, 1);
 		matXk(2, 2) = matThk(0, 2);
 		matXk(2, 3) = matThk(0, 3);
 
-		//std::cout << "trap yk:" << std::endl << yk;
-		
-		Matrix stateVariation = Wk*yk;
-		stateVariation = self->sortVariation(stateVariation);
-		//if(isMoving){
-			//std::cout << "stateVariation:" << std::endl << stateVariation;
-		//}
+
+		Matrix Sk = Hk * Pk * ~Hk + self->R;
+		Matrix Wk = Pk * ~Hk * !Sk;
+
+		Matrix stateVariation = self->multTrapMatrix(Wk, zl);
+		stateVariation = Wk * zl;
+		std::cout << "State Variation: " << std::endl;
+		stateVariation.print();
 		matXk = matXk + stateVariation;
 
-		//std::cout << "New State:" << std::endl << matXk;
+		matThk = matXk(2);
 
-		matThk(0, 0) = matXk(2, 0);
-		matThk(0, 1) = matXk(2, 1);
-		matThk(0, 2) = matXk(2, 2);
-		matThk(0, 3) = matXk(2, 3);
 
 		matXk = matXk.sort_cols();
-        
+        Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
+        std::cout << "Pk: " << std::endl;
+		Pk.print();
         float xkn = fuzzy::fstats::expectation(matXk(0, 0), matXk(0, 1), matXk(0, 2), matXk(0, 3));
         float ykn = fuzzy::fstats::expectation(matXk(1, 0), matXk(1, 1), matXk(1, 2), matXk(1, 3));
         float thkn = fuzzy::fstats::expectation(matThk(0, 0), matThk(0, 1), matThk(0, 2), matThk(0, 3));
@@ -1315,7 +1316,6 @@ void* GeneralController::trackRobotThread(void* object){
 		matXk(2, 2) = matThk(0, 2);
 		matXk(2, 3) = matThk(0, 3);
 
-
 		self->kalmanFuzzy->at(X_INDEX)->setVertexA(matXk(0, 0));
 		self->kalmanFuzzy->at(X_INDEX)->setVertexB(matXk(0, 1));
 		self->kalmanFuzzy->at(X_INDEX)->setVertexC(matXk(0, 2));
@@ -1331,12 +1331,13 @@ void* GeneralController::trackRobotThread(void* object){
 		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexC(matThk(0, 2));
 		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexD(matThk(0, 3));
 
+		std::cout << "Position Xk: " << std::endl;
+		matXk.print();
+
 		ROS_INFO("new position is: {x: %f, y: %f, theta: %f}", xkn, ykn, thkn);
-		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
+		
 		self->setRobotPosition(xkn, ykn, thkn);
-		//if(isMoving){
-			std::cout << "Position Xk: " << std::endl << matXk;
-		//}
+		
 		Sleep(90);
 		//self->keepRobotTracking = NO;
 	}
@@ -1344,52 +1345,31 @@ void* GeneralController::trackRobotThread(void* object){
 	return NULL;
 }
 
-Matrix GeneralController::sortVariation(Matrix variation){
+Matrix GeneralController::multTrapMatrix(Matrix mat, Matrix trap){
 	Matrix result(STATE_VARIABLES, TRAP_VERTEX);
+	for(int i = 0; i < mat.rows_size(); i++){
+		Matrix sumResult(1, TRAP_VERTEX);
+		for(int j = 0; j < mat.cols_size(); j++){
+			Matrix tempResult(1, TRAP_VERTEX);
+			tempResult(0, 0) = mat(i, j) * trap(j, 0);
+			tempResult(0, 1) = mat(i, j) * trap(j, 1);
+			tempResult(0, 2) = mat(i, j) * trap(j, 2);
+			tempResult(0, 3) = mat(i, j) * trap(j, 3);
 
-	for(int i = 0; i < STATE_VARIABLES; i++){
-		
-		int npositives = 0;
-		for(int j = 0; j < TRAP_VERTEX; j++){
-			if(variation(i, j) >= 0){
-				npositives++;
-			}
-		}
-		int indexN = 0, indexP = 0;
-		Matrix positives(1, npositives);
-		Matrix negatives(1, TRAP_VERTEX - npositives);
-
-		for(int j = 0; j < TRAP_VERTEX; j++){
-			if(variation(i, j) >= 0){
-				positives(0, indexP) = variation(i, j);
-				indexP++;
-			} else {
-				negatives(0, indexN) = variation(i, j);
-				indexN++;
-			}
-
-		}
-		if(positives.cols_size() > 0){
-			positives = positives.sort_cols();
-		}
-		if(negatives.cols_size() > 0){
-			negatives = negatives.sort_cols();
-		}
-		int j;
-		for(j = 0; j < npositives; j++){
-			result(i, j) = positives(0, j);
+			//tempResult = tempResult.sort_cols();
+			sumResult = sumResult + tempResult;
+			//sumResult = sumResult.sort_cols();
 		}
 
-		for(int k = 0; j < TRAP_VERTEX; j++, k++){
-			result(i, j) = negatives(0, k);
-		}
+		result(i, 0) = sumResult(0, 0);
+		result(i, 1) = sumResult(0, 1);
+		result(i, 2) = sumResult(0, 2);
+		result(i, 3) = sumResult(0, 3);
 	}
-
 	return result;
 }
 
-std::vector<fuzzy::trapezoid*> GeneralController::getObservationsTrapezoids(){
-	std::vector<fuzzy::trapezoid*> result;
+void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*> &obsWithNoise, std::vector<fuzzy::trapezoid*> &obsWONoise){
 	
 	fuzzy::trapezoid *trapX = kalmanFuzzy->at(X_INDEX);
 	fuzzy::trapezoid *trapY = kalmanFuzzy->at(X_INDEX + 1);
@@ -1537,6 +1517,8 @@ std::vector<fuzzy::trapezoid*> GeneralController::getObservationsTrapezoids(){
 
 		if((i%2) != 0){
 			results = normalizeAngles(results);
+			obsWONoise.push_back(new fuzzy::trapezoid("", results(0, 0), results(0, 1), results(0, 2), results(0, 3)));
+
 			results(0, 0) += kalmanFuzzy->at(W_INDEX + 1)->getVertexA();
 			results(0, 1) += kalmanFuzzy->at(W_INDEX + 1)->getVertexB();
 			results(0, 2) += kalmanFuzzy->at(W_INDEX + 1)->getVertexC();
@@ -1545,17 +1527,17 @@ std::vector<fuzzy::trapezoid*> GeneralController::getObservationsTrapezoids(){
 			results = normalizeAngles(results);
 
 		} else {
+			results = results.sort_cols();
+			obsWONoise.push_back(new fuzzy::trapezoid("", results(0, 0), results(0, 1), results(0, 2), results(0, 3)));
+
 			results(0, 0) += kalmanFuzzy->at(W_INDEX)->getVertexA();
 			results(0, 1) += kalmanFuzzy->at(W_INDEX)->getVertexB();
 			results(0, 2) += kalmanFuzzy->at(W_INDEX)->getVertexC();
 			results(0, 3) += kalmanFuzzy->at(W_INDEX)->getVertexD();
-			results = results.sort_cols();
 		}
 		
-		result.push_back(new fuzzy::trapezoid("", results(0, 0), results(0, 1), results(0, 2), results(0, 3)));
+		obsWithNoise.push_back(new fuzzy::trapezoid("", results(0, 0), results(0, 1), results(0, 2), results(0, 3)));
 	}
-	
-	return result;
 }
 
 void GeneralController::landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle){
@@ -1585,10 +1567,10 @@ Matrix GeneralController::denormalizeAngles(Matrix trap, int mode){
 	Matrix tempTrap = trap;
 	Matrix result(TRAP_VERTEX, 1);
 
-	if(((tempTrap(0, 0) >= 0) && (tempTrap(0, 0) <= (M_PI/4))) &&
-       ((tempTrap(0, 1) >= (7/4*M_PI)) && (tempTrap(0, 1) <= (2*M_PI))) &&
-       ((tempTrap(0, 2) >= (7/4*M_PI)) && (tempTrap(0, 2) <= (2*M_PI))) &&
-       ((tempTrap(0, 3) >= (7/4*M_PI)) && (tempTrap(0, 3) <= (2*M_PI)))){
+	if(isFirstQuadrant(tempTrap(0, 0)) &&
+       isFouthQuadrant(tempTrap(0, 1)) &&
+       isFouthQuadrant(tempTrap(0, 2)) &&
+       isFouthQuadrant(tempTrap(0, 3))){
        	if(mode != 1){
 			tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
 		} else {
@@ -1598,10 +1580,10 @@ Matrix GeneralController::denormalizeAngles(Matrix trap, int mode){
 		}
 		result = tempTrap.sort_cols();
 
-    } else if(((tempTrap(0, 0) >= 0) && (tempTrap(0, 0) <= (M_PI/4))) &&
-              ((tempTrap(0, 1) >= 0) && (tempTrap(0, 1) <= (M_PI/4))) &&
-              ((tempTrap(0, 2) >= (7/4*M_PI)) && (tempTrap(0, 2) <= (2*M_PI))) &&
-              ((tempTrap(0, 3) >= (7/4*M_PI)) && (tempTrap(0, 3) <= (2*M_PI)))){
+    } else if(isFirstQuadrant(tempTrap(0, 0)) &&
+              isFirstQuadrant(tempTrap(0, 1)) &&
+              isFouthQuadrant(tempTrap(0, 2)) &&
+              isFouthQuadrant(tempTrap(0, 3))){
     	if(mode != 1){
 			tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
 			tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
@@ -1611,11 +1593,10 @@ Matrix GeneralController::denormalizeAngles(Matrix trap, int mode){
 		}
 		result = tempTrap.sort_cols();
 
-    } else if(((tempTrap(0, 0) >= 0) && (tempTrap(0, 0) <= (M_PI/4))) &&
-              ((tempTrap(0, 1) >= 0) && (tempTrap(0, 1) <= (M_PI/4))) &&
-              ((tempTrap(0, 2) >= 0) && (tempTrap(0, 2) <= (M_PI/4))) &&
-              ((tempTrap(0, 3) >= (7/4*M_PI)) && (tempTrap(0, 3) <= (2*M_PI)))){
-
+    } else if(isFirstQuadrant(tempTrap(0, 0)) &&
+              isFirstQuadrant(tempTrap(0, 1)) &&
+              isFirstQuadrant(tempTrap(0, 2)) &&
+              isFouthQuadrant(tempTrap(0, 3))){
     	if(mode != 1){
 			tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
 			tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
@@ -1631,6 +1612,22 @@ Matrix GeneralController::denormalizeAngles(Matrix trap, int mode){
 	
 
 	return result;
+}
+
+bool GeneralController::isFirstQuadrant(float angle){
+	return (angle >= 0 && angle < (M_PI /2));
+}
+
+bool GeneralController::isSecondQuadrant(float angle){
+	return (angle >= (M_PI/2) && angle < (M_PI));
+}
+
+bool GeneralController::isThirdQuadrant(float angle){
+	return (angle >= (M_PI) && angle < (3*M_PI/2));
+}
+
+bool GeneralController::isFouthQuadrant(float angle){
+	return (angle >= (3*M_PI/2) && angle < (2*M_PI));
 }
 
 void GeneralController::stopRobotTracking(){
@@ -1695,7 +1692,7 @@ void* GeneralController::streamingThread(void* object){
 	std::vector<uchar> buff;
 	std::vector<int> params = vector<int>(2);
 	params[0] = CV_IMWRITE_JPEG_QUALITY;
-	params[1] = 85;
+	params[1] = 80;
 	
 	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), self->udpPort);
 	while(ros::ok() && self->streamingActive == YES){

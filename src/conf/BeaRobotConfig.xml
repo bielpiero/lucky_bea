@@ -1,18 +1,18 @@
 <robot>
 	<navigation-params alpha="70">
 		<initial-position>
-			<x-zone x1="-35" x2="-12" x3="12" x4="35"/> <!-- centimeters -->
-			<y-zone x1="-35" x2="-15" x3="15" x4="35"/> <!-- centimeters -->
-			<th-zone x1="-60" x2="-50" x3="50" x4="60"/> <!-- milliradians -->
+			<x-zone x1="-15" x2="-10" x3="10" x4="15"/> <!-- centimeters -->
+			<y-zone x1="-20" x2="-15" x3="15" x4="20"/> <!-- centimeters -->
+			<th-zone x1="-110" x2="-60" x3="60" x4="110"/> <!-- milliradians -->
 		</initial-position>
 		<process-noise>
-			<x-zone x1="-7" x2="-4" x3="4" x4="7"/>
-			<y-zone x1="-5" x2="-4" x3="5" x4="6"/>
-			<th-zone x1="-204" x2="-104" x3="125" x4="225"/> <!-- milliradians -->
+			<x-zone x1="-10" x2="-5" x3="5" x4="10"/> <!-- centimeters -->
+			<y-zone x1="-10" x2="-5" x3="5" x4="10"/> <!-- centimeters -->
+			<th-zone x1="-100" x2="-80" x3="80" x4="100"/> <!-- milliradians -->
 		</process-noise>
 		<observation-noise mode="d-th">
-			<d-zone x1="-30" x2="-25" x3="10" x4="15"/>
-			<th-zone x1="-100" x2="-85" x3="35" x4="40"/> <!-- milliradians -->
+			<d-zone x1="-20" x2="-15" x3="15" x4="20"/>  <!-- millimeters -->
+			<th-zone x1="-340" x2="-300" x3="300" x4="340"/> <!-- milliradians -->
 		</observation-noise>
 	</navigation-params>
 </robot>
