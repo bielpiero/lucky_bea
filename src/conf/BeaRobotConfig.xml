@@ -11,7 +11,7 @@
 			<th-zone x1="-100" x2="-80" x3="80" x4="100"/> <!-- milliradians -->
 		</process-noise>
 		<observation-noise mode="d-th">
-			<d-zone x1="-20" x2="-15" x3="15" x4="20"/>  <!-- millimeters -->
+			<d-zone x1="-50" x2="-25" x3="25" x4="50"/>  <!-- millimeters -->
 			<th-zone x1="-340" x2="-300" x3="300" x4="340"/> <!-- milliradians -->
 		</observation-noise>
 	</navigation-params>
