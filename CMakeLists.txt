@@ -97,13 +97,13 @@ pkg_search_module(LIBUSB_1 REQUIRED libusb-1.0)
 include_directories(include ${LIBUSB_1_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(include ${catkin_INCLUDE_DIRS})
-
+include_directories( /usr/local/Aria/include)
+link_directories(/usr/local/Aria/lib)
 
 ## Declare a cpp library
 # add_library(lucky_bea_socketnode src/SocketNode2.cpp)
 
 ## Declare a cpp executable
-#file(GLOB_RECURSE lucky_bea_SOURCES src/lucky_bea.cpp src/SocketNode2.cpp src/Matrix.cpp src/stats.cpp src/UDPClient.cpp src/SerialPort.cpp src/GeneralController.cpp)
 file(GLOB_RECURSE lucky_bea_SOURCES src/*.cpp)
 file(GLOB_RECURSE lucky_bea_HEADERS src/*.h)
 
@@ -129,7 +129,11 @@ target_link_libraries(lucky_bea
   ${catkin_LIBRARIES}
   ${LIBUSB_1_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  Aria pthread dl rt
 )
+
+set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-fPIC")
+#set_target_properties(lucky_bea PROPERTIES LINK_FLAGS "-Wl")
 
 #############
 ## Install ##
