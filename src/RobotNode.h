@@ -7,6 +7,20 @@
 #include <math.h>
 #include "Aria.h"
 
+class PointXY{
+private:
+	double x, y;
+public:
+	PointXY(double x, double y){
+		this->x = x;
+		this->y = y;
+	}
+	~PointXY(){}
+
+	double getX(){ return this->x; }
+	double getY(){ return this->y; }
+};
+
 class LsColor{
 private:
 	unsigned char red;
@@ -33,19 +47,19 @@ public:
 class LaserScan{
 private:
 	std::vector<float>* ranges;
-	std::vector<int>* intensities;
+	std::vector<float>* intensities;
 	std::vector<LsColor*>* color;
 
 public:
 	LaserScan(){
 		ranges = new std::vector<float>();
-		intensities = new std::vector<int>();
+		intensities = new std::vector<float>();
 		color = new std::vector<LsColor*>();
 	}
 	std::vector<float>* getRanges() { return ranges; }
-	std::vector<int>* getIntensities() { return intensities; }
+	std::vector<float>* getIntensities() { return intensities; }
 
-	void addLaserScanData(float range, int intensity = 0) { 
+	void addLaserScanData(float range, float intensity = 0) { 
 		ranges->push_back(range); 
 		intensities->push_back(intensity);
 	}
@@ -55,10 +69,13 @@ public:
 	}
 
 	float getRange(int index) { return ranges->at(index); }
-	int getIntensity(int index) { return intensities->at(index); }
+	float getIntensity(int index) { return intensities->at(index); }
 	LsColor* getColor(int index) { return color->at(index); }
 
 	int size() { return ranges->size(); }
+	float getAngleMin() { return (-M_PI / 2.0); }
+	float getAngleMax() { return (M_PI / 2.0); }
+	float getIncrement() { return (0.5 * M_PI / 180); }
 };
 
 class RobotNode{
@@ -81,26 +98,40 @@ private:
     bool isGoingForward;
     bool wasDeactivated;
     bool doNotMove;
+    char prevBatteryChargeState;
+
 
 public:
 	RobotNode(const char* port);
 	virtual ~RobotNode();
+
+	void disconnect();
     
     bool isGoalAchieved(void);
     
     void gotoPosition(double x, double y, double theta, double transSpeed = 200, double rotSpeed = 10);
 	void move(double distance, double speed = 200);
     void moveAtSpeed(double linearVelocity, double angularVelocity);
-    void stop(void);
-    
-    std::vector<bool> getFrontBumpersStatus(void);
-    std::vector<bool> getRearBumpersStatus(void);
-    
-	LaserScan* getLaserScan(void);
-    bool getMotorsStatus(void);
-	void getRobotPosition(void);
-    
-    void setMotorsStatus(bool enabled);
-    void setRobotPosition(double x, double y, double theta);
+    void stopRobot(void);
 
+    void getBatterChargeStatus(void);
+    void getBumpersStatus(void);
+	void getLaserScan(void);
+    bool getMotorsStatus(void);
+    bool getSonarsStatus(void);
+    void getSonarsScan(void);
+	void getRobotPosition(void);
+	    
+    void setMotorsStatus(bool enabled);
+    void setPosition(double x, double y, double theta);
+    void setSonarStatus(bool enabled);
+private:
+	static void* securityDistanceThread(void* object);
+	static void* dataPublishingThread(void* object);
+protected:
+	virtual void onLaserScanCompleted(LaserScan* data) = 0;
+	virtual void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear) = 0;
+	virtual void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed) = 0;
+	virtual void onSonarsDataUpdate(std::vector<PointXY*>* data) = 0;
+	virtual void onBatteryChargeStateChanged(char data) = 0;
 };

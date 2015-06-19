@@ -7,12 +7,11 @@ const float GeneralController::LASER_MAX_RANGE = 11.6;
 const float GeneralController::MIN_RAND = -1;
 const float GeneralController::MAX_RAND = 1;
 
-GeneralController::GeneralController(ros::NodeHandle nh_){
+GeneralController::GeneralController(ros::NodeHandle nh_):RobotNode("/dev/ttyS0"){
 	this->nh = nh_;
 	
 	this->maestroControllers = new SerialPort();
-	
-	this->keepSpinning = true;
+
 	this->frontBumpersOk = true;
 	this->rearBumpersOk = true;
 	this->setChargerPosition = false;
@@ -40,15 +39,13 @@ GeneralController::GeneralController(ros::NodeHandle nh_){
 	navSector = NULL;
 	loadRobotConfig();
 	loadSector(0);
-	cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/RosAria/cmd_vel", 1);
-	cmd_goto_pub = nh.advertise<geometry_msgs::Pose2D>("/RosAria/cmd_goto", 1);
-	pose2d_pub = nh.advertise<geometry_msgs::Pose2D>("/RosAria/cmd_set_pose", 1);
 
 	pthread_mutex_init(&mutexLandmarkLocker, NULL);
 }
 
 
 GeneralController::~GeneralController(void){
+	disconnect();
 	stopDynamicGesture();
 	stopVideoStreaming();
 	stopRobotTracking();
@@ -153,7 +150,7 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 			break;
 		case 0x14:
 			getPositions(cad, x, y, theta);
-			goToPosition(x, y, theta);
+			moveRobotToPosition(x, y, theta);
 			break;
 		case 0x20:
 			getNumberOfCamerasAvailable(cameraCount);
@@ -714,8 +711,6 @@ void GeneralController::loadRobotConfig(){
 	robotConfig->navParams->processNoise = new s_position;
 	robotConfig->navParams->observationNoise = new s_obs_dth;
 
-
-
 	xml_node<>* root_node = doc.first_node(XML_ELEMENT_ROBOT_STR);
 	xml_node<>* nav_root_node = root_node->first_node(XML_ELEMENT_NAV_PARAMS_STR);
 	robotConfig->navParams->alpha = (float)atoi(nav_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value()) / 100;
@@ -809,111 +804,63 @@ void GeneralController::moveRobot(float lin_vel, float angular_vel){
 		bumpersOk = false;
 	}
 	if (bumpersOk){
-		twist_msg.linear.x = lin_vel;
-		twist_msg.linear.y = 0;
-		twist_msg.linear.z = 0;
-		twist_msg.angular.x = 0;
-		twist_msg.angular.y = 0;
-		twist_msg.angular.z = angular_vel;
-		cmd_vel_pub.publish(twist_msg);
+		this->moveAtSpeed(lin_vel, angular_vel);
 	} else {
-		twist_msg.linear.x = 0;
-		twist_msg.linear.y = 0;
-		twist_msg.linear.z = 0;
-		twist_msg.angular.x = 0;
-		twist_msg.angular.y = 0;
-		twist_msg.angular.z = 0;
-		cmd_vel_pub.publish(twist_msg);
+		this->stopRobot();
 	}
 	Sleep(100);
 	ros::spinOnce();
-	keepSpinning = true;
 }
 
 void GeneralController::setRobotPosition(float x, float y, float theta){
-	Matrix Xk(3);
-	
-	Xk(0, 0) = x;
-	Xk(1, 0) = y;
-	Xk(2, 0) = theta;
-	
-	setRobotPosition(Xk);	
+	this->setPosition(x, y, theta);	
 }
 
 void GeneralController::setRobotPosition(Matrix Xk){
-	geometry_msgs::Pose2D msg;
-	
-	msg.x = Xk(0, 0);
-	msg.y = Xk(1, 0);
-	msg.theta = Xk(2, 0);
-	pose2d_pub.publish(msg);
-	
-	Sleep(100);
-	ros::spinOnce();
+	this->setPosition(Xk(0, 0), Xk(1, 0), Xk(2, 0));
 }
 
-void GeneralController::goToPosition(float x, float y, float theta){
-	geometry_msgs::Pose2D msg;
-	Matrix Xk(3);
-	
-	Xk(0, 0) = x;
-	Xk(1, 0) = y;
-	Xk(2, 0) = theta;
-
-	msg.x = Xk(0, 0);
-	msg.y = Xk(1, 0);
-	msg.theta = Xk(2, 0);
-	cmd_goto_pub.publish(msg);
-	Sleep(100);
-	ros::spinOnce();
+void GeneralController::moveRobotToPosition(float x, float y, float theta){
+	this->gotoPosition(x, y, theta);
 }
 
-void GeneralController::bumperStateCallback(const rosaria::BumperState::ConstPtr& bumpers){
+void GeneralController::onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear){
 	char* bump = new char[256];
 
 	frontBumpersOk = true;
 	rearBumpersOk = true;
 
-	for (int i = 0; i < bumpers->front_bumpers.size(); i++){
-		if (bumpers->front_bumpers[i] && frontBumpersOk){
+	for (int i = 0; i < front.size(); i++){
+		if (front[i] && frontBumpersOk){
 			frontBumpersOk = false;
 		}
 	}
 
-	for (int i = 0; i < bumpers->rear_bumpers.size(); i++){
-		if (bumpers->rear_bumpers[i] && rearBumpersOk){
+	for (int i = 0; i < rear.size(); i++){
+		if (rear[i] && rearBumpersOk){
 			rearBumpersOk = false;
 		}
 	}
 
-	sprintf(bump, "$BUMPERS|%d,%d,%d,%d,%d,%d|%d,%d,%d,%d,%d,%d",bumpers->front_bumpers[0], bumpers->front_bumpers[1], bumpers->front_bumpers[2], bumpers->front_bumpers[3], bumpers->front_bumpers[4], bumpers->front_bumpers[5],
-			bumpers->rear_bumpers[0], bumpers->rear_bumpers[1], bumpers->rear_bumpers[2], bumpers->rear_bumpers[3], bumpers->rear_bumpers[4], bumpers->rear_bumpers[5]);
+	sprintf(bump, "$BUMPERS|%d,%d,%d,%d,%d,%d|%d,%d,%d,%d,%d,%d", (int)front[0], (int)front[1], (int)front[2], (int)front[3], (int)front[4], (int)front[5],
+			(int)rear[0], (int)rear[1], (int)rear[2], (int)rear[3], (int)rear[4], (int)rear[5]);
 	int dataLen = strlen(bump);
 	if(spdUDPClient != NULL){
 		//spdUDPClient->sendData((unsigned char*)bump, dataLen);
 	}
 }
 
-void GeneralController::poseStateCallback(const nav_msgs::Odometry::ConstPtr& pose){
-	float q3 = pose->pose.pose.orientation.z; //quaternion vector component z
-	float q0 = pose->pose.pose.orientation.w; //quaternion scalar component
-	
-	float theta = std::atan2((2*(q0 * q3)), (1 - 2 * (std::pow(q3, 2))));
-    if(theta < 0){
-        theta = theta + 2 * M_PI;
-    } else if(theta >= (2 * M_PI)){
-        theta = theta - 2 * M_PI;
-    }
-	
-	robotEncoderPosition(0, 0) = pose->pose.pose.position.x;
-	robotEncoderPosition(1, 0) = pose->pose.pose.position.y;
+void GeneralController::onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed){
+
+	robotEncoderPosition(0, 0) = x;
+	robotEncoderPosition(1, 0) = y;
 	robotEncoderPosition(2, 0) = theta;
 	
-	robotVelocity(0, 0) = pose->twist.twist.linear.x;
-	robotVelocity(1, 0) = pose->twist.twist.angular.z;
+	robotVelocity(0, 0) = transSpeed;
+	robotVelocity(1, 0) = rotSpeed;
 	
 	char* bump = new char[256];
-	sprintf(bump, "$POSE_VEL|%.4f,%.4f,%.4f|%.4f,%.4f",robotEncoderPosition(0, 0), robotEncoderPosition(1, 0), robotEncoderPosition(2, 0), robotVelocity(0, 0), robotVelocity(1, 0));
+	sprintf(bump, "$POSE_VEL|%.4f,%.4f,%.4f|%.4f,%.4f", robotEncoderPosition(0, 0), robotEncoderPosition(1, 0), robotEncoderPosition(2, 0), robotVelocity(0, 0), robotVelocity(1, 0));
 	int dataLen = strlen(bump);
 	if(spdUDPClient != NULL){
 		spdUDPClient->sendData((unsigned char*)bump, dataLen);
@@ -922,24 +869,13 @@ void GeneralController::poseStateCallback(const nav_msgs::Odometry::ConstPtr& po
 	Sleep(100);
 }
 
-//void GeneralController::batteryStateCallback(const std_msgs::Float32::ConstPtr& battery){
-	//TODO: When Available.
-//}
 
-void GeneralController::sonarStateCallback(const sensor_msgs::PointCloud::ConstPtr& sonar){
+void GeneralController::onSonarsDataUpdate(std::vector<PointXY*>* data){
 
 }
 
-void GeneralController::sonarPointCloud2StateCallback(const sensor_msgs::PointCloud2::ConstPtr& sonar){
-
-}
-
-void GeneralController::batteryVoltageCallback(const std_msgs::Float64::ConstPtr& battery){
-
-}
-
-void GeneralController::batteryRechargeStateCallback(const std_msgs::Int8::ConstPtr& battery){
-	if(!setChargerPosition && ((int)battery->data) > 0){
+void GeneralController::onBatteryChargeStateChanged(char battery){
+	if(!setChargerPosition && ((int)battery) > 0){
 		if(navSector != NULL){
 			
 			for(int i = 0; i< navSector->features->size(); i++){
@@ -955,22 +891,13 @@ void GeneralController::batteryRechargeStateCallback(const std_msgs::Int8::Const
 	}
 }
 
-void GeneralController::goalAchievementStateCallback(const std_msgs::Int8::ConstPtr& hasAchieved){
-	if(((int)hasAchieved->data) == 0){
-		this->hasAchievedGoal = false;
-	} else {
-		this->hasAchievedGoal = true;
-	}
+void GeneralController::onLaserScanCompleted(LaserScan* laser){
 
-}
-
-void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::ConstPtr& laser){
-	float range = MAX_RAND - MIN_RAND;
-	float angle_min = laser->angle_min;
-	float angle_max = laser->angle_max;
-	float angle_increment = laser->angle_increment;
-	std::vector<float> data = laser->ranges;
-	std::vector<float> dataIntensities = laser->intensities;
+	float angle_min = laser->getAngleMin();
+	float angle_max = laser->getAngleMax();
+	float angle_increment = laser->getIncrement();
+	std::vector<float>* data = laser->getRanges();
+	std::vector<float> dataIntensities = *laser->getIntensities();
 
 	std::vector<int> dataIndices = stats::findIndicesHigherThan(dataIntensities, 0);
 	pthread_mutex_lock(&mutexLandmarkLocker);
@@ -980,15 +907,15 @@ void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::Con
 	std::vector<float> dataAngles;
 	for(int i = 1; i < dataIndices.size(); i++){
 		if(((dataIndices[i] - dataIndices[i - 1]) <= 2) && (i != (dataIndices.size() - 1))){
-			dataMean.push_back(data[dataIndices[i - 1]]);
+			dataMean.push_back(data->at(dataIndices[i - 1]));
 			dataAngles.push_back((angle_min + ((float)dataIndices[i - 1] * angle_increment)));
 		} else {
 			Matrix temp = Matrix(2, 1);
 			if(i != (dataIndices.size() - 1)){
-				dataMean.push_back(data[dataIndices[i - 1]]);
+				dataMean.push_back(data->at(dataIndices[i - 1]));
 				dataAngles.push_back((angle_min + ((float)dataIndices[i - 1] * angle_increment)));
 			} else {
-				dataMean.push_back(data[dataIndices[i]]);
+				dataMean.push_back(data->at(dataIndices[i]));
 				dataAngles.push_back((angle_min + ((float)dataIndices[i] * angle_increment)));
 			}
 			
@@ -1001,8 +928,6 @@ void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::Con
                 angleMean = angleMean - 2 * M_PI;
             }
 			
-			//temp(0, 0) = distMean * cos(angleMean);
-			//temp(1, 0) = distMean * sin(angleMean);
 			temp(0, 0) = distMean;
 			temp(1, 0) = angleMean;
 			landmarks.push_back(temp);
@@ -1012,10 +937,6 @@ void GeneralController::laserScanStateCallback(const sensor_msgs::LaserScan::Con
 	}
 	pthread_mutex_unlock(&mutexLandmarkLocker);
 	Sleep(100);
-}
-
-void GeneralController::laserPointCloudStateCallback(const sensor_msgs::PointCloud::ConstPtr& laser){
-
 }
 
 void GeneralController::startSitesTour(){
@@ -1035,10 +956,10 @@ void* GeneralController::sitesTourThread(void* object){
 		float xpos = self->navSector->sites->at(goalIndex)->xpos;
 		float ypos = self->navSector->sites->at(goalIndex)->ypos;
 		Sleep(100);
-		self->goToPosition(xpos, ypos, 0.0);
+		self->moveRobotToPosition(xpos, ypos, 0.0);
 		goalIndex++;
 		if(goalIndex == self->navSector->sites->size()) goalIndex = 0;
-		while(!self->hasAchievedGoal && self->keepTourAlive == YES) Sleep(100);
+		while(!self->isGoalAchieved() && self->keepTourAlive == YES) Sleep(100);
 	}
 	self->keepTourAlive = NO;
 	return NULL;

@@ -36,32 +36,12 @@ int main(int argc, char** argv){
     robot = new GeneralController(nh);
     robot->Init("", 14004, SOCKET_SERVER);
     robot->StartThread();
-    
-	
-	ros::Subscriber bumper_state = nh.subscribe("/RosAria/bumper_state", 100, &GeneralController::bumperStateCallback, robot);
-	ros::Subscriber pose_state = nh.subscribe("/RosAria/pose", 1, &GeneralController::poseStateCallback, robot);
-	ros::Subscriber battery_voltage_state = nh.subscribe("/RosAria/battery_voltage", 1, &GeneralController::batteryVoltageCallback, robot);
-	ros::Subscriber battery_recharge_state = nh.subscribe("/RosAria/battery_recharge_state", 1, &GeneralController::batteryRechargeStateCallback, robot);
 
-	ros::Subscriber goal_achievement_state = nh.subscribe("/RosAria/goal_achived", 1, &GeneralController::goalAchievementStateCallback, robot);
-	
-	//ros::Subscriber sonar_state = nh.subscribe("/RosAria/sonar", 1, &GeneralController::sonarStateCallback, robot);
-	//ros::Subscriber sonar_pointcloud2_state = nh.subscribe("/RosAria/sonar_pointcloud2", 1, &GeneralController::sonarPointCloud2StateCallback, robot);
-	
-	ros::Subscriber laser_state = nh.subscribe("/RosAria/laser", 1, &GeneralController::laserScanStateCallback, robot);
-	ros::Subscriber laser_pointcloud_state = nh.subscribe("/RosAria/laser_pointcloud", 1, &GeneralController::laserPointCloudStateCallback, robot);
-
-	int i = 10;
-	while (i > 0){
-		ros::spinOnce();
-		Sleep(100);
-		i--;
-	}
 	//robot->trackRobot();
 	robot->OnConnection();
 	ros::spin();
-	
-    //delete robot;
-    ROS_INFO( "Lucky Bea: Quitting... \n" );
+	ROS_INFO( "Lucky Bea: Quitting... \n" );
+    delete robot;
+    
     return 0;
 }

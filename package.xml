@@ -43,11 +43,11 @@
   <build_depend>opencv2</build_depend>
   <build_depend>opencv</build_depend>
   <build_depend>OpenCV</build_depend>
-  <build_depend>rosaria</build_depend>
+  <build_depend>libaria</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>roslib</build_depend>
   <run_depend>opencv2</run_depend>
-  <run_depend>rosaria</run_depend>
+  <run_depend>libaria</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>roslib</run_depend>
 

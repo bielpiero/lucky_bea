@@ -14,8 +14,6 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/LaserScan.h>
 #include <nav_msgs/Odometry.h>
-#include <rosaria/BumperState.h>
-#include <laser_assembler/AssembleScans.h>
 
 // OPEN CV
 //#include <opencv2/opencv.hpp>

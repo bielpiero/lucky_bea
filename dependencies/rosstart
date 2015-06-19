@@ -34,8 +34,6 @@ sudo setserial /dev/ttyS3 irq 5
 roscore&
 sleep 5
 
-rosrun rosaria RosAria&
-sleep 50
-#rosrun lucky_bea lucky_bea&
+rosrun lucky_bea lucky_bea&
 
 exit 0

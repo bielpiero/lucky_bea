@@ -16,6 +16,7 @@
 #include "xml/rapidxml.hpp"
 #include "xmldefs.h"
 #include "semdefs.h"
+#include "RobotNode.h"
 
 #include "Matrix.h"
 #include "stats.h"
@@ -139,7 +140,7 @@ struct s_sector{
 };
 
 
-class GeneralController : public CSocketNode // la clase GeneralController hereda de la clase CSocketNode
+class GeneralController : public CSocketNode, public RobotNode // la clase GeneralController hereda de la clase CSocketNode
 {
 private:
 	SerialPort* maestroControllers;
@@ -177,19 +178,12 @@ private:
 	
 	/// ROS Functions
 public:
-	//void batteryStateCallback(const std_msgs::Float32::ConstPtr& battery); // when available
-	void bumperStateCallback(const rosaria::BumperState::ConstPtr& bumpers);
-	void poseStateCallback(const nav_msgs::Odometry::ConstPtr& pose);
-	void batteryVoltageCallback(const std_msgs::Float64::ConstPtr& battery);
-	void batteryRechargeStateCallback(const std_msgs::Int8::ConstPtr& battery);
-	
-	void sonarStateCallback(const sensor_msgs::PointCloud::ConstPtr& sonar);
-	void sonarPointCloud2StateCallback(const sensor_msgs::PointCloud2::ConstPtr& sonar);
-	
-	void laserScanStateCallback(const sensor_msgs::LaserScan::ConstPtr& laser);
-	void laserPointCloudStateCallback(const sensor_msgs::PointCloud::ConstPtr& laser);
 
-	void goalAchievementStateCallback(const std_msgs::Int8::ConstPtr& hasAchieved);
+	void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear);
+	void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed);
+	void onBatteryChargeStateChanged(char battery);
+	void onSonarsDataUpdate(std::vector<PointXY*>* data);
+	void onLaserScanCompleted(LaserScan* laser);
 	
 	void initializeKalmanVariables();
 	
@@ -203,9 +197,7 @@ private:
 	static const float MAX_RAND;
 	UDPClient* spdUDPClient;
 	ros::NodeHandle nh;
-	ros::Publisher cmd_vel_pub;
-	ros::Publisher cmd_goto_pub;
-	ros::Publisher pose2d_pub;
+
 	//OpenCV
 	cv::VideoCapture vc;
 	//possibilistic navigation
@@ -221,7 +213,6 @@ private:
 	
 	bool setChargerPosition;
 	bool hasAchievedGoal;
-	bool keepSpinning;
 	bool frontBumpersOk;
 	bool rearBumpersOk;
 	int udpPort;
@@ -245,7 +236,7 @@ private:
 
 	void setRobotPosition(Matrix pose);
 	void setRobotPosition(float x, float y, float theta);
-	void goToPosition(float x, float y, float th);
+	void moveRobotToPosition(float x, float y, float th);
 	void getPositions(char* cad, float& x, float& y, float& theta);
 	
 	void startSitesTour();
