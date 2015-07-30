@@ -163,18 +163,19 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 			break;
 		case 0x16:
 			getMapId(cad, mapId);
-			getMapInformationLandmarks(mapId, mapInformation);
-			SendMsg(0x16, (char*)mapInformation.c_str(), (int)mapInformation.length()); 
+			loadSector(mapId);
 			break;
 		case 0x17:
-			getMapId(cad, mapId);
-			getMapInformationFeatures(mapId, mapInformation);
+			getMapInformationLandmarks(mapInformation);
 			SendMsg(0x17, (char*)mapInformation.c_str(), (int)mapInformation.length()); 
 			break;
 		case 0x18:
-			getMapId(cad, mapId);
-			getMapInformationSites(mapId, mapInformation);
+			getMapInformationFeatures(mapInformation);
 			SendMsg(0x18, (char*)mapInformation.c_str(), (int)mapInformation.length()); 
+			break;
+		case 0x19:
+			getMapInformationSites(mapInformation);
+			SendMsg(0x19, (char*)mapInformation.c_str(), (int)mapInformation.length()); 
 			break;
 		case 0x20:
 			getNumberOfCamerasAvailable(cameraCount);
@@ -841,65 +842,57 @@ void GeneralController::getMapsAvailable(std::string& mapsAvailable){
 	mapsAvailable = buffer_str.str();
 }
 
-void GeneralController::getMapInformationLandmarks(int mapId, std::string& mapInformation){
-	bool found = false;
+void GeneralController::getMapInformationLandmarks(std::string& mapInformation){
+
 	std::ostringstream buffer_str;
 	buffer_str.clear();
-	for(int i = 0; i < navSectors->size() and not found; i++){
-		if(navSectors->at(i)->id == mapId){
-			found = true;
-			for(int j = 0; j < navSectors->at(i)->landmarks->size(); j++){
-				buffer_str << navSectors->at(i)->landmarks->at(j)->id << ",";
-				buffer_str << navSectors->at(i)->landmarks->at(j)->xpos << ",";
-				buffer_str << navSectors->at(i)->landmarks->at(j)->ypos;
-				if(j != navSectors->at(i)->landmarks->size() - 1){
-					buffer_str << "|";
-				}
-			}			
-		}
+	if(currentSector != NULL){
+		for(int j = 0; j < currentSector->landmarks->size(); j++){
+			buffer_str << currentSector->landmarks->at(j)->id << ",";
+			buffer_str << currentSector->landmarks->at(j)->xpos << ",";
+			buffer_str << currentSector->landmarks->at(j)->ypos;
+			if(j != currentSector->landmarks->size() - 1){
+				buffer_str << "|";
+			}
+		}			
+	}
+	mapInformation = buffer_str.str();
+
+}
+
+
+void GeneralController::getMapInformationFeatures(std::string& mapInformation){
+
+	std::ostringstream buffer_str;
+	buffer_str.clear();
+	if(currentSector != NULL){
+		for(int j = 0; j < currentSector->features->size(); j++){
+			buffer_str << currentSector->features->at(j)->id << ",";
+			buffer_str << currentSector->features->at(j)->name << ",";
+			buffer_str << currentSector->features->at(j)->xpos << ",";
+			buffer_str << currentSector->features->at(j)->ypos;
+			if(j != currentSector->features->size() - 1){
+				buffer_str << "|";
+			}
+		}	
 	}
 	mapInformation = buffer_str.str();
 }
 
+void GeneralController::getMapInformationSites(std::string& mapInformation){
 
-void GeneralController::getMapInformationFeatures(int mapId, std::string& mapInformation){
-	bool found = false;
 	std::ostringstream buffer_str;
 	buffer_str.clear();
-	for(int i = 0; i < navSectors->size() and not found; i++){
-		if(navSectors->at(i)->id == mapId){
-			found = true;
-			for(int j = 0; j < navSectors->at(i)->features->size(); j++){
-				buffer_str << navSectors->at(i)->features->at(j)->id << ",";
-				buffer_str << navSectors->at(i)->features->at(j)->name << ",";
-				buffer_str << navSectors->at(i)->features->at(j)->xpos << ",";
-				buffer_str << navSectors->at(i)->features->at(j)->ypos;
-				if(j != navSectors->at(i)->features->size() - 1){
-					buffer_str << "|";
-				}
-			}	
-		}
-	}
-	mapInformation = buffer_str.str();
-}
-
-void GeneralController::getMapInformationSites(int mapId, std::string& mapInformation){
-	bool found = false;
-	std::ostringstream buffer_str;
-	buffer_str.clear();
-	for(int i = 0; i < navSectors->size() and not found; i++){
-		if(navSectors->at(i)->id == mapId){
-			found = true;
-			for(int j = 0; j < navSectors->at(i)->sites->size(); j++){
-				buffer_str << navSectors->at(i)->sites->at(j)->id << ",";
-				buffer_str << navSectors->at(i)->sites->at(j)->name << ",";
-				buffer_str << navSectors->at(i)->sites->at(j)->xpos << ",";
-				buffer_str << navSectors->at(i)->sites->at(j)->ypos;
-				if(j != navSectors->at(i)->sites->size() - 1){
-					buffer_str << "|";
-				}
-			}	
-		}
+	if(currentSector != NULL){
+		for(int j = 0; j < currentSector->sites->size(); j++){
+			buffer_str << currentSector->sites->at(j)->id << ",";
+			buffer_str << currentSector->sites->at(j)->name << ",";
+			buffer_str << currentSector->sites->at(j)->xpos << ",";
+			buffer_str << currentSector->sites->at(j)->ypos;
+			if(j != currentSector->sites->size() - 1){
+				buffer_str << "|";
+			}
+		}	
 	}
 	mapInformation = buffer_str.str();
 }

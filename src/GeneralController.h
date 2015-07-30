@@ -244,9 +244,9 @@ private:
 
 	void getMapId(char* cad, int& mapId);
 	void getMapsAvailable(std::string& mapsAvailable);
-	void getMapInformationLandmarks(int mapId, std::string& mapInformation);
-	void getMapInformationFeatures(int mapId, std::string& mapInformation);
-	void getMapInformationSites(int mapId, std::string& mapInformation);
+	void getMapInformationLandmarks(std::string& mapInformation);
+	void getMapInformationFeatures(std::string& mapInformation);
+	void getMapInformationSites(std::string& mapInformation);
 	
 	void startSitesTour();
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
