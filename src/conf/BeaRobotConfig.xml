@@ -1,4 +1,4 @@
-<robot>
+<robot cameras="3">
 	<navigation-params alpha="70">
 		<initial-position>
 			<x-zone x1="-25" x2="-20" x3="20" x4="25"/> <!-- centimeters -->
