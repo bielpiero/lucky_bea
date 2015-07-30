@@ -4,8 +4,6 @@
 
 
 const float GeneralController::LASER_MAX_RANGE = 11.6;
-const float GeneralController::MIN_RAND = -1;
-const float GeneralController::MAX_RAND = 1;
 
 GeneralController::GeneralController(ros::NodeHandle nh_):RobotNode("/dev/ttyS0"){
 	this->nh = nh_;
@@ -36,10 +34,11 @@ GeneralController::GeneralController(ros::NodeHandle nh_):RobotNode("/dev/ttyS0"
 	xmlSectorsFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_SECTORS_PATH;
 	xmlRobotConfigFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_ROBOT_CONFIG_PATH;
 
-	navSector = NULL;
+	navSectors = NULL;
+	currentSector = NULL;
 	loadRobotConfig();
+	loadSectors();
 	loadSector(0);
-
 	pthread_mutex_init(&mutexLandmarkLocker, NULL);
 }
 
@@ -75,6 +74,8 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 	std::string local_buffer_out = "";
 	std::string gestures = "";
 	std::string servo_positions = "";
+	std::string mapsAvailable = "";
+	std::string mapInformation = "";
 	std::ostringstream number_converter;
 	
 	unsigned char port = 0;
@@ -82,6 +83,7 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 
 	int servo_position = 0;
 	int face_id, k=0;
+	int mapId = 0;
 	float lin_vel = 0, ang_vel = 0;
 	int cameraCount = 0;
 	int videoDevice = 0;
@@ -141,8 +143,11 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 			moveRobot(lin_vel, ang_vel);
 			break;
 		case 0x11:
-			//trackRobot();
-			startSitesTour();
+			trackRobot();
+			//startSitesTour();
+			break;
+		case 0x12:
+			stopRobotTracking();
 			break;	
 		case 0x13:
 			getPositions(cad, x, y, theta);
@@ -151,6 +156,25 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 		case 0x14:
 			getPositions(cad, x, y, theta);
 			moveRobotToPosition(x, y, theta);
+			break;
+		case 0x15:
+			getMapsAvailable(mapsAvailable);
+			SendMsg(0x15, (char*)mapsAvailable.c_str(), (int)mapsAvailable.length()); 
+			break;
+		case 0x16:
+			getMapId(cad, mapId);
+			getMapInformationLandmarks(mapId, mapInformation);
+			SendMsg(0x16, (char*)mapInformation.c_str(), (int)mapInformation.length()); 
+			break;
+		case 0x17:
+			getMapId(cad, mapId);
+			getMapInformationFeatures(mapId, mapInformation);
+			SendMsg(0x17, (char*)mapInformation.c_str(), (int)mapInformation.length()); 
+			break;
+		case 0x18:
+			getMapId(cad, mapId);
+			getMapInformationSites(mapId, mapInformation);
+			SendMsg(0x18, (char*)mapInformation.c_str(), (int)mapInformation.length()); 
 			break;
 		case 0x20:
 			getNumberOfCamerasAvailable(cameraCount);
@@ -182,6 +206,10 @@ void GeneralController::initializeSPDPort(char* cad){
 		throw std::invalid_argument("Error!!! Could not initialize SPD streaming");
 	}
 	spdUDPClient = new UDPClient(this->getClientIPAddress(), this->spdUDPPort);
+}
+
+void GeneralController::getMapId(char* cad, int& mapId){
+	mapId = atoi(cad);
 }
 
 void GeneralController::getPositions(char* cad, float& x, float& y, float& theta){
@@ -501,17 +529,14 @@ void GeneralController::setGesture(std::string face_id){
 
 void GeneralController::setServoPosition(unsigned char card_id, unsigned char servo_id, int position){
     this->maestroControllers->setTarget(card_id, servo_id, position);
-    Sleep(500);
 }
 
 void GeneralController::setServoSpeed(unsigned char card_id, unsigned char servo_id, int speed){
     this->maestroControllers->setSpeed(card_id, servo_id, speed);
-    Sleep(500);
 }
 
 void GeneralController::setServoAcceleration(unsigned char card_id, unsigned char servo_id, int acceleration){
     this->maestroControllers->setAcceleration(card_id, servo_id, acceleration);
-    Sleep(500);
 }
 
 void GeneralController::stopDynamicGesture(){
@@ -532,13 +557,11 @@ void* GeneralController::dynamicFaceThread(void* object){
 	
 	doc.parse<0>(&buffer[0]);	
 	root_node = doc.first_node(XML_DYNAMIC_GESTURES_STR);
-	if(root_node != NULL)
-	{
+	if(root_node != NULL){
 		for (xml_node<> * repetir_node = root_node->first_node("Repetir"); repetir_node; repetir_node = repetir_node->next_sibling()){
 
 			std::string idGesture(repetir_node->first_attribute("idGesto")->value());
-			if(idGesture == node->id_gesto)
-			{
+			if(idGesture == node->id_gesto){
 				selected_dynamic_face.idGesture = idGesture;
 				
 				std::string ts(repetir_node->first_attribute("ts")->value());
@@ -580,11 +603,10 @@ void* GeneralController::dynamicFaceThread(void* object){
 
 	usleep(1000*atoi(selected_dynamic_face.ts.c_str()));
 
-	while(node->object->continue_dynamic_thread)
-	{
+	while(node->object->continue_dynamic_thread){
 		for(int i=0; i<selected_dynamic_face.secuences.size(); i++){
 			for(int j=0; j<selected_dynamic_face.secuences[i].motors.size(); j++){
-                                unsigned char card_id = (unsigned char)atoi(selected_dynamic_face.secuences[i].motors[j].cardId.c_str());
+                unsigned char card_id = (unsigned char)atoi(selected_dynamic_face.secuences[i].motors[j].cardId.c_str());
 				unsigned char servo_id = (unsigned char)atoi(selected_dynamic_face.secuences[i].motors[j].idMotor.c_str());
 				int position = atoi(selected_dynamic_face.secuences[i].motors[j].pos.c_str());
 				int speed = atoi(selected_dynamic_face.secuences[i].motors[j].speed.c_str());
@@ -601,6 +623,16 @@ void* GeneralController::dynamicFaceThread(void* object){
 }
 
 void GeneralController::loadSector(int sectorId){
+	bool found = false;
+	for(int i = 0; i < navSectors->size() and not found; i++){
+		if(navSectors->at(i)->id == sectorId){
+			found = true;
+			currentSector = navSectors->at(i);
+		}
+	}
+}
+
+void GeneralController::loadSectors(){
 	xml_document<> doc;
     xml_node<>* root_node;
 	
@@ -614,73 +646,75 @@ void GeneralController::loadSector(int sectorId){
 	doc.parse<0>(&buffer[0]);
 	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
 
-	if(navSector != NULL){
-		delete navSector->landmarks;
-		delete navSector->features;
-		delete navSector->sites;
-		delete navSector;
+	if(navSectors != NULL){
+		for(int i = 0; i < navSectors->size(); i++){
+			delete navSectors->at(i)->landmarks;
+			delete navSectors->at(i)->features;
+			delete navSectors->at(i)->sites;
+		}
+		delete navSectors;
 	}
-	navSector = new s_sector;
-	navSector->sitesCyclic = false;
+	navSectors = new std::vector<s_sector*>();
+	
 	if(root_node != NULL){
 		for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){	
-
+			s_sector* navSector = new s_sector;
+			navSector->sitesCyclic = false;
 			int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-			if(xmlSectorId == sectorId){
-				navSector->id = xmlSectorId;
-				navSector->name = std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-				navSector->width = atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value());
-				navSector->height = atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value());
 
-				navSector->landmarks = new std::vector<s_landmark*>();
-				navSector->features = new std::vector<s_feature*>();
-				navSector->sites = new std::vector<s_site*>();
+			navSector->id = xmlSectorId;
+			navSector->name = std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+			navSector->width = atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value());
+			navSector->height = atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value());
 
-				xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
-				for(xml_node<>* landmark_node = landmarks_root_node->first_node(XML_ELEMENT_LANDMARK_STR); landmark_node; landmark_node = landmark_node->next_sibling()){
-					s_landmark* tempLandmark = new s_landmark;
+			navSector->landmarks = new std::vector<s_landmark*>();
+			navSector->features = new std::vector<s_feature*>();
+			navSector->sites = new std::vector<s_site*>();
 
-					tempLandmark->id = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-					tempLandmark->var = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_STR)->value())) / 100;
-					tempLandmark->xpos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
-					tempLandmark->ypos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
+			xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
+			for(xml_node<>* landmark_node = landmarks_root_node->first_node(XML_ELEMENT_LANDMARK_STR); landmark_node; landmark_node = landmark_node->next_sibling()){
+				s_landmark* tempLandmark = new s_landmark;
 
-					navSector->landmarks->push_back(tempLandmark);
-				}
+				tempLandmark->id = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+				tempLandmark->var = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_STR)->value())) / 100;
+				tempLandmark->xpos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
+				tempLandmark->ypos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
 
-				xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
-				for(xml_node<>* features_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); features_node; features_node = features_node->next_sibling()){
-					s_feature* tempFeature = new s_feature;
+				navSector->landmarks->push_back(tempLandmark);
+			}
 
-					tempFeature->id = atoi(features_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-					tempFeature->name = std::string(features_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-					tempFeature->var = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_VARIANCE_STR)->value())) / 100;
-					tempFeature->xpos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
-					tempFeature->ypos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
+			xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
+			for(xml_node<>* features_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); features_node; features_node = features_node->next_sibling()){
+				s_feature* tempFeature = new s_feature;
 
-					navSector->features->push_back(tempFeature);
-					
-				}
+				tempFeature->id = atoi(features_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+				tempFeature->name = std::string(features_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+				tempFeature->var = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_VARIANCE_STR)->value())) / 100;
+				tempFeature->xpos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
+				tempFeature->ypos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
 
-				xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
-				std::string cyclic(sites_root_node->first_attribute(XML_ATTRIBUTE_CYCLIC_STR)->value());
-				if(cyclic == "yes"){
-					navSector->sitesCyclic = true;
-				}
-				for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
-					s_site* tempSite = new s_site;
-
-					tempSite->id = atoi(site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-					tempSite->name = std::string(site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-					tempSite->var = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_VARIANCE_STR)->value())) / 100;
-					tempSite->tsec = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_TIME_STR)->value()));
-					tempSite->xpos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
-					tempSite->ypos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
-
-					navSector->sites->push_back(tempSite);
-				}
+				navSector->features->push_back(tempFeature);
 				
 			}
+
+			xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+			std::string cyclic(sites_root_node->first_attribute(XML_ATTRIBUTE_CYCLIC_STR)->value());
+			if(cyclic == "yes"){
+				navSector->sitesCyclic = true;
+			}
+			for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
+				s_site* tempSite = new s_site;
+
+				tempSite->id = atoi(site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+				tempSite->name = std::string(site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+				tempSite->var = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_VARIANCE_STR)->value())) / 100;
+				tempSite->tsec = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_TIME_STR)->value()));
+				tempSite->xpos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
+				tempSite->ypos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
+
+				navSector->sites->push_back(tempSite);
+			}
+			navSectors->push_back(navSector);
 		}
 	}
 	the_file.close();
@@ -745,24 +779,24 @@ void GeneralController::loadRobotConfig(){
 	xml_node<>* process_noise_root_node = nav_root_node->first_node(XML_ELEMENT_PROCESS_NOISE_STR);
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_X_ZONE_STR);
 	s_trapezoid* x1_zone = new s_trapezoid;
-	x1_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
-	x1_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
-	x1_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
-	x1_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
+	x1_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
+	x1_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
+	x1_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
+	x1_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
 
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_Y_ZONE_STR);
 	s_trapezoid* y1_zone = new s_trapezoid;
-	y1_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
-	y1_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
-	y1_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
-	y1_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
+	y1_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
+	y1_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
+	y1_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
+	y1_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
 
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
 	s_trapezoid* th1_zone = new s_trapezoid;
-	th1_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 1000;
-	th1_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 1000;
-	th1_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 1000;
-	th1_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 1000;
+	th1_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
+	th1_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
+	th1_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
+	th1_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
 
 	robotConfig->navParams->processNoise->xZone = x1_zone;
 	robotConfig->navParams->processNoise->yZone = y1_zone;
@@ -791,8 +825,87 @@ void GeneralController::loadRobotConfig(){
 	the_file.close();
 }
 
+void GeneralController::getMapsAvailable(std::string& mapsAvailable){
+	std::ostringstream buffer_str;
+	buffer_str.clear();
+	for(int i = 0; i < navSectors->size(); i++){
+
+		buffer_str << navSectors->at(i)->id << ",";
+		buffer_str << navSectors->at(i)->name << ",";
+		buffer_str << navSectors->at(i)->width << ",";
+		buffer_str << navSectors->at(i)->height;
+		if(i != navSectors->size() - 1){
+			buffer_str << "|";
+		}
+	}
+	mapsAvailable = buffer_str.str();
+}
+
+void GeneralController::getMapInformationLandmarks(int mapId, std::string& mapInformation){
+	bool found = false;
+	std::ostringstream buffer_str;
+	buffer_str.clear();
+	for(int i = 0; i < navSectors->size() and not found; i++){
+		if(navSectors->at(i)->id == mapId){
+			found = true;
+			for(int j = 0; j < navSectors->at(i)->landmarks->size(); j++){
+				buffer_str << navSectors->at(i)->landmarks->at(j)->id << ",";
+				buffer_str << navSectors->at(i)->landmarks->at(j)->xpos << ",";
+				buffer_str << navSectors->at(i)->landmarks->at(j)->ypos;
+				if(j != navSectors->at(i)->landmarks->size() - 1){
+					buffer_str << "|";
+				}
+			}			
+		}
+	}
+	mapInformation = buffer_str.str();
+}
+
+
+void GeneralController::getMapInformationFeatures(int mapId, std::string& mapInformation){
+	bool found = false;
+	std::ostringstream buffer_str;
+	buffer_str.clear();
+	for(int i = 0; i < navSectors->size() and not found; i++){
+		if(navSectors->at(i)->id == mapId){
+			found = true;
+			for(int j = 0; j < navSectors->at(i)->features->size(); j++){
+				buffer_str << navSectors->at(i)->features->at(j)->id << ",";
+				buffer_str << navSectors->at(i)->features->at(j)->name << ",";
+				buffer_str << navSectors->at(i)->features->at(j)->xpos << ",";
+				buffer_str << navSectors->at(i)->features->at(j)->ypos;
+				if(j != navSectors->at(i)->features->size() - 1){
+					buffer_str << "|";
+				}
+			}	
+		}
+	}
+	mapInformation = buffer_str.str();
+}
+
+void GeneralController::getMapInformationSites(int mapId, std::string& mapInformation){
+	bool found = false;
+	std::ostringstream buffer_str;
+	buffer_str.clear();
+	for(int i = 0; i < navSectors->size() and not found; i++){
+		if(navSectors->at(i)->id == mapId){
+			found = true;
+			for(int j = 0; j < navSectors->at(i)->sites->size(); j++){
+				buffer_str << navSectors->at(i)->sites->at(j)->id << ",";
+				buffer_str << navSectors->at(i)->sites->at(j)->name << ",";
+				buffer_str << navSectors->at(i)->sites->at(j)->xpos << ",";
+				buffer_str << navSectors->at(i)->sites->at(j)->ypos;
+				if(j != navSectors->at(i)->sites->size() - 1){
+					buffer_str << "|";
+				}
+			}	
+		}
+	}
+	mapInformation = buffer_str.str();
+}
+
 void GeneralController::moveRobot(float lin_vel, float angular_vel){
-	geometry_msgs::Twist twist_msg;
+
 	bool bumpersOk = false;
 	if(frontBumpersOk && rearBumpersOk){
 		bumpersOk = true;
@@ -813,14 +926,16 @@ void GeneralController::moveRobot(float lin_vel, float angular_vel){
 }
 
 void GeneralController::setRobotPosition(float x, float y, float theta){
+	ROS_INFO("new position is: {x: %f, y: %f, theta: %f}", x, y, theta);
 	this->setPosition(x, y, theta);	
 }
 
 void GeneralController::setRobotPosition(Matrix Xk){
-	this->setPosition(Xk(0, 0), Xk(1, 0), Xk(2, 0));
+	this->setRobotPosition(Xk(0, 0), Xk(1, 0), Xk(2, 0));
 }
 
 void GeneralController::moveRobotToPosition(float x, float y, float theta){
+	ROS_INFO("Moving to position: {x: %f, y: %f, theta: %f}", x, y, theta);
 	this->gotoPosition(x, y, theta);
 }
 
@@ -865,8 +980,6 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 	if(spdUDPClient != NULL){
 		spdUDPClient->sendData((unsigned char*)bump, dataLen);
 	}
-	
-	Sleep(100);
 }
 
 
@@ -876,13 +989,13 @@ void GeneralController::onSonarsDataUpdate(std::vector<PointXY*>* data){
 
 void GeneralController::onBatteryChargeStateChanged(char battery){
 	if(!setChargerPosition && ((int)battery) > 0){
-		if(navSector != NULL){
+		if(currentSector != NULL){
 			
-			for(int i = 0; i< navSector->features->size(); i++){
-				if(navSector->features->at(i)->name == SEMANTIC_FEATURE_CHARGER_STR){
+			for(int i = 0; i< currentSector->features->size(); i++){
+				if(currentSector->features->at(i)->name == SEMANTIC_FEATURE_CHARGER_STR){
 					setChargerPosition = true;
-					float xpos = navSector->features->at(i)->xpos;
-					float ypos = navSector->features->at(i)->ypos;
+					float xpos = currentSector->features->at(i)->xpos;
+					float ypos = currentSector->features->at(i)->ypos;
 					Sleep(100);
 					setRobotPosition(xpos, ypos, M_PI/2);
 				}
@@ -899,34 +1012,47 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 	std::vector<float>* data = laser->getRanges();
 	std::vector<float> dataIntensities = *laser->getIntensities();
 
+
 	std::vector<int> dataIndices = stats::findIndicesHigherThan(dataIntensities, 0);
 	pthread_mutex_lock(&mutexLandmarkLocker);
 	landmarks.clear();
 	
 	std::vector<float> dataMean;
 	std::vector<float> dataAngles;
-	for(int i = 1; i < dataIndices.size(); i++){
-		if(((dataIndices[i] - dataIndices[i - 1]) <= 2) && (i != (dataIndices.size() - 1))){
-			dataMean.push_back(data->at(dataIndices[i - 1]));
-			dataAngles.push_back((angle_min + ((float)dataIndices[i - 1] * angle_increment)));
-		} else {
-			Matrix temp = Matrix(2, 1);
-			if(i != (dataIndices.size() - 1)){
-				dataMean.push_back(data->at(dataIndices[i - 1]));
-				dataAngles.push_back((angle_min + ((float)dataIndices[i - 1] * angle_increment)));
-			} else {
+
+	if(dataIndices.size() > 0){
+		for(int i = 0; i < dataIndices.size() - 1; i++){
+			if((dataIndices[i + 1] - dataIndices[i]) <= 4){
 				dataMean.push_back(data->at(dataIndices[i]));
 				dataAngles.push_back((angle_min + ((float)dataIndices[i] * angle_increment)));
+			} else {
+				Matrix temp = Matrix(2, 1);
+		
+				dataMean.push_back(data->at(dataIndices[i]));
+				dataAngles.push_back((angle_min + ((float)dataIndices[i] * angle_increment)));
+				
+				
+				float distMean = stats::expectation(dataMean);
+				float angleMean = stats::expectation(dataAngles);
+				//float distMean = (dataMean.front() + dataMean.back()) / 2.0;
+				//float angleMean = (dataAngles.front() + dataAngles.back()) / 2.0;
+				
+				temp(0, 0) = distMean;
+				temp(1, 0) = angleMean;
+				landmarks.push_back(temp);
+				dataMean.clear();
+				dataAngles.clear();
 			}
+		}
+
+		if(dataMean.size() > 0){
+			Matrix temp = Matrix(2, 1);
+		
+			dataMean.push_back(data->at(dataIndices[dataIndices.size() - 1]));
+			dataAngles.push_back((angle_min + ((float)dataIndices[dataIndices.size() - 1] * angle_increment)));
 			
 			float distMean = stats::expectation(dataMean);
 			float angleMean = stats::expectation(dataAngles);
-            
-            if(angleMean < 0){
-                angleMean = angleMean + 2 * M_PI;
-            } else if(angleMean >= (2 * M_PI)){
-                angleMean = angleMean - 2 * M_PI;
-            }
 			
 			temp(0, 0) = distMean;
 			temp(1, 0) = angleMean;
@@ -935,8 +1061,8 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 			dataAngles.clear();
 		}
 	}
+
 	pthread_mutex_unlock(&mutexLandmarkLocker);
-	Sleep(100);
 }
 
 void GeneralController::startSitesTour(){
@@ -953,12 +1079,12 @@ void* GeneralController::sitesTourThread(void* object){
 	int goalIndex = 0;
 	
 	while(ros::ok() && self->keepTourAlive == YES){
-		float xpos = self->navSector->sites->at(goalIndex)->xpos;
-		float ypos = self->navSector->sites->at(goalIndex)->ypos;
+		float xpos = self->currentSector->sites->at(goalIndex)->xpos;
+		float ypos = self->currentSector->sites->at(goalIndex)->ypos;
 		Sleep(100);
 		self->moveRobotToPosition(xpos, ypos, 0.0);
 		goalIndex++;
-		if(goalIndex == self->navSector->sites->size()) goalIndex = 0;
+		if(goalIndex == self->currentSector->sites->size()) goalIndex = 0;
 		while(!self->isGoalAchieved() && self->keepTourAlive == YES) Sleep(100);
 	}
 	self->keepTourAlive = NO;
@@ -979,12 +1105,6 @@ void GeneralController::initializeKalmanVariables(){
 	
 	float uX, uY, uTh;
 
-	float minXY = -0.5;
-	float maxXY = 0.5;
-	float minTh = -0.02618;
-	float maxTh = 0.02618;
-	float spacing = 0.1;
-
 	fuzzy::trapezoid* xxKK = new fuzzy::trapezoid("Xx(k|k)", robotEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, robotEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, robotEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, robotEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
 	
 	fuzzy::trapezoid* xyKK = new fuzzy::trapezoid("Xy(k|k)", robotEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, robotEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, robotEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, robotEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
@@ -1004,7 +1124,7 @@ void GeneralController::initializeKalmanVariables(){
 	uX = fuzzy::fstats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
 	uY = fuzzy::fstats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
 	uTh = fuzzy::fstats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
-	
+
 	P(0, 0) = uX; 	P(0, 1) = 0; 	P(0, 2) = 0;
 	P(1, 0) = 0; 	P(1, 1) = uY;	P(1, 2) = 0;
 	P(2, 0) = 0;	P(2, 1) = 0;	P(2, 2) = uTh;
@@ -1022,7 +1142,7 @@ void GeneralController::initializeKalmanVariables(){
 	uX = fuzzy::fstats::uncertainty(wdK1->getVertexA(), wdK1->getVertexB(), wdK1->getVertexC(), wdK1->getVertexD());
 	uTh = fuzzy::fstats::uncertainty(wThK1->getVertexA(), wThK1->getVertexB(), wThK1->getVertexC(), wThK1->getVertexD());
 
-	R =  Matrix(2 * navSector->landmarks->size(), 2 * navSector->landmarks->size());
+	R =  Matrix(2 * currentSector->landmarks->size(), 2 * currentSector->landmarks->size());
 	for (int i = 0; i < R.cols_size(); i++){
 		if((i % 2) != 0){
 			R(i, i) = uTh;
@@ -1031,18 +1151,7 @@ void GeneralController::initializeKalmanVariables(){
 		}
 	}
 
-	Matrix matXk(1, TRAP_VERTEX);
-	matXk(0, 0) = xThKK->getVertexA();
-	matXk(0, 1) = xThKK->getVertexB();
-	matXk(0, 2) = xThKK->getVertexC();
-	matXk(0, 3) = xThKK->getVertexD();
-
-	matXk = normalizeAngles(matXk);
-	xThKK->setVertexA(matXk(0, 0));
-	xThKK->setVertexB(matXk(0, 1));
-	xThKK->setVertexC(matXk(0, 2));
-	xThKK->setVertexD(matXk(0, 3));
-	
+	kalmanFuzzy->clear();
 	kalmanFuzzy->push_back(xxKK);
 	kalmanFuzzy->push_back(xyKK);
 	kalmanFuzzy->push_back(xThKK);
@@ -1056,7 +1165,6 @@ void GeneralController::initializeKalmanVariables(){
 }
 
 void GeneralController::trackRobot(){
-	pthread_t trackThread;
 	stopRobotTracking();
 	initializeKalmanVariables();
 	std::cout << "Tracking Doris..." << std::endl;
@@ -1082,28 +1190,33 @@ void* GeneralController::trackRobotThread(void* object){
 		bool isMoving = false;
 		if(std::abs(self->robotVelocity(0, 0)) > 0.01 || std::abs(self->robotVelocity(1, 0)) > 0.01){
 			isMoving = true;
-			self->kalmanFuzzy->at(X_INDEX) = (*self->kalmanFuzzy->at(X_INDEX)) + (*self->kalmanFuzzy->at(V_INDEX));
-			self->kalmanFuzzy->at(X_INDEX + 1) = (*self->kalmanFuzzy->at(X_INDEX + 1)) + (*self->kalmanFuzzy->at(V_INDEX + 1));
-			self->kalmanFuzzy->at(X_INDEX + 2) = (*self->kalmanFuzzy->at(X_INDEX + 2)) + (*self->kalmanFuzzy->at(V_INDEX + 2));
+			//self->kalmanFuzzy->at(X_INDEX) = (*self->kalmanFuzzy->at(X_INDEX)) + (*self->kalmanFuzzy->at(V_INDEX));
+			//self->kalmanFuzzy->at(X_INDEX + 1) = (*self->kalmanFuzzy->at(X_INDEX + 1)) + (*self->kalmanFuzzy->at(V_INDEX + 1));
+			//self->kalmanFuzzy->at(X_INDEX + 2) = (*self->kalmanFuzzy->at(X_INDEX + 2)) + (*self->kalmanFuzzy->at(V_INDEX + 2));
 		}
 		pk1 = Pk;
+        std::cout << "Pk(k|k): " << std::endl;
+		Pk.print();
+
 		if(isMoving){
 			Pk = Ak * pk1 * ~Ak + self->Q;
 		} else {
 			Pk = Ak * pk1 * ~Ak;
 		}
 
+        std::cout << "Pk(k+1|k): " << std::endl;
+		Pk.print();
 		// 2 - Observation
 		//ROS_INFO("2 - Observation");
 		
-		Hk = Matrix(2 * self->navSector->landmarks->size(), STATE_VARIABLES);
-		for(int i = 0, zIndex = 0; i < self->navSector->landmarks->size(); i++, zIndex += 2){
-			Hk(zIndex, 0) = -((self->navSector->landmarks->at(i)->xpos) - Xk(0, 0))/std::sqrt(std::pow((self->navSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->navSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
-			Hk(zIndex, 1) = -((self->navSector->landmarks->at(i)->ypos) - Xk(1, 0))/std::sqrt(std::pow((self->navSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->navSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
+		Hk = Matrix(2 * self->currentSector->landmarks->size(), STATE_VARIABLES);
+		for(int i = 0, zIndex = 0; i < self->currentSector->landmarks->size(); i++, zIndex += 2){
+			Hk(zIndex, 0) = -((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
+			Hk(zIndex, 1) = -((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
 			Hk(zIndex, 2) = 0;
 
-			Hk(zIndex + 1, 0) = ((self->navSector->landmarks->at(i)->ypos) - Xk(1, 0))/(std::pow((self->navSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->navSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
-			Hk(zIndex + 1, 1) = -((self->navSector->landmarks->at(i)->xpos) - Xk(0, 0))/(std::pow((self->navSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->navSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
+			Hk(zIndex + 1, 0) = ((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
+			Hk(zIndex + 1, 1) = -((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
 			Hk(zIndex + 1, 2) = -1;
 		}
 
@@ -1111,23 +1224,23 @@ void* GeneralController::trackRobotThread(void* object){
 		std::vector<fuzzy::trapezoid*> zklWONoise;
 		self->getObservationsTrapezoids(zklWNoise, zklWONoise);
 
-		/*for(int i = 0; i < zklWONoise.size(); i++){
-			std::cout << "Zkl Trap " << i  << ": (";
+		for(int i = 0; i < zklWONoise.size(); i++){
+		    std::cout << "Zkl Trap " << i  << ": (";
 			std::cout << zklWONoise.at(i)->getVertexA() << ", ";
 			std::cout << zklWONoise.at(i)->getVertexB() << ", ";
 			std::cout << zklWONoise.at(i)->getVertexC() << ", ";
 			std::cout << zklWONoise.at(i)->getVertexD() << ")" << std::endl;
-		}*/
+		}
 		
 		// 3 - Matching
 		//ROS_INFO("3 - Matching");
-		//ROS_INFO("Seen landmarks: %d", self->landmarks.size());
+		ROS_INFO("Seen landmarks: %d", self->landmarks.size());
 		pthread_mutex_lock(&self->mutexLandmarkLocker);
-		Matrix zl(2 * self->navSector->landmarks->size(), TRAP_VERTEX);
+		Matrix zl(2 * self->currentSector->landmarks->size(), TRAP_VERTEX);
 		for (int i = 0; i < self->landmarks.size(); i++){
 			Matrix l = self->landmarks.at(i);
 			int mode = 0;
-			//ROS_INFO("landmarks {d: %f, a: %f}", l(0, 0), l(1, 0));
+			ROS_INFO("landmarks {d: %f, a: %f}", l(0, 0), l(1, 0));
 
 			for (int j = 0; j < zklWONoise.size(); j+=2){
 				float mdDistance = zklWONoise.at(j)->evaluate(l(0, 0));
@@ -1138,16 +1251,16 @@ void* GeneralController::trackRobotThread(void* object){
 				tempZkl(0, 2) = zklWONoise.at(j+1)->getVertexC();
 				tempZkl(0, 3) = zklWONoise.at(j+1)->getVertexD();
 
-				if(self->isFirstQuadrant(l(1, 0))){
+				if(self->isThirdQuadrant(l(1, 0))){
 					mode = 1;
 				}
 
 				tempZkl = self->denormalizeAngles(tempZkl, mode);
 				fuzzy::trapezoid* tempTrap = new fuzzy::trapezoid("", tempZkl(0, 0), tempZkl(0, 1), tempZkl(0, 2), tempZkl(0, 3));
 				float mdAngle = tempTrap->evaluate(l(1, 0));
-				//ROS_INFO("Membership %d {d: %f, a: %f}", j, mdDistance, mdAngle);
+				
 				if(mdDistance >= alpha && mdAngle >= alpha){
-					//ROS_INFO("Matched landmark: {d: %d, a: %d}", j, j+1);
+					ROS_INFO("Matched landmark: {d: %d, a: %d}", j, j+1);
 					
 					Matrix tempY(1, TRAP_VERTEX);
 					tempY(0, 0) = l(0, 0) - zklWONoise.at(j)->getVertexA();
@@ -1191,6 +1304,9 @@ void* GeneralController::trackRobotThread(void* object){
 		matXk(2, 2) = trapTh->getVertexC();
 		matXk(2, 3) = trapTh->getVertexD();
 
+		std::cout << "Position Xk(k+1|k): " << std::endl;
+		matXk.print();
+
 		Matrix matThk(1, TRAP_VERTEX);
 		matThk(0, 0) = matXk(2, 0);
 		matThk(0, 1) = matXk(2, 1);
@@ -1218,17 +1334,12 @@ void* GeneralController::trackRobotThread(void* object){
 
 
 		matXk = matXk.sort_cols();
-        Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
-        std::cout << "Pk: " << std::endl;
-		Pk.print();
+        Pk = Pk - Wk * Sk * ~Wk;
+
         float xkn = fuzzy::fstats::expectation(matXk(0, 0), matXk(0, 1), matXk(0, 2), matXk(0, 3));
         float ykn = fuzzy::fstats::expectation(matXk(1, 0), matXk(1, 1), matXk(1, 2), matXk(1, 3));
         float thkn = fuzzy::fstats::expectation(matThk(0, 0), matThk(0, 1), matThk(0, 2), matThk(0, 3));
-        
-        if(thkn > M_PI){
-            thkn = thkn - 2 * M_PI;
-        }
-        
+                
 		matThk = self->normalizeAngles(matThk);
 		//std::cout << "normalizeAngles:" << std::endl << matThk;	
 
@@ -1252,10 +1363,8 @@ void* GeneralController::trackRobotThread(void* object){
 		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexC(matThk(0, 2));
 		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexD(matThk(0, 3));
 
-		std::cout << "Position Xk: " << std::endl;
+		std::cout << "Position Xk(k+1|k+1): " << std::endl;
 		matXk.print();
-
-		ROS_INFO("new position is: {x: %f, y: %f, theta: %f}", xkn, ykn, thkn);
 		
 		self->setRobotPosition(xkn, ykn, thkn);
 		
@@ -1296,7 +1405,7 @@ void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*>
 	fuzzy::trapezoid *trapY = kalmanFuzzy->at(X_INDEX + 1);
 	fuzzy::trapezoid *trapTh = kalmanFuzzy->at(X_INDEX + 2);
 
-	Matrix zklt(2 * navSector->landmarks->size(), 4);
+	Matrix zklt(2 * currentSector->landmarks->size(), 4);
 	Matrix matXk(STATE_VARIABLES, TRAP_VERTEX);
 	matXk(0, 0) = trapX->getVertexA();
 	matXk(0, 1) = trapX->getVertexB();
@@ -1319,12 +1428,8 @@ void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*>
 	matThk(0, 2) = matXk(2, 2);
 	matThk(0, 3) = matXk(2, 3);
 
-	matThk = denormalizeAngles(matThk);
-	if(fuzzy::fstats::expectation(matThk(0, 0), matThk(0, 1), matThk(0, 2), matThk(0, 3)) >= (2*M_PI)){
-		matThk = normalizeAngles(matThk);
-		matThk = denormalizeAngles(matThk, 1);
-	}
-	
+	matThk = denormalizeAngles(matThk, 1);
+		
 	matXk(2, 0) = matThk(0, 0);
 	matXk(2, 1) = matThk(0, 1);
 	matXk(2, 2) = matThk(0, 2);
@@ -1335,8 +1440,8 @@ void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*>
 	var(1, 0) = (matXk(1, 3) - matXk(1, 0)) / 4;
 	var(2, 0) = (matXk(2, 3) - matXk(2, 0)) / 4;
 
-	for(int k = 0; k < navSector->landmarks->size(); k++){
-		s_landmark* landmark = navSector->landmarks->at(k);
+	for(int k = 0; k < currentSector->landmarks->size(); k++){
+		s_landmark* landmark = currentSector->landmarks->at(k);
 		Matrix state(STATE_VARIABLES, 1);
 		float distance = 0, angle = 0;
 		state(0, 0) = matXk(0, 0);
@@ -1355,8 +1460,8 @@ void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*>
 	for(float x = matXk(0, 0); x < (matXk(0, 3) + var(0, 0)/4); x+=var(0, 0)){
 		for(float y = matXk(1, 0); y < (matXk(1, 3) + var(1, 0)/4); y+=var(1, 0)){
 			for(float th = matXk(2, 0); th < (matXk(2, 3) + var(2, 0)/4); th+=var(2, 0)){
-				for(int k = 0; k < navSector->landmarks->size(); k++){
-					s_landmark* landmark = navSector->landmarks->at(k);
+				for(int k = 0; k < currentSector->landmarks->size(); k++){
+					s_landmark* landmark = currentSector->landmarks->at(k);
 					Matrix state(STATE_VARIABLES, 1);
 					float distance = 0, angle = 0;
 					state(0, 0) = x;
@@ -1384,8 +1489,8 @@ void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*>
 	var(1, 0) = (matXk(1, 2) - matXk(1, 1)) / 4;
 	var(2, 0) = (matXk(2, 2) - matXk(2, 1)) / 4;
 
-	for(int k = 0; k < navSector->landmarks->size(); k++){
-		s_landmark* landmark = navSector->landmarks->at(k);
+	for(int k = 0; k < currentSector->landmarks->size(); k++){
+		s_landmark* landmark = currentSector->landmarks->at(k);
 		Matrix state(STATE_VARIABLES, 1);
 		float distance = 0, angle = 0;
 		state(0, 0) = matXk(0, 1);
@@ -1404,8 +1509,8 @@ void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*>
 	for(float x = matXk(0, 1); x < (matXk(0, 2) + var(0, 0)/4); x+=var(0, 0)){
 		for(float y = matXk(1, 1); y < (matXk(1, 2) + var(1, 0)/4); y+=var(1, 0)){
 			for(float th = matXk(2, 1); th < (matXk(2, 2) + var(2, 0)/4); th+=var(2, 0)){
-				for(int k = 0; k < navSector->landmarks->size(); k++){
-					s_landmark* landmark = navSector->landmarks->at(k);
+				for(int k = 0; k < currentSector->landmarks->size(); k++){
+					s_landmark* landmark = currentSector->landmarks->at(k);
 					Matrix state(STATE_VARIABLES, 1);
 					float distance = 0, angle = 0;
 					state(0, 0) = x;
@@ -1471,10 +1576,9 @@ Matrix GeneralController::normalizeAngles(Matrix trap){
 	Matrix result(1, TRAP_VERTEX);
 
 	for(int j = 0; j < TRAP_VERTEX; j++){
-		if(tempTrap(0, j) >= 2*M_PI){
+		if(tempTrap(0, j) > M_PI){
 			tempTrap(0, j) = tempTrap(0, j) - 2 * M_PI;
-		}
-		if(tempTrap(0, j) < 0){
+		} else if(tempTrap(0, j) < -M_PI){
 			tempTrap(0, j) = tempTrap(0, j) + 2 * M_PI;	
 		}
 	}
@@ -1488,44 +1592,32 @@ Matrix GeneralController::denormalizeAngles(Matrix trap, int mode){
 	Matrix tempTrap = trap;
 	Matrix result(TRAP_VERTEX, 1);
 
-	if(isFirstQuadrant(tempTrap(0, 0)) &&
-       isFouthQuadrant(tempTrap(0, 1)) &&
-       isFouthQuadrant(tempTrap(0, 2)) &&
-       isFouthQuadrant(tempTrap(0, 3))){
-       	if(mode != 1){
-			tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
-		} else {
-			tempTrap(0, 1) = tempTrap(0, 1) - 2 * M_PI;
-			tempTrap(0, 2) = tempTrap(0, 2) - 2 * M_PI;
-			tempTrap(0, 3) = tempTrap(0, 3) - 2 * M_PI;
-		}
-		result = tempTrap.sort_cols();
-
-    } else if(isFirstQuadrant(tempTrap(0, 0)) &&
-              isFirstQuadrant(tempTrap(0, 1)) &&
-              isFouthQuadrant(tempTrap(0, 2)) &&
-              isFouthQuadrant(tempTrap(0, 3))){
-    	if(mode != 1){
-			tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
-			tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
-		} else {
-			tempTrap(0, 2) = tempTrap(0, 2) - 2 * M_PI;
-			tempTrap(0, 3) = tempTrap(0, 3) - 2 * M_PI;
-		}
-		result = tempTrap.sort_cols();
-
-    } else if(isFirstQuadrant(tempTrap(0, 0)) &&
-              isFirstQuadrant(tempTrap(0, 1)) &&
-              isFirstQuadrant(tempTrap(0, 2)) &&
-              isFouthQuadrant(tempTrap(0, 3))){
-    	if(mode != 1){
-			tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
-			tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
-			tempTrap(0, 2) = tempTrap(0, 2) + 2 * M_PI;
-		} else {
-			tempTrap(0, 3) = tempTrap(0, 3) - 2 * M_PI;
-		}
+	if(isThirdQuadrant(tempTrap(0, 0)) &&
+       isSecondQuadrant(tempTrap(0, 1)) &&
+       isSecondQuadrant(tempTrap(0, 2)) &&
+       isSecondQuadrant(tempTrap(0, 3))){
+		tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
 		
+		result = tempTrap.sort_cols();
+
+    } else if(isThirdQuadrant(tempTrap(0, 0)) &&
+              isThirdQuadrant(tempTrap(0, 1)) &&
+              isSecondQuadrant(tempTrap(0, 2)) &&
+              isSecondQuadrant(tempTrap(0, 3))){
+    	if(mode != 1){
+			tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
+			tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
+		} else {
+			tempTrap(0, 2) = tempTrap(0, 2) - 2 * M_PI;
+			tempTrap(0, 3) = tempTrap(0, 3) - 2 * M_PI;
+		}
+		result = tempTrap.sort_cols();
+
+    } else if(isThirdQuadrant(tempTrap(0, 0)) &&
+              isThirdQuadrant(tempTrap(0, 1)) &&
+              isThirdQuadrant(tempTrap(0, 2)) &&
+              isFouthQuadrant(tempTrap(0, 3))){
+		tempTrap(0, 3) = tempTrap(0, 3) - 2 * M_PI;
 		result = tempTrap.sort_cols();
 	} else {
 		result = trap;
@@ -1536,26 +1628,29 @@ Matrix GeneralController::denormalizeAngles(Matrix trap, int mode){
 }
 
 bool GeneralController::isFirstQuadrant(float angle){
-	return (angle >= 0 && angle < (M_PI /2));
+	return (angle >= 0 && angle <= (M_PI /2));
 }
 
 bool GeneralController::isSecondQuadrant(float angle){
-	return (angle >= (M_PI/2) && angle < (M_PI));
+	return (angle > (M_PI/2) && angle <= (M_PI));
 }
 
 bool GeneralController::isThirdQuadrant(float angle){
-	return (angle >= (M_PI) && angle < (3*M_PI/2));
+	return (angle <= (-M_PI/2) && angle > (-M_PI));
 }
 
 bool GeneralController::isFouthQuadrant(float angle){
-	return (angle >= (3*M_PI/2) && angle < (2*M_PI));
+	return (angle < 0 && angle > (-M_PI/2));
 }
 
 void GeneralController::stopRobotTracking(){
 	if(keepRobotTracking == YES){
 		keepRobotTracking = MAYBE;
-		std::cout << "Stopping Robot Tracking" << std::endl;
-		while(keepRobotTracking != NO) Sleep(100);
+		std::cout << "Stopping robot tracking thread" << std::endl;
+		pthread_cancel(trackThread);
+		keepRobotTracking = NO;
+		//while(keepRobotTracking != NO) Sleep(100);
+		std::cout << "Stopped robot tracking thread" << std::endl;
 	}
 }
 

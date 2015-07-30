@@ -24,8 +24,7 @@ CSocketNode::~CSocketNode()
 	//#endif
 }
 
-int CSocketNode::Init(const char *address,int port, int t)
-{
+int CSocketNode::Init(const char *address,int port, int t){
 	type=t;
 	this->ip_address = new char[strlen(address)];
 	strcpy(this->ip_address, address);
@@ -38,42 +37,34 @@ int CSocketNode::Init(const char *address,int port, int t)
 		socket_server_address.sin_addr.s_addr = INADDR_ANY;
 	socket_server_address.sin_port = htons(port);
 //SERVER
-	if(type==SOCKET_SERVER)
-	{
+	if(type==SOCKET_SERVER){
 		socket_server = socket(AF_INET, SOCK_STREAM, 0);
 
-		if (socket_server==INVALID_SOCKET)
-		{
+		if (socket_server==INVALID_SOCKET){
 			Error("Server: Error Socket");
 			return -1;
 		}
 		int len = sizeof(socket_server_address);
-		if (bind(socket_server,(struct sockaddr *) &socket_server_address,len) < 0)
-		{
+		if (bind(socket_server,(struct sockaddr *) &socket_server_address,len) < 0){
 			return -1;
 		}
 		// Damos como mximo 5 puertos de conexin.
-		if (listen(socket_server, 5) < 0)
-		{
+		if (listen(socket_server, 5) < 0){
 			return -1;
 		}
 			
 		return 0;
 	}
 //CLIENT
-	if(type==SOCKET_CLIENT)
-	{
+	if(type==SOCKET_CLIENT){
 		return 0;
 	}
 	return -1;
 }
-void CSocketNode::HandleConnection(void)
-{
-	if(type==SOCKET_SERVER)
-	{
+void CSocketNode::HandleConnection(void){
+	if(type==SOCKET_SERVER){
 
-		if(socket_conn==INVALID_SOCKET)
-		{
+		if(socket_conn==INVALID_SOCKET){
 			unsigned int len = sizeof(socket_address);
 
 			fd_set readfds;
@@ -84,13 +75,11 @@ void CSocketNode::HandleConnection(void)
 			timeout.tv_sec=0;
 			timeout.tv_usec=10;//10000;
 			int ret=select(socket_server + 1, &readfds, NULL, NULL, &timeout);
-			if(ret==1)
-			{
+			if(ret==1){
 				socket_conn = accept(socket_server,(struct sockaddr *)&socket_address, &len);
 				
 				//socket_conn = accept(socket_server, 0, 0);
-				if(socket_conn==INVALID_SOCKET)
-				{
+				if(socket_conn==INVALID_SOCKET){
 					return;
 				}	
 				int optval;
@@ -104,22 +93,18 @@ void CSocketNode::HandleConnection(void)
 		}
 	}
 
-	if(type==SOCKET_CLIENT )
-	{
-		if(socket_conn==INVALID_SOCKET)
-		{
+	if(type==SOCKET_CLIENT ){
+		if(socket_conn==INVALID_SOCKET){
 			//Aux socket to avoid sock_conn!=INVALID without connecting
 			int aux_sock = 0;
 			aux_sock=socket(AF_INET, SOCK_STREAM, 0);
-			if (aux_sock == INVALID_SOCKET) 
-			{
+			if (aux_sock == INVALID_SOCKET){
 				return;
 			}
 		
 
 			int len= sizeof(socket_server_address);
-			if(connect(aux_sock,(const struct sockaddr *) &socket_server_address,len)!=0) 
-			{
+			if(connect(aux_sock,(const struct sockaddr *) &socket_server_address,len)!=0){
 				shutdown(aux_sock,SD_BOTH);
 				closesocket(aux_sock);
 				return;
@@ -134,8 +119,7 @@ void CSocketNode::HandleConnection(void)
 		}
 	}	
 }
-void CSocketNode::Error(const char* cad)
-{
+void CSocketNode::Error(const char* cad){
 	printf("%s\n", cad);
 	if(socket_conn!=INVALID_SOCKET)
 	{	
@@ -146,23 +130,19 @@ void CSocketNode::Error(const char* cad)
 	}
 }
 
-int CSocketNode::SendMsg(const char opr, const char* cad,int length)
-{
+int CSocketNode::SendMsg(const char opr, const char* cad,int length){
 	if (socket_conn == INVALID_SOCKET)
 		return -1;
 	//Build header
 	Buffer_out[1] = 48; //12345 / 256;
 	Buffer_out[0] = 57; //12345 % 256;
 	length++;
-	if((length / 256) >= 256)
-	{
+	if((length / 256) >= 256){
 		int divi = length / 256;
 		Buffer_out[2] = length % 256;
 		Buffer_out[3] = divi % 256;
 		Buffer_out[4] = divi / 256;
-	}
-	else
-	{
+	} else {
 		Buffer_out[2] = length % 256;
 		Buffer_out[3] = 0;
 		Buffer_out[4] = length / 256;
@@ -181,44 +161,36 @@ int CSocketNode::SendMsg(const char opr, const char* cad,int length)
 	return 0;
 }
 
-int CSocketNode::SendBytes(char *cad, int length)
-{
+int CSocketNode::SendBytes(char *cad, int length){
 	//Send it
 	int err = send(socket_conn, cad, length,0);
-	if (err == SOCKET_ERROR )
-	{
+	if (err == SOCKET_ERROR ){
 		Error("SendBytes Error");
 		return -1;
 	}
 	return 0;
 }
 
-int CSocketNode::ReceiveBytes(char *cad, int *length,int timeout)
-{
+int CSocketNode::ReceiveBytes(char *cad, int *length,int timeout){
 	if (socket_conn == INVALID_SOCKET)
 		return -1;
 	fd_set readfds; FD_ZERO(&readfds); FD_SET(socket_conn, &readfds);
 	timeval tout; tout.tv_sec = 0; tout.tv_usec = 10000;
 	int ret = select(socket_conn + 1, &readfds, NULL, NULL, &tout);
-	if (1 == ret)
-	{
+	if (1 == ret){
 		int r = recv(socket_conn, cad, *length, 0);
-		if (r == SOCKET_ERROR || r == 0)
-		{
+		if (r == SOCKET_ERROR || r == 0){
 			Error("Receive bytes Error");
 			return -1;
 
-		}
-		else
-		{
+		} else {
 			*length = r;
 			return 0;
 		}
 	}
 	return -1;
 }
-int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout) 
-{
+int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 	int ret;
 	int nChars;
 	int len;
@@ -235,8 +207,7 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout)
 	
 	if (header[0] != 57 ||	// 12345 % 256
 		header[1] != 48 ||	// 12345 / 256
-		len <= 0)
-	{
+		len <= 0){
 		Error("Header error");
 		return -2;//header error
 	}
@@ -251,17 +222,7 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout)
 	return ret;
 }
 
-void CSocketNode::OnMsg(char* cad,int length)
-{// Virtual function
-    
-}
-
-void CSocketNode::OnConnection()
-{// Virtual function
-}
-
-int CSocketNode::IsConnected()
-{
+int CSocketNode::IsConnected(){
 	if(socket_conn==INVALID_SOCKET)
 		return 0;
 	else

@@ -55,7 +55,7 @@ RobotNode::RobotNode(const char* port){
     pthread_create(&sensorDataThread, NULL, dataPublishingThread, (void *)(this)  );
 
     pthread_t distanceThread;
-    pthread_create(&distanceThread, NULL, securityDistanceThread, (void *)(this)  );
+    //pthread_create(&distanceThread, NULL, securityDistanceThread, (void *)(this)  );
 }
 
 RobotNode::~RobotNode(){

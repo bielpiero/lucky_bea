@@ -193,8 +193,7 @@ public:
 	void trackRobot();
 private:
 	static const float LASER_MAX_RANGE;
-	static const float MIN_RAND;
-	static const float MAX_RAND;
+
 	UDPClient* spdUDPClient;
 	ros::NodeHandle nh;
 
@@ -221,11 +220,15 @@ private:
 	
 	unsigned char keepRobotTracking;
 	unsigned char keepTourAlive;
-	s_sector* navSector;
+	std::vector<s_sector*>* navSectors;
+	s_sector* currentSector;
 	s_robot* robotConfig;
+
+	pthread_t trackThread;
 
 	pthread_mutex_t mutexLandmarkLocker;
 
+	void loadSectors();
 	void loadSector(int sectorId);
 	void loadRobotConfig();
 	
@@ -238,6 +241,12 @@ private:
 	void setRobotPosition(float x, float y, float theta);
 	void moveRobotToPosition(float x, float y, float th);
 	void getPositions(char* cad, float& x, float& y, float& theta);
+
+	void getMapId(char* cad, int& mapId);
+	void getMapsAvailable(std::string& mapsAvailable);
+	void getMapInformationLandmarks(int mapId, std::string& mapInformation);
+	void getMapInformationFeatures(int mapId, std::string& mapInformation);
+	void getMapInformationSites(int mapId, std::string& mapInformation);
 	
 	void startSitesTour();
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);

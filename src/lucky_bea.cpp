@@ -28,7 +28,7 @@ int main(int argc, char** argv){
     sigaction(SIGINT, &sigIntHandler, NULL);
     sigaction(SIGTERM, &sigIntHandler, NULL);
 	
-	ros::init(argc, argv, "bea_con_suerte");
+	ros::init(argc, argv, "lucky_bea");
 	ros::start();
 	ros::NodeHandle nh;
 	ROS_INFO("Lucky Bea for Doris. To control the IC Group Robot named Doris");

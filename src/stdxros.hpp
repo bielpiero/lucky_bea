@@ -4,17 +4,6 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 
-// NAV Messages
-#include <geometry_msgs/Twist.h>
-#include <geometry_msgs/Pose2D.h>
-#include <std_msgs/Int8.h>
-#include <std_msgs/Float32.h>
-#include <std_msgs/Float64.h>
-#include <sensor_msgs/PointCloud.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/LaserScan.h>
-#include <nav_msgs/Odometry.h>
-
 // OPEN CV
 //#include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>

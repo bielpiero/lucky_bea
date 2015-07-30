@@ -53,8 +53,8 @@ public:
 	void StartThread();//launch a 10 ms thread loop over the following actions
 	void HandleConnection();//manages all connection and reconnection
 protected:
-	virtual void OnConnection();//callback for client and server
-	virtual void OnMsg(char* cad, int length);//callback for client and server
+	virtual void OnConnection() = 0;//callback for client and server
+	virtual void OnMsg(char* cad, int length) = 0;//callback for client and server
 protected:
 	void Error(const char* cad="");
 public:
