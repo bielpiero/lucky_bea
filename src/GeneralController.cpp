@@ -177,17 +177,11 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 			getMapInformationSites(mapInformation);
 			SendMsg(0x19, (char*)mapInformation.c_str(), (int)mapInformation.length()); 
 			break;
-		case 0x20:
-			getNumberOfCamerasAvailable(cameraCount);
-			number_converter << cameraCount;
-			local_buffer_out = number_converter.str();
-			SendMsg(0x20, (char*)local_buffer_out.c_str(), (int)local_buffer_out.length()); 
-			break;
-		case 0x21:
+		case 0x30:
 			getCameraDevicePort(cad, videoDevice, udpPort);
 			beginVideoStreaming(videoDevice);
 			break;
-		case 0x22:
+		case 0x31:
 			stopVideoStreaming();
 			break;
 		case 0xFF:
@@ -1651,10 +1645,10 @@ void GeneralController::beginVideoStreaming(int videoDevice){
 	pthread_t t1;
 	stopVideoStreaming();
 
-	try{
-		vc = cv::VideoCapture(videoDevice);
-	} catch(cv::Exception& e){
-		std::cout << "Exception caught: " << e.what() << std::endl;
+	
+	vc = cv::VideoCapture(videoDevice);
+	if(videoDevice == 0){
+		vcSecond = cv::VideoCapture(2);
 	}
 
 	if(vc.isOpened()){
@@ -1677,27 +1671,17 @@ void GeneralController::stopVideoStreaming(){
 	}
 }
 
-void GeneralController::getNumberOfCamerasAvailable(int& count){
-	int value = 0;
-	bool firstCrash = false;
-	for(int i = 0; i < 10 && !firstCrash; i++)
-	{
-		/*cv::VideoCapture vc(i);
-		if(vc.isOpened()){
-			value++;
-			vc.release();
-		} else{
-			firstCrash = true;
-		}*/
-	}
-	count = value;
-}
-
 void* GeneralController::streamingThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	self->streamingActive = YES;
-	
-	cv::Mat frame;
+
+	cv::Stitcher stitcher = cv::Stitcher::createDefault(true);
+	cv::Stitcher::Status status;
+
+	cv::Mat frameA;
+	cv::Mat frameB;
+	cv::Mat pano;
+	std::vector<cv::Mat> imgs = vector<cv::Mat>(2);
 	std::vector<uchar> buff;
 	std::vector<int> params = vector<int>(2);
 	params[0] = CV_IMWRITE_JPEG_QUALITY;
@@ -1705,13 +1689,28 @@ void* GeneralController::streamingThread(void* object){
 	
 	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), self->udpPort);
 	while(ros::ok() && self->streamingActive == YES){
-		self->vc >> frame;
-		cv::imencode(".jpg", frame, buff, params);
+		self->vc >> frameA;
+		if(self->vcSecond.isOpened()){
+			self->vcSecond >> frameB;
+			imgs[0] = frameA;
+			imgs[1] = frameB;
+
+			status = stitcher.stitch(imgs, pano);
+
+			params[1] = 50;
+			cv::imencode(".jpg", pano, buff, params);
+		} else {
+			params[1] = 80;
+			cv::imencode(".jpg", frameA, buff, params);
+		}		
 		udp_client->sendData(&buff[0], buff.size());
 		Sleep(30);
 	}
 	udp_client->closeConnection();
 	self->vc.release();
+	if(self->vcSecond.isOpened()){
+		self->vcSecond.release();
+	}
 	self->streamingActive = NO;
 	return NULL;
 }

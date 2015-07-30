@@ -199,6 +199,7 @@ private:
 
 	//OpenCV
 	cv::VideoCapture vc;
+	cv::VideoCapture vcSecond;
 	//possibilistic navigation
 	Matrix robotVelocity;
 	Matrix robotEncoderPosition;
@@ -259,7 +260,6 @@ private:
 	bool isThirdQuadrant(float angle);
 	bool isFouthQuadrant(float angle);
 
-	void getNumberOfCamerasAvailable(int& count);
 	void getCameraDevicePort(char* cad, int& device, int& port);
 	void beginVideoStreaming(int videoDevice);
 	
