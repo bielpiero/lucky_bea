@@ -7,6 +7,8 @@
 #include <math.h>
 #include "Aria.h"
 
+#define FULL_ENCODER_TICKS 32768
+
 class PointXY{
 private:
 	double x, y;
@@ -87,6 +89,7 @@ private:
     ArActionGoto *gotoPoseAction;
     ArRobot *robot;
     ArPose *myPose;
+    ArPose *myRawPose;
     ArSonarDevice *sonar;
     
     double maxTransVel;
@@ -100,6 +103,13 @@ private:
     bool doNotMove;
     char prevBatteryChargeState;
 
+    long int prevLeftEncoderData;
+    long int prevRightEncoderData;
+
+    double deltaDistance;
+    double deltaDegrees;
+
+    bool isFirstFakeEstimation;
 
 public:
 	RobotNode(const char* port);
@@ -125,9 +135,29 @@ public:
     void setMotorsStatus(bool enabled);
     void setPosition(double x, double y, double theta);
     void setSonarStatus(bool enabled);
+
+    int getDriftFactor();
+	int getRevCount();
+	int getTicksMM();
+
+	double getDeltaDegrees();
+	double getDeltaDistance();
+
+	long int getLeftEncoder();
+	long int getRightEncoder();
+
+	double getDiffConvFactor();
+	double getDistConvFactor();
+	double getAngleConvFactor();
+
 private:
 	static void* securityDistanceThread(void* object);
 	static void* dataPublishingThread(void* object);
+
+	void computePositionFromEncoders();
+	void getRawPoseFromOdometry();
+    bool checkForwardLimitTransition(double enc_k, double enc_k_1);
+    bool checkBackwardLimitTransition(double enc_k, double enc_k_1);
 protected:
 	virtual void onLaserScanCompleted(LaserScan* data) = 0;
 	virtual void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear) = 0;

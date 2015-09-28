@@ -33,6 +33,13 @@ RobotNode::RobotNode(const char* port){
     isGoingForward = false;
     wasDeactivated = false;
     doNotMove = false;
+
+    this->prevLeftEncoderData = 0;
+    this->prevRightEncoderData = 0;
+    this->isFirstFakeEstimation = true;
+
+    robot->requestEncoderPackets();
+    myRawPose = new ArPose(0.0, 0.0, 0.0);
     
     gotoPoseAction = new ArActionGoto("goto", ArPose(0.0, 0.0, 0.0), 100, 100, 100);
  	robot->addAction(gotoPoseAction, 89); 
@@ -164,6 +171,8 @@ void RobotNode::setPosition(double x, double y, double theta){
     newPose.setThRad(theta);
     robot->lock();
     robot->clearDirectMotion();
+    myRawPose->setPose(x*1000, y*1000);
+    myRawPose->setThRad(theta);
     robot->moveTo(newPose);
     robot->unlock();
 }
@@ -236,6 +245,152 @@ void RobotNode::getSonarsScan(void){
     }
 }
 
+void RobotNode::computePositionFromEncoders(){
+    long int rightEncoderData = getRightEncoder();
+    long int leftEncoderData = getLeftEncoder();
+
+    if(isFirstFakeEstimation){
+        prevRightEncoderData = rightEncoderData;
+        prevLeftEncoderData = leftEncoderData;
+        isFirstFakeEstimation = false;
+    }
+
+    double newLeftEncoderData = (double)leftEncoderData;
+    double newRightEncoderData = (double)rightEncoderData;
+    double newPrevLeftEncoderData = (double)prevLeftEncoderData;
+    double newPrevRightEncoderData = (double)prevRightEncoderData;
+
+    bool resultCheck[4];
+    resultCheck[0] = checkForwardLimitTransition(prevLeftEncoderData, leftEncoderData);
+    resultCheck[1] = checkBackwardLimitTransition(prevLeftEncoderData, leftEncoderData);
+    resultCheck[2] = checkForwardLimitTransition(prevRightEncoderData, rightEncoderData);
+    resultCheck[3] = checkBackwardLimitTransition(prevRightEncoderData, rightEncoderData);
+
+
+    if(resultCheck[0] == false and resultCheck[1] == false and resultCheck[2] == false and resultCheck[3] == true){
+        newPrevRightEncoderData = (double)prevRightEncoderData + (2 * FULL_ENCODER_TICKS);
+
+    } 
+    if(resultCheck[0] == false and resultCheck[1] == false and resultCheck[2] == true and resultCheck[3] == false){
+        newPrevRightEncoderData = (double)prevRightEncoderData - (2 * FULL_ENCODER_TICKS);
+
+    } 
+    if(resultCheck[0] == false and resultCheck[1] == true and resultCheck[2] == false and resultCheck[3] == false){
+        newPrevLeftEncoderData = (double)prevLeftEncoderData + (2 * FULL_ENCODER_TICKS);
+
+    } 
+    if(resultCheck[0] == false and resultCheck[1] == true and resultCheck[2] == false and resultCheck[3] == true){
+        newPrevRightEncoderData = (double)prevRightEncoderData + (2 * FULL_ENCODER_TICKS);
+        newPrevLeftEncoderData = (double)prevLeftEncoderData + (2 * FULL_ENCODER_TICKS);
+
+    } 
+    if(resultCheck[0] == false and resultCheck[1] == true and resultCheck[2] == true and resultCheck[3] == false){
+        newPrevRightEncoderData = (double)prevRightEncoderData - (2 * FULL_ENCODER_TICKS);
+        newPrevLeftEncoderData = (double)prevLeftEncoderData + (2 * FULL_ENCODER_TICKS);
+
+    } 
+    if(resultCheck[0] == true and resultCheck[1] == false and resultCheck[2] == false and resultCheck[3] == false){
+        newPrevLeftEncoderData = (double)prevLeftEncoderData - (2 * FULL_ENCODER_TICKS);
+
+    } 
+    if(resultCheck[0] == true and resultCheck[1] == false and resultCheck[2] == false and resultCheck[3] == true){
+        newPrevRightEncoderData = (double)prevRightEncoderData - (2 * FULL_ENCODER_TICKS);
+        newPrevLeftEncoderData = (double)prevLeftEncoderData + (2 * FULL_ENCODER_TICKS);
+
+    } 
+    if(resultCheck[0] == true and resultCheck[1] == false and resultCheck[2] == true and resultCheck[3] == false){
+        newPrevRightEncoderData = (double)prevRightEncoderData - (2 * FULL_ENCODER_TICKS);
+        newPrevLeftEncoderData = (double)prevLeftEncoderData - (2 * FULL_ENCODER_TICKS);
+
+    }
+
+    double deltaLeft = (newLeftEncoderData - newPrevLeftEncoderData)/((double)getTicksMM());
+    double deltaRight = (newRightEncoderData - newPrevRightEncoderData)/((double)getTicksMM());
+    
+
+    deltaDistance = (deltaLeft + deltaRight) / 2.0;
+    deltaDegrees = ((robot->getEncoderTh() * M_PI / 180) - myRawPose->getThRad());
+    //deltaDegrees = (deltaRight - deltaLeft) / (2 * robot->getRobotRadius());
+
+    getRawPoseFromOdometry();
+
+    prevRightEncoderData = rightEncoderData;
+    prevLeftEncoderData = leftEncoderData;
+}
+
+
+bool RobotNode::checkForwardLimitTransition(double enc_k, double enc_k_1){
+    bool result = false;
+    if(enc_k > enc_k_1){
+        if((enc_k > (FULL_ENCODER_TICKS/2) and enc_k <= (FULL_ENCODER_TICKS - 1)) and (enc_k_1 >= -FULL_ENCODER_TICKS and enc_k_1 < -(FULL_ENCODER_TICKS/2))){
+            result = true;
+        }
+    }
+    return result;
+}
+
+bool RobotNode::checkBackwardLimitTransition(double enc_k, double enc_k_1){
+    bool result = false;
+    if(enc_k_1 > enc_k){
+        if((enc_k >= -FULL_ENCODER_TICKS and enc_k < -(FULL_ENCODER_TICKS/2)) and (enc_k_1 > (FULL_ENCODER_TICKS/2) and enc_k_1 <= (FULL_ENCODER_TICKS-1))){
+            result = true;
+        }
+    }
+    return result;
+}
+
+void RobotNode::getRawPoseFromOdometry(){
+    double x = 0, y = 0, th = 0;
+
+    x = myRawPose->getX() + (deltaDistance * cos(myRawPose->getThRad() + deltaDegrees/2.0));
+    y = myRawPose->getY() + (deltaDistance * sin(myRawPose->getThRad() + deltaDegrees/2.0));
+    th = myRawPose->getThRad() + deltaDegrees;
+
+    myRawPose->setPose(x, y);
+    myRawPose->setThRad(th);
+
+}
+
+int RobotNode::getDriftFactor(){
+    return robot->getOrigRobotConfig()->getDriftFactor();
+}
+
+int RobotNode::getRevCount(){
+    return robot->getOrigRobotConfig()->getRevCount();
+}
+
+int RobotNode::getTicksMM(){
+    return robot->getOrigRobotConfig()->getTicksMM();
+}
+
+double RobotNode::getDiffConvFactor(){
+    return robot->getRobotParams()->getDiffConvFactor();
+}
+
+double RobotNode::getDistConvFactor(){
+    return robot->getRobotParams()->getDistConvFactor();
+}
+
+double RobotNode::getAngleConvFactor(){
+    return robot->getRobotParams()->getAngleConvFactor();
+}
+
+long int RobotNode::getRightEncoder(){
+    return robot->getRightEncoder();
+}
+
+long int RobotNode::getLeftEncoder(){
+    return robot->getLeftEncoder();
+}
+
+double RobotNode::getDeltaDegrees(){
+    return deltaDegrees;
+}
+
+double RobotNode::getDeltaDistance(){
+    return deltaDistance;
+}
+
 void RobotNode::getBatterChargeStatus(void){
     char s = robot->getChargeState();
     if(s != prevBatteryChargeState){
@@ -248,12 +403,13 @@ void* RobotNode::dataPublishingThread(void* object){
     RobotNode* self = (RobotNode*)object;
     ArUtil::sleep(2000);
     while(true){
+        self->computePositionFromEncoders();
         self->getBatterChargeStatus();
         self->getLaserScan();
         self->getBumpersStatus();
         self->getRobotPosition();
         self->getSonarsScan();
-        ArUtil::sleep(100);
+        ArUtil::sleep(30);
     }
     return NULL;
 }

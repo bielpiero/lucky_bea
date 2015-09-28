@@ -1647,9 +1647,10 @@ void GeneralController::beginVideoStreaming(int videoDevice){
 
 	
 	vc = cv::VideoCapture(videoDevice);
-	if(videoDevice == 0){
+	/*if(videoDevice == 0){
 		vcSecond = cv::VideoCapture(2);
-	}
+
+	}*/
 
 	if(vc.isOpened()){
 		std::cout << "Streaming from camera device: " << videoDevice << std::endl;
@@ -1678,10 +1679,7 @@ void* GeneralController::streamingThread(void* object){
 	cv::Stitcher stitcher = cv::Stitcher::createDefault(true);
 	cv::Stitcher::Status status;
 
-	cv::Mat frameA;
-	cv::Mat frameB;
-	cv::Mat pano;
-	std::vector<cv::Mat> imgs = vector<cv::Mat>(2);
+	cv::Mat frame;
 	std::vector<uchar> buff;
 	std::vector<int> params = vector<int>(2);
 	params[0] = CV_IMWRITE_JPEG_QUALITY;
@@ -1689,20 +1687,8 @@ void* GeneralController::streamingThread(void* object){
 	
 	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), self->udpPort);
 	while(ros::ok() && self->streamingActive == YES){
-		self->vc >> frameA;
-		if(self->vcSecond.isOpened()){
-			self->vcSecond >> frameB;
-			imgs[0] = frameA;
-			imgs[1] = frameB;
-
-			status = stitcher.stitch(imgs, pano);
-
-			params[1] = 50;
-			cv::imencode(".jpg", pano, buff, params);
-		} else {
-			params[1] = 80;
-			cv::imencode(".jpg", frameA, buff, params);
-		}		
+		self->vc >> frame;
+		cv::imencode(".jpg", frame, buff, params);
 		udp_client->sendData(&buff[0], buff.size());
 		Sleep(30);
 	}
