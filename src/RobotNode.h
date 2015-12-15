@@ -111,6 +111,8 @@ private:
 
     bool isFirstFakeEstimation;
 
+    pthread_mutex_t mutexRawPositionLocker;
+
 public:
 	RobotNode(const char* port);
 	virtual ~RobotNode();
@@ -131,6 +133,7 @@ public:
     bool getSonarsStatus(void);
     void getSonarsScan(void);
 	void getRobotPosition(void);
+	void getRawRobotPosition(void);
 	    
     void setMotorsStatus(bool enabled);
     void setPosition(double x, double y, double theta);
@@ -162,6 +165,7 @@ protected:
 	virtual void onLaserScanCompleted(LaserScan* data) = 0;
 	virtual void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear) = 0;
 	virtual void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed) = 0;
+	virtual void onRawPositionUpdate(double x, double y, double theta, double deltaDistance, double deltaDegrees) = 0;
 	virtual void onSonarsDataUpdate(std::vector<PointXY*>* data) = 0;
 	virtual void onBatteryChargeStateChanged(char data) = 0;
 };

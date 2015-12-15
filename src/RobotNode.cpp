@@ -105,6 +105,11 @@ void RobotNode::getRobotPosition(){
     onPositionUpdate(myPose->getX()/1e3, myPose->getY()/1e3, myPose->getThRad(), robot->getVel()/1e3, robot->getRotVel()*M_PI/180);
 }
 
+void RobotNode::getRawRobotPosition(){
+    computePositionFromEncoders();
+    onRawPositionUpdate(myRawPose->getX()/1e3, myRawPose->getY()/1e3, myRawPose->getThRad(), this->deltaDistance, this->deltaDegrees);
+}
+
 void RobotNode::stopRobot(){
     robot->lock();
     robot->stop();
@@ -167,12 +172,13 @@ void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed
 }
 
 void RobotNode::setPosition(double x, double y, double theta){
-    ArPose newPose(x *1000, y * 1000);
+    ArPose newPose(x * 1000, y * 1000);
     newPose.setThRad(theta);
     robot->lock();
     robot->clearDirectMotion();
-    myRawPose->setPose(x*1000, y*1000);
-    myRawPose->setThRad(theta);
+    pthread_mutex_lock(&mutexRawPositionLocker);
+    myRawPose->setPose(x * 1000, y * 1000, theta * 180 / M_PI);
+    pthread_mutex_unlock(&mutexRawPositionLocker);
     robot->moveTo(newPose);
     robot->unlock();
 }
@@ -309,7 +315,7 @@ void RobotNode::computePositionFromEncoders(){
     
 
     deltaDistance = (deltaLeft + deltaRight) / 2.0;
-    deltaDegrees = ((robot->getEncoderTh() * M_PI / 180) - myRawPose->getThRad());
+    deltaDegrees = robot->getPose().getThRad() - myRawPose->getThRad();
     //deltaDegrees = (deltaRight - deltaLeft) / (2 * robot->getRobotRadius());
 
     getRawPoseFromOdometry();
@@ -341,13 +347,13 @@ bool RobotNode::checkBackwardLimitTransition(double enc_k, double enc_k_1){
 
 void RobotNode::getRawPoseFromOdometry(){
     double x = 0, y = 0, th = 0;
-
+    pthread_mutex_lock(&mutexRawPositionLocker);
     x = myRawPose->getX() + (deltaDistance * cos(myRawPose->getThRad() + deltaDegrees/2.0));
     y = myRawPose->getY() + (deltaDistance * sin(myRawPose->getThRad() + deltaDegrees/2.0));
     th = myRawPose->getThRad() + deltaDegrees;
-
-    myRawPose->setPose(x, y);
-    myRawPose->setThRad(th);
+    
+    myRawPose->setPose(x, y, th * 180 / M_PI);
+    pthread_mutex_unlock(&mutexRawPositionLocker);
 
 }
 
@@ -403,13 +409,13 @@ void* RobotNode::dataPublishingThread(void* object){
     RobotNode* self = (RobotNode*)object;
     ArUtil::sleep(2000);
     while(true){
-        self->computePositionFromEncoders();
+        self->getRawRobotPosition();
         self->getBatterChargeStatus();
         self->getLaserScan();
         self->getBumpersStatus();
         self->getRobotPosition();
         self->getSonarsScan();
-        ArUtil::sleep(30);
+        ArUtil::sleep(100);
     }
     return NULL;
 }

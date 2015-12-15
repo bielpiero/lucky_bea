@@ -3,16 +3,15 @@
 		<initial-position>
 			<x-zone x1="-25" x2="-20" x3="20" x4="25"/> <!-- centimeters -->
 			<y-zone x1="-38" x2="-30" x3="30" x4="38"/> <!-- centimeters -->
-			<th-zone x1="-237" x2="-160" x3="160" x4="237"/> <!-- milliradians -->
+			<th-zone x1="-0.237" x2="-0.160" x3="0.160" x4="0.237"/> <!-- radians -->
 		</initial-position>
 		<process-noise>
-			<x-zone x1="-0.025" x2="-0.0125" x3="0.0125" x4="0.025"/> <!-- percentage 0-1-->
-			<y-zone x1="-0.025" x2="-0.0125" x3="0.0125" x4="0.025"/> <!-- percentage 0-1-->
-			<th-zone x1="-0.01" x2="-0.005" x3="0.005" x4="0.01"/> <!-- percentage 0-1-->
+			<d-zone x1="-20" x2="-14" x3="14" x4="20"/> <!-- millimeters -->
+			<th-zone x1="-0.1" x2="-0.05" x3="0.05" x4="0.1"/> <!-- radians -->
 		</process-noise>
 		<observation-noise mode="d-th">
 			<d-zone x1="-60" x2="-50" x3="50" x4="60"/>  <!-- millimeters -->
-			<th-zone x1="-60" x2="-56" x3="56" x4="60"/> <!-- milliradians -->
+			<th-zone x1="-0.22" x2="-0.17" x3="0.17" x4="0.22"/> <!-- radians -->
 		</observation-noise>
 	</navigation-params>
 </robot>

@@ -98,6 +98,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(include ${catkin_INCLUDE_DIRS})
 include_directories( /usr/local/Aria/include)
 link_directories(/usr/local/Aria/lib)
+link_directories(src/lib)
 
 ## Declare a cpp library
 # add_library(lucky_bea_socketnode src/SocketNode2.cpp)
@@ -129,6 +130,7 @@ target_link_libraries(lucky_bea
   ${LIBUSB_1_LIBRARIES}
   ${OpenCV_LIBRARIES}
   Aria pthread dl rt
+  ftd2xx
 )
 
 set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-fPIC")

@@ -9,6 +9,9 @@ GeneralController::GeneralController(ros::NodeHandle nh_):RobotNode("/dev/ttyS0"
 	this->nh = nh_;
 	
 	this->maestroControllers = new SerialPort();
+	this->tts = new TextToSpeech();
+	this->tts->setDefaultConfiguration();
+	this->tts->setString("Hola, me llamo Doris.");
 
 	this->frontBumpersOk = true;
 	this->rearBumpersOk = true;
@@ -24,9 +27,12 @@ GeneralController::GeneralController(ros::NodeHandle nh_):RobotNode("/dev/ttyS0"
 	robotState = Matrix(3, 1);
 	robotEncoderPosition = Matrix(3, 1);
 	robotVelocity = Matrix (2, 1);
+
+	robotRawEncoderPosition = Matrix(3, 1);
+	robotRawDeltaPosition = Matrix (2, 1);
 	
 	P = Matrix(3, 3);
-	Q = Matrix(3, 3);
+	Q = Matrix(2, 2);
 	R = Matrix(3, 3);
 	spdUDPClient = NULL;
 
@@ -737,7 +743,7 @@ void GeneralController::loadRobotConfig(){
 	robotConfig = new s_robot;
 	robotConfig->navParams = new s_navigation_params;
 	robotConfig->navParams->initialPosition = new s_position;
-	robotConfig->navParams->processNoise = new s_position;
+	robotConfig->navParams->processNoise = new s_obs_dth;
 	robotConfig->navParams->observationNoise = new s_obs_dth;
 
 	xml_node<>* root_node = doc.first_node(XML_ELEMENT_ROBOT_STR);
@@ -761,10 +767,10 @@ void GeneralController::loadRobotConfig(){
 
 	pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
 	s_trapezoid* th_zone = new s_trapezoid;
-	th_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 1000;
-	th_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 1000;
-	th_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 1000;
-	th_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 1000;
+	th_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
+	th_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
+	th_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
+	th_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
 
 	robotConfig->navParams->initialPosition->xZone = x_zone;
 	robotConfig->navParams->initialPosition->yZone = y_zone;
@@ -772,19 +778,12 @@ void GeneralController::loadRobotConfig(){
 	
 
 	xml_node<>* process_noise_root_node = nav_root_node->first_node(XML_ELEMENT_PROCESS_NOISE_STR);
-	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_X_ZONE_STR);
+	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_D_ZONE_STR);
 	s_trapezoid* x1_zone = new s_trapezoid;
-	x1_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
-	x1_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
-	x1_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
-	x1_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
-
-	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_Y_ZONE_STR);
-	s_trapezoid* y1_zone = new s_trapezoid;
-	y1_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
-	y1_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
-	y1_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
-	y1_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
+	x1_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 1000;
+	x1_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 1000;
+	x1_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 1000;
+	x1_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 1000;
 
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
 	s_trapezoid* th1_zone = new s_trapezoid;
@@ -793,8 +792,7 @@ void GeneralController::loadRobotConfig(){
 	th1_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
 	th1_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
 
-	robotConfig->navParams->processNoise->xZone = x1_zone;
-	robotConfig->navParams->processNoise->yZone = y1_zone;
+	robotConfig->navParams->processNoise->dZone = x1_zone;
 	robotConfig->navParams->processNoise->thZone = th1_zone;
 
 
@@ -808,10 +806,10 @@ void GeneralController::loadRobotConfig(){
 
 	pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
 	s_trapezoid* th2_zone = new s_trapezoid;
-	th2_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 1000;
-	th2_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 1000;
-	th2_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 1000;
-	th2_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 1000;
+	th2_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
+	th2_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
+	th2_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
+	th2_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
 
 	robotConfig->navParams->observationNoise->dZone = d_zone;
 	robotConfig->navParams->observationNoise->thZone = th2_zone;
@@ -970,6 +968,15 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 }
 
 
+void GeneralController::onRawPositionUpdate(double x, double y, double theta, double deltaDistance, double deltaDegrees){
+	robotRawEncoderPosition(0, 0) = x;
+	robotRawEncoderPosition(1, 0) = y;
+	robotRawEncoderPosition(2, 0) = theta;
+
+	robotRawDeltaPosition(0, 0) = deltaDistance;
+	robotRawDeltaPosition(1, 0) = deltaDegrees;
+}
+
 void GeneralController::onSonarsDataUpdate(std::vector<PointXY*>* data){
 
 }
@@ -1092,15 +1099,13 @@ void GeneralController::initializeKalmanVariables(){
 	
 	float uX, uY, uTh;
 
-	fuzzy::trapezoid* xxKK = new fuzzy::trapezoid("Xx(k|k)", robotEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, robotEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, robotEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, robotEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
+	fuzzy::trapezoid* xxKK = new fuzzy::trapezoid("Xx(k|k)", robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
 	
-	fuzzy::trapezoid* xyKK = new fuzzy::trapezoid("Xy(k|k)", robotEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, robotEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, robotEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, robotEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
+	fuzzy::trapezoid* xyKK = new fuzzy::trapezoid("Xy(k|k)", robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
 	
-	fuzzy::trapezoid* xThKK = new fuzzy::trapezoid("XTh(k|k)", robotEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x1, robotEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x2, robotEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x3, robotEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x4);	
+	fuzzy::trapezoid* xThKK = new fuzzy::trapezoid("XTh(k|k)", robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x1, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x2, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x3, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x4);	
 	
-	fuzzy::trapezoid* vxK1 = new fuzzy::trapezoid("Vx(k + 1)", robotConfig->navParams->processNoise->xZone->x1, robotConfig->navParams->processNoise->xZone->x2, robotConfig->navParams->processNoise->xZone->x3, robotConfig->navParams->processNoise->xZone->x4);
-	
-	fuzzy::trapezoid* vyK1 = new fuzzy::trapezoid("Vy(k + 1)", robotConfig->navParams->processNoise->yZone->x1, robotConfig->navParams->processNoise->yZone->x2, robotConfig->navParams->processNoise->yZone->x3, robotConfig->navParams->processNoise->yZone->x4);
+	fuzzy::trapezoid* vdK1 = new fuzzy::trapezoid("Vd(k + 1)", robotConfig->navParams->processNoise->dZone->x1, robotConfig->navParams->processNoise->dZone->x2, robotConfig->navParams->processNoise->dZone->x3, robotConfig->navParams->processNoise->dZone->x4);
 	
 	fuzzy::trapezoid* vThK1 = new fuzzy::trapezoid("VTh(k + 1)", robotConfig->navParams->processNoise->thZone->x1, robotConfig->navParams->processNoise->thZone->x2, robotConfig->navParams->processNoise->thZone->x3, robotConfig->navParams->processNoise->thZone->x4);	
 	
@@ -1118,13 +1123,11 @@ void GeneralController::initializeKalmanVariables(){
 	
 	// Variances and Covariances Matrix of Process noise Q
 
-	uX = fuzzy::fstats::uncertainty(vxK1->getVertexA(), vxK1->getVertexB(), vxK1->getVertexC(), vxK1->getVertexD());
-	uY = fuzzy::fstats::uncertainty(vyK1->getVertexA(), vyK1->getVertexB(), vyK1->getVertexC(), vyK1->getVertexD());
+	uX = fuzzy::fstats::uncertainty(vdK1->getVertexA(), vdK1->getVertexB(), vdK1->getVertexC(), vdK1->getVertexD());
 	uTh = fuzzy::fstats::uncertainty(vThK1->getVertexA(), vThK1->getVertexB(), vThK1->getVertexC(), vThK1->getVertexD());
 	
-	Q(0, 0) = uX; 	Q(0, 1) = 0; 	Q(0, 2) = 0;
-	Q(1, 0) = 0; 	Q(1, 1) = uY;	Q(1, 2) = 0;
-	Q(2, 0) = 0;	Q(2, 1) = 0;	Q(2, 2) = uTh;
+	Q(0, 0) = uX; 	Q(0, 1) = 0;
+	Q(1, 0) = 0; 	Q(1, 1) = uTh;
 
 	uX = fuzzy::fstats::uncertainty(wdK1->getVertexA(), wdK1->getVertexB(), wdK1->getVertexC(), wdK1->getVertexD());
 	uTh = fuzzy::fstats::uncertainty(wThK1->getVertexA(), wThK1->getVertexB(), wThK1->getVertexC(), wThK1->getVertexD());
@@ -1143,8 +1146,7 @@ void GeneralController::initializeKalmanVariables(){
 	kalmanFuzzy->push_back(xyKK);
 	kalmanFuzzy->push_back(xThKK);
 	
-	kalmanFuzzy->push_back(vxK1);
-	kalmanFuzzy->push_back(vyK1);
+	kalmanFuzzy->push_back(vdK1);
 	kalmanFuzzy->push_back(vThK1);
 	
 	kalmanFuzzy->push_back(wdK1);
@@ -1165,32 +1167,59 @@ void* GeneralController::trackRobotThread(void* object){
 	self->keepRobotTracking = YES;
 	float alpha = self->robotConfig->navParams->alpha;
 	Matrix Ak = Matrix::eye(3);
+	Matrix Bk(3, 2);
 	Matrix pk1;
 	Matrix Hk;
 	Matrix Pk = self->P;
-	Matrix Xk;
 	
 	while(ros::ok() && self->keepRobotTracking == YES){
 		//1 - Prediction
 		//ROS_INFO("1 - Prediction");
-		Xk = self->robotEncoderPosition;
-		bool isMoving = false;
-		if(std::abs(self->robotVelocity(0, 0)) > 0.01 || std::abs(self->robotVelocity(1, 0)) > 0.01){
-			isMoving = true;
-			//self->kalmanFuzzy->at(X_INDEX) = (*self->kalmanFuzzy->at(X_INDEX)) + (*self->kalmanFuzzy->at(V_INDEX));
-			//self->kalmanFuzzy->at(X_INDEX + 1) = (*self->kalmanFuzzy->at(X_INDEX + 1)) + (*self->kalmanFuzzy->at(V_INDEX + 1));
-			//self->kalmanFuzzy->at(X_INDEX + 2) = (*self->kalmanFuzzy->at(X_INDEX + 2)) + (*self->kalmanFuzzy->at(V_INDEX + 2));
-		}
+
 		pk1 = Pk;
+		
+		Matrix matXk(STATE_VARIABLES, TRAP_VERTEX);
+
+		matXk(0, 0) = self->kalmanFuzzy->at(X_INDEX)->getVertexA();
+		matXk(0, 1) = self->kalmanFuzzy->at(X_INDEX)->getVertexB();
+		matXk(0, 2) = self->kalmanFuzzy->at(X_INDEX)->getVertexC();
+		matXk(0, 3) = self->kalmanFuzzy->at(X_INDEX)->getVertexD();
+
+		matXk(1, 0) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexA();
+		matXk(1, 1) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexB();
+		matXk(1, 2) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexC();
+		matXk(1, 3) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexD();
+
+		matXk(2, 0) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexA();
+		matXk(2, 1) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexB();
+		matXk(2, 2) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexC();
+		matXk(2, 3) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexD();
+		
+		std::cout << "Position Xk(k|k): " << std::endl;
+		matXk.print();
         std::cout << "Pk(k|k): " << std::endl;
 		Pk.print();
 
-		if(isMoving){
-			Pk = Ak * pk1 * ~Ak + self->Q;
-		} else {
-			Pk = Ak * pk1 * ~Ak;
+		Ak(0, 2) = -self->robotRawDeltaPosition(0, 0) * std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+		Ak(1, 2) = self->robotRawDeltaPosition(0, 0) * std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+
+		Bk(0, 0) = std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+		Bk(0, 1) = -0.5 * self->robotRawDeltaPosition(0, 0) * std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+
+		Bk(1, 0) = std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+		Bk(1, 1) = 0.5 * self->robotRawDeltaPosition(0, 0) * std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+
+		Bk(2, 0) = 0.0;
+		Bk(2, 1) = 1.0;
+
+
+		Matrix currentQ = self->Q;
+		if(self->robotRawDeltaPosition(0, 0) == 0.0 and self->robotRawDeltaPosition(1, 0) == 0.0){
+			currentQ = Matrix(2, 2);
 		}
 
+		//Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
+		Pk = (Ak * pk1 * ~Ak);
         std::cout << "Pk(k+1|k): " << std::endl;
 		Pk.print();
 		// 2 - Observation
@@ -1198,13 +1227,13 @@ void* GeneralController::trackRobotThread(void* object){
 		
 		Hk = Matrix(2 * self->currentSector->landmarks->size(), STATE_VARIABLES);
 		for(int i = 0, zIndex = 0; i < self->currentSector->landmarks->size(); i++, zIndex += 2){
-			Hk(zIndex, 0) = -((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
-			Hk(zIndex, 1) = -((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
-			Hk(zIndex, 2) = 0;
+			Hk(zIndex, 0) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0), 2));
+			Hk(zIndex, 1) = -((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0), 2));
+			Hk(zIndex, 2) = 0.0;
 
-			Hk(zIndex + 1, 0) = ((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
-			Hk(zIndex + 1, 1) = -((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - Xk(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - Xk(1, 0),2));
-			Hk(zIndex + 1, 2) = -1;
+			Hk(zIndex + 1, 0) = ((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0), 2));
+			Hk(zIndex + 1, 1) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0), 2));
+			Hk(zIndex + 1, 2) = -1.0;
 		}
 
 		std::vector<fuzzy::trapezoid*> zklWNoise;
@@ -1269,27 +1298,23 @@ void* GeneralController::trackRobotThread(void* object){
 		}
 		pthread_mutex_unlock(&self->mutexLandmarkLocker);
 		// 4 - Correction
-		//ROS_INFO("4 - Correction");
-		fuzzy::trapezoid *trapX = self->kalmanFuzzy->at(X_INDEX);
-		fuzzy::trapezoid *trapY = self->kalmanFuzzy->at(X_INDEX + 1);
-		fuzzy::trapezoid *trapTh = self->kalmanFuzzy->at(X_INDEX + 2);
-		
-		Matrix matXk(STATE_VARIABLES, TRAP_VERTEX);
+		//ROS_INFO("4 - Correction");	
+		//Matrix matXk(STATE_VARIABLES, TRAP_VERTEX);
 
-		matXk(0, 0) = trapX->getVertexA();
-		matXk(0, 1) = trapX->getVertexB();
-		matXk(0, 2) = trapX->getVertexC();
-		matXk(0, 3) = trapX->getVertexD();
+		matXk(0, 0) = self->kalmanFuzzy->at(X_INDEX)->getVertexA();
+		matXk(0, 1) = self->kalmanFuzzy->at(X_INDEX)->getVertexB();
+		matXk(0, 2) = self->kalmanFuzzy->at(X_INDEX)->getVertexC();
+		matXk(0, 3) = self->kalmanFuzzy->at(X_INDEX)->getVertexD();
 
-		matXk(1, 0) = trapY->getVertexA();
-		matXk(1, 1) = trapY->getVertexB();
-		matXk(1, 2) = trapY->getVertexC();
-		matXk(1, 3) = trapY->getVertexD();
+		matXk(1, 0) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexA();
+		matXk(1, 1) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexB();
+		matXk(1, 2) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexC();
+		matXk(1, 3) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexD();
 
-		matXk(2, 0) = trapTh->getVertexA();
-		matXk(2, 1) = trapTh->getVertexB();
-		matXk(2, 2) = trapTh->getVertexC();
-		matXk(2, 3) = trapTh->getVertexD();
+		matXk(2, 0) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexA();
+		matXk(2, 1) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexB();
+		matXk(2, 2) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexC();
+		matXk(2, 3) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexD();
 
 		std::cout << "Position Xk(k+1|k): " << std::endl;
 		matXk.print();
@@ -1348,10 +1373,7 @@ void* GeneralController::trackRobotThread(void* object){
 		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexA(matThk(0, 0));
 		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexB(matThk(0, 1));
 		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexC(matThk(0, 2));
-		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexD(matThk(0, 3));
-
-		std::cout << "Position Xk(k+1|k+1): " << std::endl;
-		matXk.print();
+		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexD(matThk(0, 3));	
 		
 		self->setRobotPosition(xkn, ykn, thkn);
 		

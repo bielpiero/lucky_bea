@@ -10,6 +10,7 @@
 #include <cstring>
 #include "SocketNode2.h"
 #include "SerialPort.h"
+#include "TextToSpeech.h"
 #include "stdxros.hpp"
 #include "UDPClient.h"
 #include "xml/rapidxml_print.hpp"
@@ -41,7 +42,7 @@
 
 #define X_INDEX 0
 #define V_INDEX 3
-#define W_INDEX 6
+#define W_INDEX 5
 
 #define TRAP_VERTEX 4
 
@@ -96,7 +97,7 @@ struct s_obs_dth{
 struct s_navigation_params{
 	float alpha;
 	s_position* initialPosition;
-	s_position* processNoise;
+	s_obs_dth* processNoise;
 	s_obs_dth* observationNoise;
 };
 
@@ -144,6 +145,7 @@ class GeneralController : public CSocketNode, public RobotNode // la clase Gener
 {
 private:
 	SerialPort* maestroControllers;
+	TextToSpeech* tts;
 	bool continue_dynamic_thread;
 	
 	std::string xmlFaceFullPath;
@@ -181,6 +183,7 @@ public:
 
 	void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear);
 	void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed);
+	void onRawPositionUpdate(double x, double y, double theta, double deltaDistance, double deltaDegrees);
 	void onBatteryChargeStateChanged(char battery);
 	void onSonarsDataUpdate(std::vector<PointXY*>* data);
 	void onLaserScanCompleted(LaserScan* laser);
@@ -203,6 +206,10 @@ private:
 	//possibilistic navigation
 	Matrix robotVelocity;
 	Matrix robotEncoderPosition;
+
+	Matrix robotRawDeltaPosition;
+	Matrix robotRawEncoderPosition;
+
 	std::vector<fuzzy::trapezoid*>* kalmanFuzzy;
 	Matrix robotState;
 	Matrix P;

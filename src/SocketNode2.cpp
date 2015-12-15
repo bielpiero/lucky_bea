@@ -6,6 +6,22 @@
 #include <stdlib.h>
 #include <sys/timeb.h>
 #include <iostream>
+
+const std::string CSocketNode::connectionField = "Connection:";
+const std::string CSocketNode::upgrade = "upgrade";
+const std::string CSocketNode::upgrade2 = "Upgrade";
+const std::string CSocketNode::upgradeField = "Upgrade:";
+const std::string CSocketNode::websocket = "websocket";
+const std::string CSocketNode::webSocketStr = "WebSocket";
+const std::string CSocketNode::hostField = "Host:";
+const std::string CSocketNode::originField = "Origin:";
+const std::string CSocketNode::keyField = "Sec-WebSocket-Key:";
+const std::string CSocketNode::protocolField = "Sec-WebSocket-Protocol:";
+const std::string CSocketNode::versionField = "Sec-WebSocket-Version:";
+const std::string CSocketNode::acceptField = "Sec-WebSocket-Accept:";
+const std::string CSocketNode::version = "13";
+const std::string CSocketNode::secret = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+const std::string CSocketNode::switchingProtocolField = "HTTP/1.1 101 Switching";
 	
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -15,6 +31,9 @@ CSocketNode::CSocketNode()
 {
 	socket_conn=INVALID_SOCKET;
 	thread_status=0;
+	webSocket = false;
+	checkedWebSocket = false;
+	handshakeDone = false;
 }
 
 CSocketNode::~CSocketNode()
@@ -62,6 +81,9 @@ int CSocketNode::Init(const char *address,int port, int t){
 	return -1;
 }
 void CSocketNode::HandleConnection(void){
+	webSocket = false;
+	checkedWebSocket = false;
+	handshakeDone = false;
 	if(type==SOCKET_SERVER){
 
 		if(socket_conn==INVALID_SOCKET){
@@ -179,6 +201,7 @@ int CSocketNode::ReceiveBytes(char *cad, int *length,int timeout){
 	int ret = select(socket_conn + 1, &readfds, NULL, NULL, &tout);
 	if (1 == ret){
 		int r = recv(socket_conn, cad, *length, 0);
+		
 		if (r == SOCKET_ERROR || r == 0){
 			Error("Receive bytes Error");
 			return -1;
@@ -191,35 +214,72 @@ int CSocketNode::ReceiveBytes(char *cad, int *length,int timeout){
 	return -1;
 }
 int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
+	int result = 0;
 	int ret;
 	int nChars;
 	int len;
-	char header[5];
-	nChars = 5;
-        
-	if (0 != ReceiveBytes(header, &nChars, timeout))
-		return -1;//no header
-    if(header[3] != 0){
-		len = header[2] + (header[3] + header[4] * 256) * 256;
+	char* header = new char[5];
+	char webHeader[3];
+	char partHeader[2];
+	wsState state = WS_STATE_OPENING;
+	wsFrameType frameType = WS_INCOMPLETE_FRAME;
+	Handshake hs;
+
+	nChars = 3;
+
+	if(ReceiveBytes(webHeader, &nChars, timeout) == 0){
+		checkedWebSocket = true;
+		if(memcmp(webHeader, "GET", sizeof(webHeader)) == 0){
+			printf("WebSocket detected...\n");
+			webSocket = true;
+			len = BUFFER_SIZE;
+			result = ReceiveBytes(Buffer_in, &len, timeout);
+			Buffer_in[len] = 0;
+			memcpy(cad, "GET", 3);
+			cad += 3;
+			memcpy(cad, Buffer_in, *size<len ? *size : len);
+			cad -= 3;
+
+			*size = len + 3;
+			printf("------------>Received:%s\n------------>Size: %d\n", cad, *size);
+
+			wsParseHandshake(cad, *size, &hs);
+			
+
+		} else {
+			nChars = 2;
+			ReceiveBytes(partHeader, &nChars, timeout);
+			memcpy(header, webHeader, sizeof(webHeader));
+			header += sizeof(webHeader);
+			memcpy(header, partHeader, sizeof(partHeader));
+			header -= sizeof(webHeader);
+
+			if(header[3] != 0){
+				len = header[2] + (header[3] + header[4] * 256) * 256;
+			} else {
+				len = header[2] + header[4] * 256;
+			}
+			
+			if (header[0] != 57 ||	// 12345 % 256
+				header[1] != 48 ||	// 12345 / 256
+				len <= 0){
+				Error("Header error");
+				result = -2; //header error
+			}
+			result = ReceiveBytes(Buffer_in, &len, timeout);
+			Buffer_in[len] = 0;
+			memcpy(cad, Buffer_in, *size<len ? *size : len);
+
+			if (*size<len)
+				result = -3;//short buffer
+
+			*size = len;
+		}
 	} else {
-		len = header[2] + header[4] * 256;
+		result = -1; //no header
 	}
-	
-	if (header[0] != 57 ||	// 12345 % 256
-		header[1] != 48 ||	// 12345 / 256
-		len <= 0){
-		Error("Header error");
-		return -2;//header error
-	}
-	ret = ReceiveBytes(Buffer_in, &len, timeout);
-	Buffer_in[len] = 0;
-	memcpy(cad, Buffer_in, *size<len ? *size : len);
 
-	if (*size<len)
-		return -3;//short buffer
-
-	*size = len;
-	return ret;
+	return result;
 }
 
 int CSocketNode::IsConnected(){
@@ -229,7 +289,11 @@ int CSocketNode::IsConnected(){
 		return 1;
 }
 
-void* LaunchThread(void* p){
+bool CSocketNode::isWebSocket(){
+	return webSocket;
+}
+
+void* CSocketNode::LaunchThread(void* p){
 	CSocketNode* node=(CSocketNode*) p;
 
 	node->thread_status=1;
@@ -287,10 +351,83 @@ int CSocketNode::getClientPort(){
 	socklen_t len;
 	struct sockaddr_in addr;
 
-
 	len = sizeof(addr);
 	getpeername(socket_conn, (struct sockaddr*)&addr, &len);
 	
 	return addr.sin_port;
+
+}
+
+wsFrameType CSocketNode::wsParseHandshake(char* buffer, int size, Handshake* hs){
+	std::vector<std::string> strings = split(buffer, WS_EOL);
+
+	for(int i = 0; i < strings.size(); i++){
+		std::vector<std::string> spCurrentString = split((char*)strings[i].c_str(), " ");
+		if(spCurrentString[0] == hostField){
+			hs->setHost(spCurrentString[1]);
+		} else if(spCurrentString[0] == originField){
+			hs->setOrigin(spCurrentString[1]);
+		} else if(spCurrentString[0] == keyField){
+			hs->setKey(spCurrentString[1]);
+		} else if(spCurrentString[0] == protocolField){
+			hs->setProtocol(spCurrentString[1]);
+		}
+	}
+
+	std::cout << "Handshake Parsed... OK" << std::endl;
+
+	return WS_OPENING_FRAME;
+}
+
+void CSocketNode::wsGetHandshakeAnswer(Handshake* hs, char* outFrame, int& outLength){
+	std::string answer;
+	unsigned char digest[20];
+
+	answer = switchingProtocolField + WS_EOL;
+	answer += upgradeField + " " + webSocketStr + WS_EOL;
+	answer += connectionField + " " + upgrade2 + WS_EOL;
+
+	if(hs->getKey().length() > 0){
+		std::string acceptKey;
+		acceptKey = hs->getKey() + secret;
+
+		// perform sha
+
+		//Little endian to big endian
+		for(int i = 0; i < 20; i += 4){
+			unsigned char character;
+			character = digest[i];
+			digest[i] = digest[i + 3];
+			digest[i + 3] = character;
+
+			character = digest[i + 1];
+			digest[i + 1] = digest[i + 2];
+			digest[i + 2] = character;
+		}
+
+		answer += acceptField + " " + acceptKey + WS_EOL;
+	}
+	if(hs->getProtocol().length() > 0){
+		answer += protocolField + " " + hs->getProtocol() + WS_EOL;
+	}
+	answer += WS_EOL;
+	outLength = answer.length();
+	memcpy(outFrame, answer.c_str(), answer.length());
+}
+
+wsFrameType wsParseInputFrame(char* bufferIn, int sizeIn, char* bufferOut, int& sizeOut){
+
+}
+
+std::vector<std::string> CSocketNode::split(char* buffer, const char* delimiter){
+	std::vector<std::string> result;
+
+	char* current;
+	current = strtok(buffer, delimiter);
+	while(current != NULL){
+		result.push_back(std::string(current));
+		current = strtok(NULL, delimiter);
+	}
+	return result;
 
 }

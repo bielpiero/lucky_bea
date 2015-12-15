@@ -16,6 +16,12 @@
 #include <pthread.h>
 #include <errno.h>	
 #include <string.h>
+
+#include "handshake.h"
+#include "crypt/base64.h"
+#include "crypt/sha512.h"
+#include <vector>
+
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
 #define SD_BOTH SHUT_RDWR
@@ -30,6 +36,15 @@
 
 #define SOCKET_UDP 0
 #define SOCKET_TCP 1
+
+#define WS_EOL "\r\n"
+#define WS_EOMSG "\r\n\r\n"
+    
+enum wsState {
+    WS_STATE_OPENING,
+    WS_STATE_NORMAL,
+    WS_STATE_CLOSING
+};
 
 class CSocketNode 
 {
@@ -47,9 +62,12 @@ public:
 	int SendBytes(char*cad, int length);
 	int ReceiveMsg(char* cad, int* size, int timeout=200);		
 	int ReceiveBytes(char* cad,int* length, int timeout);
-	
-	char* getClientIPAddress();
 	int getClientPort();
+
+	bool isWebSocket();
+
+	char* getClientIPAddress();
+	
 	void StartThread();//launch a 10 ms thread loop over the following actions
 	void HandleConnection();//manages all connection and reconnection
 protected:
@@ -57,15 +75,42 @@ protected:
 	virtual void OnMsg(char* cad, int length) = 0;//callback for client and server
 protected:
 	void Error(const char* cad="");
-public:
+private:
 	int type;//server or client
 	int thread_status;//0 not started, 1 started, 2 waiting to finish
 	
 	int socket_conn;
 	int socket_server;
-	struct sockaddr_in socket_address, socket_server_address;
 
-	friend void* LaunchThread(void* p);
+	bool webSocket;
+	bool checkedWebSocket;
+	bool handshakeDone;
+
+	struct sockaddr_in socket_address, socket_server_address;
+	
+	//WebSocket Implementation
+	wsFrameType wsParseHandshake(char* buffer, int size, Handshake* hs);
+	wsFrameType wsParseInputFrame(char* bufferIn, int sizeIn, char* bufferOut, int& sizeOut);
+	void wsGetHandshakeAnswer(Handshake* hs, char* outFrame, int &outLength);
+	std::vector<std::string> split(char* buffer, const char* delimiter);
+
+	static const std::string connectionField;
+	static const std::string upgrade;
+	static const std::string upgrade2;
+	static const std::string upgradeField;
+	static const std::string websocket;
+	static const std::string webSocketStr;
+	static const std::string hostField;
+	static const std::string originField;
+	static const std::string keyField;
+	static const std::string protocolField;
+	static const std::string versionField;
+	static const std::string acceptField;
+	static const std::string version;
+	static const std::string secret;
+	static const std::string switchingProtocolField;
+
+	static void* LaunchThread(void* p);
 };
 
 #endif // !defined(AFX_SOCKETNODE_H__895095F5_AD65_4FF5_973F_0DD16E9BC2FE__INCLUDED_)
