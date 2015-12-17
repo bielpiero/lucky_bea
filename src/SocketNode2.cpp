@@ -392,6 +392,8 @@ void CSocketNode::wsGetHandshakeAnswer(Handshake* hs, char* outFrame, int& outLe
 		acceptKey = hs->getKey() + secret;
 
 		// perform sha
+		SHA512* sha512 = new SHA512;
+		sha512->execute(acceptKey);
 
 		//Little endian to big endian
 		for(int i = 0; i < 20; i += 4){
