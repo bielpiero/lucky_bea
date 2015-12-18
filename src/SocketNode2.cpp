@@ -21,7 +21,7 @@ const std::string CSocketNode::versionField = "Sec-WebSocket-Version:";
 const std::string CSocketNode::acceptField = "Sec-WebSocket-Accept:";
 const std::string CSocketNode::version = "13";
 const std::string CSocketNode::secret = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-const std::string CSocketNode::switchingProtocolField = "HTTP/1.1 101 Switching";
+const std::string CSocketNode::switchingProtocolField = "HTTP/1.1 101 Switching Protocols";
 	
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -142,7 +142,8 @@ void CSocketNode::HandleConnection(void){
 	}	
 }
 void CSocketNode::Error(const char* cad){
-	printf("%s\n", cad);
+	//printf("%s\n", cad);
+	perror(cad);
 	if(socket_conn!=INVALID_SOCKET)
 	{	
 		shutdown(socket_conn,SD_BOTH);
@@ -201,7 +202,6 @@ int CSocketNode::ReceiveBytes(char *cad, int *length,int timeout){
 	int ret = select(socket_conn + 1, &readfds, NULL, NULL, &tout);
 	if (1 == ret){
 		int r = recv(socket_conn, cad, *length, 0);
-		
 		if (r == SOCKET_ERROR || r == 0){
 			Error("Receive bytes Error");
 			return -1;
@@ -227,7 +227,7 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 
 	nChars = 3;
 
-	if(ReceiveBytes(webHeader, &nChars, timeout) == 0){
+	if(!checkedWebSocket and ReceiveBytes(webHeader, &nChars, timeout) == 0){
 		checkedWebSocket = true;
 		if(memcmp(webHeader, "GET", sizeof(webHeader)) == 0){
 			printf("WebSocket detected...\n");
@@ -241,12 +241,15 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 			cad -= 3;
 
 			*size = len + 3;
-			printf("------------>Received:%s\n------------>Size: %d\n", cad, *size);
-
-			wsParseHandshake(cad, *size, &hs);
 			
+			wsParseHandshake(cad, *size, &hs);
+			memset(&Buffer_out, 0, BUFFER_SIZE);
+			len = 0;
+			wsGetHandshakeAnswer(&hs, Buffer_out, len);
+			std::cout << Buffer_out;
+			SendBytes(Buffer_out, len);
 
-		} else {
+		} else if(!webSocket){
 			nChars = 2;
 			ReceiveBytes(partHeader, &nChars, timeout);
 			memcpy(header, webHeader, sizeof(webHeader));
@@ -275,8 +278,38 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 
 			*size = len;
 		}
-	} else {
-		result = -1; //no header
+	} 
+
+	if(checkedWebSocket and !webSocket){
+		nChars = 5;
+		if(ReceiveBytes(header, &nChars, timeout) == 0){
+			if(header[3] != 0){
+				len = header[2] + (header[3] + header[4] * 256) * 256;
+			} else {
+				len = header[2] + header[4] * 256;
+			}
+			
+			if (header[0] != 57 ||	// 12345 % 256
+				header[1] != 48 ||	// 12345 / 256
+				len <= 0){
+				Error("Header error");
+				result = -2; //header error
+			}
+			result = ReceiveBytes(Buffer_in, &len, timeout);
+			Buffer_in[len] = 0;
+			memcpy(cad, Buffer_in, *size<len ? *size : len);
+
+			if (*size<len)
+				result = -3;//short buffer
+
+			*size = len;
+
+		} else {
+			result = -1;
+		}
+
+	} else if(checkedWebSocket and webSocket){
+		result = -1;
 	}
 
 	return result;
@@ -381,31 +414,33 @@ wsFrameType CSocketNode::wsParseHandshake(char* buffer, int size, Handshake* hs)
 
 void CSocketNode::wsGetHandshakeAnswer(Handshake* hs, char* outFrame, int& outLength){
 	std::string answer;
-	unsigned char digest[20];
 
 	answer = switchingProtocolField + WS_EOL;
-	answer += upgradeField + " " + webSocketStr + WS_EOL;
+	answer += upgradeField + " " + websocket + WS_EOL;
 	answer += connectionField + " " + upgrade2 + WS_EOL;
 
 	if(hs->getKey().length() > 0){
 		std::string acceptKey;
+		std::cout << hs->getKey() << std::endl;
 		acceptKey = hs->getKey() + secret;
 
 		// perform sha
-		SHA512* sha512 = new SHA512;
-		sha512->execute(acceptKey);
+		SHA* sha = new SHA;
+		acceptKey = sha->execute(acceptKey);
 
-		//Little endian to big endian
-		for(int i = 0; i < 20; i += 4){
-			unsigned char character;
-			character = digest[i];
-			digest[i] = digest[i + 3];
-			digest[i + 3] = character;
-
-			character = digest[i + 1];
-			digest[i + 1] = digest[i + 2];
-			digest[i + 2] = character;
+		std::cout << "Hash code: " << acceptKey << std::endl;
+		unsigned char* hashCode = new unsigned char[20];
+		char* resultHashCode = (char*)acceptKey.c_str();
+		int index = 0;
+		for(int i = 0; i < acceptKey.length(); i+=2){
+			char* hex = new char[3];
+			memcpy(hex, resultHashCode + i, 2);
+			hex[2] = 0;
+			hashCode[index] = (unsigned char)strtol(hex, NULL, 16);
+			index++;
 		}
+
+		acceptKey = Base64::encode(hashCode, 20);
 
 		answer += acceptField + " " + acceptKey + WS_EOL;
 	}

@@ -19,7 +19,7 @@
 
 #include "handshake.h"
 #include "crypt/base64.h"
-#include "crypt/sha512.h"
+#include "crypt/sha.h"
 #include <vector>
 
 #define INVALID_SOCKET -1
