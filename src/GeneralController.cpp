@@ -11,7 +11,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_):RobotNode("/dev/ttyS0"
 	this->maestroControllers = new SerialPort();
 	this->tts = new TextToSpeech();
 	this->tts->setDefaultConfiguration();
-	this->tts->setString("Hola, me llamo Doris.");
+	this->tts->setString("Hola, me llamo Doris");
 
 	this->frontBumpersOk = true;
 	this->rearBumpersOk = true;

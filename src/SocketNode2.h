@@ -90,7 +90,8 @@ private:
 	
 	//WebSocket Implementation
 	wsFrameType wsParseHandshake(char* buffer, int size, Handshake* hs);
-	wsFrameType wsParseInputFrame(char* bufferIn, int sizeIn, char* bufferOut, int& sizeOut);
+	wsFrameType wsParseInputFrame(unsigned char* bufferIn, int sizeIn, char* bufferOut, int& sizeOut);
+
 	void wsGetHandshakeAnswer(Handshake* hs, char* outFrame, int &outLength);
 	std::vector<std::string> split(char* buffer, const char* delimiter);
 
