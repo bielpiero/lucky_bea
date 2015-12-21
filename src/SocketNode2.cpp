@@ -344,9 +344,9 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 			char bufferIn[BUFFER_SIZE];
 			int sizeOutput;
 			wsParseInputFrame((unsigned char*)Buffer_in, len, bufferIn, sizeOutput);
-			//memcpy(cad, bufferIn, sizeOutput);
-			printf("%s\n", bufferIn);
-			result = -1;
+			memcpy(cad, bufferIn, sizeOutput);
+			
+			result = 0;
 		} else{
 			result = -1;
 		}
