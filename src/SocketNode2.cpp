@@ -157,6 +157,7 @@ int CSocketNode::SendMsg(const char opr, const char* cad,int length){
 	if (socket_conn == INVALID_SOCKET)
 		return -1;
 	int pos = 0;
+	memset(Buffer_out, 0, BUFFER_SIZE);
 	if(!webSocket){
 		//Build header
 		Buffer_out[pos] = 57; //12345 % 256;
@@ -175,22 +176,21 @@ int CSocketNode::SendMsg(const char opr, const char* cad,int length){
 		}
 		Buffer_out[pos + 5] = opr;
 		pos = 5;
-		memcpy(Buffer_out + 6, cad, length);
+		memcpy(Buffer_out + pos + 1, cad, length);
 	} else {
-		Buffer_out[pos++] = (char)WS_TEXT_FRAME;
+		Buffer_out[pos++] = 129;
 		
-
 		if(length <= 125){
 			Buffer_out[pos++] = length;
 		} else if(length <= 65535) {
 			Buffer_out[pos++] = 126;
 			Buffer_out[pos++] = (length >> 8) & 0xff;
 			Buffer_out[pos++] = length & 0xff;
+
 		} else {
 			Buffer_out[pos++] = 127;
 			memset(Buffer_out + pos, 0, 8);
-			pos += 8;
-
+			
 			for (int i = 7; i >= 0; i--){
 				Buffer_out[pos++] = (length >> 8*i) & 0xff;
 			}
@@ -198,7 +198,7 @@ int CSocketNode::SendMsg(const char opr, const char* cad,int length){
 		Buffer_out[pos++] = opr;
 		memcpy(Buffer_out + pos, cad, length);
 	}
-		
+	printf("1: %d, 2: %d, 3: %d, 4: %d\n", Buffer_out[1], Buffer_out[2], Buffer_out[3], Buffer_out[4]);
 		//Send it
 	int err = send(socket_conn, Buffer_out, length + pos, 0);
 	//	delete[] cad_aux;
@@ -246,27 +246,25 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 	int ret;
 	int nChars;
 	int len;
+	bool firstReceiveDone = false;
 	char* header = new char[5];
-	char webHeader[3];
-	char partHeader[2];
 	wsState state = WS_STATE_OPENING;
 	wsFrameType frameType = WS_INCOMPLETE_FRAME;
 	Handshake hs;
 
-	nChars = 3;
+	
 	if(!checkedWebSocket){
-		if(ReceiveBytes(webHeader, &nChars, timeout) == 0){
+		nChars = 3;
+		if(ReceiveBytes(header, &nChars, timeout) == 0){
 			checkedWebSocket = true;
-			if(memcmp(webHeader, "GET", sizeof(webHeader)) == 0){
+			if(memcmp(header, "GET", nChars) == 0){
 				printf("WebSocket detected...\n");
 				webSocket = true;
 				len = BUFFER_SIZE;
 				result = ReceiveBytes(Buffer_in, &len, timeout);
 				Buffer_in[len] = 0;
 				memcpy(cad, "GET", 3);
-				cad += 3;
-				memcpy(cad, Buffer_in, *size<len ? *size : len);
-				cad -= 3;
+				memcpy(cad + 3, Buffer_in, *size<len ? *size : len);
 
 				*size = len + 3;
 				
@@ -274,42 +272,43 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 				memset(&Buffer_out, 0, BUFFER_SIZE);
 				len = 0;
 				wsGetHandshakeAnswer(&hs, Buffer_out, len);
-				//std::cout << Buffer_out;
 				SendBytes(Buffer_out, len);
 
 			} else if(!webSocket){
 				nChars = 2;
-				ReceiveBytes(partHeader, &nChars, timeout);
-				memcpy(header, webHeader, sizeof(webHeader));
-				header += sizeof(webHeader);
-				memcpy(header, partHeader, sizeof(partHeader));
-				header -= sizeof(webHeader);
+				if(ReceiveBytes(header + 3, &nChars, timeout) == 0){
+					firstReceiveDone = true;
+					printf("3: %d, 4: %d\n", header[3], header[4]);
+					if(header[3] != 0){
+						len = header[2] + (header[3] + header[4] * 256) * 256;
+					} else {
+						len = header[2] + header[4] * 256;
+					}
+					
+					if (header[0] != 57 ||	// 12345 % 256
+						header[1] != 48 ||	// 12345 / 256
+						len <= 0){
+						Error("Header error");
+						result = -2; //header error
+					}
+					result = ReceiveBytes(Buffer_in, &len, timeout);
+					Buffer_in[len] = 0;
+					memcpy(cad, Buffer_in, *size<len ? *size : len);
 
-				if(header[3] != 0){
-					len = header[2] + (header[3] + header[4] * 256) * 256;
+					if (*size<len)
+						result = -3;//short buffer
+
+					*size = len;
 				} else {
-					len = header[2] + header[4] * 256;
+					result = -1;
 				}
-				
-				if (header[0] != 57 ||	// 12345 % 256
-					header[1] != 48 ||	// 12345 / 256
-					len <= 0){
-					Error("Header error");
-					result = -2; //header error
-				}
-				result = ReceiveBytes(Buffer_in, &len, timeout);
-				Buffer_in[len] = 0;
-				memcpy(cad, Buffer_in, *size<len ? *size : len);
-
-				if (*size<len)
-					result = -3;//short buffer
-
-				*size = len;
 			}
+		} else {
+			result = -1;
 		}
 	}
 
-	if(checkedWebSocket and !webSocket){
+	if(checkedWebSocket and !webSocket and !firstReceiveDone){
 		nChars = 5;
 		if(ReceiveBytes(header, &nChars, timeout) == 0){
 			if(header[3] != 0){
@@ -342,11 +341,11 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 		memset(&Buffer_in, 0, BUFFER_SIZE);
 		if((result = ReceiveBytes(Buffer_in, &len, timeout)) == 0){
 			char bufferIn[BUFFER_SIZE];
-			int sizeOutput;
+			memset(bufferIn, 0, BUFFER_SIZE);
+			int sizeOutput = 0;
 			wsParseInputFrame((unsigned char*)Buffer_in, len, bufferIn, sizeOutput);
 			memcpy(cad, bufferIn, sizeOutput);
-			
-			result = 0;
+			printf("mensaje recibido...\n");
 		} else{
 			result = -1;
 		}
@@ -499,11 +498,9 @@ wsFrameType CSocketNode::wsParseInputFrame(unsigned char* bufferIn, int sizeIn, 
 		int payload = 0;
 		int pos = 2;
 		int lengthField = bufferIn[1] & (~0x80);
-		printf("%d\n", bufferIn[1]);
 		if(lengthField <= 125){
 			payload = lengthField;
 		} else if(lengthField == 126){
-			printf("2: %d, 3: %d\n", bufferIn[2], bufferIn[3]);
 			payload = (bufferIn[2] << 8) + bufferIn[3];
 			pos += 2;
 		} else if (lengthField == 127){
