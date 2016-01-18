@@ -12,9 +12,10 @@
 			<landmark id="8" var="12" xpos="695" ypos="192"/>
 		</landmarks>
 		<features>
-			<feature id="0" name="charger" var="25" xpos="645" ypos="340"/>
+			<feature id="0" name="door" var="25" xpos="70" ypos="0"/>
+			<feature id="1" name="charger" var="25" xpos="645" ypos="340"/>
 		</features>
-		<sites cyclic="yes">
+		<sites cyclic="yes" sequence="0,1,2,3,4,5">
 			<site id="0" name="site a" var="10" tsec="10" xpos="200" ypos="108"/>
 			<site id="1" name="site b" var="10" tsec="10" xpos="200" ypos="350"/>
 			<site id="2" name="site c" var="10" tsec="10" xpos="280" ypos="270"/>

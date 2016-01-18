@@ -14,4 +14,37 @@
 			<th-zone x1="-0.22" x2="-0.17" x3="0.17" x4="0.22"/> <!-- radians -->
 		</observation-noise>
 	</navigation-params>
+	<permissions>
+		<permission function="0x00" token-required="0"/>
+		<permission function="0x01" token-required="0"/>
+		<permission function="0x02" token-required="0"/>
+		<permission function="0x03" token-required="0"/>
+		<permission function="0x04" token-required="1"/>
+		<permission function="0x05" token-required="1"/>
+		<permission function="0x06" token-required="1"/>
+		<permission function="0x07" token-required="1"/>
+		<permission function="0x08" token-required="0"/>
+		<permission function="0x09" token-required="0"/>
+		<permission function="0x0A" token-required="1"/>
+		<permission function="0x10" token-required="1"/>
+		<permission function="0x11" token-required="1"/>
+		<permission function="0x12" token-required="0"/>
+		<permission function="0x13" token-required="1"/>
+		<permission function="0x14" token-required="1"/>
+		<permission function="0x15" token-required="0"/>
+		<permission function="0x16" token-required="1"/>
+		<permission function="0x17" token-required="0"/>
+		<permission function="0x18" token-required="0"/>
+		<permission function="0x19" token-required="0"/>
+		<permission function="0x1A" token-required="1"/>
+		<permission function="0x1B" token-required="1"/>
+		<permission function="0x1C" token-required="1"/>
+		<permission function="0x1D" token-required="1"/>
+		<permission function="0x30" token-required="0"/>
+		<permission function="0x31" token-required="0"/>
+		<permission function="0x7C" token-required="0"/>
+		<permission function="0x7D" token-required="1"/>
+		<permission function="0x7E" token-required="1"/>
+		<permission function="0xFF" token-required="0"/>
+	</permissions>
 </robot>

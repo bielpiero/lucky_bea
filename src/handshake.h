@@ -42,6 +42,7 @@ public:
 
 	std::string getProtocol(){ return protocol; }
 	void setProtocol(std::string protocol) { this->protocol = protocol; }
+
 private:
     std::string host;
     std::string origin;

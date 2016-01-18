@@ -19,6 +19,7 @@ const std::string CSocketNode::keyField = "Sec-WebSocket-Key:";
 const std::string CSocketNode::protocolField = "Sec-WebSocket-Protocol:";
 const std::string CSocketNode::versionField = "Sec-WebSocket-Version:";
 const std::string CSocketNode::acceptField = "Sec-WebSocket-Accept:";
+const std::string CSocketNode::extensionsField = "Sec-WebSocket-Extensions:";
 const std::string CSocketNode::version = "13";
 const std::string CSocketNode::secret = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 const std::string CSocketNode::switchingProtocolField = "HTTP/1.1 101 Switching Protocols";
@@ -29,18 +30,17 @@ const std::string CSocketNode::switchingProtocolField = "HTTP/1.1 101 Switching 
 
 CSocketNode::CSocketNode()
 {
-	socket_conn=INVALID_SOCKET;
-	thread_status=0;
-	webSocket = false;
-	checkedWebSocket = false;
-	handshakeDone = false;
+	tokenOwner = -1;
+	lastTokenOwner = -1;
+	for(int i = 0; i < MAX_CLIENTS; i++){
+		socket_conn[i] = TCPSocketClient(INVALID_SOCKET);
+	}
+
+	thread_status = 0;
 }
 
-CSocketNode::~CSocketNode()
-{
-	//#ifdef SOCKET_NODE_WINDOWS
-	//	WSACleanup();
-	//#endif
+CSocketNode::~CSocketNode(){
+	
 }
 
 int CSocketNode::Init(const char *address,int port, int t){
@@ -48,7 +48,10 @@ int CSocketNode::Init(const char *address,int port, int t){
 	this->ip_address = new char[strlen(address)];
 	strcpy(this->ip_address, address);
 	
-	socket_conn=INVALID_SOCKET;
+	for(int i = 0; i < MAX_CLIENTS; i++){
+		socket_conn[i] = TCPSocketClient(INVALID_SOCKET);
+	}
+
 // Configuracion del socket del Servidor	
 	socket_server_address.sin_family = AF_INET;
 	socket_server_address.sin_addr.s_addr = inet_addr(address);
@@ -60,9 +63,13 @@ int CSocketNode::Init(const char *address,int port, int t){
 		socket_server = socket(AF_INET, SOCK_STREAM, 0);
 
 		if (socket_server==INVALID_SOCKET){
-			Error("Server: Error Socket");
+			//Error(socketIndex, "Server: Error Socket");
 			return -1;
 		}
+
+		int optval = 1;
+		setsockopt(socket_server, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval));
+
 		int len = sizeof(socket_server_address);
 		if (bind(socket_server,(struct sockaddr *) &socket_server_address,len) < 0){
 			return -1;
@@ -81,42 +88,62 @@ int CSocketNode::Init(const char *address,int port, int t){
 	return -1;
 }
 void CSocketNode::HandleConnection(void){
-	webSocket = false;
-	checkedWebSocket = false;
-	handshakeDone = false;
+	//webSocket = false;
+	//checkedWebSocket = false;
+	//handshakeDone = false;
 	if(type==SOCKET_SERVER){
 
-		if(socket_conn==INVALID_SOCKET){
-			unsigned int len = sizeof(socket_address);
 
-			fd_set readfds;
-		
-			FD_ZERO(&readfds);
-			FD_SET(socket_server,&readfds);
-			timeval timeout;
-			timeout.tv_sec=0;
-			timeout.tv_usec=10;//10000;
-			int ret=select(socket_server + 1, &readfds, NULL, NULL, &timeout);
-			if(ret==1){
-				socket_conn = accept(socket_server,(struct sockaddr *)&socket_address, &len);
-				
-				//socket_conn = accept(socket_server, 0, 0);
-				if(socket_conn==INVALID_SOCKET){
-					return;
-				}	
-				int optval;
-				setsockopt(socket_conn, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-				int buff_size = BUFFER_SIZE;
-				setsockopt(socket_conn, SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
-				setsockopt(socket_conn, SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));
-				OnConnection();		
+		unsigned int len = sizeof(socket_address);
+
+		fd_set readfds;
+	
+		FD_ZERO(&readfds);
+		FD_SET(socket_server, &readfds);
+		int maxSD = socket_server;
+
+		for(int i = 0; i < MAX_CLIENTS; i++){
+			int sd = socket_conn[i].getSocket();
+			if(sd > INVALID_SOCKET){
+				FD_SET(sd, &readfds);
 			}
-			
+
+			if(sd > maxSD){
+				maxSD = sd;
+			}
+		}
+
+		timeval timeout;
+		timeout.tv_sec=0;
+		timeout.tv_usec=10;//10000;
+		int ret=select(socket_server + 1, &readfds, NULL, NULL, &timeout);
+		if(ret==1){
+			if(FD_ISSET(socket_server, &readfds)){
+				int newIncommingConnection = accept(socket_server,(struct sockaddr *)&socket_address, &len);
+				bool stored = false;
+				for(int i = 0; i < MAX_CLIENTS and not stored; i++)	{
+					if(socket_conn[i].getSocket() == INVALID_SOCKET){
+						stored = true;
+
+						socket_conn[i].setSocket(newIncommingConnection);
+						socket_conn[i].setIsAWebSocket(false);
+						socket_conn[i].setCheckedIfIsAWebSocket(false);
+						socket_conn[i].setHandshakeDone(false);
+
+						int optval;
+						setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+						int buff_size = BUFFER_SIZE;
+						setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
+						setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));
+						OnConnection(i);
+					}
+				}
+			}
 		}
 	}
 
-	if(type==SOCKET_CLIENT ){
-		if(socket_conn==INVALID_SOCKET){
+	if(type == SOCKET_CLIENT){
+		if(socket_conn[CLIENT_DEFAULT_INDEX].getSocket()==INVALID_SOCKET){
 			//Aux socket to avoid sock_conn!=INVALID without connecting
 			int aux_sock = 0;
 			aux_sock=socket(AF_INET, SOCK_STREAM, 0);
@@ -132,33 +159,36 @@ void CSocketNode::HandleConnection(void){
 				return;
 			}
 		
-			socket_conn=aux_sock;
+			socket_conn[CLIENT_DEFAULT_INDEX].setSocket(aux_sock);
 			int buff_size = BUFFER_SIZE;
-			setsockopt(socket_conn, SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
-			setsockopt(socket_conn, SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));
+			setsockopt(socket_conn[CLIENT_DEFAULT_INDEX].getSocket(), SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
+			setsockopt(socket_conn[CLIENT_DEFAULT_INDEX].getSocket(), SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));
 		
-			OnConnection();
+			OnConnection(CLIENT_DEFAULT_INDEX);
 		}
-	}	
+	}
+
 }
-void CSocketNode::Error(const char* cad){
+void CSocketNode::Error(int socketIndex, const char* cad){
 	//printf("%s\n", cad);
 	perror(cad);
-	if(socket_conn!=INVALID_SOCKET)
+	if(socket_conn[socketIndex].getSocket()!=INVALID_SOCKET)
 	{	
-		shutdown(socket_conn,SD_BOTH);
-		closesocket(socket_conn);
-		socket_conn=INVALID_SOCKET;
-		OnConnection();
+		shutdown(socket_conn[socketIndex].getSocket(),SD_BOTH);
+		closesocket(socket_conn[socketIndex].getSocket());
+		socket_conn[socketIndex].setSocket(INVALID_SOCKET);
+		OnConnection(socketIndex);
 	}
 }
 
-int CSocketNode::SendMsg(const char opr, const char* cad,int length){
-	if (socket_conn == INVALID_SOCKET)
+int CSocketNode::SendMsg(int socketIndex, const char opr, const char* cad, unsigned int length){
+	if (socket_conn[socketIndex].getSocket() == INVALID_SOCKET)
 		return -1;
 	int pos = 0;
+	int result = 0;
 	memset(Buffer_out, 0, BUFFER_SIZE);
-	if(!webSocket){
+
+	if(!socket_conn[socketIndex].isWebSocket()){
 		//Build header
 		Buffer_out[pos] = 57; //12345 % 256;
 		Buffer_out[pos + 1] = 48; //12345 / 256;
@@ -177,63 +207,69 @@ int CSocketNode::SendMsg(const char opr, const char* cad,int length){
 		Buffer_out[pos + 5] = opr;
 		pos = 5;
 		memcpy(Buffer_out + pos + 1, cad, length);
-	} else {
-		Buffer_out[pos++] = 129;
 		
-		if(length <= 125){
-			Buffer_out[pos++] = length;
-		} else if(length <= 65535) {
-			Buffer_out[pos++] = 126;
+	} else {
+		length++;
+		Buffer_out[pos++] = 0x81;
+		Buffer_out[pos++] = length <= 125 ? length : (length <= 65535 ? 126 : 127);
+		if(Buffer_out[pos-1] == 126){
 			Buffer_out[pos++] = (length >> 8) & 0xff;
-			Buffer_out[pos++] = length & 0xff;
-
-		} else {
-			Buffer_out[pos++] = 127;
-			memset(Buffer_out + pos, 0, 8);
-			
-			for (int i = 7; i >= 0; i--){
-				Buffer_out[pos++] = (length >> 8*i) & 0xff;
-			}
+			Buffer_out[pos++] = (length & 0xff);
+		} else if(Buffer_out[pos-1] == 127){ 
+			Buffer_out[pos++] = (length >> 56) & 0xff;
+			Buffer_out[pos++] = (length >> 48) & 0xff;
+			Buffer_out[pos++] = (length >> 40) & 0xff;
+			Buffer_out[pos++] = (length >> 32) & 0xff;
+			Buffer_out[pos++] = (length >> 24) & 0xff;
+			Buffer_out[pos++] = (length >> 16) & 0xff;
+			Buffer_out[pos++] = (length >> 8) & 0xff;
+			Buffer_out[pos++] = (length & 0xff);
 		}
 		Buffer_out[pos++] = opr;
-		memcpy(Buffer_out + pos, cad, length);
-	}
-	printf("1: %d, 2: %d, 3: %d, 4: %d\n", Buffer_out[1], Buffer_out[2], Buffer_out[3], Buffer_out[4]);
-		//Send it
-	int err = send(socket_conn, Buffer_out, length + pos, 0);
-	//	delete[] cad_aux;
-	if (err == SOCKET_ERROR){
-		Error("SendMsg Error");
-		return -1;
-	}
-	
+		
+		for(int i = 0; i < length - 1; i++){
+			Buffer_out[pos++] = cad[i];	
+		}
+		length = 0;
 
-	return 0;
+	}
+	result = SendBytes(socketIndex, Buffer_out, length + pos);	
+	return result;
 }
 
-int CSocketNode::SendBytes(char *cad, int length){
+int CSocketNode::wsSendPingMsg(int socketIndex){
+	int pos = 0;
+	memset(Buffer_out, 0, BUFFER_SIZE);
+	if(socket_conn[socketIndex].isWebSocket()){
+		Buffer_out[pos++] = 0x89;
+		SendBytes(socketIndex, Buffer_out, pos);
+	}
+}
+
+int CSocketNode::SendBytes(int socketIndex, char *cad, unsigned int length){
 	//Send it
-	int err = send(socket_conn, cad, length,0);
+	int err = write(socket_conn[socketIndex].getSocket(), cad, length);
 	if (err == SOCKET_ERROR ){
-		Error("SendBytes Error");
+		Error(socketIndex, "SendBytes Error");
 		return -1;
 	}
 	return 0;
 }
 
-int CSocketNode::ReceiveBytes(char *cad, int *length,int timeout){
-	if (socket_conn == INVALID_SOCKET)
+int CSocketNode::ReceiveBytes(int socketIndex, char *cad, int *length,int timeout){
+
+	if (socket_conn[socketIndex].getSocket() == INVALID_SOCKET)
 		return -1;
-	fd_set readfds; FD_ZERO(&readfds); FD_SET(socket_conn, &readfds);
+	int sd = socket_conn[socketIndex].getSocket();
+	fd_set readfds; FD_ZERO(&readfds); FD_SET(sd, &readfds);
 	timeval tout; tout.tv_sec = 0; tout.tv_usec = 10000;
-	int ret = select(socket_conn + 1, &readfds, NULL, NULL, &tout);
-	if (1 == ret){
-		int r = recv(socket_conn, cad, *length, 0);
 
-		if (r == SOCKET_ERROR || r == 0){
-			Error("Receive bytes Error");
+	if(select(sd + 1, &readfds, NULL, NULL, &tout) == 1){
+		int r = recv(sd, cad, *length, 0);
+
+		if(r == 0 || r == SOCKET_ERROR){
+			Error(socketIndex, "Receive bytes Error");
 			return -1;
-
 		} else {
 			*length = r;
 			return 0;
@@ -241,7 +277,7 @@ int CSocketNode::ReceiveBytes(char *cad, int *length,int timeout){
 	}
 	return -1;
 }
-int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
+int CSocketNode::ReceiveMsg(int socketIndex, char* cad, int* size, int timeout){
 	int result = 0;
 	int ret;
 	int nChars;
@@ -253,32 +289,31 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 	Handshake hs;
 
 	
-	if(!checkedWebSocket){
+	if(!socket_conn[socketIndex].checkedIfIsAWebSocket()){
 		nChars = 3;
-		if(ReceiveBytes(header, &nChars, timeout) == 0){
-			checkedWebSocket = true;
+		if(ReceiveBytes(socketIndex, header, &nChars, timeout) == 0){
+			socket_conn[socketIndex].setCheckedIfIsAWebSocket(true);
 			if(memcmp(header, "GET", nChars) == 0){
 				printf("WebSocket detected...\n");
-				webSocket = true;
+				socket_conn[socketIndex].setIsAWebSocket(true);
 				len = BUFFER_SIZE;
-				result = ReceiveBytes(Buffer_in, &len, timeout);
+				result = ReceiveBytes(socketIndex, Buffer_in, &len, timeout);
 				Buffer_in[len] = 0;
 				memcpy(cad, "GET", 3);
 				memcpy(cad + 3, Buffer_in, *size<len ? *size : len);
 
 				*size = len + 3;
-				
 				wsParseHandshake(cad, *size, &hs);
 				memset(&Buffer_out, 0, BUFFER_SIZE);
 				len = 0;
 				wsGetHandshakeAnswer(&hs, Buffer_out, len);
-				SendBytes(Buffer_out, len);
+				SendBytes(socketIndex, Buffer_out, len);
 
-			} else if(!webSocket){
+			} else if(!socket_conn[socketIndex].isWebSocket()){
 				nChars = 2;
-				if(ReceiveBytes(header + 3, &nChars, timeout) == 0){
+				if(ReceiveBytes(socketIndex, header + 3, &nChars, timeout) == 0){
 					firstReceiveDone = true;
-					printf("3: %d, 4: %d\n", header[3], header[4]);
+
 					if(header[3] != 0){
 						len = header[2] + (header[3] + header[4] * 256) * 256;
 					} else {
@@ -288,10 +323,10 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 					if (header[0] != 57 ||	// 12345 % 256
 						header[1] != 48 ||	// 12345 / 256
 						len <= 0){
-						Error("Header error");
+						Error(socketIndex, "Header error");
 						result = -2; //header error
 					}
-					result = ReceiveBytes(Buffer_in, &len, timeout);
+					result = ReceiveBytes(socketIndex, Buffer_in, &len, timeout);
 					Buffer_in[len] = 0;
 					memcpy(cad, Buffer_in, *size<len ? *size : len);
 
@@ -308,9 +343,9 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 		}
 	}
 
-	if(checkedWebSocket and !webSocket and !firstReceiveDone){
+	if(socket_conn[socketIndex].checkedIfIsAWebSocket() and !socket_conn[socketIndex].isWebSocket() and !firstReceiveDone){
 		nChars = 5;
-		if(ReceiveBytes(header, &nChars, timeout) == 0){
+		if(ReceiveBytes(socketIndex, header, &nChars, timeout) == 0){
 			if(header[3] != 0){
 				len = header[2] + (header[3] + header[4] * 256) * 256;
 			} else {
@@ -320,10 +355,12 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 			if (header[0] != 57 ||	// 12345 % 256
 				header[1] != 48 ||	// 12345 / 256
 				len <= 0){
-				Error("Header error");
+				Error(socketIndex, "Header error");
 				result = -2; //header error
 			}
-			result = ReceiveBytes(Buffer_in, &len, timeout);
+			memset(&Buffer_in, 0, BUFFER_SIZE);
+			memset(cad, 0, BUFFER_SIZE);
+			result = ReceiveBytes(socketIndex, Buffer_in, &len, timeout);
 			Buffer_in[len] = 0;
 			memcpy(cad, Buffer_in, *size<len ? *size : len);
 
@@ -336,16 +373,19 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 			result = -1;
 		}
 
-	} else if(checkedWebSocket and webSocket){
+	} else if(socket_conn[socketIndex].checkedIfIsAWebSocket() and socket_conn[socketIndex].isWebSocket()){
 		len = BUFFER_SIZE;
 		memset(&Buffer_in, 0, BUFFER_SIZE);
-		if((result = ReceiveBytes(Buffer_in, &len, timeout)) == 0){
+		if((result = ReceiveBytes(socketIndex, Buffer_in, &len, timeout)) == 0){
+			
 			char bufferIn[BUFFER_SIZE];
 			memset(bufferIn, 0, BUFFER_SIZE);
+			memset(cad, 0, BUFFER_SIZE);
 			int sizeOutput = 0;
 			wsParseInputFrame((unsigned char*)Buffer_in, len, bufferIn, sizeOutput);
+			bufferIn[sizeOutput] = 0;
 			memcpy(cad, bufferIn, sizeOutput);
-			printf("mensaje recibido...\n");
+			
 		} else{
 			result = -1;
 		}
@@ -354,34 +394,43 @@ int CSocketNode::ReceiveMsg(char* cad, int* size, int timeout){
 	return result;
 }
 
-int CSocketNode::IsConnected(){
-	if(socket_conn==INVALID_SOCKET)
+int CSocketNode::IsConnected(int socketIndex){
+	if(socket_conn[socketIndex].getSocket()==INVALID_SOCKET)
 		return 0;
 	else
 		return 1;
 }
 
-bool CSocketNode::isWebSocket(){
-	return webSocket;
-}
-
 void* CSocketNode::LaunchThread(void* p){
-	CSocketNode* node=(CSocketNode*) p;
+	CSocketNode* self=(CSocketNode*) p;
 
-	node->thread_status=1;
-	while(node->thread_status==1) {
-		if(!node->IsConnected()){
-			node->HandleConnection();
-		} else {	
-			char msg[BUFFER_SIZE];
-			int l=BUFFER_SIZE;
-			if(0==node->ReceiveMsg(msg, &l, 0)){
-				node->OnMsg(msg,l);
+	self->thread_status=1;
+	while(self->thread_status==1) {
+
+		self->HandleConnection();
+		if(self->type == SOCKET_SERVER){
+			for(int i = 0; i < MAX_CLIENTS; i++){
+				if(self->socket_conn[i].getSocket() != INVALID_SOCKET){
+					char msg[BUFFER_SIZE];
+					int l=BUFFER_SIZE;
+					if(0 == self->ReceiveMsg(i, msg, &l, 0)){
+						self->OnMsg(i, msg,l);
+					}
+				}
 			}
+		} else {
+			if(self->socket_conn[CLIENT_DEFAULT_INDEX].getSocket() != INVALID_SOCKET){
+				char msg[BUFFER_SIZE];
+				int l=BUFFER_SIZE;
+				if(0 == self->ReceiveMsg(CLIENT_DEFAULT_INDEX, msg, &l, 0)){
+					self->OnMsg(CLIENT_DEFAULT_INDEX, msg,l);
+				}
+			}
+
 		}
 		Sleep(10);
 	}
-	node->thread_status=0;
+	self->thread_status=0;
 	return NULL;
 }
 
@@ -397,37 +446,58 @@ int CSocketNode::Close(){
 		thread_status=2;
 		while(thread_status!=0)Sleep(100);
 	}
-		
-	shutdown(socket_conn,SD_BOTH);
-	closesocket(socket_conn);
-	socket_conn=INVALID_SOCKET;
+	for(int i = 0; i < MAX_CLIENTS; i++){
+		if(socket_conn[i].getSocket() != INVALID_SOCKET){
+			shutdown(socket_conn[i].getSocket(), SD_BOTH);
+			closesocket(socket_conn[i].getSocket());
+			socket_conn[i].setSocket(INVALID_SOCKET);
+		}
+	}
+	
 	closesocket(socket_server);
 	return 1;
 }
 
-char* CSocketNode::getClientIPAddress(){
+char* CSocketNode::getClientIPAddress(int socketIndex){
 	char* ip_address = new char[15];
 	socklen_t len;
 	struct sockaddr_in addr;
 
 
 	len = sizeof(addr);
-	getpeername(socket_conn, (struct sockaddr*)&addr, &len);
+	getpeername(socket_conn[socketIndex].getSocket(), (struct sockaddr*)&addr, &len);
 	sprintf(ip_address, "%d.%d.%d.%d", int(addr.sin_addr.s_addr&0xFF), int((addr.sin_addr.s_addr&0xFF00)>>8), int ((addr.sin_addr.s_addr&0xFF0000)>>16), int((addr.sin_addr.s_addr&0xFF000000)>>24));
 
 	return ip_address;
 }
 
-int CSocketNode::getClientPort(){
+int CSocketNode::getClientPort(int socketIndex){
 
 	socklen_t len;
 	struct sockaddr_in addr;
 
 	len = sizeof(addr);
-	getpeername(socket_conn, (struct sockaddr*)&addr, &len);
+	getpeername(socket_conn[socketIndex].getSocket(), (struct sockaddr*)&addr, &len);
 	
 	return addr.sin_port;
 
+}
+
+int CSocketNode::getTokenOwner(){
+	return tokenOwner;
+}
+
+void CSocketNode::setTokenOwner(int token){
+	setLastTokenOwner(this->tokenOwner);
+	this->tokenOwner = token;
+}
+
+int CSocketNode::getLastTokenOwner(){
+	return lastTokenOwner;
+}
+
+void CSocketNode::setLastTokenOwner(int token){
+	this->lastTokenOwner = token;
 }
 
 wsFrameType CSocketNode::wsParseHandshake(char* buffer, int size, Handshake* hs){
@@ -526,6 +596,8 @@ wsFrameType CSocketNode::wsParseInputFrame(unsigned char* bufferIn, int sizeIn, 
 			bufferOut[payload] = 0;
 			sizeOut = payload + 1;
 		}
+	} else if(opCode == WS_PING_FRAME){
+		printf("Llego un frame de PING....\n");
 	}
 }
 

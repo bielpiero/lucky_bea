@@ -21,6 +21,12 @@
 #define XML_ELEMENT_SITES_STR "sites"
 #define XML_ELEMENT_SITE_STR "site"
 
+#define XML_ELEMENT_PERMISSIONS_STR "permissions"
+#define XML_ELEMENT_PERMISSION_STR "permission"
+
+#define XML_ATTRIBUTE_FUNCTION_STR "function"
+#define XML_ATTRIBUTE_TOKEN_REQUIRED_STR "token-required"
+
 #define XML_ELEMENT_ROBOT_STR "robot"
 #define XML_ELEMENT_NAV_PARAMS_STR "navigation-params"
 #define XML_ELEMENT_INITIAL_POS_STR "initial-position"

@@ -5,13 +5,19 @@
 
 const float GeneralController::LASER_MAX_RANGE = 11.6;
 
-GeneralController::GeneralController(ros::NodeHandle nh_):RobotNode("/dev/ttyS0"){
+GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):RobotNode(port){
 	this->nh = nh_;
 	
 	this->maestroControllers = new SerialPort();
 	this->tts = new TextToSpeech();
 	this->tts->setDefaultConfiguration();
 	this->tts->setString("Hola, me llamo Doris");
+
+	tokenRequester = NONE;
+	this->setTokenOwner(NONE);
+
+	clientsConnected = 0;
+	pendingTransferControl = false;
 
 	this->frontBumpersOk = true;
 	this->rearBumpersOk = true;
@@ -21,6 +27,8 @@ GeneralController::GeneralController(ros::NodeHandle nh_):RobotNode("/dev/ttyS0"
 	this->keepRobotTracking = NO;
 	this->udpPort = 0;
 	this->spdUDPPort = 0;
+
+
 	
 	kalmanFuzzy = new std::vector<fuzzy::trapezoid*>();
 	
@@ -58,23 +66,29 @@ GeneralController::~GeneralController(void){
 	pthread_mutex_destroy(&mutexLandmarkLocker);
 }
 
-void GeneralController::OnConnection()//callback for client and server
+void GeneralController::OnConnection(int socketIndex)//callback for client and server
 {
-	if(IsConnected()) {
-		std::cout << "Client "<< this->getClientIPAddress() << " is Connected to Doris, using port " << this->getClientPort() << std::endl;	
+	if(IsConnected(socketIndex)) {
+		clientsConnected++;
+
+		std::cout << "Client "<< this->getClientIPAddress(socketIndex) << " is Connected to Doris, using port " << this->getClientPort(socketIndex) << std::endl;	
 	} else {
 		std::cout << "Disconnected..." << std::endl;
-		
-		if(spdUDPClient != NULL){
-			spdUDPClient->closeConnection();
-			spdUDPClient = NULL;
+		clientsConnected++;
+		if(clientsConnected == 0){
+			setTokenOwner(NONE);
+			if(spdUDPClient != NULL){
+				spdUDPClient->closeConnection();
+				spdUDPClient = NULL;
+			}
+			stopDynamicGesture();
+			stopVideoStreaming();
+			stopCurrentTour();
 		}
-		stopDynamicGesture();
-		stopVideoStreaming();
-		stopCurrentTour();
 	}
+	std::cout << "Clients connected: " << clientsConnected << std::endl;
 }
-void GeneralController::OnMsg(char* cad,int length){//callback for client and server
+void GeneralController::OnMsg(int socketIndex, char* cad,int length){//callback for client and server
 	cad[length] = 0;
 	unsigned char function = *(cad++);
 	std::string local_buffer_out = "";
@@ -82,6 +96,7 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 	std::string servo_positions = "";
 	std::string mapsAvailable = "";
 	std::string mapInformation = "";
+	std::string jsonControlError = "{\"control\":[{\"error\":\"Permission denied.\"}]}";
 	std::ostringstream number_converter;
 	
 	unsigned char port = 0;
@@ -94,17 +109,19 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 	int cameraCount = 0;
 	int videoDevice = 0;
 	float x, y, theta;
-	
+
+	bool granted = isPermissionNeeded(function) && (socketIndex == getTokenOwner());
+	printf("Function: %d\n", function);
 	switch (function){
 		case 0x00:
 			std::cout << "Command 0x00. Static Faces Requested" << std::endl;
 			getGestures("0", gestures);
-			SendMsg(0x00, (char*)gestures.c_str(), (int)(gestures.length())); 
+			SendMsg(socketIndex, 0x00, (char*)gestures.c_str(), (unsigned int)(gestures.length())); 
 			break;
 		case 0x01:
 			std::cout << "Command 0x01. Dynamic Faces Requested" << std::endl;
 			getGestures("1", gestures);
-			SendMsg(0x01, (char*)gestures.c_str(), (int)(gestures.length()));
+			SendMsg(socketIndex, 0x01, (char*)gestures.c_str(), (unsigned int)(gestures.length()));
 			break;
 		case 0x02:
 			std::cout << "Command 0x02. Saving New Static Face" << std::endl;
@@ -116,19 +133,39 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 			break;
 		case 0x04:
 			std::cout << "Command 0x04. Modifying Static Face" << std::endl;
-			modifyGesture(cad, 0);
+			if(granted){
+				modifyGesture(cad, 0);
+			} else {
+				std::cout << "Command 0x04. Modifying Static Face denied to " << getClientIPAddress(socketIndex) << std::endl;
+				SendMsg(socketIndex, 0x04, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x05:
 			std::cout << "Command 0x05. Modifying Dynamic Face" << std::endl;
-			modifyGesture(cad, 1);
+			if(granted){
+				modifyGesture(cad, 1);
+			} else {
+				std::cout << "Command 0x05. Modifying Dynamic Face denied to " << getClientIPAddress(socketIndex) << std::endl;
+				SendMsg(socketIndex, 0x05, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x06:
 			std::cout << "Command 0x06. Removing Face" << std::endl;
-			removeGesture(cad);
+			if(granted){
+				removeGesture(cad);
+			} else {
+				std::cout << "Command 0x06. Removing Face denied to " << getClientIPAddress(socketIndex) << std::endl;
+				SendMsg(socketIndex, 0x06, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x07:
 			std::cout << "Command 0x07. Setting Gesture Id: " << cad << std::endl;
-			setGesture(cad);
+			if(granted){
+				setGesture(cad);
+			} else {
+				std::cout << "Command 0x07. Setting Gesture denied to " << getClientIPAddress(socketIndex) << std::endl;
+				SendMsg(socketIndex, 0x07, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x08:
             getPololuInstruction(cad, card_id, port, servo_position);            
@@ -138,15 +175,26 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 		case 0x09:
 			std::cout << "Command 0x09. Sending current positions" << std::endl;
 			//SendServoPositions(servo_positions);
-			//SendMsg(0x09, (char*)servo_positions.c_str(), (int)(servo_positions.length()));
+			//SendMsg(socketIndex, 0x09, (char*)servo_positions.c_str(), (int)(servo_positions.length()));
 			break;
 		case 0x0A:
 			std::cout << "Command 0x0A. Stopping any Dynamic Face" << std::endl;
-			stopDynamicGesture();
+			if(granted){
+				stopDynamicGesture();
+			} else {
+				std::cout << "Command 0x0A. Stopping any Dynamic Face denied to " << getClientIPAddress(socketIndex) << std::endl;
+				SendMsg(socketIndex, 0x0A, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x10:
-			getVelocities(cad, lin_vel, ang_vel);
-			moveRobot(lin_vel, ang_vel);
+			if(granted){
+				getVelocities(cad, lin_vel, ang_vel);
+				moveRobot(lin_vel, ang_vel);
+			} else {
+				std::cout << "Command 0x10. Robot teleoperation denied to " << getClientIPAddress(socketIndex) << std::endl;
+				SendMsg(socketIndex, 0x10, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
+
 			break;
 		case 0x11:
 			trackRobot();
@@ -156,32 +204,60 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 			stopRobotTracking();
 			break;	
 		case 0x13:
-			getPositions(cad, x, y, theta);
-			setRobotPosition(x, y, theta);
+			if(granted){
+				getPositions(cad, x, y, theta);
+				setRobotPosition(x, y, theta);
+			} else {
+				std::cout << "Command 0x13. Set Robot position denied to " << getClientIPAddress(socketIndex) << std::endl;
+				SendMsg(socketIndex, 0x13, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
+			
 			break;
 		case 0x14:
-			getPositions(cad, x, y, theta);
-			moveRobotToPosition(x, y, theta);
+			if(granted){
+				getPositions(cad, x, y, theta);
+				moveRobotToPosition(x, y, theta);
+			} else {
+				std::cout << "Command 0x14. Moving Robot to position denied to " << getClientIPAddress(socketIndex) << std::endl;
+				SendMsg(socketIndex, 0x14, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x15:
 			getMapsAvailable(mapsAvailable);
-			SendMsg(0x15, (char*)mapsAvailable.c_str(), (int)mapsAvailable.length()); 
+			SendMsg(socketIndex, 0x15, (char*)mapsAvailable.c_str(), (unsigned int)mapsAvailable.length()); 
 			break;
 		case 0x16:
-			getMapId(cad, mapId);
-			loadSector(mapId);
+			if(granted){
+				getMapId(cad, mapId);
+				loadSector(mapId);
+			} else {
+				std::cout << "Command 0x16. Setting Map into Robot denied to " << getClientIPAddress(socketIndex) << std::endl;
+				SendMsg(socketIndex, 0x16, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x17:
 			getMapInformationLandmarks(mapInformation);
-			SendMsg(0x17, (char*)mapInformation.c_str(), (int)mapInformation.length()); 
+			SendMsg(socketIndex, 0x17, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
 			break;
 		case 0x18:
 			getMapInformationFeatures(mapInformation);
-			SendMsg(0x18, (char*)mapInformation.c_str(), (int)mapInformation.length()); 
+			SendMsg(socketIndex, 0x18, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
 			break;
 		case 0x19:
 			getMapInformationSites(mapInformation);
-			SendMsg(0x19, (char*)mapInformation.c_str(), (int)mapInformation.length()); 
+			SendMsg(socketIndex, 0x19, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
+			break;
+		case 0x1A:
+			//function to add point of interest
+			break;
+		case 0x1B:
+			//function to modify point of interest
+			break;
+		case 0x1C:
+			//function to delete point of interest
+			break;
+		case 0x1D:
+			//function to modify the execution sequence
 			break;
 		case 0x30:
 			getCameraDevicePort(cad, videoDevice, udpPort);
@@ -190,8 +266,29 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 		case 0x31:
 			stopVideoStreaming();
 			break;
+		case 0x7C:
+			requestRobotControl(socketIndex);
+			break;
+		case 0x7D:
+			if(granted){
+				acceptTransferRobotControl(socketIndex, cad);
+			} else {
+				std::cout << "Command 0x7D. Accept transfering robot control denied to " << getClientIPAddress(socketIndex) << std::endl;
+				SendMsg(socketIndex, 0x7D, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
+			break;
+		case 0x7E:
+			if(granted){
+				releaseRobotControl(socketIndex);
+				setTokenOwner(NONE);
+			} else {
+				std::cout << "Command 0x7E. Release Robot control denied to " << getClientIPAddress(socketIndex) << std::endl;
+				SendMsg(socketIndex, 0x7E, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
+
+			break;
 		case 0xFF:
-			initializeSPDPort(cad);
+			initializeSPDPort(socketIndex, cad);
 			break;
 		default:
 			std::cout << "Command Not Recognized.." << std::endl;
@@ -201,12 +298,82 @@ void GeneralController::OnMsg(char* cad,int length){//callback for client and se
 	
 }
 
-void GeneralController::initializeSPDPort(char* cad){
+bool GeneralController::isPermissionNeeded(char function){
+	bool result = false;
+	xml_document<> doc;
+	
+	std::string buffer_str = "";
+	
+    std::ifstream the_file(xmlRobotConfigFullPath.c_str());
+	
+    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+	buffer.push_back('\0');
+
+	doc.parse<0>(&buffer[0]);
+	xml_node<>* root_node = doc.first_node(XML_ELEMENT_ROBOT_STR);
+	xml_node<>* permissions_node = root_node->first_node(XML_ELEMENT_PERMISSIONS_STR);
+	bool found = false;
+	for(xml_node<>* permision_node = permissions_node->first_node(XML_ELEMENT_PERMISSION_STR); permision_node and not found; permision_node = permision_node->next_sibling()){
+		s_feature* tempFeature = new s_feature;
+
+		char func = (int)strtol(permision_node->first_attribute(XML_ATTRIBUTE_FUNCTION_STR)->value(), NULL, 0);
+		if(func == function){
+			found = true;
+			int tokenRequired = atoi(permision_node->first_attribute(XML_ATTRIBUTE_TOKEN_REQUIRED_STR)->value());
+			result = tokenRequired == YES ? true : false;
+		}
+		
+	}
+	the_file.close();
+	return result;
+}
+
+void GeneralController::requestRobotControl(int socketIndex){
+	std::string jsonString;
+	if(getTokenOwner() == NONE){
+		setTokenOwner(socketIndex);
+		jsonString = "{\"control\":[{\"granted\":\"1\"},{\"error\":\"0\"}]}";
+		SendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+	} else {
+		tokenRequester = socketIndex;
+		jsonString = "{\"control\":[{\"requested\":\"" + std::string(getClientIPAddress(socketIndex)) + "\"},{\"error\":\"0\"}]}";
+		SendMsg(getTokenOwner(), 0x7C, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+	}
+
+}
+void GeneralController::acceptTransferRobotControl(int socketIndex, char* acceptance){
+	int acceptValue = atoi(acceptance);
+	std::string jsonString;
+	if(tokenRequester != NONE){
+		if(acceptValue == YES){
+			setTokenOwner(tokenRequester);
+			releaseRobotControl(socketIndex);
+			tokenRequester = NONE;
+			jsonString = "{\"control\":[{\"granted\":\"1\"},{\"error\":\"0\"}]}";
+			SendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+		} else if(acceptValue == NO){
+			jsonString = "{\"control\":[{\"granted\":\"0\"},{\"error\":\"0\"}]}";
+			SendMsg(tokenRequester, 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+			tokenRequester = NONE;
+		} else {
+			jsonString = "{\"control\":[{\"error\":\"1\"}]}";
+			SendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+		}
+	}
+}
+
+void GeneralController::releaseRobotControl(int socketIndex){
+	std::string jsonString = "{\"control\":[{\"released\":\"1\"},{\"error\":\"0\"}]}";
+	SendMsg(socketIndex, 0x7E, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+
+}
+
+void GeneralController::initializeSPDPort(int socketIndex, char* cad){
 	this->spdUDPPort = atoi(cad);
 	if(this->spdUDPPort <= 0){
 		throw std::invalid_argument("Error!!! Could not initialize SPD streaming");
 	}
-	spdUDPClient = new UDPClient(this->getClientIPAddress(), this->spdUDPPort);
+	spdUDPClient = new UDPClient(this->getClientIPAddress(socketIndex), this->spdUDPPort);
 }
 
 void GeneralController::getMapId(char* cad, int& mapId){
@@ -1707,7 +1874,7 @@ void* GeneralController::streamingThread(void* object){
 	params[0] = CV_IMWRITE_JPEG_QUALITY;
 	params[1] = 80;
 	
-	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), self->udpPort);
+	/*UDPClient* udp_client = new UDPClient(self->getClientIPAddress(), self->udpPort);
 	while(ros::ok() && self->streamingActive == YES){
 		self->vc >> frame;
 		cv::imencode(".jpg", frame, buff, params);
@@ -1718,7 +1885,7 @@ void* GeneralController::streamingThread(void* object){
 	self->vc.release();
 	if(self->vcSecond.isOpened()){
 		self->vcSecond.release();
-	}
+	}*/
 	self->streamingActive = NO;
 	return NULL;
 }

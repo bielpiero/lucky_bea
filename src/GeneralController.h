@@ -32,6 +32,13 @@
 #define XML_FILE_SECTORS_PATH "/src/conf/BeaSectors.xml"
 #define XML_FILE_ROBOT_CONFIG_PATH "/src/conf/BeaRobotConfig.xml"
 
+#define NONE -1
+
+#define PERMISSION_ACCEPTED 0
+#define PERMISSION_REQUESTED 1
+#define PERMISSION_REJECTED 2
+
+
 #define YES 1
 #define NO 0
 #define MAYBE 2
@@ -147,19 +154,28 @@ private:
 	SerialPort* maestroControllers;
 	TextToSpeech* tts;
 	bool continue_dynamic_thread;
+	bool pendingTransferControl;
+	unsigned int clientsConnected;
 	
 	std::string xmlFaceFullPath;
 	std::string xmlSectorsFullPath;
 	std::string xmlRobotConfigFullPath;
 		
 public:
-	GeneralController(ros::NodeHandle nh_);
+	GeneralController(ros::NodeHandle nh_, const char* port);
 	~GeneralController(void);
 	
-	virtual void OnConnection();//callback for client and server
-	virtual void OnMsg(char* cad,int length);//callback for client and server
+	virtual void OnConnection(int socketIndex);//callback for client and server
+	virtual void OnMsg(int socketIndex, char* cad,int length);//callback for client and server
 	void stopDynamicGesture();
 private:
+
+	bool isPermissionNeeded(char function);
+	void requestRobotControl(int socketIndex);
+	void releaseRobotControl(int socketIndex);
+
+	void acceptTransferRobotControl(int socketIndex, char* acceptance);
+
 	void getPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value);
 	void getGestures(std::string type, std::string& gestures);
 	void setGesture(std::string id);
@@ -215,6 +231,8 @@ private:
 	Matrix P;
 	Matrix Q;
 	Matrix R;
+
+	int tokenRequester;
 	
 	std::vector<Matrix> landmarks;
 	
@@ -240,7 +258,7 @@ private:
 	void loadSector(int sectorId);
 	void loadRobotConfig();
 	
-	void initializeSPDPort(char* cad);
+	void initializeSPDPort(int socketIndex, char* cad);
 	
 	void getVelocities(char* cad, float& lin_vel, float& angular_vel);
 	void moveRobot(float lin_vel, float angular_vel);

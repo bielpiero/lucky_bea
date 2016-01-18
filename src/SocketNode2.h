@@ -13,14 +13,17 @@
 #include <sys/select.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <pthread.h>
 #include <errno.h>	
 #include <string.h>
+#include <vector>
 
 #include "handshake.h"
 #include "crypt/base64.h"
 #include "crypt/sha.h"
-#include <vector>
+#include "TCPSocketClient.h"
+
 
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
@@ -28,6 +31,8 @@
 #define closesocket(x) close(x)
 #define Sleep(x) usleep(x*1000)
 
+#define MAX_CLIENTS 10
+#define CLIENT_DEFAULT_INDEX 0
 
 #define SOCKET_SERVER 0
 #define SOCKET_CLIENT 1
@@ -36,6 +41,8 @@
 
 #define SOCKET_UDP 0
 #define SOCKET_TCP 1
+
+#define FRAME_MAX_HEADER_SIZE 16
 
 #define WS_EOL "\r\n"
 #define WS_EOMSG "\r\n\r\n"
@@ -50,44 +57,47 @@ class CSocketNode
 {
 
 public:
-	char* ip_address;
+	char*   ip_address;
 	char	Buffer_in[BUFFER_SIZE];	  // Maximun buiffer to send
 	char	Buffer_out[BUFFER_SIZE];
 	CSocketNode();
 	virtual ~CSocketNode();	
 	int Init(const char* address, int port,int type);
 	int Close();
-	int IsConnected();
-	int SendMsg(const char opr, const char* cad,int length);
-	int SendBytes(char*cad, int length);
-	int ReceiveMsg(char* cad, int* size, int timeout=200);		
-	int ReceiveBytes(char* cad,int* length, int timeout);
-	int getClientPort();
+	int IsConnected(int socketIndex);
+	int SendMsg(int socketIndex, const char opr, const char* cad, unsigned int length);
+	int wsSendPingMsg(int socketIndex);
+	int SendBytes(int socketIndex, char* cad, unsigned int length);
+	int ReceiveMsg(int socketIndex, char* cad, int* size, int timeout=200);		
+	int ReceiveBytes(int socketIndex, char* cad, int* length, int timeout);
+	int getClientPort(int socketIndex);
 
-	bool isWebSocket();
+	int getTokenOwner();
+	void setTokenOwner(int token);
+	int getLastTokenOwner();
 
-	char* getClientIPAddress();
+	char* getClientIPAddress(int socketIndex);
 	
 	void StartThread();//launch a 10 ms thread loop over the following actions
 	void HandleConnection();//manages all connection and reconnection
 protected:
-	virtual void OnConnection() = 0;//callback for client and server
-	virtual void OnMsg(char* cad, int length) = 0;//callback for client and server
+	virtual void OnConnection(int socketIndex) = 0;//callback for client and server
+	virtual void OnMsg(int socketIndex, char* cad, int length) = 0;//callback for client and server
 protected:
-	void Error(const char* cad="");
+	void Error(int socketIndex, const char* cad="");
 private:
 	int type;//server or client
 	int thread_status;//0 not started, 1 started, 2 waiting to finish
-	
-	int socket_conn;
-	int socket_server;
 
-	bool webSocket;
-	bool checkedWebSocket;
-	bool handshakeDone;
+	int tokenOwner;
+	int lastTokenOwner;
+
+	TCPSocketClient socket_conn[MAX_CLIENTS];
+	int socket_server;
 
 	struct sockaddr_in socket_address, socket_server_address;
 	
+	void setLastTokenOwner(int token);
 	//WebSocket Implementation
 	wsFrameType wsParseHandshake(char* buffer, int size, Handshake* hs);
 	wsFrameType wsParseInputFrame(unsigned char* bufferIn, int sizeIn, char* bufferOut, int& sizeOut);
@@ -110,6 +120,7 @@ private:
 	static const std::string version;
 	static const std::string secret;
 	static const std::string switchingProtocolField;
+	static const std::string extensionsField;
 
 	static void* LaunchThread(void* p);
 };

@@ -31,17 +31,29 @@ int main(int argc, char** argv){
 	ros::init(argc, argv, "lucky_bea");
 	ros::start();
 	ros::NodeHandle nh;
-	ROS_INFO("Lucky Bea for Doris. To control the IC Group Robot named Doris");
-	ROS_INFO("Press Ctrl+C to exit");
-    robot = new GeneralController(nh);
-    robot->Init("", 14004, SOCKET_SERVER);
-    robot->StartThread();
 
-	//robot->trackRobot();
-	robot->OnConnection();
-	ros::spin();
-	ROS_INFO( "Lucky Bea: Quitting... \n" );
-    delete robot;
+	if(argc == 1 || argc == 3){
+		ROS_INFO("Lucky Bea for Doris. To control the IC Group Robot named Doris");
+		ROS_INFO("Press Ctrl+C to exit");
+		std::string port = "/dev/ttyS0";
+		if(argc == 3){
+			if(strcmp(argv[1], "-p") == 0){
+				port = std::string(argv[2]);
+			}
+		}
+	    robot = new GeneralController(nh, port.c_str());
+	    robot->Init("", 14004, SOCKET_SERVER);
+	    robot->StartThread();
+	    ROS_INFO("No clients connected...");
+		//robot->trackRobot();
+		//robot->OnConnection();
+		ros::spin();
+		ROS_INFO( "Lucky Bea: Quitting... \n" );
+	    delete robot;
+
+	}
+
+	
     
     return 0;
 }
