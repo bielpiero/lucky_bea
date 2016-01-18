@@ -65,11 +65,11 @@ public:
 	int Init(const char* address, int port,int type);
 	int Close();
 	int IsConnected(int socketIndex);
-	int SendMsg(int socketIndex, const char opr, const char* cad, unsigned int length);
+	int SendMsg(int socketIndex, const char opr, const char* cad, unsigned long long int length);
 	int wsSendPingMsg(int socketIndex);
-	int SendBytes(int socketIndex, char* cad, unsigned int length);
-	int ReceiveMsg(int socketIndex, char* cad, int* size, int timeout=200);		
-	int ReceiveBytes(int socketIndex, char* cad, int* length, int timeout);
+	int SendBytes(int socketIndex, char* cad, unsigned long long int length);
+	int ReceiveMsg(int socketIndex, char* cad, unsigned long long int& size, int timeout=200);		
+	int ReceiveBytes(int socketIndex, char* cad, unsigned long long int& length, int timeout);
 	int getClientPort(int socketIndex);
 
 	int getTokenOwner();
@@ -82,7 +82,7 @@ public:
 	void HandleConnection();//manages all connection and reconnection
 protected:
 	virtual void OnConnection(int socketIndex) = 0;//callback for client and server
-	virtual void OnMsg(int socketIndex, char* cad, int length) = 0;//callback for client and server
+	virtual void OnMsg(int socketIndex, char* cad, unsigned long long int length) = 0;//callback for client and server
 protected:
 	void Error(int socketIndex, const char* cad="");
 private:
@@ -99,10 +99,10 @@ private:
 	
 	void setLastTokenOwner(int token);
 	//WebSocket Implementation
-	wsFrameType wsParseHandshake(char* buffer, int size, Handshake* hs);
-	wsFrameType wsParseInputFrame(unsigned char* bufferIn, int sizeIn, char* bufferOut, int& sizeOut);
+	wsFrameType wsParseHandshake(char* buffer, unsigned long long int size, Handshake* hs);
+	wsFrameType wsParseInputFrame(unsigned char* bufferIn, unsigned long long int sizeIn, char* bufferOut, unsigned long long int& sizeOut);
 
-	void wsGetHandshakeAnswer(Handshake* hs, char* outFrame, int &outLength);
+	void wsGetHandshakeAnswer(Handshake* hs, char* outFrame, unsigned long long int &outLength);
 	std::vector<std::string> split(char* buffer, const char* delimiter);
 
 	static const std::string connectionField;

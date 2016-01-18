@@ -91,7 +91,7 @@ void GeneralController::OnConnection(int socketIndex)//callback for client and s
 	}
 	std::cout << "Clients connected: " << clientsConnected << std::endl;
 }
-void GeneralController::OnMsg(int socketIndex, char* cad,int length){//callback for client and server
+void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int length){//callback for client and server
 	cad[length] = 0;
 	unsigned char function = *(cad++);
 	std::string local_buffer_out = "";

@@ -166,7 +166,7 @@ public:
 	~GeneralController(void);
 	
 	virtual void OnConnection(int socketIndex);//callback for client and server
-	virtual void OnMsg(int socketIndex, char* cad,int length);//callback for client and server
+	virtual void OnMsg(int socketIndex, char* cad, unsigned long long int length);//callback for client and server
 	void stopDynamicGesture();
 private:
 
