@@ -73,8 +73,11 @@ void GeneralController::OnConnection(int socketIndex)//callback for client and s
 
 		std::cout << "Client "<< this->getClientIPAddress(socketIndex) << " is Connected to Doris, using port " << this->getClientPort(socketIndex) << std::endl;	
 	} else {
+		if(socketIndex == getTokenOwner()){
+			setTokenOwner(NONE);
+		}
 		std::cout << "Disconnected..." << std::endl;
-		clientsConnected++;
+		clientsConnected--;
 		if(clientsConnected == 0){
 			setTokenOwner(NONE);
 			if(spdUDPClient != NULL){
