@@ -87,6 +87,7 @@ private:
 	ArLaser *laser;
     ArSick *sick;
     ArActionGoto *gotoPoseAction;
+    ArActionInput *gyroPoseAction;
     ArRobot *robot;
     ArPose *myPose;
     ArPose *myRawPose;
@@ -121,7 +122,7 @@ public:
     
     bool isGoalAchieved(void);
     
-    void gotoPosition(double x, double y, double theta, double transSpeed = 200, double rotSpeed = 10);
+    void gotoPosition(double x, double y, double theta, double transSpeed = 200, double rotSpeed = 4.75);
 	void move(double distance, double speed = 200);
     void moveAtSpeed(double linearVelocity, double angularVelocity);
     void stopRobot(void);

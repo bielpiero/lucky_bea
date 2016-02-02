@@ -1,1 +1,2 @@
 #define SEMANTIC_FEATURE_CHARGER_STR "charger"
+#define SEMANTIC_FEATURE_DOOR_STR "door"

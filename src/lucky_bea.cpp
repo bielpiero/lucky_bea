@@ -42,18 +42,18 @@ int main(int argc, char** argv){
 			}
 		}
 	    robot = new GeneralController(nh, port.c_str());
-	    robot->Init("", 14004, SOCKET_SERVER);
-	    robot->StartThread();
-	    ROS_INFO("No clients connected...");
-		//robot->trackRobot();
-		//robot->OnConnection();
-		ros::spin();
-		ROS_INFO( "Lucky Bea: Quitting... \n" );
+	    if(robot->init("", 14004, SOCKET_SERVER) == 0){
+	    	robot->startThread();
+		    ROS_INFO("No clients connected...");
+			//robot->trackRobot();
+			//robot->OnConnection();
+			ros::spin();
+			ROS_INFO( "Lucky Bea: Quitting... \n" );	
+	    }
+	    
 	    delete robot;
 
-	}
-
-	
+	}	
     
     return 0;
 }

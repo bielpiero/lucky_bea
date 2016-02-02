@@ -1,17 +1,17 @@
 <robot cameras="2">
 	<navigation-params alpha="70">
 		<initial-position>
-			<x-zone x1="-25" x2="-20" x3="20" x4="25"/> <!-- centimeters -->
-			<y-zone x1="-38" x2="-30" x3="30" x4="38"/> <!-- centimeters -->
-			<th-zone x1="-0.237" x2="-0.160" x3="0.160" x4="0.237"/> <!-- radians -->
+			<x-zone x1="-15" x2="-10" x3="10" x4="15"/> <!-- centimeters -->
+			<y-zone x1="-15" x2="-10" x3="10" x4="15"/> <!-- centimeters -->
+			<th-zone x1="-0.033798" x2="-0.02618" x3="0.02618" x4="0.033798"/> <!-- radians -->
 		</initial-position>
 		<process-noise>
-			<d-zone x1="-20" x2="-14" x3="14" x4="20"/> <!-- millimeters -->
-			<th-zone x1="-0.1" x2="-0.05" x3="0.05" x4="0.1"/> <!-- radians -->
+			<d-zone x1="-20" x2="-14" x3="14" x4="20"/> <!-- centimeters -->
+			<th-zone x1="-0.25" x2="-0.2" x3="0.2" x4="0.25"/> <!-- radians -->
 		</process-noise>
 		<observation-noise mode="d-th">
-			<d-zone x1="-60" x2="-50" x3="50" x4="60"/>  <!-- millimeters -->
-			<th-zone x1="-0.22" x2="-0.17" x3="0.17" x4="0.22"/> <!-- radians -->
+			<d-zone x1="-24" x2="-19" x3="19" x4="24"/>  <!-- centimeters -->
+			<th-zone x1="-0.09" x2="-0.05" x3="0.05" x4="0.09"/> <!-- radians -->
 		</observation-noise>
 	</navigation-params>
 	<permissions>
@@ -36,15 +36,16 @@
 		<permission function="0x17" token-required="0"/>
 		<permission function="0x18" token-required="0"/>
 		<permission function="0x19" token-required="0"/>
-		<permission function="0x1A" token-required="1"/>
+		<permission function="0x1A" token-required="0"/>
 		<permission function="0x1B" token-required="1"/>
 		<permission function="0x1C" token-required="1"/>
 		<permission function="0x1D" token-required="1"/>
+		<permission function="0x1E" token-required="1"/>
 		<permission function="0x30" token-required="0"/>
 		<permission function="0x31" token-required="0"/>
 		<permission function="0x7C" token-required="0"/>
 		<permission function="0x7D" token-required="1"/>
 		<permission function="0x7E" token-required="1"/>
-		<permission function="0xFF" token-required="0"/>
+		<permission function="0x7F" token-required="0"/>
 	</permissions>
 </robot>

@@ -1,15 +1,15 @@
 <sectors>
 	<sector id="0" name="Mobile Robots" width="900" height="410">
 		<landmarks>
-			<landmark id="0" var="12" xpos="65" ypos="148"/>
-			<landmark id="1" var="12" xpos="105" ypos="360"/>
-			<landmark id="2" var="12" xpos="250" ypos="402"/>
-			<landmark id="3" var="12" xpos="263" ypos="52"/>
-			<landmark id="4" var="12" xpos="375" ypos="312"/>
-			<landmark id="5" var="12" xpos="415" ypos="106"/>
-			<landmark id="6" var="12" xpos="527" ypos="312"/>
-			<landmark id="7" var="12" xpos="570" ypos="106"/>
-			<landmark id="8" var="12" xpos="695" ypos="192"/>
+			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="65" ypos="148"/>
+			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="105" ypos="360"/>
+			<landmark id="2" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="250" ypos="402"/>
+			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="263" ypos="52"/>
+			<landmark id="4" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="375" ypos="312"/>
+			<landmark id="5" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="408" ypos="109"/>
+			<landmark id="6" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="527" ypos="312"/>
+			<landmark id="7" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="570" ypos="106"/>
+			<landmark id="8" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="695" ypos="192"/>
 		</landmarks>
 		<features>
 			<feature id="0" name="door" var="25" xpos="70" ypos="0"/>
@@ -19,9 +19,13 @@
 			<site id="0" name="site a" var="10" tsec="10" xpos="200" ypos="108"/>
 			<site id="1" name="site b" var="10" tsec="10" xpos="200" ypos="350"/>
 			<site id="2" name="site c" var="10" tsec="10" xpos="280" ypos="270"/>
-			<site id="3" name="site d" var="10" tsec="10" xpos="600" ypos="270"/>
-			<site id="4" name="site e" var="10" tsec="10" xpos="600" ypos="170"/>
-			<site id="5" name="site f" var="10" tsec="10" xpos="360" ypos="170"/>
+			<site id="4" name="site d" var="10" tsec="10" xpos="600" ypos="270"/>
+			<site id="5" name="site e" var="10" tsec="10" xpos="600" ypos="170"/>
+			<site id="6" name="site f" var="10" tsec="10" xpos="360" ypos="170"/>
+			<site id="3" name="new" var="10" tsec="10" xpos="516.68" ypos="178.605"/>
+			<site id="7" name="new2" var="10" tsec="10" xpos="280" ypos="140"/>
+			<site id="8" name="sd" var="10" tsec="10" xpos="441" ypos="295"/>
 		</sites>
 	</sector>
 </sectors>
+

@@ -42,7 +42,9 @@ RobotNode::RobotNode(const char* port){
     myRawPose = new ArPose(0.0, 0.0, 0.0);
     
     gotoPoseAction = new ArActionGoto("goto", ArPose(0.0, 0.0, 0.0), 100, 100, 100);
- 	robot->addAction(gotoPoseAction, 89); 
+    gyroPoseAction = new ArActionInput("Input");
+ 	robot->addAction(gotoPoseAction, 89);
+    robot->addAction(gyroPoseAction, 90);
 
 
  	laserConnector = new ArLaserConnector(argparser, robot, connector);
@@ -157,9 +159,10 @@ void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed
     robot->setAbsoluteMaxTransVel(transSpeed);
     robot->setAbsoluteMaxRotVel(rotSpeed);
     robot->clearDirectMotion();
-    
     if(x == 0.0 && y == 0.0 && theta != 0.0){
-        robot->setHeading(theta * 180/M_PI);
+        //gyroPoseAction->setRotVel(rotSpeed);
+        gyroPoseAction->setHeading(theta * 180/M_PI);
+        
     } else {
         gotoPoseAction->setGoal(newPose);
     }
@@ -176,6 +179,7 @@ void RobotNode::setPosition(double x, double y, double theta){
     newPose.setThRad(theta);
     robot->lock();
     robot->clearDirectMotion();
+    gyroPoseAction->clear();
     pthread_mutex_lock(&mutexRawPositionLocker);
     myRawPose->setPose(x * 1000, y * 1000, theta * 180 / M_PI);
     pthread_mutex_unlock(&mutexRawPositionLocker);

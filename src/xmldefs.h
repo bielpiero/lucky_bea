@@ -38,7 +38,12 @@
 #define XML_ELEMENT_POS_D_ZONE_STR "d-zone"
 
 #define XML_ATTRIBUTE_CYCLIC_STR "cyclic"
+#define XML_ATTRIBUTE_SEQUENCE_STR "sequence"
 #define XML_ATTRIBUTE_VARIANCE_STR "var"
+#define XML_ATTRIBUTE_VARIANCE_MIN_X_STR "var-min-x"
+#define XML_ATTRIBUTE_VARIANCE_MAX_X_STR "var-max-x"
+#define XML_ATTRIBUTE_VARIANCE_MIN_Y_STR "var-min-y"
+#define XML_ATTRIBUTE_VARIANCE_MAX_Y_STR "var-max-y"
 #define XML_ATTRIBUTE_WIDTH_STR "width"
 #define XML_ATTRIBUTE_HEIGHT_STR "height"
 #define XML_ATTRIBUTE_TIME_STR "tsec"

@@ -18,6 +18,7 @@
 #include <errno.h>	
 #include <string.h>
 #include <vector>
+#include <cstring>
 
 #include "handshake.h"
 #include "crypt/base64.h"
@@ -62,29 +63,34 @@ public:
 	char	Buffer_out[BUFFER_SIZE];
 	CSocketNode();
 	virtual ~CSocketNode();	
-	int Init(const char* address, int port,int type);
-	int Close();
-	int IsConnected(int socketIndex);
-	int SendMsg(int socketIndex, const char opr, const char* cad, unsigned long long int length);
+	int init(const char* address, int port,int type);
+	int closeConnection();
+	int isConnected(int socketIndex);
+	int sendMsg(int socketIndex, const char opr, const char* cad, unsigned long long int length);
 	int wsSendPingMsg(int socketIndex);
-	int SendBytes(int socketIndex, char* cad, unsigned long long int length);
-	int ReceiveMsg(int socketIndex, char* cad, unsigned long long int& size, int timeout=200);		
-	int ReceiveBytes(int socketIndex, char* cad, unsigned long long int& length, int timeout);
-	int getClientPort(int socketIndex);
+	int sendBytes(int socketIndex, char* cad, unsigned long long int length);
+	int receiveMsg(int socketIndex, char* cad, unsigned long long int& size, int timeout=200);		
+	int receiveBytes(int socketIndex, char* cad, unsigned long long int& length, int timeout);
+	int getServerPort();
+
+	bool isWebSocket(int socketIndex);
 
 	int getTokenOwner();
 	void setTokenOwner(int token);
 	int getLastTokenOwner();
 
 	char* getClientIPAddress(int socketIndex);
+	int getClientPort(int socketIndex);
+
+	void startThread();//launch a 10 ms thread loop over the following actions
+	void handleConnection();//manages all connection and reconnection
+	std::vector<std::string> split(char* buffer, const char* delimiter);
+protected:
+	virtual void onConnection(int socketIndex) = 0;//callback for client and server
+	virtual void onMsg(int socketIndex, char* cad, unsigned long long int length) = 0;//callback for client and server
+protected:
+	void error(int socketIndex, const char* cad="");
 	
-	void StartThread();//launch a 10 ms thread loop over the following actions
-	void HandleConnection();//manages all connection and reconnection
-protected:
-	virtual void OnConnection(int socketIndex) = 0;//callback for client and server
-	virtual void OnMsg(int socketIndex, char* cad, unsigned long long int length) = 0;//callback for client and server
-protected:
-	void Error(int socketIndex, const char* cad="");
 private:
 	int type;//server or client
 	int thread_status;//0 not started, 1 started, 2 waiting to finish
@@ -103,8 +109,7 @@ private:
 	wsFrameType wsParseInputFrame(unsigned char* bufferIn, unsigned long long int sizeIn, char* bufferOut, unsigned long long int& sizeOut);
 
 	void wsGetHandshakeAnswer(Handshake* hs, char* outFrame, unsigned long long int &outLength);
-	std::vector<std::string> split(char* buffer, const char* delimiter);
-
+	
 	static const std::string connectionField;
 	static const std::string upgrade;
 	static const std::string upgrade2;
@@ -122,7 +127,7 @@ private:
 	static const std::string switchingProtocolField;
 	static const std::string extensionsField;
 
-	static void* LaunchThread(void* p);
+	static void* launchThread(void* p);
 };
 
 #endif // !defined(AFX_SOCKETNODE_H__895095F5_AD65_4FF5_973F_0DD16E9BC2FE__INCLUDED_)

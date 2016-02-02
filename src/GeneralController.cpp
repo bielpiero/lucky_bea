@@ -54,6 +54,12 @@ GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):Robo
 	loadSectors();
 	loadSector(0);
 	pthread_mutex_init(&mutexLandmarkLocker, NULL);
+	//addMapInformationSite("6,Robot Home,10,10,456,789");
+	
+
+	spdWSServer = new RobotDataStreamer();
+	spdWSServer->init("", 14005, SOCKET_SERVER);
+	spdWSServer->startThread();
 }
 
 
@@ -66,9 +72,9 @@ GeneralController::~GeneralController(void){
 	pthread_mutex_destroy(&mutexLandmarkLocker);
 }
 
-void GeneralController::OnConnection(int socketIndex)//callback for client and server
+void GeneralController::onConnection(int socketIndex) //callback for client and server
 {
-	if(IsConnected(socketIndex)) {
+	if(isConnected(socketIndex)) {
 		clientsConnected++;
 
 		std::cout << "Client "<< this->getClientIPAddress(socketIndex) << " is Connected to Doris, using port " << this->getClientPort(socketIndex) << std::endl;	
@@ -91,7 +97,7 @@ void GeneralController::OnConnection(int socketIndex)//callback for client and s
 	}
 	std::cout << "Clients connected: " << clientsConnected << std::endl;
 }
-void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int length){//callback for client and server
+void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int length){//callback for client and server
 	cad[length] = 0;
 	unsigned char function = *(cad++);
 	std::string local_buffer_out = "";
@@ -99,7 +105,8 @@ void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int
 	std::string servo_positions = "";
 	std::string mapsAvailable = "";
 	std::string mapInformation = "";
-	std::string jsonControlError = "{\"control\":[{\"error\":\"Permission denied.\"}]}";
+	std::string jsonRobotOpSuccess = "{\"robot\":{\"error\":\"None.\"}}";
+	std::string jsonControlError = "{\"robot\":{\"error\":\"Permission denied.\"}}";
 	std::ostringstream number_converter;
 	
 	unsigned char port = 0;
@@ -111,20 +118,21 @@ void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int
 	float lin_vel = 0, ang_vel = 0;
 	int cameraCount = 0;
 	int videoDevice = 0;
+	int indexAssigned = 0;
 	float x, y, theta;
 
 	bool granted = isPermissionNeeded(function) && (socketIndex == getTokenOwner());
-	printf("Function: %d\n", function);
+	printf("Function: %d executed from: %s\n", function, getClientIPAddress(socketIndex));
 	switch (function){
 		case 0x00:
 			std::cout << "Command 0x00. Static Faces Requested" << std::endl;
 			getGestures("0", gestures);
-			SendMsg(socketIndex, 0x00, (char*)gestures.c_str(), (unsigned int)(gestures.length())); 
+			sendMsg(socketIndex, 0x00, (char*)gestures.c_str(), (unsigned int)(gestures.length())); 
 			break;
 		case 0x01:
 			std::cout << "Command 0x01. Dynamic Faces Requested" << std::endl;
 			getGestures("1", gestures);
-			SendMsg(socketIndex, 0x01, (char*)gestures.c_str(), (unsigned int)(gestures.length()));
+			sendMsg(socketIndex, 0x01, (char*)gestures.c_str(), (unsigned int)(gestures.length()));
 			break;
 		case 0x02:
 			std::cout << "Command 0x02. Saving New Static Face" << std::endl;
@@ -140,7 +148,7 @@ void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int
 				modifyGesture(cad, 0);
 			} else {
 				std::cout << "Command 0x04. Modifying Static Face denied to " << getClientIPAddress(socketIndex) << std::endl;
-				SendMsg(socketIndex, 0x04, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+				sendMsg(socketIndex, 0x04, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x05:
@@ -149,7 +157,7 @@ void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int
 				modifyGesture(cad, 1);
 			} else {
 				std::cout << "Command 0x05. Modifying Dynamic Face denied to " << getClientIPAddress(socketIndex) << std::endl;
-				SendMsg(socketIndex, 0x05, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+				sendMsg(socketIndex, 0x05, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x06:
@@ -158,16 +166,18 @@ void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int
 				removeGesture(cad);
 			} else {
 				std::cout << "Command 0x06. Removing Face denied to " << getClientIPAddress(socketIndex) << std::endl;
-				SendMsg(socketIndex, 0x06, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+				sendMsg(socketIndex, 0x06, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x07:
 			std::cout << "Command 0x07. Setting Gesture Id: " << cad << std::endl;
 			if(granted){
-				setGesture(cad);
+				gestures = "";
+				setGesture(cad, servo_positions);
+				sendMsg(socketIndex, 0x07, (char*)servo_positions.c_str(), (unsigned int)servo_positions.length());
 			} else {
 				std::cout << "Command 0x07. Setting Gesture denied to " << getClientIPAddress(socketIndex) << std::endl;
-				SendMsg(socketIndex, 0x07, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+				sendMsg(socketIndex, 0x07, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x08:
@@ -186,7 +196,7 @@ void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int
 				stopDynamicGesture();
 			} else {
 				std::cout << "Command 0x0A. Stopping any Dynamic Face denied to " << getClientIPAddress(socketIndex) << std::endl;
-				SendMsg(socketIndex, 0x0A, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+				sendMsg(socketIndex, 0x0A, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x10:
@@ -195,7 +205,7 @@ void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int
 				moveRobot(lin_vel, ang_vel);
 			} else {
 				std::cout << "Command 0x10. Robot teleoperation denied to " << getClientIPAddress(socketIndex) << std::endl;
-				SendMsg(socketIndex, 0x10, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+				sendMsg(socketIndex, 0x10, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 
 			break;
@@ -210,9 +220,10 @@ void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int
 			if(granted){
 				getPositions(cad, x, y, theta);
 				setRobotPosition(x, y, theta);
+				sendMsg(socketIndex, 0x13, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				std::cout << "Command 0x13. Set Robot position denied to " << getClientIPAddress(socketIndex) << std::endl;
-				SendMsg(socketIndex, 0x13, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+				sendMsg(socketIndex, 0x13, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			
 			break;
@@ -220,51 +231,86 @@ void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int
 			if(granted){
 				getPositions(cad, x, y, theta);
 				moveRobotToPosition(x, y, theta);
+				sendMsg(socketIndex, 0x14, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				std::cout << "Command 0x14. Moving Robot to position denied to " << getClientIPAddress(socketIndex) << std::endl;
-				SendMsg(socketIndex, 0x14, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+				sendMsg(socketIndex, 0x14, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x15:
 			getMapsAvailable(mapsAvailable);
-			SendMsg(socketIndex, 0x15, (char*)mapsAvailable.c_str(), (unsigned int)mapsAvailable.length()); 
+			sendMsg(socketIndex, 0x15, (char*)mapsAvailable.c_str(), (unsigned int)mapsAvailable.length()); 
 			break;
 		case 0x16:
 			if(granted){
 				getMapId(cad, mapId);
 				loadSector(mapId);
+				sendMsg(socketIndex, 0x16, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				std::cout << "Command 0x16. Setting Map into Robot denied to " << getClientIPAddress(socketIndex) << std::endl;
-				SendMsg(socketIndex, 0x16, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+				sendMsg(socketIndex, 0x16, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x17:
 			getMapInformationLandmarks(mapInformation);
-			SendMsg(socketIndex, 0x17, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
+			sendMsg(socketIndex, 0x17, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
 			break;
 		case 0x18:
 			getMapInformationFeatures(mapInformation);
-			SendMsg(socketIndex, 0x18, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
+			sendMsg(socketIndex, 0x18, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
 			break;
 		case 0x19:
 			getMapInformationSites(mapInformation);
-			SendMsg(socketIndex, 0x19, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
+			sendMsg(socketIndex, 0x19, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
 			break;
 		case 0x1A:
-			//function to add point of interest
+			getMapInformationSitesSequence(mapInformation);
+			sendMsg(socketIndex, 0x1A, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
 			break;
 		case 0x1B:
-			//function to modify point of interest
+			//function to add point of interest
+			if(granted){
+				addMapInformationSite(cad, indexAssigned);
+				number_converter << indexAssigned;
+				jsonRobotOpSuccess = "{\"robot\":{\"index\":\"" + number_converter.str() + "\",\"error\":\"0\"}}";
+				sendMsg(socketIndex, 0x1B, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
+			} else {
+				std::cout << "Command 0x1B. Adding site to map denied to " << getClientIPAddress(socketIndex) << std::endl;
+				sendMsg(socketIndex, 0x1B, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x1C:
-			//function to delete point of interest
+			//function to modify point of interest
+			if(granted){
+				modifyMapInformationSite(cad);
+				sendMsg(socketIndex, 0x1C, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
+			} else {
+				std::cout << "Command 0x1C. Modifying site to map denied to " << getClientIPAddress(socketIndex) << std::endl;
+				sendMsg(socketIndex, 0x1C, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x1D:
+			//function to delete point of interest
+			if(granted){
+				deleteMapInformationSite(cad);
+				sendMsg(socketIndex, 0x1D, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
+			} else {
+				std::cout << "Command 0x1D. Delete site to map denied to " << getClientIPAddress(socketIndex) << std::endl;
+				sendMsg(socketIndex, 0x1D, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
+			break;
+		case 0x1E:
 			//function to modify the execution sequence
+			if(granted){
+				setSitesExecutionSequence(cad);
+			} else {
+				std::cout << "Command 0x1E. Setting sites sequence denied to " << getClientIPAddress(socketIndex) << std::endl;
+				sendMsg(socketIndex, 0x1E, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x30:
 			getCameraDevicePort(cad, videoDevice, udpPort);
-			beginVideoStreaming(videoDevice);
+			beginVideoStreaming(socketIndex, videoDevice);
 			break;
 		case 0x31:
 			stopVideoStreaming();
@@ -277,7 +323,7 @@ void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int
 				acceptTransferRobotControl(socketIndex, cad);
 			} else {
 				std::cout << "Command 0x7D. Accept transfering robot control denied to " << getClientIPAddress(socketIndex) << std::endl;
-				SendMsg(socketIndex, 0x7D, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+				sendMsg(socketIndex, 0x7D, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x7E:
@@ -286,11 +332,11 @@ void GeneralController::OnMsg(int socketIndex, char* cad, unsigned long long int
 				setTokenOwner(NONE);
 			} else {
 				std::cout << "Command 0x7E. Release Robot control denied to " << getClientIPAddress(socketIndex) << std::endl;
-				SendMsg(socketIndex, 0x7E, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+				sendMsg(socketIndex, 0x7E, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 
 			break;
-		case 0xFF:
+		case 0x7F:
 			initializeSPDPort(socketIndex, cad);
 			break;
 		default:
@@ -335,12 +381,12 @@ void GeneralController::requestRobotControl(int socketIndex){
 	std::string jsonString;
 	if(getTokenOwner() == NONE){
 		setTokenOwner(socketIndex);
-		jsonString = "{\"control\":[{\"granted\":\"1\"},{\"error\":\"0\"}]}";
-		SendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+		jsonString = "{\"control\":{\"granted\":\"1\",\"error\":\"0\"}}";
+		sendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
 	} else {
 		tokenRequester = socketIndex;
-		jsonString = "{\"control\":[{\"requested\":\"" + std::string(getClientIPAddress(socketIndex)) + "\"},{\"error\":\"0\"}]}";
-		SendMsg(getTokenOwner(), 0x7C, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+		jsonString = "{\"control\":{\"requester\":\"" + std::string(getClientIPAddress(socketIndex)) + "\",\"error\":\"0\"}}";
+		sendMsg(getTokenOwner(), 0x7C, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
 	}
 
 }
@@ -352,31 +398,39 @@ void GeneralController::acceptTransferRobotControl(int socketIndex, char* accept
 			setTokenOwner(tokenRequester);
 			releaseRobotControl(socketIndex);
 			tokenRequester = NONE;
-			jsonString = "{\"control\":[{\"granted\":\"1\"},{\"error\":\"0\"}]}";
-			SendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+			jsonString = "{\"control\":{\"granted\":\"1\",\"error\":\"0\"}}";
+			sendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
 		} else if(acceptValue == NO){
-			jsonString = "{\"control\":[{\"granted\":\"0\"},{\"error\":\"0\"}]}";
-			SendMsg(tokenRequester, 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+			jsonString = "{\"control\":{\"granted\":\"0\",\"error\":\"0\"}}";
+			sendMsg(tokenRequester, 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
 			tokenRequester = NONE;
 		} else {
-			jsonString = "{\"control\":[{\"error\":\"1\"}]}";
-			SendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+			jsonString = "{\"control\":{\"error\":\"1\"}}";
+			sendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
 		}
 	}
 }
 
 void GeneralController::releaseRobotControl(int socketIndex){
-	std::string jsonString = "{\"control\":[{\"released\":\"1\"},{\"error\":\"0\"}]}";
-	SendMsg(socketIndex, 0x7E, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
+	std::string jsonString = "{\"control\":{\"released\":\"1\",\"error\":\"0\"}}";
+	sendMsg(socketIndex, 0x7E, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
 
 }
 
 void GeneralController::initializeSPDPort(int socketIndex, char* cad){
 	this->spdUDPPort = atoi(cad);
-	if(this->spdUDPPort <= 0){
-		throw std::invalid_argument("Error!!! Could not initialize SPD streaming");
+	if(!this->isWebSocket(socketIndex)){
+		if(this->spdUDPPort <= 0){
+			throw std::invalid_argument("Error!!! Could not initialize SPD streaming");
+		}
+		spdUDPClient = new UDPClient(this->getClientIPAddress(socketIndex), this->spdUDPPort);	
+	} else {
+		std::ostringstream convert;
+		convert << spdWSServer->getServerPort();
+		std::string jsonString = "{\"streaming\":{\"port\":\""+ convert.str() + "\",\"error\":\"0\"}}";
+		sendMsg(socketIndex, 0x7F, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
 	}
-	spdUDPClient = new UDPClient(this->getClientIPAddress(socketIndex), this->spdUDPPort);
+	
 }
 
 void GeneralController::getMapId(char* cad, int& mapId){
@@ -647,11 +701,12 @@ void GeneralController::removeGesture(std::string face_id){
 	}
 }
 
-void GeneralController::setGesture(std::string face_id){
+void GeneralController::setGesture(std::string face_id, std::string& servo_positions){
     xml_document<> doc;
     xml_node<>* root_node;
 	
 	std::string buffer_str = "";
+	std::ostringstream bufferOut_str;
 	
     std::ifstream the_file(xmlFaceFullPath.c_str());
     std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
@@ -669,6 +724,11 @@ void GeneralController::setGesture(std::string face_id){
 			
 			if (face_id == id)
 			{
+				int currentCardId = NONE;
+				std::string nombre(gesto_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+
+				bufferOut_str << "{\"Gesture\":\"" << nombre << "\",\"Id\":\"" << id << "\",\"Cards\":[";
+
 				for(xml_node<> * motor_node = gesto_node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling()){
 					unsigned char card_id = (unsigned char)atoi(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value());
 					unsigned char servo_id = (unsigned char)atoi(motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
@@ -676,11 +736,25 @@ void GeneralController::setGesture(std::string face_id){
 					int speed = atoi(motor_node->first_attribute(XML_ATTRIBUTE_SPEED_STR)->value());
 					int acceleration = atoi(motor_node->first_attribute(XML_ATTRIBUTE_ACCELERATION_STR)->value());
 
+					if(currentCardId != NONE){
+						if(currentCardId != card_id){
+							currentCardId = card_id;
+							bufferOut_str << "]},{\"CardId\":\"" << (int)card_id << "\",\"Motors\":[";
+						}
+					} else {
+						if(currentCardId != card_id){
+							currentCardId = card_id;
+							bufferOut_str << "{\"cardId\":\"" << (int)card_id << "\",\"Motors\":[";
+						}
+					}
+					bufferOut_str << "{\"MotorId\":\"" << (int)servo_id << "\",\"Position\":\"" << position << "\"}";
+
 					setServoPosition(card_id, servo_id, position);
 					//setServoSpeed(card_id, servo_id, speed);
 					//setServoAcceleration(card_id, servo_id, acceleration);
 				}	
-					
+				bufferOut_str << "]}";
+
 				if(tipo == "1"){
 					std::cout << "This is a dynamic face" << std::endl;
 					dynamic_face_info *data = new dynamic_face_info;
@@ -696,6 +770,7 @@ void GeneralController::setGesture(std::string face_id){
 		}
 	}
 	the_file.close();
+	servo_positions = bufferOut_str.str();
 }
 
 void GeneralController::setServoPosition(unsigned char card_id, unsigned char servo_id, int position){
@@ -847,7 +922,10 @@ void GeneralController::loadSectors(){
 				s_landmark* tempLandmark = new s_landmark;
 
 				tempLandmark->id = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-				tempLandmark->var = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_STR)->value())) / 100;
+				tempLandmark->varMinX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100;
+				tempLandmark->varMaxX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100;
+				tempLandmark->varMinY = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100;
+				tempLandmark->varMaxY = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100;
 				tempLandmark->xpos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
 				tempLandmark->ypos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
 
@@ -873,6 +951,8 @@ void GeneralController::loadSectors(){
 			if(cyclic == "yes"){
 				navSector->sitesCyclic = true;
 			}
+			std::string sequence(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)->value());
+			navSector->sequence = sequence;
 			for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
 				s_site* tempSite = new s_site;
 
@@ -950,10 +1030,10 @@ void GeneralController::loadRobotConfig(){
 	xml_node<>* process_noise_root_node = nav_root_node->first_node(XML_ELEMENT_PROCESS_NOISE_STR);
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_D_ZONE_STR);
 	s_trapezoid* x1_zone = new s_trapezoid;
-	x1_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 1000;
-	x1_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 1000;
-	x1_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 1000;
-	x1_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 1000;
+	x1_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
+	x1_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
+	x1_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
+	x1_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
 
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
 	s_trapezoid* th1_zone = new s_trapezoid;
@@ -969,10 +1049,10 @@ void GeneralController::loadRobotConfig(){
 	xml_node<>* observation_noise_root_node = nav_root_node->first_node(XML_ELEMENT_OBSERV_NOISE_STR);
 	pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_D_ZONE_STR);
 	s_trapezoid* d_zone = new s_trapezoid;
-	d_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 1000;
-	d_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 1000;
-	d_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 1000;
-	d_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 1000;
+	d_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
+	d_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
+	d_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
+	d_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
 
 	pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
 	s_trapezoid* th2_zone = new s_trapezoid;
@@ -1012,7 +1092,11 @@ void GeneralController::getMapInformationLandmarks(std::string& mapInformation){
 		for(int j = 0; j < currentSector->landmarks->size(); j++){
 			buffer_str << currentSector->landmarks->at(j)->id << ",";
 			buffer_str << currentSector->landmarks->at(j)->xpos << ",";
-			buffer_str << currentSector->landmarks->at(j)->ypos;
+			buffer_str << currentSector->landmarks->at(j)->ypos << ",";
+			buffer_str << currentSector->landmarks->at(j)->varMinX << ",";
+			buffer_str << currentSector->landmarks->at(j)->varMaxX << ",";
+			buffer_str << currentSector->landmarks->at(j)->varMinY << ",";
+			buffer_str << currentSector->landmarks->at(j)->varMaxY;
 			if(j != currentSector->landmarks->size() - 1){
 				buffer_str << "|";
 			}
@@ -1057,6 +1141,222 @@ void GeneralController::getMapInformationSites(std::string& mapInformation){
 		}	
 	}
 	mapInformation = buffer_str.str();
+}
+
+void GeneralController::getMapInformationSitesSequence(std::string& mapInformation){
+	mapInformation = currentSector->sequence;
+}
+
+void GeneralController::addMapInformationSite(char* cad, int& indexAssigned){
+
+	bool globalFound = false;
+	while(not globalFound){
+		bool found = false;
+		for(int i = 0; i < currentSector->sites->size() and not found; i++){
+			if(indexAssigned == currentSector->sites->at(i)->id){
+				found = true;
+			}
+		}
+		if(found){
+			indexAssigned++;	
+		} else {
+			globalFound = true;
+		}
+	}
+
+	std::vector<std::string> data = split(cad, ",");
+
+	s_site* tempSite = new s_site;
+
+	tempSite->id = indexAssigned;
+	tempSite->name = std::string(data.at(0));
+	tempSite->var = ((float)atoi(data.at(1).c_str())) / 100;
+	tempSite->tsec = ((float)atoi(data.at(2).c_str()));
+	tempSite->xpos = ((float)atoi(data.at(3).c_str())) / 100;
+	tempSite->ypos = ((float)atoi(data.at(4).c_str())) / 100;
+	
+
+	currentSector->sites->push_back(tempSite);
+
+	xml_document<> doc;
+    xml_node<>* root_node;       
+	
+    std::ifstream the_file(xmlSectorsFullPath.c_str());
+    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+	buffer.push_back('\0');
+	
+	doc.parse<0>(&buffer[0]);
+	
+	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+	if(root_node != NULL){
+
+		xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR);
+		if(sector_node != NULL){
+			xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+			if(sites_root_node != NULL){
+				xml_node<>* new_sites_node = doc.allocate_node(node_element, XML_ELEMENT_SITE_STR);
+
+				
+				std::ostringstream convert;
+				convert << indexAssigned;
+
+		        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, convert.str().c_str()));
+		        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_NAME_STR, data.at(0).c_str()));
+		        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_VARIANCE_STR, data.at(1).c_str()));
+		        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_TIME_STR, data.at(2).c_str()));
+		        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(3).c_str()));
+		        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(4).c_str()));
+
+		        sites_root_node->append_node(new_sites_node);
+			}
+		}
+    }
+    the_file.close();
+
+    std::ofstream the_new_file(xmlSectorsFullPath.c_str());
+    the_new_file << doc;
+    the_new_file.close();
+}
+
+void GeneralController::modifyMapInformationSite(char* cad){
+	std::vector<std::string> dataWithId = split(cad, "|");
+	int id = atoi(dataWithId.at(0).c_str());
+	std::string dataString = dataWithId.at(1);
+	std::vector<std::string> data = split((char*)dataString.c_str(), ",");
+
+	bool found = false;
+	for(int i = 0; i < currentSector->sites->size() and not found; i++){
+		if(id == currentSector->sites->at(i)->id){
+			found = true;
+			currentSector->sites->at(i)->name = std::string(data.at(0));	
+			currentSector->sites->at(i)->var = ((float)atoi(data.at(1).c_str())) / 100;
+			currentSector->sites->at(i)->tsec = ((float)atoi(data.at(2).c_str()));
+			currentSector->sites->at(i)->xpos = ((float)atoi(data.at(3).c_str())) / 100;
+			currentSector->sites->at(i)->ypos = ((float)atoi(data.at(4).c_str())) / 100;
+
+		}
+	}
+
+	xml_document<> doc;
+    xml_node<>* root_node;       
+	
+    std::ifstream the_file(xmlSectorsFullPath.c_str());
+    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+	buffer.push_back('\0');
+	
+	doc.parse<0>(&buffer[0]);
+	
+	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+	if(root_node != NULL){
+
+		xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR);
+		if(sector_node != NULL){
+			xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+			if(sites_root_node != NULL){
+				for(xml_node<> *where = sites_root_node->first_node(XML_ELEMENT_SITE_STR); where; where = where->next_sibling()){
+					int indexToDelete = atoi(where->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+					if(indexToDelete == id){
+						where->remove_all_attributes();
+						std::ostringstream convert;
+						convert << id;
+
+		        		where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, convert.str().c_str()));
+						where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_NAME_STR, data.at(0).c_str()));
+				        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_VARIANCE_STR, data.at(1).c_str()));
+				        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_TIME_STR, data.at(2).c_str()));
+				        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(3).c_str()));
+				        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(4).c_str()));
+						break;
+					}
+				}
+			}
+		}
+    }
+    the_file.close();
+
+    std::ofstream the_new_file(xmlSectorsFullPath.c_str());
+    the_new_file << doc;
+    the_new_file.close();
+}
+
+void GeneralController::deleteMapInformationSite(char* cad){
+	int index = atoi(cad);
+	int indexInArray = NONE;
+	bool found = false;
+	for(int i = 0; i < currentSector->sites->size() and not found; i++){
+		if(index == currentSector->sites->at(i)->id){
+			found = true;
+			indexInArray = i;
+		}
+	}
+
+	currentSector->sites->erase(currentSector->sites->begin() + indexInArray);
+
+	xml_document<> doc;
+    xml_node<>* root_node;       
+	
+    std::ifstream the_file(xmlSectorsFullPath.c_str());
+    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+	buffer.push_back('\0');
+	
+	doc.parse<0>(&buffer[0]);
+	
+	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+	if(root_node != NULL){
+
+		xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR);
+		if(sector_node != NULL){
+			xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+			if(sites_root_node != NULL){
+				for(xml_node<> *where = sites_root_node->first_node(XML_ELEMENT_SITE_STR); where; where = where->next_sibling()){
+					int indexToDelete = atoi(where->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+					if(indexToDelete == index){
+						sites_root_node->remove_node(where);
+						break;
+					}
+				}
+
+			}
+		}
+    }
+
+    the_file.close();
+
+    std::ofstream the_new_file(xmlSectorsFullPath.c_str());
+    the_new_file << doc;
+    the_new_file.close();
+}
+
+void GeneralController::setSitesExecutionSequence(char* cad){
+	currentSector->sequence = std::string(cad);
+	xml_document<> doc;
+    xml_node<>* root_node;       
+	
+    std::ifstream the_file(xmlSectorsFullPath.c_str());
+    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+	buffer.push_back('\0');
+	
+	doc.parse<0>(&buffer[0]);
+	
+	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+	if(root_node != NULL){
+
+		xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR);
+		if(sector_node != NULL){
+			xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+			if(sites_root_node != NULL){
+				xml_attribute<> *where = sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR);
+				sites_root_node->remove_attribute(where);
+				sites_root_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_SEQUENCE_STR, cad));
+			}
+		}
+    }
+
+    the_file.close();
+
+    std::ofstream the_new_file(xmlSectorsFullPath.c_str());
+    the_new_file << doc;
+    the_new_file.close();
 }
 
 void GeneralController::moveRobot(float lin_vel, float angular_vel){
@@ -1112,7 +1412,7 @@ void GeneralController::onBumpersUpdate(std::vector<bool> front, std::vector<boo
 		}
 	}
 
-	sprintf(bump, "$BUMPERS|%d,%d,%d,%d,%d,%d|%d,%d,%d,%d,%d,%d", (int)front[0], (int)front[1], (int)front[2], (int)front[3], (int)front[4], (int)front[5],
+	sprintf(bump, "$BUMPERS|%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", (int)front[0], (int)front[1], (int)front[2], (int)front[3], (int)front[4], (int)front[5],
 			(int)rear[0], (int)rear[1], (int)rear[2], (int)rear[3], (int)rear[4], (int)rear[5]);
 	int dataLen = strlen(bump);
 	if(spdUDPClient != NULL){
@@ -1130,10 +1430,15 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 	robotVelocity(1, 0) = rotSpeed;
 	
 	char* bump = new char[256];
-	sprintf(bump, "$POSE_VEL|%.4f,%.4f,%.4f|%.4f,%.4f", robotEncoderPosition(0, 0), robotEncoderPosition(1, 0), robotEncoderPosition(2, 0), robotVelocity(0, 0), robotVelocity(1, 0));
+	sprintf(bump, "$POSE_VEL|%.4f,%.4f,%.4f,%.4f,%.4f", robotEncoderPosition(0, 0), robotEncoderPosition(1, 0), robotEncoderPosition(2, 0), robotVelocity(0, 0), robotVelocity(1, 0));
 	int dataLen = strlen(bump);
 	if(spdUDPClient != NULL){
 		spdUDPClient->sendData((unsigned char*)bump, dataLen);
+	}
+	for(int i = 0; i < MAX_CLIENTS; i++){
+		if(isConnected(i) && isWebSocket(i)){
+			spdWSServer->sendMsg(i, 0x00, bump, dataLen);
+		}
 	}
 }
 
@@ -1186,24 +1491,24 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 
 	if(dataIndices.size() > 0){
 		for(int i = 0; i < dataIndices.size() - 1; i++){
-			if((dataIndices[i + 1] - dataIndices[i]) <= 4){
+			if((dataIndices[i + 1] - dataIndices[i]) <= 10){
 				dataMean.push_back(data->at(dataIndices[i]));
 				dataAngles.push_back((angle_min + ((float)dataIndices[i] * angle_increment)));
+				
 			} else {
-				Matrix temp = Matrix(2, 1);
+				if(dataMean.size() > 1){
+					Matrix temp = Matrix(2, 1);
 		
-				dataMean.push_back(data->at(dataIndices[i]));
-				dataAngles.push_back((angle_min + ((float)dataIndices[i] * angle_increment)));
+					dataMean.push_back(data->at(dataIndices[i]));
+					dataAngles.push_back((angle_min + ((float)dataIndices[i] * angle_increment)));
 				
-				
-				float distMean = stats::expectation(dataMean);
-				float angleMean = stats::expectation(dataAngles);
-				//float distMean = (dataMean.front() + dataMean.back()) / 2.0;
-				//float angleMean = (dataAngles.front() + dataAngles.back()) / 2.0;
-				
-				temp(0, 0) = distMean;
-				temp(1, 0) = angleMean;
-				landmarks.push_back(temp);
+					float distMean = stats::expectation(dataMean);
+					float angleMean = stats::expectation(dataAngles);
+					
+					temp(0, 0) = distMean;
+					temp(1, 0) = angleMean;
+					landmarks.push_back(temp);
+				}
 				dataMean.clear();
 				dataAngles.clear();
 			}
@@ -1211,16 +1516,17 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 
 		if(dataMean.size() > 0){
 			Matrix temp = Matrix(2, 1);
-		
-			dataMean.push_back(data->at(dataIndices[dataIndices.size() - 1]));
-			dataAngles.push_back((angle_min + ((float)dataIndices[dataIndices.size() - 1] * angle_increment)));
+			if(dataMean.size() > 1){
+				dataMean.push_back(data->at(dataIndices[dataIndices.size() - 1]));
+				dataAngles.push_back((angle_min + ((float)dataIndices[dataIndices.size() - 1] * angle_increment)));
 			
-			float distMean = stats::expectation(dataMean);
-			float angleMean = stats::expectation(dataAngles);
-			
-			temp(0, 0) = distMean;
-			temp(1, 0) = angleMean;
-			landmarks.push_back(temp);
+				float distMean = stats::expectation(dataMean);
+				float angleMean = stats::expectation(dataAngles);
+				
+				temp(0, 0) = distMean;
+				temp(1, 0) = angleMean;
+				landmarks.push_back(temp);
+			}
 			dataMean.clear();
 			dataAngles.clear();
 		}
@@ -1305,9 +1611,9 @@ void GeneralController::initializeKalmanVariables(){
 	R =  Matrix(2 * currentSector->landmarks->size(), 2 * currentSector->landmarks->size());
 	for (int i = 0; i < R.cols_size(); i++){
 		if((i % 2) != 0){
-			R(i, i) = uTh;
+			R(i, i) = 1e-2;
 		} else {
-			R(i, i) = uX;
+			R(i, i) = 3e-3;
 		}
 	}
 
@@ -1327,9 +1633,92 @@ void GeneralController::trackRobot(){
 	stopRobotTracking();
 	initializeKalmanVariables();
 	std::cout << "Tracking Doris..." << std::endl;
-	pthread_create(&trackThread, NULL, trackRobotThread, (void *)(this));
-	
+	//pthread_create(&trackThread, NULL, trackRobotThread, (void *)(this));
+	pthread_create(&trackThread, NULL, trackRobotProbabilisticThread, (void *)(this));
 }
+
+void* GeneralController::trackRobotProbabilisticThread(void* object){
+	GeneralController* self = (GeneralController*)object;
+		
+	self->keepRobotTracking = YES;
+	float alpha = 30;
+	Matrix Ak = Matrix::eye(3);
+	Matrix Bk(3, 2);
+	Matrix pk1;
+	Matrix Hk;
+	Matrix Pk = self->P;
+	
+	while(ros::ok() && self->keepRobotTracking == YES){
+		pk1 = Pk;
+
+		Ak(0, 2) = -self->robotRawDeltaPosition(0, 0) * std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+		Ak(1, 2) = self->robotRawDeltaPosition(0, 0) * std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+
+		Bk(0, 0) = std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+		Bk(0, 1) = -0.5 * self->robotRawDeltaPosition(0, 0) * std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+
+		Bk(1, 0) = std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+		Bk(1, 1) = 0.5 * self->robotRawDeltaPosition(0, 0) * std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
+
+		Bk(2, 0) = 0.0;
+		Bk(2, 1) = 1.0;
+
+		Matrix currentQ = self->Q;
+		if(self->robotRawDeltaPosition(0, 0) == 0.0 and self->robotRawDeltaPosition(1, 0) == 0.0){
+			currentQ = Matrix(2, 2);
+		}
+
+		Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
+
+
+		Hk = Matrix(2 * self->currentSector->landmarks->size(), STATE_VARIABLES);
+		for(int i = 0, zIndex = 0; i < self->currentSector->landmarks->size(); i++, zIndex += 2){
+			Hk(zIndex, 0) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex, 1) = -((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex, 2) = 0.0;
+
+			Hk(zIndex + 1, 0) = ((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex + 1, 1) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex + 1, 2) = -1.0;
+		}
+		Matrix zkl, dthTraps;
+		self->getObservations(zkl, dthTraps);
+
+		ROS_INFO("\n\nSeen landmarks: %d", self->landmarks.size());
+		pthread_mutex_lock(&self->mutexLandmarkLocker);
+		Matrix zl(2 * self->currentSector->landmarks->size(), 1);
+		for (int i = 0; i < self->landmarks.size(); i++){
+			Matrix l = self->landmarks.at(i);
+			ROS_INFO("landmarks {d: %f, a: %f}", l(0, 0), l(1, 0));
+
+			for (int j = 0; j < zkl.rows_size(); j+=2){
+				//float mdDistance = (new fuzzy::trapezoid("", dthTraps(j, 0), dthTraps(j, 1), dthTraps(j, 2), dthTraps(j, 3)))->evaluate(l(0, 0));
+				//float mdAngle = (new fuzzy::trapezoid("", dthTraps(j + 1, 0), dthTraps(j + 1, 1), dthTraps(j + 1, 2), dthTraps(j + 1, 3)))->evaluate(l(1, 0));
+				float mahalanobisDistance = std::sqrt(std::pow((l(0, 0) - zkl(j, 0))/self->R(j, j), 2) + std::pow((l(1, 0) - zkl(j + 1, 0))/self->R(j + 1, j + 1), 2));
+				//ROS_INFO("Mahalanobis Distance: %f", mahalanobisDistance);
+				if(mahalanobisDistance <= alpha){
+					ROS_INFO("Matched landmark: {d: %d, a: %d}. MHD: %f", j, j+1, mahalanobisDistance);
+					zl(j, 0) = l(0, 0) - zkl(j, 0);
+					zl(j + 1, 0) = l(1, 0) - zkl(j + 1, 0);
+				}
+			}
+		}
+		pthread_mutex_unlock(&self->mutexLandmarkLocker);
+
+		Matrix Sk = Hk * Pk * ~Hk + self->R;
+		Matrix Wk = Pk * ~Hk * !Sk;
+
+		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
+		Matrix newPosition = self->robotRawEncoderPosition + Wk * zl;
+
+		self->setRobotPosition(newPosition);
+		Sleep(50);
+	}
+	self->keepRobotTracking = NO;
+	return NULL;
+}
+
+
 
 void* GeneralController::trackRobotThread(void* object){
 	GeneralController* self = (GeneralController*)object;
@@ -1397,12 +1786,12 @@ void* GeneralController::trackRobotThread(void* object){
 		
 		Hk = Matrix(2 * self->currentSector->landmarks->size(), STATE_VARIABLES);
 		for(int i = 0, zIndex = 0; i < self->currentSector->landmarks->size(); i++, zIndex += 2){
-			Hk(zIndex, 0) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0), 2));
-			Hk(zIndex, 1) = -((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0), 2));
+			Hk(zIndex, 0) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex, 1) = -((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
 			Hk(zIndex, 2) = 0.0;
 
-			Hk(zIndex + 1, 0) = ((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0), 2));
-			Hk(zIndex + 1, 1) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawDeltaPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawDeltaPosition(1, 0), 2));
+			Hk(zIndex + 1, 0) = ((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex + 1, 1) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
 			Hk(zIndex + 1, 2) = -1.0;
 		}
 
@@ -1576,6 +1965,130 @@ Matrix GeneralController::multTrapMatrix(Matrix mat, Matrix trap){
 		result(i, 3) = sumResult(0, 3);
 	}
 	return result;
+}
+
+void GeneralController::getObservations(Matrix& observations, Matrix& dthTraps){
+	Matrix result(2 * currentSector->landmarks->size(), 1);
+	Matrix traps(2 * currentSector->landmarks->size(), TRAP_VERTEX);
+
+	for(int k = 0; k < currentSector->landmarks->size(); k++){
+		float distance = 0, angle = 0;
+		s_landmark* landmark = currentSector->landmarks->at(k);
+
+
+		landmarkObservation(robotRawEncoderPosition, landmark, distance, angle);
+		result(2 * k, 0) = distance;
+		if(angle > M_PI){
+			angle = angle - 2 * M_PI;
+		} else if(angle < -M_PI){
+			angle = angle + 2 * M_PI;
+		}
+		result(2 * k + 1, 0) = angle;
+
+		/*Matrix pairs(2, TRAP_VERTEX);
+		
+		Matrix newLandmark(2, TRAP_VERTEX);
+		newLandmark(0, 0) = currentSector->landmarks->at(k)->xpos - currentSector->landmarks->at(k)->varMaxX;
+		newLandmark(0, 1) = currentSector->landmarks->at(k)->xpos - currentSector->landmarks->at(k)->varMinX;
+		newLandmark(0, 2) = currentSector->landmarks->at(k)->xpos + currentSector->landmarks->at(k)->varMinX;
+		newLandmark(0, 3) = currentSector->landmarks->at(k)->xpos + currentSector->landmarks->at(k)->varMaxX;
+
+		newLandmark(1, 0) = currentSector->landmarks->at(k)->ypos - currentSector->landmarks->at(k)->varMaxY;
+		newLandmark(1, 1) = currentSector->landmarks->at(k)->ypos - currentSector->landmarks->at(k)->varMinY;
+		newLandmark(1, 2) = currentSector->landmarks->at(k)->ypos + currentSector->landmarks->at(k)->varMinY;
+		newLandmark(1, 3) = currentSector->landmarks->at(k)->ypos + currentSector->landmarks->at(k)->varMaxY;
+
+		pairs(0, 0) = newLandmark(0, 0);
+		pairs(0, 1) = newLandmark(0, 0);
+		pairs(0, 2) = newLandmark(0, 3);
+		pairs(0, 3) = newLandmark(0, 3);
+		pairs(1, 0) = newLandmark(1, 0);
+		pairs(1, 1) = newLandmark(1, 3);
+		pairs(1, 2) = newLandmark(1, 0);
+		pairs(1, 3) = newLandmark(1, 3);
+
+		landmark->xpos = pairs(0, 0);
+		landmark->ypos = pairs(1, 0);
+		distance = 0; angle = 0;
+		landmarkObservation(robotRawEncoderPosition, landmark, distance, angle);
+		traps(0, 0) = distance;
+		traps(0, 3) = distance;
+		traps(1, 0) = angle;
+		traps(1, 3) = angle;
+
+		for(int i = 0; i < pairs.cols_size(); i++){
+			landmark->xpos = pairs(0, i);
+			landmark->ypos = pairs(1, i);
+			distance = 0; angle = 0;
+			landmarkObservation(robotRawEncoderPosition, landmark, distance, angle);
+
+			if(distance < traps(2 * k, 0)){
+	            traps(2 * k, 0) = distance;
+			} else if(distance > traps(2 * k, 3)){
+	            traps(2 * k, 3) = distance;
+			}
+
+			if(angle < traps(2 * k + 1, 0)){
+	            traps(2 * k + 1, 0) = angle;
+			} else if(angle > traps(2 * k + 1, 3)){
+	            traps(2 * k + 1, 3) = angle;
+			}
+		}
+
+		pairs(0, 0) = newLandmark(0, 1);
+		pairs(0, 1) = newLandmark(0, 1);
+		pairs(0, 2) = newLandmark(0, 2);
+		pairs(0, 3) = newLandmark(0, 2);
+		pairs(1, 0) = newLandmark(1, 1);
+		pairs(1, 1) = newLandmark(1, 2);
+		pairs(1, 2) = newLandmark(1, 1);
+		pairs(1, 3) = newLandmark(1, 2);
+
+		landmark->xpos = pairs(0, 0);
+		landmark->ypos = pairs(1, 0);
+		distance = 0; angle = 0;
+		landmarkObservation(robotRawEncoderPosition, landmark, distance, angle);
+		traps(0, 1) = distance;
+		traps(0, 2) = distance;
+		traps(1, 1) = angle;
+		traps(1, 2) = angle;
+
+		for(int i = 0; i < pairs.cols_size(); i++){
+			landmark->xpos = pairs(0, i);
+			landmark->ypos = pairs(1, i);
+			distance = 0; angle = 0;
+			landmarkObservation(robotRawEncoderPosition, landmark, distance, angle);
+
+			if(distance < traps(2 * k, 1)){
+	            traps(2 * k, 1) = distance;
+			} else if(distance > traps(2 * k, 2)){
+	            traps(2 * k, 2) = distance;
+			}
+
+			if(angle < traps(2 * k + 1, 1)){
+	            traps(2 * k + 1, 1) = angle;
+			} else if(angle > traps(2 * k + 1, 2)){
+	            traps(2 * k + 1, 2) = angle;
+			}
+		}
+	}
+
+	for(int i = 1; i < traps.rows_size(); i+=2){
+		Matrix normAngles(1, TRAP_VERTEX);
+		normAngles(0, 0) = traps(i, 0);
+		normAngles(0, 1) = traps(i, 1);
+		normAngles(0, 2) = traps(i, 2);
+		normAngles(0, 3) = traps(i, 3);
+		normAngles = normalizeAngles(normAngles);
+
+		 traps(i, 0) = normAngles(0, 0);
+		 traps(i, 1) = normAngles(0, 1);
+		 traps(i, 2) = normAngles(0, 2);
+		 traps(i, 3) = normAngles(0, 3);*/
+	}
+
+	observations = result;
+	dthTraps = traps;
 }
 
 void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*> &obsWithNoise, std::vector<fuzzy::trapezoid*> &obsWONoise){
@@ -1833,7 +2346,7 @@ void GeneralController::stopRobotTracking(){
 	}
 }
 
-void GeneralController::beginVideoStreaming(int videoDevice){
+void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice){
 	pthread_t t1;
 	stopVideoStreaming();
 
@@ -1892,4 +2405,3 @@ void* GeneralController::streamingThread(void* object){
 	self->streamingActive = NO;
 	return NULL;
 }
-

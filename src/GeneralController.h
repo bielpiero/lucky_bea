@@ -18,6 +18,7 @@
 #include "xmldefs.h"
 #include "semdefs.h"
 #include "RobotNode.h"
+#include "RobotDataStreamer.h"
 
 #include "Matrix.h"
 #include "stats.h"
@@ -114,7 +115,10 @@ struct s_robot{
 
 struct s_landmark{
 	int id;
-	float var;
+	float varMinX;
+	float varMaxX;
+	float varMinY;
+	float varMaxY;
 	float xpos;
 	float ypos;
 };
@@ -142,6 +146,7 @@ struct s_sector{
 	float width;
 	float height;
 	bool sitesCyclic;
+	std::string sequence;
 	std::vector<s_landmark*> *landmarks;
 	std::vector<s_feature*> *features;
 	std::vector<s_site*> *sites;
@@ -165,8 +170,8 @@ public:
 	GeneralController(ros::NodeHandle nh_, const char* port);
 	~GeneralController(void);
 	
-	virtual void OnConnection(int socketIndex);//callback for client and server
-	virtual void OnMsg(int socketIndex, char* cad, unsigned long long int length);//callback for client and server
+	virtual void onConnection(int socketIndex);//callback for client and server
+	virtual void onMsg(int socketIndex, char* cad, unsigned long long int length);//callback for client and server
 	void stopDynamicGesture();
 private:
 
@@ -178,7 +183,7 @@ private:
 
 	void getPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value);
 	void getGestures(std::string type, std::string& gestures);
-	void setGesture(std::string id);
+	void setGesture(std::string id, std::string& servo_positions);
 	void saveGesture(std::string token, int gesture_type);
 	void saveStaticGesture(std::string name, s_motor servos[]);
 	void saveDynamicGesture(std::string name, s_motor servos[]);
@@ -214,6 +219,7 @@ private:
 	static const float LASER_MAX_RANGE;
 
 	UDPClient* spdUDPClient;
+	RobotDataStreamer* spdWSServer;
 	ros::NodeHandle nh;
 
 	//OpenCV
@@ -273,10 +279,16 @@ private:
 	void getMapInformationLandmarks(std::string& mapInformation);
 	void getMapInformationFeatures(std::string& mapInformation);
 	void getMapInformationSites(std::string& mapInformation);
+	void getMapInformationSitesSequence(std::string& mapInformation);
+	void addMapInformationSite(char* cad, int& indexAssigned);
+	void modifyMapInformationSite(char* cad);
+	void deleteMapInformationSite(char* cad);
+	void setSitesExecutionSequence(char* cad);
 	
 	void startSitesTour();
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
 	void getObservationsTrapezoids(std::vector<fuzzy::trapezoid*> &obsWithNoise, std::vector<fuzzy::trapezoid*> &obsWONoise);
+	void getObservations(Matrix &observations, Matrix &dthTraps);
 	Matrix normalizeAngles(Matrix trap);
 	Matrix denormalizeAngles(Matrix trap, int mode = 0);
 	Matrix multTrapMatrix(Matrix mat, Matrix trap);
@@ -286,10 +298,11 @@ private:
 	bool isFouthQuadrant(float angle);
 
 	void getCameraDevicePort(char* cad, int& device, int& port);
-	void beginVideoStreaming(int videoDevice);
+	void beginVideoStreaming(int socketIndex, int videoDevice);
 	
 	static void* streamingThread(void*);
 	static void* trackRobotThread(void*);
+	static void* trackRobotProbabilisticThread(void*);
 	static void* sitesTourThread(void*);
 	
 };
