@@ -8,9 +8,9 @@
 #include <cmath>
 #include <string>
 #include <cstring>
+#include <ctime>
 #include "SocketNode2.h"
 #include "SerialPort.h"
-#include "TextToSpeech.h"
 #include "stdxros.hpp"
 #include "UDPClient.h"
 #include "xml/rapidxml_print.hpp"
@@ -19,6 +19,7 @@
 #include "semdefs.h"
 #include "RobotNode.h"
 #include "RobotDataStreamer.h"
+#include "DorisLipSync.h"
 
 #include "Matrix.h"
 #include "stats.h"
@@ -82,6 +83,12 @@ struct s_movement{
 struct dynamic_face_info{
 	std::string id_gesto;
 	GeneralController* object;
+};
+
+struct s_video_streamer_data{
+	int socketIndex;
+	int port;
+	GeneralController* object;	
 };
 
 struct s_trapezoid{
@@ -157,7 +164,8 @@ class GeneralController : public CSocketNode, public RobotNode // la clase Gener
 {
 private:
 	SerialPort* maestroControllers;
-	TextToSpeech* tts;
+	DorisLipSync* ttsLipSync;
+	
 	bool continue_dynamic_thread;
 	bool pendingTransferControl;
 	unsigned int clientsConnected;
@@ -165,6 +173,12 @@ private:
 	std::string xmlFaceFullPath;
 	std::string xmlSectorsFullPath;
 	std::string xmlRobotConfigFullPath;
+	
+	std::ostringstream emotionsTimestamp;
+	std::ostringstream mappingEnvironmentTimestamp;
+	std::ostringstream mappingLandmarksTimestamp;
+	std::ostringstream mappingFeaturesTimestamp;
+	std::ostringstream mappingSitesTimestamp;
 		
 public:
 	GeneralController(ros::NodeHandle nh_, const char* port);
@@ -246,7 +260,6 @@ private:
 	bool hasAchievedGoal;
 	bool frontBumpersOk;
 	bool rearBumpersOk;
-	int udpPort;
 	int spdUDPPort;
 	unsigned char streamingActive;
 	
@@ -280,15 +293,22 @@ private:
 	void getMapInformationFeatures(std::string& mapInformation);
 	void getMapInformationSites(std::string& mapInformation);
 	void getMapInformationSitesSequence(std::string& mapInformation);
+
+	//sites functions
 	void addMapInformationSite(char* cad, int& indexAssigned);
 	void modifyMapInformationSite(char* cad);
 	void deleteMapInformationSite(char* cad);
 	void setSitesExecutionSequence(char* cad);
+
+	//features functions
+	void addMapInformationFeatures(char* cad, int& indexAssigned);
+	void modifyMapInformationFeatures(char* cad);
+	void deleteMapInformationFeatures(char* cad);
 	
 	void startSitesTour();
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
 	void getObservationsTrapezoids(std::vector<fuzzy::trapezoid*> &obsWithNoise, std::vector<fuzzy::trapezoid*> &obsWONoise);
-	void getObservations(Matrix &observations, Matrix &dthTraps);
+	void getObservations(Matrix &observations);
 	Matrix normalizeAngles(Matrix trap);
 	Matrix denormalizeAngles(Matrix trap, int mode = 0);
 	Matrix multTrapMatrix(Matrix mat, Matrix trap);
@@ -298,12 +318,16 @@ private:
 	bool isFouthQuadrant(float angle);
 
 	void getCameraDevicePort(char* cad, int& device, int& port);
-	void beginVideoStreaming(int socketIndex, int videoDevice);
+	void beginVideoStreaming(int socketIndex, int videoDevice, int port);
+
+	void getTimestamp(std::ostringstream& timestamp);
 	
 	static void* streamingThread(void*);
 	static void* trackRobotThread(void*);
 	static void* trackRobotProbabilisticThread(void*);
 	static void* sitesTourThread(void*);
+
+	static void* serverStatusThread(void*);
 	
 };
 

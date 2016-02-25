@@ -1,8 +1,8 @@
 <robot cameras="2">
 	<navigation-params alpha="70">
 		<initial-position>
-			<x-zone x1="-15" x2="-10" x3="10" x4="15"/> <!-- centimeters -->
-			<y-zone x1="-15" x2="-10" x3="10" x4="15"/> <!-- centimeters -->
+			<x-zone x1="-20" x2="-15" x3="15" x4="20"/> <!-- centimeters -->
+			<y-zone x1="-20" x2="-15" x3="15" x4="20"/> <!-- centimeters -->
 			<th-zone x1="-0.033798" x2="-0.02618" x3="0.02618" x4="0.033798"/> <!-- radians -->
 		</initial-position>
 		<process-noise>
@@ -10,8 +10,8 @@
 			<th-zone x1="-0.25" x2="-0.2" x3="0.2" x4="0.25"/> <!-- radians -->
 		</process-noise>
 		<observation-noise mode="d-th">
-			<d-zone x1="-24" x2="-19" x3="19" x4="24"/>  <!-- centimeters -->
-			<th-zone x1="-0.09" x2="-0.05" x3="0.05" x4="0.09"/> <!-- radians -->
+			<d-zone x1="-4" x2="-2" x3="3" x4="4"/>  <!-- centimeters -->
+			<th-zone x1="-0.04" x2="-0.02" x3="0.0351" x4="0.04"/> <!-- radians -->
 		</observation-noise>
 	</navigation-params>
 	<permissions>
@@ -26,6 +26,7 @@
 		<permission function="0x08" token-required="0"/>
 		<permission function="0x09" token-required="0"/>
 		<permission function="0x0A" token-required="1"/>
+		<permission function="0x0B" token-required="1"/>
 		<permission function="0x10" token-required="1"/>
 		<permission function="0x11" token-required="1"/>
 		<permission function="0x12" token-required="0"/>
@@ -41,6 +42,9 @@
 		<permission function="0x1C" token-required="1"/>
 		<permission function="0x1D" token-required="1"/>
 		<permission function="0x1E" token-required="1"/>
+		<permission function="0x1F" token-required="1"/>
+		<permission function="0x20" token-required="1"/>
+		<permission function="0x21" token-required="1"/>
 		<permission function="0x30" token-required="0"/>
 		<permission function="0x31" token-required="0"/>
 		<permission function="0x7C" token-required="0"/>

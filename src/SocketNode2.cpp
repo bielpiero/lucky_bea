@@ -23,6 +23,7 @@ const std::string CSocketNode::extensionsField = "Sec-WebSocket-Extensions:";
 const std::string CSocketNode::version = "13";
 const std::string CSocketNode::secret = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 const std::string CSocketNode::switchingProtocolField = "HTTP/1.1 101 Switching Protocols";
+const std::string CSocketNode::applicationDataField = "Application data";
 	
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -37,10 +38,13 @@ CSocketNode::CSocketNode()
 	}
 
 	thread_status = 0;
+	//pingTimerThreadStatus = 0;
+	//pthread_create(&pingThread, NULL, pingTimerThread, (void *)(this));
 }
 
 CSocketNode::~CSocketNode(){
-	
+	pingTimerThreadStatus = 0;
+	pthread_cancel(pingThread);
 }
 
 int CSocketNode::init(const char *address,int port, int t){
@@ -70,12 +74,15 @@ int CSocketNode::init(const char *address,int port, int t){
 		int optval = 1;
 		setsockopt(socket_server, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval));
 
-		int len = sizeof(socket_server_address);
-		if (bind(socket_server,(struct sockaddr *) &socket_server_address,len) < 0){
+		unsigned int len = sizeof(socket_server_address);
+		
+		if (bind(socket_server,(struct sockaddr *) &socket_server_address, len) < 0){
+			perror("Hay un peo en el bind");
 			return -1;
 		}
 		// Damos como mximo 5 puertos de conexin.
 		if (listen(socket_server, 5) < 0){
+			perror("Hay un peo en el listen");
 			return -1;
 		}
 			
@@ -118,23 +125,25 @@ void CSocketNode::handleConnection(void){
 		if(ret==1){
 			if(FD_ISSET(socket_server, &readfds)){
 				int newIncommingConnection = accept(socket_server,(struct sockaddr *)&socket_address, &len);
-				bool stored = false;
-				for(int i = 0; i < MAX_CLIENTS and not stored; i++)	{
-					if(socket_conn[i].getSocket() == INVALID_SOCKET){
-						stored = true;
+				if(newIncommingConnection != INVALID_SOCKET){
+					bool stored = false;
+					for(int i = 0; i < MAX_CLIENTS and not stored; i++)	{
+						if(socket_conn[i].getSocket() == INVALID_SOCKET){
+							stored = true;
 
-						socket_conn[i].setSocket(newIncommingConnection);
-						socket_conn[i].setIsAWebSocket(false);
-						socket_conn[i].setCheckedIfIsAWebSocket(false);
-						socket_conn[i].setHandshakeDone(false);
+							socket_conn[i].setSocket(newIncommingConnection);
+							socket_conn[i].setIsAWebSocket(false);
+							socket_conn[i].setCheckedIfIsAWebSocket(false);
+							socket_conn[i].setHandshakeDone(false);
 
-						int optval;
-						setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-						int buff_size = BUFFER_SIZE;
-						setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
-						setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));
-						std::cout << "Salta en el handleConnection" << std::endl;
-						onConnection(i);
+							int optval;
+							setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+							int buff_size = BUFFER_SIZE;
+							setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
+							setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));
+							std::cout << "Salta en el handleConnection" << std::endl;
+							onConnection(i);
+						}
 					}
 				}
 			}
@@ -173,7 +182,7 @@ void CSocketNode::error(int socketIndex, const char* cad){
 	perror(cad);
 	if(socket_conn[socketIndex].getSocket()!=INVALID_SOCKET)
 	{	
-		shutdown(socket_conn[socketIndex].getSocket(),SD_BOTH);
+		shutdown(socket_conn[socketIndex].getSocket(), SD_BOTH);
 		closesocket(socket_conn[socketIndex].getSocket());
 		socket_conn[socketIndex].setSocket(INVALID_SOCKET);
 		std::cout << "Salta en el error" << std::endl;
@@ -242,6 +251,10 @@ int CSocketNode::wsSendPingMsg(int socketIndex){
 	memset(Buffer_out, 0, BUFFER_SIZE);
 	if(socket_conn[socketIndex].isWebSocket()){
 		Buffer_out[pos++] = 0x89;
+		Buffer_out[pos++] = applicationDataField.length();
+		for(int i = 0; i < applicationDataField.length(); i++){
+			Buffer_out[pos++] = applicationDataField.at(i);	
+		}
 		sendBytes(socketIndex, Buffer_out, pos);
 	}
 }
@@ -307,7 +320,9 @@ int CSocketNode::receiveMsg(int socketIndex, char* cad, unsigned long long int& 
 				memset(&Buffer_out, 0, BUFFER_SIZE);
 				len = 0;
 				wsGetHandshakeAnswer(&hs, Buffer_out, len);
-				sendBytes(socketIndex, Buffer_out, len);
+				if(sendBytes(socketIndex, Buffer_out, len) == 0){
+					printf("Handshake done...\n");
+				}
 
 			} else if(!socket_conn[socketIndex].isWebSocket()){
 				nChars = 2;
@@ -385,7 +400,7 @@ int CSocketNode::receiveMsg(int socketIndex, char* cad, unsigned long long int& 
 			wsParseInputFrame((unsigned char*)Buffer_in, len, bufferIn, sizeOutput);
 			bufferIn[sizeOutput] = 0;
 			memcpy(cad, bufferIn, sizeOutput);
-			size = len;
+			size = sizeOutput;
 			
 		} else{
 			result = -1;
@@ -418,8 +433,10 @@ void* CSocketNode::launchThread(void* p){
 				if(self->socket_conn[i].getSocket() != INVALID_SOCKET){
 					char msg[BUFFER_SIZE];
 					unsigned long long int l=BUFFER_SIZE;
-					if(0 == self->receiveMsg(i, msg, l, 0)){
-						self->onMsg(i, msg,l);
+					if(self->receiveMsg(i, msg, l, 0) == 0){
+						if(l > 0){
+							self->onMsg(i, msg,l);
+						}
 					}
 				}
 			}
@@ -427,7 +444,7 @@ void* CSocketNode::launchThread(void* p){
 			if(self->socket_conn[CLIENT_DEFAULT_INDEX].getSocket() != INVALID_SOCKET){
 				char msg[BUFFER_SIZE];
 				unsigned long long int l=BUFFER_SIZE;
-				if(0 == self->receiveMsg(CLIENT_DEFAULT_INDEX, msg, l, 0)){
+				if(self->receiveMsg(CLIENT_DEFAULT_INDEX, msg, l, 0) == 0){
 					self->onMsg(CLIENT_DEFAULT_INDEX, msg, l);
 				}
 			}
@@ -489,8 +506,15 @@ int CSocketNode::getClientPort(int socketIndex){
 }
 
 int CSocketNode::getServerPort(){
-	
-	return ntohs(socket_server_address.sin_port);
+	socklen_t len;
+	struct sockaddr_in addr;
+
+	len = sizeof(addr);
+	if (getsockname(socket_server, (struct sockaddr *) &addr, &len) < 0){
+    		return -1;
+	}
+
+	return ntohs(addr.sin_port);
 
 }
 
@@ -615,7 +639,9 @@ wsFrameType CSocketNode::wsParseInputFrame(unsigned char* bufferIn, unsigned lon
 			sizeOut = payload;
 		}
 	} else if(opCode == WS_PING_FRAME){
-		printf("Llego un frame de PING....\n");
+		//printf("Llego un frame de PING....\n");
+	} else if(opCode == WS_PONG_FRAME){
+		//printf("Llego un frame de PONG....\n");
 	}
 }
 
@@ -631,5 +657,20 @@ std::vector<std::string> CSocketNode::split(char* buffer, const char* delimiter)
 		current = std::strtok(NULL, delimiter);
 	}
 	return result;
+
+}
+
+void* CSocketNode::pingTimerThread(void* p){
+	CSocketNode* self=(CSocketNode*)p;
+
+	self->pingTimerThreadStatus = 1;
+	while(self->pingTimerThreadStatus == 1){
+		for(int i = 0; i < MAX_CLIENTS; i++){
+			if(self->isConnected(i) and self->isWebSocket(i)){
+				self->wsSendPingMsg(i);
+				Sleep(10000);
+			}
+		}
+	}
 
 }

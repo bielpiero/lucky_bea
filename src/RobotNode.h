@@ -60,6 +60,7 @@ public:
 	}
 	std::vector<float>* getRanges() { return ranges; }
 	std::vector<float>* getIntensities() { return intensities; }
+	std::vector<LsColor*>* getColors() { return color; }
 
 	void addLaserScanData(float range, float intensity = 0) { 
 		ranges->push_back(range); 
@@ -111,6 +112,7 @@ private:
     double deltaDegrees;
 
     bool isFirstFakeEstimation;
+    int maxEnconderTicks;
 
     pthread_mutex_t mutexRawPositionLocker;
 

@@ -1,31 +1,87 @@
 <sectors>
-	<sector id="0" name="Mobile Robots" width="900" height="410">
+	<sector id="0" name="Mobile Robots" width="902" height="452">
 		<landmarks>
 			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="65" ypos="148"/>
-			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="105" ypos="360"/>
-			<landmark id="2" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="250" ypos="402"/>
-			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="263" ypos="52"/>
-			<landmark id="4" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="375" ypos="312"/>
-			<landmark id="5" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="408" ypos="109"/>
-			<landmark id="6" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="527" ypos="312"/>
-			<landmark id="7" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="570" ypos="106"/>
-			<landmark id="8" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="695" ypos="192"/>
+			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="180" ypos="312"/>
+			<landmark id="2" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="263" ypos="52"/>
+			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="375" ypos="312"/>
+			<landmark id="4" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="420" ypos="122"/>
+			<landmark id="5" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="535" ypos="312"/>
+			<landmark id="6" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="570" ypos="122"/>
+			<landmark id="7" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="725" ypos="272"/>
+			<landmark id="8" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="745" ypos="122"/>
+			<landmark id="9" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="900" ypos="167"/>
 		</landmarks>
 		<features>
+			<feature id="1" name="charger" var="25" xpos="705" ypos="340"/>
 			<feature id="0" name="door" var="25" xpos="70" ypos="0"/>
-			<feature id="1" name="charger" var="25" xpos="645" ypos="340"/>
 		</features>
 		<sites cyclic="yes" sequence="0,1,2,3,4,5">
-			<site id="0" name="site a" var="10" tsec="10" xpos="200" ypos="108"/>
-			<site id="1" name="site b" var="10" tsec="10" xpos="200" ypos="350"/>
-			<site id="2" name="site c" var="10" tsec="10" xpos="280" ypos="270"/>
-			<site id="4" name="site d" var="10" tsec="10" xpos="600" ypos="270"/>
-			<site id="5" name="site e" var="10" tsec="10" xpos="600" ypos="170"/>
-			<site id="6" name="site f" var="10" tsec="10" xpos="360" ypos="170"/>
-			<site id="3" name="new" var="10" tsec="10" xpos="516.68" ypos="178.605"/>
-			<site id="7" name="new2" var="10" tsec="10" xpos="280" ypos="140"/>
-			<site id="8" name="sd" var="10" tsec="10" xpos="441" ypos="295"/>
+			<site id="0" name="site a" var="0" tsec="0" xpos="330.83" ypos="94.3"/>
+			<site id="1" name="site b" var="0" tsec="0" xpos="292.48" ypos="313.25"/>
+			<site id="2" name="site c" var="0" tsec="0" xpos="568.97" ypos="199.78"/>
+			<site id="3" name="site d" var="0" tsec="0" xpos="754.36" ypos="186.99"/>
 		</sites>
+	</sector>
+	<sector id="1" name="FM Office" width="400" height="410">
+		<landmarks/>
+		<features/>
+		<sites/>
+	</sector>
+	<sector id="2" name="Computer Vision" width="1400" height="1200">
+		<landmarks/>
+		<features/>
+		<sites/>
+	</sector>
+	<sector id="3" name="Workshop Receiver" width="350" height="350">
+		<landmarks/>
+		<features/>
+		<sites/>
+	</sector>
+	<sector id="4" name="Workshop Place" width="400" height="400">
+		<landmarks/>
+		<features/>
+		<sites/>
+	</sector>
+	<sector id="5" name="Offices" width="400" height="400">
+		<landmarks/>
+		<features/>
+		<sites/>
+	</sector>
+	<sector id="6" name="Main Hall" width="900" height="410">
+		<landmarks/>
+		<features/>
+		<sites/>
+	</sector>
+	<sector id="7" name="Computer Room" width="1400" height="500">
+		<landmarks/>
+		<features/>
+		<sites/>
+	</sector>
+	<sector id="8" name="Teleoperation" width="1400" height="500">
+		<landmarks/>
+		<features/>
+		<sites/>
+	</sector>
+	<sector id="9" name="Main Receiver" width="900" height="410">
+		<landmarks/>
+		<features/>
+		<sites/>
+	</sector>
+	<sector id="10" name="Bathrooms" width="120" height="300">
+		<landmarks/>
+		<features/>
+		<sites/>
+	</sector>
+	<sector id="11" name="Cybernetics Workshop" width="350" height="1000">
+		<landmarks/>
+		<features/>
+		<sites/>
+	</sector>
+	<sector id="12" name="Cybernetics Workplace" width="1000" height="500">
+		<landmarks/>
+		<features/>
+		<sites/>
 	</sector>
 </sectors>
 

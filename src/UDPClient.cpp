@@ -80,6 +80,7 @@ void* UDPClient::launchThread(void* p)
 			node->OnMessageReceivedWithData(msg,l);
 		}
 		Sleep(10);
+		delete [] msg;
 	}
 	node->thread_status=0;
 	return NULL;

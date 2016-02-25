@@ -38,6 +38,8 @@ RobotNode::RobotNode(const char* port){
     this->prevRightEncoderData = 0;
     this->isFirstFakeEstimation = true;
 
+    maxEnconderTicks = 0;
+
     robot->requestEncoderPackets();
     myRawPose = new ArPose(0.0, 0.0, 0.0);
     
@@ -62,7 +64,9 @@ RobotNode::RobotNode(const char* port){
 
     pthread_t sensorDataThread;
     pthread_create(&sensorDataThread, NULL, dataPublishingThread, (void *)(this)  );
-
+    printf("Connection Timeout: %d\n", robot->getConnectionTimeoutTime());
+    printf("TicksMM: %d, DriftFactor: %d, RevCount: %d\n", getTicksMM(), getDriftFactor(), getRevCount());
+    printf("DiffConvFactor: %f, DistConvFactor: %f, AngleConvFactor: %f\n", getDiffConvFactor(), getDistConvFactor(), getAngleConvFactor());
     pthread_t distanceThread;
     //pthread_create(&distanceThread, NULL, securityDistanceThread, (void *)(this)  );
 }
@@ -93,7 +97,7 @@ void RobotNode::getLaserScan(void){
 		data = new LaserScan();
 		for(size_t it = 0; it < currentReadings->size(); it++){
 			data->addLaserScanData((float)currentReadings->at(it).getRange() / 1000, (float)currentReadings->at(it).getExtraInt());
-			data->setScanPrimaryColor(draw->getPrimaryColor().getRed(), draw->getPrimaryColor().getGreen(), draw->getPrimaryColor().getBlue());
+			//data->setScanPrimaryColor(draw->getPrimaryColor().getRed(), draw->getPrimaryColor().getGreen(), draw->getPrimaryColor().getBlue());
 			draw++;
 		}
         sick->unlockDevice();
@@ -314,13 +318,16 @@ void RobotNode::computePositionFromEncoders(){
 
     }
 
-    double deltaLeft = (newLeftEncoderData - newPrevLeftEncoderData)/((double)getTicksMM());
-    double deltaRight = (newRightEncoderData - newPrevRightEncoderData)/((double)getTicksMM());
+    double deltaLeftMM = (newLeftEncoderData - newPrevLeftEncoderData)/((double)getTicksMM());
+    double deltaRightMM = (newRightEncoderData - newPrevRightEncoderData)/((double)getTicksMM());
+
+    double deltaLeftRad = ((newLeftEncoderData - newPrevLeftEncoderData) * getAngleConvFactor());
+    double deltaRightRad = ((newRightEncoderData - newPrevRightEncoderData) * getAngleConvFactor());
     
 
-    deltaDistance = (deltaLeft + deltaRight) / 2.0;
+    deltaDistance = (deltaLeftMM + deltaRightMM) / 2.0;
     deltaDegrees = robot->getPose().getThRad() - myRawPose->getThRad();
-    //deltaDegrees = (deltaRight - deltaLeft) / (2 * robot->getRobotRadius());
+    //deltaDegrees = (deltaRightRad - deltaLeftRad) * getDiffConvFactor();
 
     getRawPoseFromOdometry();
 
@@ -419,7 +426,7 @@ void* RobotNode::dataPublishingThread(void* object){
         self->getBumpersStatus();
         self->getRobotPosition();
         self->getSonarsScan();
-        ArUtil::sleep(100);
+        ArUtil::sleep(10);
     }
     return NULL;
 }

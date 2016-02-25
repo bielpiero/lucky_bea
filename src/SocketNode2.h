@@ -94,12 +94,16 @@ protected:
 private:
 	int type;//server or client
 	int thread_status;//0 not started, 1 started, 2 waiting to finish
+	int pingTimerThreadStatus;
+	
+	pthread_t pingThread;
 
 	int tokenOwner;
 	int lastTokenOwner;
 
 	TCPSocketClient socket_conn[MAX_CLIENTS];
 	int socket_server;
+	
 
 	struct sockaddr_in socket_address, socket_server_address;
 	
@@ -126,8 +130,10 @@ private:
 	static const std::string secret;
 	static const std::string switchingProtocolField;
 	static const std::string extensionsField;
+	static const std::string applicationDataField;
 
 	static void* launchThread(void* p);
+	static void* pingTimerThread(void* p);
 };
 
 #endif // !defined(AFX_SOCKETNODE_H__895095F5_AD65_4FF5_973F_0DD16E9BC2FE__INCLUDED_)
