@@ -21,6 +21,7 @@ RobotNode::RobotNode(const char* port){
     robot->disableSonar();   
 
     robot->runAsync(true);
+    robot->setNoTimeWarningThisCycle(true);
 
     this->prevBatteryChargeState = -5;
 
@@ -89,7 +90,7 @@ void RobotNode::getLaserScan(void){
 	//robot->lock();
 	sick = (ArSick*)laser;
 	if(sick != NULL){
-		sick->lockDevice();
+		//sick->lockDevice();
         
 		std::vector<ArSensorReading> *currentReadings = sick->getRawReadingsAsVector();
 		ArDrawingData* draw = sick->getCurrentDrawingData();
@@ -100,7 +101,7 @@ void RobotNode::getLaserScan(void){
 			//data->setScanPrimaryColor(draw->getPrimaryColor().getRed(), draw->getPrimaryColor().getGreen(), draw->getPrimaryColor().getBlue());
 			draw++;
 		}
-        sick->unlockDevice();
+        //sick->unlockDevice();
         onLaserScanCompleted(data);
 	}
 	//robot->unlock();
@@ -436,7 +437,7 @@ void* RobotNode::securityDistanceThread(void* object){
     while(true){
         ArSick* sickLaser = (ArSick*)self->laser;
         if(sickLaser != NULL){
-            sickLaser->lockDevice();
+            //sickLaser->lockDevice();
             
             std::vector<ArSensorReading> *currentReadings = sickLaser->getRawReadingsAsVector();
             for(size_t it = 0; it < currentReadings->size(); it++){
@@ -480,7 +481,7 @@ void* RobotNode::securityDistanceThread(void* object){
                     }
                 }
             }
-            sickLaser->unlockDevice();
+            //sickLaser->unlockDevice();
         }
     }
     return NULL;

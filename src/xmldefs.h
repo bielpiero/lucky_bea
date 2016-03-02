@@ -46,6 +46,7 @@
 #define XML_ATTRIBUTE_VARIANCE_MAX_Y_STR "var-max-y"
 #define XML_ATTRIBUTE_WIDTH_STR "width"
 #define XML_ATTRIBUTE_HEIGHT_STR "height"
+#define XML_ATTRIBUTE_RADIUS_STR "radius"
 #define XML_ATTRIBUTE_TIME_STR "tsec"
 #define XML_ATTRIBUTE_X_POSITION_STR "xpos"
 #define XML_ATTRIBUTE_Y_POSITION_STR "ypos"

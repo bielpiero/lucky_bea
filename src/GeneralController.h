@@ -55,6 +55,16 @@
 
 #define TRAP_VERTEX 4
 
+#define ADD_SITE_VARIABLE_LENGTH 6
+#define MODIFY_SITE_VARIABLE_LENGTH 7
+#define DELETE_SITE_VARIABLE_LENGTH 2
+
+#define SITE_SEQUENCE_VARIABLE_LENGTH 2
+
+#define ADD_FEATURE_VARIABLE_LENGTH 6
+#define MODIFY_FEATURE_VARIABLE_LENGTH 7
+#define DELETE_FEATURE_VARIABLE_LENGTH 2
+
 using namespace rapidxml;
 
 class GeneralController;
@@ -133,7 +143,8 @@ struct s_landmark{
 struct s_feature{
 	int id;
 	std::string name;
-	float var;
+	float width;
+	float height;
 	float xpos;
 	float ypos;
 };
@@ -142,7 +153,7 @@ struct s_site{
 	int id;
 	std::string name;
 	float tsec;
-	float var;
+	float radius;
 	float xpos;
 	float ypos;
 };
@@ -165,7 +176,7 @@ class GeneralController : public CSocketNode, public RobotNode // la clase Gener
 private:
 	SerialPort* maestroControllers;
 	DorisLipSync* ttsLipSync;
-	
+
 	bool continue_dynamic_thread;
 	bool pendingTransferControl;
 	unsigned int clientsConnected;
@@ -289,10 +300,10 @@ private:
 
 	void getMapId(char* cad, int& mapId);
 	void getMapsAvailable(std::string& mapsAvailable);
-	void getMapInformationLandmarks(std::string& mapInformation);
-	void getMapInformationFeatures(std::string& mapInformation);
-	void getMapInformationSites(std::string& mapInformation);
-	void getMapInformationSitesSequence(std::string& mapInformation);
+	void getMapInformationLandmarks(int mapId, std::string& mapInformation);
+	void getMapInformationFeatures(int mapId, std::string& mapInformation);
+	void getMapInformationSites(int mapId, std::string& mapInformation);
+	void getMapInformationSitesSequence(int mapId, std::string& mapInformation);
 
 	//sites functions
 	void addMapInformationSite(char* cad, int& indexAssigned);
