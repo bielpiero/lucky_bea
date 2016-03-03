@@ -8,6 +8,8 @@
 #include "Aria.h"
 
 #define FULL_ENCODER_TICKS 32768
+#define MIN_INDEX_LASER_SECURITY_DISTANCE 80
+#define MAX_INDEX_LASER_SECURITY_DISTANCE 240
 
 class PointXY{
 private:
@@ -124,6 +126,8 @@ private:
 
     bool isFirstFakeEstimation;
     int maxEnconderTicks;
+    
+    static const float SECURITY_DISTANCE;
 
     pthread_mutex_t mutexRawPositionLocker;
 
@@ -175,6 +179,8 @@ private:
 	void getRawPoseFromOdometry();
     bool checkForwardLimitTransition(double enc_k, double enc_k_1);
     bool checkBackwardLimitTransition(double enc_k, double enc_k_1);
+    void executeLaserSecurityDistance(float value);
+    
 protected:
 	virtual void onLaserScanCompleted(LaserScan* data) = 0;
 	virtual void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear) = 0;

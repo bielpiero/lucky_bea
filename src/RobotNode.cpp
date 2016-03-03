@@ -1,5 +1,7 @@
 #include "RobotNode.h"
 
+const float RobotNode::SECURITY_DISTANCE = 0.5;
+
 RobotNode::RobotNode(const char* port){
 	Aria::init();
 
@@ -90,7 +92,7 @@ void RobotNode::getLaserScan(void){
 	//robot->lock();
 	sick = (ArSick*)laser;
 	if(sick != NULL){
-		//sick->lockDevice();
+		sick->lockDevice();
         
 		std::vector<ArSensorReading> *currentReadings = sick->getRawReadingsAsVector();
 		ArDrawingData* draw = sick->getCurrentDrawingData();
@@ -101,7 +103,7 @@ void RobotNode::getLaserScan(void){
 			//data->setScanPrimaryColor(draw->getPrimaryColor().getRed(), draw->getPrimaryColor().getGreen(), draw->getPrimaryColor().getBlue());
 			draw++;
 		}
-        //sick->unlockDevice();
+        sick->unlockDevice();
         onLaserScanCompleted(data);
         delete currentReadings;
         delete data;
@@ -445,52 +447,42 @@ void* RobotNode::securityDistanceThread(void* object){
     while(true){
         ArSick* sickLaser = (ArSick*)self->laser;
         if(sickLaser != NULL){
-            //sickLaser->lockDevice();
+            sickLaser->lockDevice();
             
             std::vector<ArSensorReading> *currentReadings = sickLaser->getRawReadingsAsVector();
             for(size_t it = 0; it < currentReadings->size(); it++){
                 if(sickLaser->getDegrees() == ArSick::DEGREES180){
                     if(sickLaser->getIncrement() == ArSick::INCREMENT_HALF){
-                        if(it > 80 && it < 280){
-                            if((currentReadings->at(it).getRange() / 1000.0) < 0.5){
-                                if(self->isDirectMotion && self->isGoingForward && !self->doNotMove){
-                                    self->doNotMove = true;
-                                    self->robot->stop();
-                                } else if(self->gotoPoseAction->isActive()){
-                                    self->gotoPoseAction->deactivate();
-                                    self->wasDeactivated = true;
-                                }
-                            } else { 
-                                self->doNotMove = false;
-                                if(self->wasDeactivated){
-                                    self->wasDeactivated = false;
-                                    self->gotoPoseAction->activate();
-                                }
-                            }
+                        if(it > MIN_INDEX_LASER_SECURITY_DISTANCE && it < MAX_INDEX_LASER_SECURITY_DISTANCE){
+                            executeLaserSecurityDistance((float)currentReadings->at(it).getRange());
                         }
-                    } else{
-                        if(it > 40 && it < 140){
-                            if((currentReadings->at(it).getRange() / 1000.0) < 0.5){
-                                if(self->isDirectMotion && self->isGoingForward && !self->doNotMove){
-                                    self->doNotMove = true;
-                                    self->robot->stop();
-                                } else if(self->gotoPoseAction->isActive()){
-                                    self->gotoPoseAction->deactivate();
-                                    self->wasDeactivated = true;
-                                }
-                            } else { 
-                                self->doNotMove = false;
-                                if(self->wasDeactivated){
-                                    self->wasDeactivated = false;
-                                    self->gotoPoseAction->activate();
-                                }
-                            }
-                        }
+                    } else if(it > (MIN_INDEX_LASER_SECURITY_DISTANCE / 2) && it < (MIN_INDEX_LASER_SECURITY_DISTANCE / 2){
+                        executeLaserSecurityDistance((float)currentReadings->at(it).getRange());
                     }
                 }
             }
-            //sickLaser->unlockDevice();
+            sickLaser->unlockDevice();
+            delete currentReadings;
         }
+        ArUtil::sleep(11);
     }
     return NULL;
+}
+
+void RobotNode::executeLaserSecurityDistance(float value){
+    if((value / 1000.0) < SECURITY_DISTANCE){
+        if(this->isDirectMotion && this->isGoingForward && !this->doNotMove){
+            this->doNotMove = true;
+            this->robot->stop();
+        } else if(this->gotoPoseAction->isActive()){
+            this->gotoPoseAction->deactivate();
+            this->wasDeactivated = true;
+        }
+    } else {
+        this->doNotMove = false;
+        if(this->wasDeactivated){
+            this->wasDeactivated = false;
+            this->gotoPoseAction->activate();
+        }
+    }
 }
