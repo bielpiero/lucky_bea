@@ -296,7 +296,7 @@ int CSocketNode::receiveMsg(int socketIndex, char* cad, unsigned long long int& 
 	unsigned long long int nChars;
 	unsigned long long int len;
 	bool firstReceiveDone = false;
-	char* header = new char[5];
+	unsigned char* header = new char[5];
 	wsState state = WS_STATE_OPENING;
 	wsFrameType frameType = WS_INCOMPLETE_FRAME;
 	Handshake hs;

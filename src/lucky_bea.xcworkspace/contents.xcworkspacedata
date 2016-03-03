@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:conf">
+   </FileRef>
+   <FileRef
+      location = "group:crypt">
+   </FileRef>
+   <FileRef
+      location = "group:DorisLipSync.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:DorisLipSync.h">
+   </FileRef>
+   <FileRef
+      location = "group:fl">
+   </FileRef>
+   <FileRef
+      location = "group:ftd2xx.h">
+   </FileRef>
+   <FileRef
+      location = "group:GeneralController.h">
+   </FileRef>
+   <FileRef
+      location = "group:handshake.h">
+   </FileRef>
+   <FileRef
+      location = "group:lib">
+   </FileRef>
+   <FileRef
+      location = "group:lucky_bea.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:Matrix.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:Matrix.h">
+   </FileRef>
+   <FileRef
+      location = "group:RobotDataStreamer.h">
+   </FileRef>
+   <FileRef
+      location = "group:RobotNode.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:RobotNode.h">
+   </FileRef>
+   <FileRef
+      location = "group:semdefs.h">
+   </FileRef>
+   <FileRef
+      location = "group:SerialPort.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:SerialPort.h">
+   </FileRef>
+   <FileRef
+      location = "group:SocketNode2.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:SocketNode2.h">
+   </FileRef>
+   <FileRef
+      location = "group:stats.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:stats.h">
+   </FileRef>
+   <FileRef
+      location = "group:stdxros.hpp">
+   </FileRef>
+   <FileRef
+      location = "group:TCPSocketClient.h">
+   </FileRef>
+   <FileRef
+      location = "group:TextToSpeech.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:TextToSpeech.h">
+   </FileRef>
+   <FileRef
+      location = "group:UDPClient.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:UDPClient.h">
+   </FileRef>
+   <FileRef
+      location = "group:WinTypes.h">
+   </FileRef>
+   <FileRef
+      location = "group:xml">
+   </FileRef>
+   <FileRef
+      location = "group:xmldefs.h">
+   </FileRef>
+   <FileRef
+      location = "container:GeneralController.cpp">
+   </FileRef>
+</Workspace>

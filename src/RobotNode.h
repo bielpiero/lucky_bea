@@ -58,6 +58,17 @@ public:
 		intensities = new std::vector<float>();
 		color = new std::vector<LsColor*>();
 	}
+    ~LaserScan(){
+        ranges->clear();
+        intensities->clear();
+        delete [] ranges;
+        delete [] intensities;
+        for (int i = 0; i < color->size(); i++) {
+            delete color->at(i);
+        }
+        color->clear();
+        delete [] color;
+    }
 	std::vector<float>* getRanges() { return ranges; }
 	std::vector<float>* getIntensities() { return intensities; }
 	std::vector<LsColor*>* getColors() { return color; }

@@ -103,6 +103,8 @@ void RobotNode::getLaserScan(void){
 		}
         //sick->unlockDevice();
         onLaserScanCompleted(data);
+        delete currentReadings;
+        delete data;
 	}
 	//robot->unlock();
 }

@@ -1470,7 +1470,7 @@ void GeneralController::modifyMapInformationSite(char* cad){
 
 void GeneralController::deleteMapInformationSite(char* cad){
 	std::vector<std::string> data = split(cad, ",");
-	if(data.size() == MODIFY_SITE_VARIABLE_LENGTH){
+	if(data.size() == DELETE_SITE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
 		s_sector* requestedSectorInfo = NULL;
@@ -1799,7 +1799,7 @@ void GeneralController::modifyMapInformationFeatures(char* cad){
 
 void GeneralController::deleteMapInformationFeatures(char* cad){
 	std::vector<std::string> data = split(cad, ",");
-	if(data.size() == MODIFY_FEATURE_VARIABLE_LENGTH){
+	if(data.size() == DELETE_FEATURE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
 		s_sector* requestedSectorInfo = NULL;
