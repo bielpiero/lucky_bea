@@ -264,6 +264,7 @@ private:
 	Matrix R;
 
 	int tokenRequester;
+    int lastSiteVisitedIndex;
 	
 	std::vector<Matrix> landmarks;
 	

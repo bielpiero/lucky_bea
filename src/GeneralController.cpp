@@ -24,7 +24,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):Robo
 	this->keepRobotTracking = NO;
 	this->spdUDPPort = 0;
 
-
+    this->lastSiteVisitedIndex = NONE;
 	
 	kalmanFuzzy = new std::vector<fuzzy::trapezoid*>();
 	
@@ -2072,16 +2072,21 @@ void GeneralController::startSitesTour(){
 void* GeneralController::sitesTourThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	self->keepTourAlive = YES;
-	int goalIndex = 0;
+    std::vector<std::string> spltdSequence = self->split(self->currentSector->sequence.c_str());
 	
 	while(ros::ok() && self->keepTourAlive == YES){
+        int goalIndex = self->lastSiteVisitedIndex + 1;
 		float xpos = self->currentSector->sites->at(goalIndex)->xpos;
 		float ypos = self->currentSector->sites->at(goalIndex)->ypos;
 		Sleep(100);
 		self->moveRobotToPosition(xpos, ypos, 0.0);
-		goalIndex++;
-		if(goalIndex == self->currentSector->sites->size()) goalIndex = 0;
 		while(!self->isGoalAchieved() && self->keepTourAlive == YES) Sleep(100);
+        if (self->isGoalAchieved()) {
+            self->lastSiteVisitedIndex++;
+            if (self->sitesCyclic && self->lastSiteVisitedIndex == spltdSequence.size()) {
+                self->lastSiteVisitedIndex = NONE;
+            }
+        }
 	}
 	self->keepTourAlive = NO;
 	return NULL;
