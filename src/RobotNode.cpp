@@ -257,8 +257,14 @@ void RobotNode::getSonarsScan(void){
             if(reading) {
                 data->push_back(new PointXY(reading->getLocalX() / 1000.0, reading->getLocalY() / 1000.0));
             }
+            delete reading;
         }
         onSonarsDataUpdate(data);
+        for (int i = 0; i < data->size(); i++) {
+            delete data->at(i);
+        }
+        data->clear();
+        delete [] data;
     }
 }
 
