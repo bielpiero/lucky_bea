@@ -453,6 +453,7 @@ void* CSocketNode::launchThread(void* p){
 		Sleep(10);
 	}
 	self->thread_status=0;
+    delete self;
 	return NULL;
 }
 
@@ -672,5 +673,6 @@ void* CSocketNode::pingTimerThread(void* p){
 			}
 		}
 	}
+    self->pingTimerThreadStatus == 0;
 
 }

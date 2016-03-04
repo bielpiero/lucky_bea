@@ -41,7 +41,9 @@ RobotNode::RobotNode(const char* port){
     this->prevRightEncoderData = 0;
     this->isFirstFakeEstimation = true;
 
-    maxEnconderTicks = 0;
+    timerSecs = 0;
+    this->securityDistanceWarningTime =  DEFAULT_SECURITY_DISTANCE_WARNING_TIME;
+    this->securityDistanceStopTime = DEFAULT_SECURITY_DISTANCE_STOP_TIME;
 
     robot->requestEncoderPackets();
     myRawPose = new ArPose(0.0, 0.0, 0.0);
@@ -65,13 +67,14 @@ RobotNode::RobotNode(const char* port){
 		printf("Connected to SICK LMS200 laser.\n");
 	}
 
-    pthread_t sensorDataThread;
     pthread_create(&sensorDataThread, NULL, dataPublishingThread, (void *)(this)  );
     printf("Connection Timeout: %d\n", robot->getConnectionTimeoutTime());
     printf("TicksMM: %d, DriftFactor: %d, RevCount: %d\n", getTicksMM(), getDriftFactor(), getRevCount());
     printf("DiffConvFactor: %f, DistConvFactor: %f, AngleConvFactor: %f\n", getDiffConvFactor(), getDistConvFactor(), getAngleConvFactor());
-    pthread_t distanceThread;
+    
     //pthread_create(&distanceThread, NULL, securityDistanceThread, (void *)(this)  );
+    
+    //pthread_create(&distanceTimerThread, NULL, securityDistanceTimerThread, (void *)(this)  );
 }
 
 RobotNode::~RobotNode(){
@@ -79,12 +82,39 @@ RobotNode::~RobotNode(){
 }
 
 void RobotNode::disconnect(){
+    finishThreads();
     sick->disconnect();
     robot->disableMotors();
     robot->disableSonar();
     robot->stopRunning();
     robot->waitForRunExit();
     Aria::shutdown();
+}
+
+void RobotNode::finishThreads(){
+    if (keepActiveSecurityDistanceTimerThread == YES) {
+        keepActiveSecurityDistanceTimerThread = MAYBE;
+        while (keepActiveSecurityDistanceTimerThread != NONE) {
+            ArUtil::sleep(10);
+        }
+        printf("Stopped Security Distance Timer Thread\n");
+    }
+    
+    if (keepActiveSecurityDistanceThread == YES) {
+        keepActiveSecurityDistanceThread = MAYBE;
+        while (keepActiveSecurityDistanceThread != NONE) {
+            ArUtil::sleep(10);
+        }
+        printf("Stopped Security Distance Thread\n");
+    }
+    
+    if (keepActiveSensorDataThread == YES) {
+        keepActiveSensorDataThread = MAYBE;
+        while (keepActiveSensorDataThread != NONE) {
+            ArUtil::sleep(10);
+        }
+        printf("Stopped Robot Data Aquisition Thread\n");
+    }
 }
 
 void RobotNode::getLaserScan(void){
@@ -429,8 +459,9 @@ void RobotNode::getBatterChargeStatus(void){
 
 void* RobotNode::dataPublishingThread(void* object){
     RobotNode* self = (RobotNode*)object;
+    self->keepActiveSensorDataThread = YES;
     ArUtil::sleep(2000);
-    while(true){
+    while(self->keepActiveSensorDataThread == YES){
         self->getRawRobotPosition();
         self->getBatterChargeStatus();
         self->getLaserScan();
@@ -439,12 +470,15 @@ void* RobotNode::dataPublishingThread(void* object){
         self->getSonarsScan();
         ArUtil::sleep(10);
     }
+    self->keepActiveSensorDataThread = NO;
+    delete self;
     return NULL;
 }
 
 void* RobotNode::securityDistanceThread(void* object){
     RobotNode* self = (RobotNode*)object;
-    while(true){
+    self->keepActiveSecurityDistanceThread = YES;
+    while(self->keepActiveSecurityDistanceThread == YES){
         ArSick* sickLaser = (ArSick*)self->laser;
         if(sickLaser != NULL){
             sickLaser->lockDevice();
@@ -466,6 +500,8 @@ void* RobotNode::securityDistanceThread(void* object){
         }
         ArUtil::sleep(11);
     }
+    self->keepActiveSecurityDistanceThread = NO;
+    delete self;
     return NULL;
 }
 
@@ -477,6 +513,7 @@ void RobotNode::executeLaserSecurityDistance(float value){
         } else if(this->gotoPoseAction->isActive()){
             this->gotoPoseAction->deactivate();
             this->wasDeactivated = true;
+            
         }
     } else {
         this->doNotMove = false;
@@ -485,4 +522,30 @@ void RobotNode::executeLaserSecurityDistance(float value){
             this->gotoPoseAction->activate();
         }
     }
+}
+
+void* RobotNode::securityDistanceTimerThread(void* object){
+    RobotNode* self = (RobotNode*)object;
+    self->keepActiveSecurityDistanceTimerThread = YES;
+    while(self->keepActiveSecurityDistanceTimerThread == YES){
+        if(self->wasDeactivated){
+            ArUtil::sleep(1000);
+            timerSecs++;
+            if(timerSecs == securityDistanceWarningTime){
+                self->onSecurityDistanceWarningSignal();
+            } else if(timerSecs == securityDistanceStopTime){
+                self->robot->lock();
+                self->gotoPoseAction->cancelGoal();
+                self->robot->clearDirectMotion();
+                self->robot->unlock();
+                self->wasDeactivated = false;
+                self->onSecurityDistanceStopSignal();
+            }
+        } else{
+            timerSecs = 0;
+        }
+    }
+    self->keepActiveSecurityDistanceTimerThread = NO;
+    delete self;
+    return NULL;
 }

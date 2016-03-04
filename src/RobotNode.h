@@ -7,9 +7,18 @@
 #include <math.h>
 #include "Aria.h"
 
+#define NONE -1
+
+#define YES 1
+#define NO 0
+#define MAYBE 2
+
 #define FULL_ENCODER_TICKS 32768
 #define MIN_INDEX_LASER_SECURITY_DISTANCE 80
 #define MAX_INDEX_LASER_SECURITY_DISTANCE 240
+
+#define DEFAULT_SECURITY_DISTANCE_WARNING_TIME 30
+#define DEFAULT_SECURITY_DISTANCE_STOP_TIME 60
 
 class PointXY{
 private:
@@ -125,11 +134,21 @@ private:
     double deltaDegrees;
 
     bool isFirstFakeEstimation;
-    int maxEnconderTicks;
+    
+    unsigned int timerSecs;
+    unsigned int securityDistanceWarningTime;
+    unsigned int securityDistanceStopTime;
+    
+    char keepActiveSensorDataThread;
+    char keepActiveSecurityDistanceThread;
+    char keepActiveSecurityDistanceTimerThread;
     
     static const float SECURITY_DISTANCE;
 
     pthread_mutex_t mutexRawPositionLocker;
+    pthread_t sensorDataThread;
+    pthread_t distanceThread;
+    pthread_t distanceTimerThread;
 
 public:
 	RobotNode(const char* port);
@@ -173,8 +192,10 @@ public:
 
 private:
 	static void* securityDistanceThread(void* object);
+    static void* securityDistanceTimerThread(void* object);
 	static void* dataPublishingThread(void* object);
-
+    
+    void finishThreads();
 	void computePositionFromEncoders();
 	void getRawPoseFromOdometry();
     bool checkForwardLimitTransition(double enc_k, double enc_k_1);
@@ -188,4 +209,6 @@ protected:
 	virtual void onRawPositionUpdate(double x, double y, double theta, double deltaDistance, double deltaDegrees) = 0;
 	virtual void onSonarsDataUpdate(std::vector<PointXY*>* data) = 0;
 	virtual void onBatteryChargeStateChanged(char data) = 0;
+    virtual void onSecurityDistanceWarningSignal() = 0;
+    virtual void onSecurityDistanceStopSignal() = 0;
 };

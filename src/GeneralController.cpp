@@ -71,6 +71,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):Robo
 
 GeneralController::~GeneralController(void){
 	disconnect();
+    closeConnection();
 	stopDynamicGesture();
 	stopVideoStreaming();
 	stopRobotTracking();

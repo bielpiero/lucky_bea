@@ -34,16 +34,9 @@
 #define XML_FILE_SECTORS_PATH "/src/conf/BeaSectors.xml"
 #define XML_FILE_ROBOT_CONFIG_PATH "/src/conf/BeaRobotConfig.xml"
 
-#define NONE -1
-
 #define PERMISSION_ACCEPTED 0
 #define PERMISSION_REQUESTED 1
 #define PERMISSION_REJECTED 2
-
-
-#define YES 1
-#define NO 0
-#define MAYBE 2
 
 #define STATE_VARIABLES 3
 
