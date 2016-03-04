@@ -125,6 +125,7 @@ private:
     bool isGoingForward;
     bool wasDeactivated;
     bool doNotMove;
+    bool goalCanceled;
     char prevBatteryChargeState;
 
     long int prevLeftEncoderData;
@@ -157,11 +158,13 @@ public:
 	void disconnect();
     
     bool isGoalAchieved(void);
+    bool isGoalCanceled(void);
     
     void gotoPosition(double x, double y, double theta, double transSpeed = 200, double rotSpeed = 4.75);
 	void move(double distance, double speed = 200);
     void moveAtSpeed(double linearVelocity, double angularVelocity);
     void stopRobot(void);
+    void cancelRobotGoal();
 
     void getBatterChargeStatus(void);
     void getBumpersStatus(void);

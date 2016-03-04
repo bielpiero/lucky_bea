@@ -2081,15 +2081,19 @@ void* GeneralController::sitesTourThread(void* object){
 		float ypos = self->currentSector->sites->at(goalIndex)->ypos;
 		Sleep(100);
 		self->moveRobotToPosition(xpos, ypos, 0.0);
-		while(!self->isGoalAchieved() && self->keepTourAlive == YES) Sleep(100);
+		while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) Sleep(100);
         if (self->isGoalAchieved()) {
             self->lastSiteVisitedIndex++;
             if (self->sitesCyclic && self->lastSiteVisitedIndex == spltdSequence.size()) {
                 self->lastSiteVisitedIndex = NONE;
             }
         }
+        if (isGoalCanceled()) {
+            self->keepTourAlive = NO;
+        }
 	}
 	self->keepTourAlive = NO;
+    delete self;
 	return NULL;
 }
 

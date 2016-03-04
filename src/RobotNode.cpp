@@ -52,7 +52,8 @@ RobotNode::RobotNode(const char* port){
     gyroPoseAction = new ArActionInput("Input");
  	robot->addAction(gotoPoseAction, 89);
     robot->addAction(gyroPoseAction, 90);
-
+    
+    this->goalCanceled = false;
 
  	laserConnector = new ArLaserConnector(argparser, robot, connector);
 	if(!laserConnector->connectLasers(false, false, true)){
@@ -172,7 +173,8 @@ void RobotNode::moveAtSpeed(double linearVelocity, double angularVelocity){
     isDirectMotion = true;
     isGoingForward = false;
     robot->lock();
-    gotoPoseAction->cancelGoal();
+    //gotoPoseAction->cancelGoal();
+    cancelRobotGoal();
     if(linearVelocity == 0.0 && angularVelocity == 0.0){
         robot->stop();
         isDirectMotion = false;
@@ -197,6 +199,7 @@ void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed
     
     robot->setAbsoluteMaxTransVel(transSpeed);
     robot->setAbsoluteMaxRotVel(rotSpeed);
+    this->goalCanceled = false;
     robot->clearDirectMotion();
     if(x == 0.0 && y == 0.0 && theta != 0.0){
         //gyroPoseAction->setRotVel(rotSpeed);
@@ -217,6 +220,7 @@ void RobotNode::setPosition(double x, double y, double theta){
     ArPose newPose(x * 1000, y * 1000);
     newPose.setThRad(theta);
     robot->lock();
+    this->goalCanceled = false;
     robot->clearDirectMotion();
     gyroPoseAction->clear();
     pthread_mutex_lock(&mutexRawPositionLocker);
@@ -245,6 +249,10 @@ bool RobotNode::getMotorsStatus(){
 
 bool RobotNode::isGoalAchieved(){
     return gotoPoseAction->haveAchievedGoal();
+}
+
+bool RobotNode::isGoalCanceled(){
+    return this->goalCanceled;
 }
 
 void RobotNode::setSonarStatus(bool enabled){
@@ -449,6 +457,11 @@ double RobotNode::getDeltaDistance(){
     return deltaDistance;
 }
 
+void RobotNode::cancelRobotGoal(){
+    this->gotoPoseAction->cancelGoal();
+    this->goalCanceled = true;
+}
+
 void RobotNode::getBatterChargeStatus(void){
     char s = robot->getChargeState();
     if(s != prevBatteryChargeState){
@@ -535,7 +548,8 @@ void* RobotNode::securityDistanceTimerThread(void* object){
                 self->onSecurityDistanceWarningSignal();
             } else if(timerSecs == securityDistanceStopTime){
                 self->robot->lock();
-                self->gotoPoseAction->cancelGoal();
+                self->cancelRobotGoal();
+                //self->gotoPoseAction->cancelGoal();
                 self->robot->clearDirectMotion();
                 self->robot->unlock();
                 self->wasDeactivated = false;
