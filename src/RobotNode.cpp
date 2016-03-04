@@ -530,7 +530,7 @@ void* RobotNode::securityDistanceTimerThread(void* object){
     while(self->keepActiveSecurityDistanceTimerThread == YES){
         if(self->wasDeactivated){
             ArUtil::sleep(1000);
-            timerSecs++;
+            self->timerSecs++;
             if(timerSecs == securityDistanceWarningTime){
                 self->onSecurityDistanceWarningSignal();
             } else if(timerSecs == securityDistanceStopTime){
@@ -539,10 +539,11 @@ void* RobotNode::securityDistanceTimerThread(void* object){
                 self->robot->clearDirectMotion();
                 self->robot->unlock();
                 self->wasDeactivated = false;
+                self->timerSecs = 0;
                 self->onSecurityDistanceStopSignal();
             }
         } else{
-            timerSecs = 0;
+            self->timerSecs = 0;
         }
     }
     self->keepActiveSecurityDistanceTimerThread = NO;
