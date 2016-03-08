@@ -259,7 +259,7 @@ int CSocketNode::wsSendPingMsg(int socketIndex){
 	}
 }
 
-int CSocketNode::sendBytes(int socketIndex, char *cad, unsigned long long int length){
+int CSocketNode::sendBytes(int socketIndex, unsigned char *cad, unsigned long long int length){
 	//Send it
 	int err = write(socket_conn[socketIndex].getSocket(), cad, length);
 	if (err == SOCKET_ERROR ){
@@ -269,7 +269,7 @@ int CSocketNode::sendBytes(int socketIndex, char *cad, unsigned long long int le
 	return 0;
 }
 
-int CSocketNode::receiveBytes(int socketIndex, char *cad, unsigned long long int& length, int timeout){
+int CSocketNode::receiveBytes(int socketIndex, unsigned char *cad, unsigned long long int& length, int timeout){
 
 	if (socket_conn[socketIndex].getSocket() == INVALID_SOCKET)
 		return -1;
@@ -296,7 +296,7 @@ int CSocketNode::receiveMsg(int socketIndex, char* cad, unsigned long long int& 
 	unsigned long long int nChars;
 	unsigned long long int len;
 	bool firstReceiveDone = false;
-	unsigned char* header = new char[5];
+	unsigned char* header = new unsigned char[5];
 	wsState state = WS_STATE_OPENING;
 	wsFrameType frameType = WS_INCOMPLETE_FRAME;
 	Handshake hs;
@@ -319,7 +319,7 @@ int CSocketNode::receiveMsg(int socketIndex, char* cad, unsigned long long int& 
 				wsParseHandshake(cad, size, &hs);
 				memset(&Buffer_out, 0, BUFFER_SIZE);
 				len = 0;
-				wsGetHandshakeAnswer(&hs, Buffer_out, len);
+				wsGetHandshakeAnswer(&hs, (char*)Buffer_out, len);
 				if(sendBytes(socketIndex, Buffer_out, len) == 0){
 					printf("Handshake done...\n");
 				}
@@ -406,7 +406,7 @@ int CSocketNode::receiveMsg(int socketIndex, char* cad, unsigned long long int& 
 			result = -1;
 		}
 	}
-
+	delete [] header;
 	return result;
 }
 
@@ -431,13 +431,14 @@ void* CSocketNode::launchThread(void* p){
 		if(self->type == SOCKET_SERVER){
 			for(int i = 0; i < MAX_CLIENTS; i++){
 				if(self->socket_conn[i].getSocket() != INVALID_SOCKET){
-					char msg[BUFFER_SIZE];
+					char* msg = new char[BUFFER_SIZE];
 					unsigned long long int l=BUFFER_SIZE;
 					if(self->receiveMsg(i, msg, l, 0) == 0){
 						if(l > 0){
 							self->onMsg(i, msg,l);
 						}
 					}
+					delete [] msg;
 				}
 			}
 		} else {
@@ -588,6 +589,7 @@ void CSocketNode::wsGetHandshakeAnswer(Handshake* hs, char* outFrame, unsigned l
 		acceptKey = Base64::encode(hashCode, 20);
 
 		answer += acceptField + " " + acceptKey + WS_EOL;
+		delete [] hashCode;
 	}
 	if(hs->getProtocol().length() > 0){
 		answer += protocolField + " " + hs->getProtocol() + WS_EOL;
@@ -657,6 +659,7 @@ std::vector<std::string> CSocketNode::split(char* buffer, const char* delimiter)
 		result.push_back(std::string(current));
 		current = std::strtok(NULL, delimiter);
 	}
+	delete current;
 	return result;
 
 }

@@ -77,6 +77,11 @@ GeneralController::~GeneralController(void){
 	stopRobotTracking();
 	stopCurrentTour();
 	pthread_mutex_destroy(&mutexLandmarkLocker);
+	delete maestroControllers;
+	delete kalmanFuzzy;
+	delete ttsLipSync;
+	delete spdWSServer;
+	delete navSectors;
 }
 
 void GeneralController::onConnection(int socketIndex) //callback for client and server
@@ -228,16 +233,19 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 
 			break;
 		case 0x11:
-			trackRobot();
-			//startSitesTour();
+			//trackRobot();
+			startSitesTour();
 			break;
 		case 0x12:
-			stopRobotTracking();
+			//stopRobotTracking();
+			stopCurrentTour();
 			break;	
 		case 0x13:
 			if(granted){
 				getPositions(cad, x, y, theta);
+				stopRobotTracking();
 				setRobotPosition(x, y, theta);
+				trackRobot();
 				sendMsg(socketIndex, 0x13, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				std::cout << "Command 0x13. Set Robot position denied to " << getClientIPAddress(socketIndex) << std::endl;
@@ -273,7 +281,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(cad != NULL){
 				getMapId(cad, mapId);
 			} else {
-				mapId = currentSector->id;
+				mapId = currentSector->getId();
 			}
 			getMapInformationLandmarks(mapId, mapInformation);
 			sendMsg(socketIndex, 0x17, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
@@ -282,7 +290,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(cad != NULL){
 				getMapId(cad, mapId);
 			} else {
-				mapId = currentSector->id;
+				mapId = currentSector->getId();
 			}
 			getMapInformationFeatures(mapId, mapInformation);
 			sendMsg(socketIndex, 0x18, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
@@ -291,7 +299,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(cad != NULL){
 				getMapId(cad, mapId);
 			} else {
-				mapId = currentSector->id;
+				mapId = currentSector->getId();
 			}
 			getMapInformationSites(mapId, mapInformation);
 			sendMsg(socketIndex, 0x19, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
@@ -300,7 +308,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(cad != NULL){
 				getMapId(cad, mapId);
 			} else {
-				mapId = currentSector->id;
+				mapId = currentSector->getId();
 			}
 			getMapInformationSitesSequence(mapId, mapInformation);
 			sendMsg(socketIndex, 0x1A, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
@@ -509,7 +517,7 @@ void GeneralController::getMapId(char* cad, int& mapId){
 
 void GeneralController::getPositions(char* cad, float& x, float& y, float& theta){
 	char* current_number;
-	float values[6];
+	float values[3];
 	int index = 0;
 	current_number = std::strtok(cad, ",");
 
@@ -521,11 +529,12 @@ void GeneralController::getPositions(char* cad, float& x, float& y, float& theta
 	x = values[0];
 	y = values[1];
 	theta = values[2];
+	delete current_number;
 }
 
 void GeneralController::getCameraDevicePort(char* cad, int& device, int& port){
 	char* current_number;
-	int values[6];
+	int values[2];
 	int index = 0;
 	current_number = std::strtok(cad, ":");
 	//
@@ -535,11 +544,12 @@ void GeneralController::getCameraDevicePort(char* cad, int& device, int& port){
 	}
 	device = values[0];
 	port = values[1];
+	delete current_number;
 }
 
 void GeneralController::getPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value){
 	char* current_number;
-	int values[6];
+	int values[3];
 	int index = 0;
 	current_number = std::strtok(cad, ",");
 	//
@@ -550,11 +560,12 @@ void GeneralController::getPololuInstruction(char* cad, unsigned char& card_id, 
 	card_id = (unsigned char)values[0];
 	servo_id = (unsigned char)values[1];
 	value = values[2];
+	delete current_number;
 }
 
 void GeneralController::getVelocities(char* cad, float& lin_vel, float& ang_vel){
 	char* current_number;
-	float values[6];
+	float values[2];
 	int index = 0;
 	current_number = std::strtok(cad, ",");
 	
@@ -565,6 +576,7 @@ void GeneralController::getVelocities(char* cad, float& lin_vel, float& ang_vel)
 	}
 	lin_vel = values[0];
 	ang_vel = values[1];
+	delete current_number;
 }
 
 void GeneralController::getGestures(std::string type, std::string& gestures){
@@ -597,6 +609,7 @@ void GeneralController::getGestures(std::string type, std::string& gestures){
 	gestures = buffer_str;
 	the_file.close();
 	
+	
 }
 
 void GeneralController::saveGesture(std::string token, int type){
@@ -614,29 +627,30 @@ void GeneralController::saveGesture(std::string token, int type){
 			motor_positions[i++].pos = std::string(positions);
 			positions = strtok(NULL, ",");
 		}
-		
+		delete positions;
 		saveStaticGesture(gesture_name, motor_positions);
     }
 }
 
 void GeneralController::modifyGesture(std::string token, int type){
     if(type == 0){
-	s_motor motor_positions[SERVOS_COUNT];
-	int i = 0;
-	std::string gesture_id(strtok((char*)token.c_str(), "|"));
-	std::string gesture_name(strtok(NULL, "|"));
-	std::string gesture_positions(strtok(NULL, "|"));
-	        
-	char* positions = strtok((char*)gesture_positions.c_str(), ",");
-	while (positions != 0)
-	{
-            std::ostringstream convert;
-            convert << i;
-                motor_positions[i].idMotor = convert.str();
-		motor_positions[i++].pos = std::string(positions);
-		positions = strtok(NULL, ",");
-	}
-	modifyStaticGesture(gesture_id, gesture_name, motor_positions);
+		s_motor motor_positions[SERVOS_COUNT];
+		int i = 0;
+		std::string gesture_id(strtok((char*)token.c_str(), "|"));
+		std::string gesture_name(strtok(NULL, "|"));
+		std::string gesture_positions(strtok(NULL, "|"));
+		        
+		char* positions = strtok((char*)gesture_positions.c_str(), ",");
+		while (positions != 0)
+		{
+	            std::ostringstream convert;
+	            convert << i;
+	                motor_positions[i].idMotor = convert.str();
+			motor_positions[i++].pos = std::string(positions);
+			positions = strtok(NULL, ",");
+		}
+		delete positions;
+		modifyStaticGesture(gesture_id, gesture_name, motor_positions);
     }
 }
 
@@ -684,7 +698,8 @@ void GeneralController::modifyStaticGesture(std::string gesture_id, std::string 
         std::ofstream the_new_file(xmlFaceFullPath.c_str());
         the_new_file << doc;
         the_new_file.close(); 
-	}       
+	}  
+	     
 }
 
 void GeneralController::saveStaticGesture(std::string name, s_motor servos[]){
@@ -732,6 +747,7 @@ void GeneralController::saveStaticGesture(std::string name, s_motor servos[]){
         the_new_file << doc;
         the_new_file.close();    
 	}
+	
 }
 
 void GeneralController::saveDynamicGesture(std::string name, s_motor servos[]){
@@ -769,6 +785,7 @@ void GeneralController::removeGesture(std::string face_id){
         the_new_file << doc;
         the_new_file.close();
 	}
+	
 }
 
 void GeneralController::setGesture(std::string face_id, std::string& servo_positions){
@@ -841,6 +858,7 @@ void GeneralController::setGesture(std::string face_id, std::string& servo_posit
 	}
 	the_file.close();
 	servo_positions = bufferOut_str.str();
+	
 }
 
 void GeneralController::setServoPosition(unsigned char card_id, unsigned char servo_id, int position){
@@ -916,6 +934,7 @@ void* GeneralController::dynamicFaceThread(void* object){
 	}
 
 	the_file.close();
+	
 
 	usleep(1000*atoi(selected_dynamic_face.ts.c_str()));
 
@@ -941,7 +960,7 @@ void* GeneralController::dynamicFaceThread(void* object){
 void GeneralController::loadSector(int sectorId){
 	bool found = false;
 	for(int i = 0; i < navSectors->size() and not found; i++){
-		if(navSectors->at(i)->id == sectorId){
+		if(navSectors->at(i)->getId() == sectorId){
 			found = true;
 			currentSector = navSectors->at(i);
 			getTimestamp(mappingEnvironmentTimestamp);
@@ -963,30 +982,18 @@ void GeneralController::loadSectors(){
 	doc.parse<0>(&buffer[0]);
 	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
 
-	if(navSectors != NULL){
-		for(int i = 0; i < navSectors->size(); i++){
-			delete navSectors->at(i)->landmarks;
-			delete navSectors->at(i)->features;
-			delete navSectors->at(i)->sites;
-		}
-		delete navSectors;
-	}
-	navSectors = new std::vector<s_sector*>();
+	navSectors = new std::vector<MapSector*>();
 	
 	if(root_node != NULL){
 		for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){	
-			s_sector* navSector = new s_sector;
-			navSector->sitesCyclic = false;
+			MapSector* navSector = new MapSector;
+
 			int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 
-			navSector->id = xmlSectorId;
-			navSector->name = std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-			navSector->width = (float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())/100;
-			navSector->height = (float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())/100;
-
-			navSector->landmarks = new std::vector<s_landmark*>();
-			navSector->features = new std::vector<s_feature*>();
-			navSector->sites = new std::vector<s_site*>();
+			navSector->setId(xmlSectorId);
+			navSector->setName(std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value()));
+			navSector->setWidth((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())/100);
+			navSector->setHeight((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())/100);
 
 			xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
 			if(landmarks_root_node->first_node() !=  NULL){
@@ -1001,7 +1008,7 @@ void GeneralController::loadSectors(){
 					tempLandmark->xpos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
 					tempLandmark->ypos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
 
-					navSector->landmarks->push_back(tempLandmark);
+					navSector->addLandmark(tempLandmark);
 				}
 			}
 
@@ -1017,7 +1024,7 @@ void GeneralController::loadSectors(){
 					tempFeature->xpos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
 					tempFeature->ypos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
 
-					navSector->features->push_back(tempFeature);
+					navSector->addFeature(tempFeature);
 					
 				}
 			}
@@ -1027,13 +1034,13 @@ void GeneralController::loadSectors(){
 				if(sites_root_node->first_attribute(XML_ATTRIBUTE_CYCLIC_STR)){
 					std::string cyclic(sites_root_node->first_attribute(XML_ATTRIBUTE_CYCLIC_STR)->value());
 					if(cyclic == "yes"){
-						navSector->sitesCyclic = true;
+						navSector->setIfSitesCyclic(true);
 					}
 				}
 
 				if(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)){
 					std::string sequence(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)->value());
-					navSector->sequence = sequence;
+					navSector->setSequence(sequence);
 				}
 			}
 			
@@ -1049,13 +1056,14 @@ void GeneralController::loadSectors(){
 					tempSite->xpos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
 					tempSite->ypos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
 
-					navSector->sites->push_back(tempSite);
+					navSector->addSite(tempSite);
 				}
 			}
 			navSectors->push_back(navSector);
 		}
 	}
 	the_file.close();
+	
 }
 
 void GeneralController::loadRobotConfig(){
@@ -1151,7 +1159,6 @@ void GeneralController::loadRobotConfig(){
 	robotConfig->navParams->observationNoise->dZone = d_zone;
 	robotConfig->navParams->observationNoise->thZone = th2_zone;
 
-	
 	the_file.close();
 }
 
@@ -1160,46 +1167,47 @@ void GeneralController::getMapsAvailable(std::string& mapsAvailable){
 	buffer_str.clear();
 	for(int i = 0; i < navSectors->size(); i++){
 
-		buffer_str << navSectors->at(i)->id << ",";
-		buffer_str << navSectors->at(i)->name << ",";
-		buffer_str << navSectors->at(i)->width << ",";
-		buffer_str << navSectors->at(i)->height;
+		buffer_str << navSectors->at(i)->getId() << ",";
+		buffer_str << navSectors->at(i)->getName() << ",";
+		buffer_str << navSectors->at(i)->getWidth() << ",";
+		buffer_str << navSectors->at(i)->getHeight();
 		if(i != navSectors->size() - 1){
 			buffer_str << "|";
 		}
 	}
 	mapsAvailable = buffer_str.str();
+	buffer_str.clear();
 }
 
 void GeneralController::getMapInformationLandmarks(int mapId, std::string& mapInformation){
 
 	std::ostringstream buffer_str;
 	buffer_str.clear();
-	s_sector* requestedSectorInfo = NULL;
+	MapSector* requestedSectorInfo = NULL;
 	bool found = false;
 	for(int i = 0; i < navSectors->size() and not found; i++){
-		if(mapId == navSectors->at(i)->id){
+		if(mapId == navSectors->at(i)->getId()){
 			found = true;
 			requestedSectorInfo = navSectors->at(i);
 		}
 	}
 
 	if(requestedSectorInfo != NULL){
-		for(int j = 0; j < requestedSectorInfo->landmarks->size(); j++){
-			buffer_str << requestedSectorInfo->landmarks->at(j)->id << ",";
-			buffer_str << requestedSectorInfo->landmarks->at(j)->xpos << ",";
-			buffer_str << requestedSectorInfo->landmarks->at(j)->ypos << ",";
-			buffer_str << requestedSectorInfo->landmarks->at(j)->varMinX << ",";
-			buffer_str << requestedSectorInfo->landmarks->at(j)->varMaxX << ",";
-			buffer_str << requestedSectorInfo->landmarks->at(j)->varMinY << ",";
-			buffer_str << requestedSectorInfo->landmarks->at(j)->varMaxY;
-			if(j != requestedSectorInfo->landmarks->size() - 1){
+		for(int j = 0; j < requestedSectorInfo->landmarksSize(); j++){
+			buffer_str << requestedSectorInfo->landmarkAt(j)->id << ",";
+			buffer_str << requestedSectorInfo->landmarkAt(j)->xpos << ",";
+			buffer_str << requestedSectorInfo->landmarkAt(j)->ypos << ",";
+			buffer_str << requestedSectorInfo->landmarkAt(j)->varMinX << ",";
+			buffer_str << requestedSectorInfo->landmarkAt(j)->varMaxX << ",";
+			buffer_str << requestedSectorInfo->landmarkAt(j)->varMinY << ",";
+			buffer_str << requestedSectorInfo->landmarkAt(j)->varMaxY;
+			if(j != requestedSectorInfo->landmarksSize() - 1){
 				buffer_str << "|";
 			}
 		}			
 	}
 	mapInformation = buffer_str.str();
-
+	buffer_str.clear();
 }
 
 
@@ -1207,72 +1215,74 @@ void GeneralController::getMapInformationFeatures(int mapId, std::string& mapInf
 
 	std::ostringstream buffer_str;
 	buffer_str.clear();
-	s_sector* requestedSectorInfo = NULL;
+	MapSector* requestedSectorInfo = NULL;
 	bool found = false;
 	for(int i = 0; i < navSectors->size() and not found; i++){
-		if(mapId == navSectors->at(i)->id){
+		if(mapId == navSectors->at(i)->getId()){
 			found = true;
 			requestedSectorInfo = navSectors->at(i);
 		}
 	}
 
 	if(requestedSectorInfo != NULL){
-		for(int j = 0; j < requestedSectorInfo->features->size(); j++){
-			buffer_str << requestedSectorInfo->features->at(j)->id << ",";
-			buffer_str << requestedSectorInfo->features->at(j)->name << ",";
-			buffer_str << requestedSectorInfo->features->at(j)->xpos << ",";
-			buffer_str << requestedSectorInfo->features->at(j)->ypos << ",";
-			buffer_str << requestedSectorInfo->features->at(j)->width << ",";
-			buffer_str << requestedSectorInfo->features->at(j)->height;
-			if(j != requestedSectorInfo->features->size() - 1){
+		for(int j = 0; j < requestedSectorInfo->featuresSize(); j++){
+			buffer_str << requestedSectorInfo->featureAt(j)->id << ",";
+			buffer_str << requestedSectorInfo->featureAt(j)->name << ",";
+			buffer_str << requestedSectorInfo->featureAt(j)->xpos << ",";
+			buffer_str << requestedSectorInfo->featureAt(j)->ypos << ",";
+			buffer_str << requestedSectorInfo->featureAt(j)->width << ",";
+			buffer_str << requestedSectorInfo->featureAt(j)->height;
+			if(j != requestedSectorInfo->featuresSize() - 1){
 				buffer_str << "|";
 			}
 		}	
 	}
 	mapInformation = buffer_str.str();
+	buffer_str.clear();
 }
 
 void GeneralController::getMapInformationSites(int mapId, std::string& mapInformation){
 
 	std::ostringstream buffer_str;
 	buffer_str.clear();
-	s_sector* requestedSectorInfo = NULL;
+	MapSector* requestedSectorInfo = NULL;
 	bool found = false;
 	for(int i = 0; i < navSectors->size() and not found; i++){
-		if(mapId == navSectors->at(i)->id){
+		if(mapId == navSectors->at(i)->getId()){
 			found = true;
 			requestedSectorInfo = navSectors->at(i);
 		}
 	}
 
 	if(requestedSectorInfo != NULL){
-		for(int j = 0; j < requestedSectorInfo->sites->size(); j++){
-			buffer_str << requestedSectorInfo->sites->at(j)->id << ",";
-			buffer_str << requestedSectorInfo->sites->at(j)->name << ",";
-			buffer_str << requestedSectorInfo->sites->at(j)->xpos << ",";
-			buffer_str << requestedSectorInfo->sites->at(j)->ypos << ",";
-			buffer_str << requestedSectorInfo->sites->at(j)->radius;
-			if(j != requestedSectorInfo->sites->size() - 1){
+		for(int j = 0; j < requestedSectorInfo->sitesSize(); j++){
+			buffer_str << requestedSectorInfo->siteAt(j)->id << ",";
+			buffer_str << requestedSectorInfo->siteAt(j)->name << ",";
+			buffer_str << requestedSectorInfo->siteAt(j)->xpos << ",";
+			buffer_str << requestedSectorInfo->siteAt(j)->ypos << ",";
+			buffer_str << requestedSectorInfo->siteAt(j)->radius;
+			if(j != requestedSectorInfo->sitesSize() - 1){
 				buffer_str << "|";
 			}
 		}	
 	}
 	mapInformation = buffer_str.str();
+	buffer_str.clear();
 }
 
 void GeneralController::getMapInformationSitesSequence(int mapId, std::string& mapInformation){
 	mapInformation = "";
-	s_sector* requestedSectorInfo = NULL;
+	MapSector* requestedSectorInfo = NULL;
 	bool found = false;
 	for(int i = 0; i < navSectors->size() and not found; i++){
-		if(mapId == navSectors->at(i)->id){
+		if(mapId == navSectors->at(i)->getId()){
 			found = true;
 			requestedSectorInfo = navSectors->at(i);
 		}
 	}
 
 	if(requestedSectorInfo != NULL){
-		mapInformation = requestedSectorInfo->sequence;
+		mapInformation = requestedSectorInfo->getSequence();
 	}
 }
 
@@ -1281,9 +1291,9 @@ void GeneralController::addMapInformationSite(char* cad, int& indexAssigned){
 	if(data.size() == ADD_SITE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
-		s_sector* requestedSectorInfo = NULL;
+		MapSector* requestedSectorInfo = NULL;
 		for(int i = 0; i < navSectors->size() and not found; i++){
-			if(mapId == navSectors->at(i)->id){
+			if(mapId == navSectors->at(i)->getId()){
 				found = true;
 				requestedSectorInfo = navSectors->at(i);
 			}
@@ -1293,8 +1303,8 @@ void GeneralController::addMapInformationSite(char* cad, int& indexAssigned){
 			bool globalFound = false;
 			while(not globalFound){
 				found = false;
-				for(int i = 0; i < requestedSectorInfo->sites->size() and not found; i++){
-					if(indexAssigned == requestedSectorInfo->sites->at(i)->id){
+				for(int i = 0; i < requestedSectorInfo->sitesSize() and not found; i++){
+					if(indexAssigned == requestedSectorInfo->siteAt(i)->id){
 						found = true;
 					}
 				}
@@ -1317,17 +1327,17 @@ void GeneralController::addMapInformationSite(char* cad, int& indexAssigned){
 			tempSite->ypos = ((float)atoi(data.at(5).c_str())) / 100;
 			
 
-			requestedSectorInfo->sites->push_back(tempSite);
+			requestedSectorInfo->addSite(tempSite);
 
 			bool found = false;
 			for(int i = 0; i < navSectors->size() and not found; i++){
-				if(navSectors->at(i)->id == mapId){
+				if(navSectors->at(i)->getId() == mapId){
 					found = true;
 					navSectors->at(i) = requestedSectorInfo;
 				}
 			}
 
-			if(currentSector->id == mapId){
+			if(currentSector->getId() == mapId){
 				currentSector = requestedSectorInfo;
 			}
 
@@ -1371,6 +1381,7 @@ void GeneralController::addMapInformationSite(char* cad, int& indexAssigned){
 		    std::ofstream the_new_file(xmlSectorsFullPath.c_str());
 		    the_new_file << doc;
 		    the_new_file.close();
+		    
 		}
 	    
 	} else {
@@ -1383,9 +1394,9 @@ void GeneralController::modifyMapInformationSite(char* cad){
 	if(data.size() == MODIFY_SITE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
-		s_sector* requestedSectorInfo = NULL;
+		MapSector* requestedSectorInfo = NULL;
 		for(int i = 0; i < navSectors->size() and not found; i++){
-			if(mapId == navSectors->at(i)->id){
+			if(mapId == navSectors->at(i)->getId()){
 				found = true;
 				requestedSectorInfo = navSectors->at(i);
 			}
@@ -1394,27 +1405,27 @@ void GeneralController::modifyMapInformationSite(char* cad){
 		if(requestedSectorInfo != NULL){
 			int siteId = atoi(data.at(1).c_str());
 			found = false;
-			for(int i = 0; i < requestedSectorInfo->sites->size() and not found; i++){
-				if(siteId == requestedSectorInfo->sites->at(i)->id){
+			for(int i = 0; i < requestedSectorInfo->sitesSize() and not found; i++){
+				if(siteId == requestedSectorInfo->siteAt(i)->id){
 					found = true;
-					requestedSectorInfo->sites->at(i)->name = std::string(data.at(2));	
-					requestedSectorInfo->sites->at(i)->radius = ((float)atoi(data.at(3).c_str())) / 100;
-					requestedSectorInfo->sites->at(i)->tsec = ((float)atoi(data.at(4).c_str()));
-					requestedSectorInfo->sites->at(i)->xpos = ((float)atoi(data.at(5).c_str())) / 100;
-					requestedSectorInfo->sites->at(i)->ypos = ((float)atoi(data.at(6).c_str())) / 100;
+					requestedSectorInfo->siteAt(i)->name = std::string(data.at(2));	
+					requestedSectorInfo->siteAt(i)->radius = ((float)atoi(data.at(3).c_str())) / 100;
+					requestedSectorInfo->siteAt(i)->tsec = ((float)atoi(data.at(4).c_str()));
+					requestedSectorInfo->siteAt(i)->xpos = ((float)atoi(data.at(5).c_str())) / 100;
+					requestedSectorInfo->siteAt(i)->ypos = ((float)atoi(data.at(6).c_str())) / 100;
 
 				}
 			}
 
 			found = false;
 			for(int i = 0; i < navSectors->size() and not found; i++){
-				if(navSectors->at(i)->id == mapId){
+				if(navSectors->at(i)->getId() == mapId){
 					found = true;
 					navSectors->at(i) = requestedSectorInfo;
 				}
 			}
 
-			if(currentSector->id == mapId){
+			if(currentSector->getId() == mapId){
 				currentSector = requestedSectorInfo;
 			}
 
@@ -1463,6 +1474,7 @@ void GeneralController::modifyMapInformationSite(char* cad){
 		    std::ofstream the_new_file(xmlSectorsFullPath.c_str());
 		    the_new_file << doc;
 		    the_new_file.close();
+		    
 		}
 	} else {
 		std::cout << "Unable to edit site. Invalid number of parameters.." << std::endl;
@@ -1474,9 +1486,9 @@ void GeneralController::deleteMapInformationSite(char* cad){
 	if(data.size() == DELETE_SITE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
-		s_sector* requestedSectorInfo = NULL;
+		MapSector* requestedSectorInfo = NULL;
 		for(int i = 0; i < navSectors->size() and not found; i++){
-			if(mapId == navSectors->at(i)->id){
+			if(mapId == navSectors->at(i)->getId()){
 				found = true;
 				requestedSectorInfo = navSectors->at(i);
 			}
@@ -1486,25 +1498,25 @@ void GeneralController::deleteMapInformationSite(char* cad){
 			int indexInArray = NONE;
 			int siteId = atoi(data.at(1).c_str());
 			found = false;
-			for(int i = 0; i < requestedSectorInfo->sites->size() and not found; i++){
-				if(siteId == requestedSectorInfo->sites->at(i)->id){
+			for(int i = 0; i < requestedSectorInfo->sitesSize() and not found; i++){
+				if(siteId == requestedSectorInfo->siteAt(i)->id){
 					found = true;
 					indexInArray = i;
 				}
 			}
 			if(indexInArray != NONE){
-				requestedSectorInfo->sites->erase(requestedSectorInfo->sites->begin() + indexInArray);
+				requestedSectorInfo->deleteSiteAt(indexInArray);
 			}
 
 			found = false;
 			for(int i = 0; i < navSectors->size() and not found; i++){
-				if(navSectors->at(i)->id == requestedSectorInfo->id){
+				if(navSectors->at(i)->getId() == mapId){
 					found = true;
 					navSectors->at(i) = requestedSectorInfo;
 				}
 			}
 
-			if(currentSector->id == mapId){
+			if(currentSector->getId() == mapId){
 				currentSector = requestedSectorInfo;
 			}
 
@@ -1528,13 +1540,17 @@ void GeneralController::deleteMapInformationSite(char* cad){
 						xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
 						if(sites_root_node != NULL){
 							bool siteFound = false;
+							xml_node<> *toDelete = NULL;
 							for(xml_node<> *where = sites_root_node->first_node(XML_ELEMENT_SITE_STR); where and not siteFound; where = where->next_sibling()){
 								int indexToDelete = atoi(where->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 								if(indexToDelete == siteId){
 									siteFound = true;
-									sites_root_node->remove_node(where);
-									getTimestamp(mappingSitesTimestamp);
+									toDelete = where;
 								}
+							}
+							if(toDelete != NULL){
+								sites_root_node->remove_node(toDelete);
+								getTimestamp(mappingSitesTimestamp);
 							}
 
 						}
@@ -1546,6 +1562,7 @@ void GeneralController::deleteMapInformationSite(char* cad){
 		    std::ofstream the_new_file(xmlSectorsFullPath.c_str());
 		    the_new_file << doc;
 		    the_new_file.close();
+		    
 		}
 	} else {
 		std::cout << "Unable to delete site. Invalid number of parameters.." << std::endl;
@@ -1557,16 +1574,16 @@ void GeneralController::setSitesExecutionSequence(char* cad){
 	if(data.size() == SITE_SEQUENCE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
-		s_sector* requestedSectorInfo = NULL;
+		MapSector* requestedSectorInfo = NULL;
 		for(int i = 0; i < navSectors->size() and not found; i++){
-			if(mapId == navSectors->at(i)->id){
+			if(mapId == navSectors->at(i)->getId()){
 				found = true;
 				requestedSectorInfo = navSectors->at(i);
 			}
 		}
 
 		if(requestedSectorInfo != NULL){
-			requestedSectorInfo->sequence = data.at(1);
+			requestedSectorInfo->setSequence(data.at(1));
 		
 			xml_document<> doc;
 		    xml_node<>* root_node;       
@@ -1599,6 +1616,7 @@ void GeneralController::setSitesExecutionSequence(char* cad){
 		    std::ofstream the_new_file(xmlSectorsFullPath.c_str());
 		    the_new_file << doc;
 		    the_new_file.close();
+		    
 		}
 	} else {
 		std::cout << "Unable to set site sequence. Invalid number or parameters" << std::endl;
@@ -1610,9 +1628,9 @@ std::vector<std::string> data = split(cad, ",");
 	if(data.size() == ADD_FEATURE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
-		s_sector* requestedSectorInfo = NULL;
+		MapSector* requestedSectorInfo = NULL;
 		for(int i = 0; i < navSectors->size() and not found; i++){
-			if(mapId == navSectors->at(i)->id){
+			if(mapId == navSectors->at(i)->getId()){
 				found = true;
 				requestedSectorInfo = navSectors->at(i);
 			}
@@ -1622,8 +1640,8 @@ std::vector<std::string> data = split(cad, ",");
 			bool globalFound = false;
 			while(not globalFound){
 				found = false;
-				for(int i = 0; i < requestedSectorInfo->features->size() and not found; i++){
-					if(indexAssigned == requestedSectorInfo->features->at(i)->id){
+				for(int i = 0; i < requestedSectorInfo->featuresSize() and not found; i++){
+					if(indexAssigned == requestedSectorInfo->featureAt(i)->id){
 						found = true;
 					}
 				}
@@ -1633,8 +1651,6 @@ std::vector<std::string> data = split(cad, ",");
 					globalFound = true;
 				}
 			}
-
-			
 
 			s_feature* tempFeature = new s_feature;
 
@@ -1646,17 +1662,17 @@ std::vector<std::string> data = split(cad, ",");
 			tempFeature->ypos = ((float)atoi(data.at(5).c_str())) / 100;
 			
 
-			requestedSectorInfo->features->push_back(tempFeature);
+			requestedSectorInfo->addFeature(tempFeature);
 
 			bool found = false;
 			for(int i = 0; i < navSectors->size() and not found; i++){
-				if(navSectors->at(i)->id == mapId){
+				if(navSectors->at(i)->getId() == mapId){
 					found = true;
 					navSectors->at(i) = requestedSectorInfo;
 				}
 			}
 
-			if(currentSector->id == mapId){
+			if(currentSector->getId() == mapId){
 				currentSector = requestedSectorInfo;
 			}
 
@@ -1700,6 +1716,7 @@ std::vector<std::string> data = split(cad, ",");
 		    std::ofstream the_new_file(xmlSectorsFullPath.c_str());
 		    the_new_file << doc;
 		    the_new_file.close();
+		    
 		}
 	    
 	} else {
@@ -1712,9 +1729,9 @@ void GeneralController::modifyMapInformationFeatures(char* cad){
 	if(data.size() == MODIFY_FEATURE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
-		s_sector* requestedSectorInfo = NULL;
+		MapSector* requestedSectorInfo = NULL;
 		for(int i = 0; i < navSectors->size() and not found; i++){
-			if(mapId == navSectors->at(i)->id){
+			if(mapId == navSectors->at(i)->getId()){
 				found = true;
 				requestedSectorInfo = navSectors->at(i);
 			}
@@ -1723,27 +1740,27 @@ void GeneralController::modifyMapInformationFeatures(char* cad){
 		if(requestedSectorInfo != NULL){
 			int featureId = atoi(data.at(1).c_str());
 			found = false;
-			for(int i = 0; i < requestedSectorInfo->features->size() and not found; i++){
-				if(featureId == requestedSectorInfo->features->at(i)->id){
+			for(int i = 0; i < requestedSectorInfo->featuresSize() and not found; i++){
+				if(featureId == requestedSectorInfo->featureAt(i)->id){
 					found = true;
-					requestedSectorInfo->features->at(i)->name = std::string(data.at(2));	
-					requestedSectorInfo->features->at(i)->width = ((float)atoi(data.at(3).c_str())) / 100;
-					requestedSectorInfo->features->at(i)->height = ((float)atoi(data.at(4).c_str())) / 100;
-					requestedSectorInfo->features->at(i)->xpos = ((float)atoi(data.at(5).c_str())) / 100;
-					requestedSectorInfo->features->at(i)->ypos = ((float)atoi(data.at(6).c_str())) / 100;
+					requestedSectorInfo->featureAt(i)->name = std::string(data.at(2));	
+					requestedSectorInfo->featureAt(i)->width = ((float)atoi(data.at(3).c_str())) / 100;
+					requestedSectorInfo->featureAt(i)->height = ((float)atoi(data.at(4).c_str())) / 100;
+					requestedSectorInfo->featureAt(i)->xpos = ((float)atoi(data.at(5).c_str())) / 100;
+					requestedSectorInfo->featureAt(i)->ypos = ((float)atoi(data.at(6).c_str())) / 100;
 
 				}
 			}
 
 			found = false;
 			for(int i = 0; i < navSectors->size() and not found; i++){
-				if(navSectors->at(i)->id == mapId){
+				if(navSectors->at(i)->getId() == mapId){
 					found = true;
 					navSectors->at(i) = requestedSectorInfo;
 				}
 			}
 
-			if(currentSector->id == mapId){
+			if(currentSector->getId() == mapId){
 				currentSector = requestedSectorInfo;
 			}
 
@@ -1792,6 +1809,7 @@ void GeneralController::modifyMapInformationFeatures(char* cad){
 		    std::ofstream the_new_file(xmlSectorsFullPath.c_str());
 		    the_new_file << doc;
 		    the_new_file.close();
+		    
 		}
 	} else {
 		std::cout << "Unable to edit feature. Invalid number of parameters.." << std::endl;
@@ -1803,9 +1821,9 @@ void GeneralController::deleteMapInformationFeatures(char* cad){
 	if(data.size() == DELETE_FEATURE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
-		s_sector* requestedSectorInfo = NULL;
+		MapSector* requestedSectorInfo = NULL;
 		for(int i = 0; i < navSectors->size() and not found; i++){
-			if(mapId == navSectors->at(i)->id){
+			if(mapId == navSectors->at(i)->getId()){
 				found = true;
 				requestedSectorInfo = navSectors->at(i);
 			}
@@ -1815,25 +1833,25 @@ void GeneralController::deleteMapInformationFeatures(char* cad){
 			int indexInArray = NONE;
 			int featureId = atoi(data.at(1).c_str());
 			found = false;
-			for(int i = 0; i < requestedSectorInfo->features->size() and not found; i++){
-				if(featureId == requestedSectorInfo->features->at(i)->id){
+			for(int i = 0; i < requestedSectorInfo->featuresSize() and not found; i++){
+				if(featureId == requestedSectorInfo->featureAt(i)->id){
 					found = true;
 					indexInArray = i;
 				}
 			}
 			if(indexInArray != NONE){
-				requestedSectorInfo->features->erase(requestedSectorInfo->features->begin() + indexInArray);
+				requestedSectorInfo->deleteFeatureAt(indexInArray);
 			}
 
 			found = false;
 			for(int i = 0; i < navSectors->size() and not found; i++){
-				if(navSectors->at(i)->id == requestedSectorInfo->id){
+				if(navSectors->at(i)->getId() == mapId){
 					found = true;
 					navSectors->at(i) = requestedSectorInfo;
 				}
 			}
 
-			if(currentSector->id == mapId){
+			if(currentSector->getId() == mapId){
 				currentSector = requestedSectorInfo;
 			}
 
@@ -1857,13 +1875,17 @@ void GeneralController::deleteMapInformationFeatures(char* cad){
 						xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
 						if(features_root_node != NULL){
 							bool featureFound = false;
+							xml_node<> *toDelete = NULL;
 							for(xml_node<> *where = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); where and not featureFound; where = where->next_sibling()){
 								int indexToDelete = atoi(where->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 								if(indexToDelete == featureId){
 									featureFound = true;
-									features_root_node->remove_node(where);
-									getTimestamp(mappingFeaturesTimestamp);
+									toDelete = where;
 								}
+							}
+							if(toDelete != NULL){
+								features_root_node->remove_node(toDelete);
+								getTimestamp(mappingFeaturesTimestamp);
 							}
 
 						}
@@ -1875,6 +1897,7 @@ void GeneralController::deleteMapInformationFeatures(char* cad){
 		    std::ofstream the_new_file(xmlSectorsFullPath.c_str());
 		    the_new_file << doc;
 		    the_new_file.close();
+		    
 		}
 	} else {
 		std::cout << "Unable to delete feature. Invalid number of parameters.." << std::endl;
@@ -1945,6 +1968,7 @@ void GeneralController::onBumpersUpdate(std::vector<bool> front, std::vector<boo
 			spdWSServer->sendMsg(i, 0x00, bump, dataLen);
 		}
 	}
+	delete[] bump;
 }
 
 void GeneralController::onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed){
@@ -1957,7 +1981,7 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 	robotVelocity(1, 0) = rotSpeed;
 	
 	char* bump = new char[256];
-	sprintf(bump, "$POSE_VEL|%.4f,%.4f,%.4f,%.4f,%.4f", robotRawEncoderPosition(0, 0), robotRawEncoderPosition(1, 0), robotRawEncoderPosition(2, 0), robotVelocity(0, 0), robotVelocity(1, 0));
+	sprintf(bump, "$POSE_VEL|%.4f,%.4f,%.4f,%.4f,%.4f", robotEncoderPosition(0, 0), robotEncoderPosition(1, 0), robotEncoderPosition(2, 0), robotVelocity(0, 0), robotVelocity(1, 0));
 	int dataLen = strlen(bump);
 	if(spdUDPClient != NULL){
 		spdUDPClient->sendData((unsigned char*)bump, dataLen);
@@ -1967,6 +1991,7 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 			spdWSServer->sendMsg(i, 0x00, bump, dataLen);
 		}
 	}
+	delete[] bump;
 }
 
 
@@ -1987,11 +2012,11 @@ void GeneralController::onBatteryChargeStateChanged(char battery){
 	if(!setChargerPosition && ((int)battery) > 0){
 		if(currentSector != NULL){
 			
-			for(int i = 0; i< currentSector->features->size(); i++){
-				if(currentSector->features->at(i)->name == SEMANTIC_FEATURE_CHARGER_STR){
+			for(int i = 0; i< currentSector->featuresSize(); i++){
+				if(currentSector->featureAt(i)->name == SEMANTIC_FEATURE_CHARGER_STR){
 					setChargerPosition = true;
-					float xpos = currentSector->features->at(i)->xpos;
-					float ypos = currentSector->features->at(i)->ypos;
+					float xpos = currentSector->featureAt(i)->xpos;
+					float ypos = currentSector->featureAt(i)->ypos;
 					Sleep(100);
 					setRobotPosition(xpos, ypos, M_PI/2);
 				}
@@ -2062,6 +2087,14 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 	pthread_mutex_unlock(&mutexLandmarkLocker);
 }
 
+void GeneralController::onSecurityDistanceWarningSignal(){
+	printf("Alert on something is blocking Doris to achieve goal...\n");
+}
+
+void GeneralController::onSecurityDistanceStopSignal(){
+	printf("Doris Stopped. Could not achieve goal %d...\n", lastSiteVisitedIndex);
+}
+
 void GeneralController::startSitesTour(){
 	pthread_t tourThread;
 	stopCurrentTour();
@@ -2073,27 +2106,27 @@ void GeneralController::startSitesTour(){
 void* GeneralController::sitesTourThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	self->keepTourAlive = YES;
-    std::vector<std::string> spltdSequence = self->split(self->currentSector->sequence.c_str());
+    std::vector<std::string> spltdSequence = self->split((char*)self->currentSector->getSequence().c_str(), ",");
 	
 	while(ros::ok() && self->keepTourAlive == YES){
         int goalIndex = self->lastSiteVisitedIndex + 1;
-		float xpos = self->currentSector->sites->at(goalIndex)->xpos;
-		float ypos = self->currentSector->sites->at(goalIndex)->ypos;
+		float xpos = self->currentSector->siteAt(goalIndex)->xpos;
+		float ypos = self->currentSector->siteAt(goalIndex)->ypos;
 		Sleep(100);
 		self->moveRobotToPosition(xpos, ypos, 0.0);
 		while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) Sleep(100);
         if (self->isGoalAchieved()) {
             self->lastSiteVisitedIndex++;
-            if (self->sitesCyclic && self->lastSiteVisitedIndex == spltdSequence.size()) {
+            if (self->currentSector->isSitesCyclic() && (self->lastSiteVisitedIndex == (spltdSequence.size() - 1))) {
                 self->lastSiteVisitedIndex = NONE;
             }
         }
-        if (isGoalCanceled()) {
+        if (self->isGoalCanceled()) {
             self->keepTourAlive = NO;
         }
 	}
 	self->keepTourAlive = NO;
-    delete self;
+    //delete self;
 	return NULL;
 }
 
@@ -2144,7 +2177,7 @@ void GeneralController::initializeKalmanVariables(){
 	uX = fuzzy::fstats::uncertainty(wdK1->getVertexA(), wdK1->getVertexB(), wdK1->getVertexC(), wdK1->getVertexD());
 	uTh = fuzzy::fstats::uncertainty(wThK1->getVertexA(), wThK1->getVertexB(), wThK1->getVertexC(), wThK1->getVertexD());
 
-	R =  Matrix(2 * currentSector->landmarks->size(), 2 * currentSector->landmarks->size());
+	R =  Matrix(2 * currentSector->landmarksSize(), 2 * currentSector->landmarksSize());
 	for (int i = 0; i < R.cols_size(); i++){
 		if((i % 2) != 0){
 			R(i, i) = uTh;
@@ -2207,14 +2240,14 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
 
 
-		Hk = Matrix(2 * self->currentSector->landmarks->size(), STATE_VARIABLES);
-		for(int i = 0, zIndex = 0; i < self->currentSector->landmarks->size(); i++, zIndex += 2){
-			Hk(zIndex, 0) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex, 1) = -((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+		Hk = Matrix(2 * self->currentSector->landmarksSize(), STATE_VARIABLES);
+		for(int i = 0, zIndex = 0; i < self->currentSector->landmarksSize(); i++, zIndex += 2){
+			Hk(zIndex, 0) = -((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0))/std::sqrt(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex, 1) = -((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0))/std::sqrt(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
 			Hk(zIndex, 2) = 0.0;
 
-			Hk(zIndex + 1, 0) = ((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex + 1, 1) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex + 1, 0) = ((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0))/(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex + 1, 1) = -((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0))/(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
 			Hk(zIndex + 1, 2) = -1.0;
 		}
 		Matrix zkl;
@@ -2222,7 +2255,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 
 		//printf("\n\nSeen landmarks: %d\n", self->landmarks.size());
 		pthread_mutex_lock(&self->mutexLandmarkLocker);
-		Matrix zl(2 * self->currentSector->landmarks->size(), 1);
+		Matrix zl(2 * self->currentSector->landmarksSize(), 1);
 		for (int i = 0; i < self->landmarks.size(); i++){
 			Matrix l = self->landmarks.at(i);
 			//printf("landmarks {d: %f, a: %f}\n", l(0, 0), l(1, 0));
@@ -2246,7 +2279,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		Matrix newPosition = self->robotRawEncoderPosition + Wk * zl;
 
-		self->setRobotPosition(newPosition);
+		self->setPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
 		Sleep(29);
 	}
 	self->keepRobotTracking = NO;
@@ -2319,14 +2352,14 @@ void* GeneralController::trackRobotThread(void* object){
 		// 2 - Observation
 		//ROS_INFO("2 - Observation");
 		
-		Hk = Matrix(2 * self->currentSector->landmarks->size(), STATE_VARIABLES);
-		for(int i = 0, zIndex = 0; i < self->currentSector->landmarks->size(); i++, zIndex += 2){
-			Hk(zIndex, 0) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex, 1) = -((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0))/std::sqrt(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+		Hk = Matrix(2 * self->currentSector->landmarksSize(), STATE_VARIABLES);
+		for(int i = 0, zIndex = 0; i < self->currentSector->landmarksSize(); i++, zIndex += 2){
+			Hk(zIndex, 0) = -((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0))/std::sqrt(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex, 1) = -((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0))/std::sqrt(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
 			Hk(zIndex, 2) = 0.0;
 
-			Hk(zIndex + 1, 0) = ((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex + 1, 1) = -((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0))/(std::pow((self->currentSector->landmarks->at(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarks->at(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex + 1, 0) = ((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0))/(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
+			Hk(zIndex + 1, 1) = -((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0))/(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
 			Hk(zIndex + 1, 2) = -1.0;
 		}
 
@@ -2346,7 +2379,7 @@ void* GeneralController::trackRobotThread(void* object){
 		//ROS_INFO("3 - Matching");
 		ROS_INFO("Seen landmarks: %d", self->landmarks.size());
 		pthread_mutex_lock(&self->mutexLandmarkLocker);
-		Matrix zl(2 * self->currentSector->landmarks->size(), TRAP_VERTEX);
+		Matrix zl(2 * self->currentSector->landmarksSize(), TRAP_VERTEX);
 		for (int i = 0; i < self->landmarks.size(); i++){
 			Matrix l = self->landmarks.at(i);
 			int mode = 0;
@@ -2503,11 +2536,11 @@ Matrix GeneralController::multTrapMatrix(Matrix mat, Matrix trap){
 }
 
 void GeneralController::getObservations(Matrix& observations){
-	Matrix result(2 * currentSector->landmarks->size(), 1);
+	Matrix result(2 * currentSector->landmarksSize(), 1);
 
-	for(int k = 0; k < currentSector->landmarks->size(); k++){
+	for(int k = 0; k < currentSector->landmarksSize(); k++){
 		float distance = 0, angle = 0;
-		s_landmark* landmark = currentSector->landmarks->at(k);
+		s_landmark* landmark = currentSector->landmarkAt(k);
 
 
 		landmarkObservation(robotRawEncoderPosition, landmark, distance, angle);
@@ -2529,7 +2562,7 @@ void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*>
 	fuzzy::trapezoid *trapY = kalmanFuzzy->at(X_INDEX + 1);
 	fuzzy::trapezoid *trapTh = kalmanFuzzy->at(X_INDEX + 2);
 
-	Matrix zklt(2 * currentSector->landmarks->size(), 4);
+	Matrix zklt(2 * currentSector->landmarksSize(), 4);
 	Matrix matXk(STATE_VARIABLES, TRAP_VERTEX);
 	matXk(0, 0) = trapX->getVertexA();
 	matXk(0, 1) = trapX->getVertexB();
@@ -2564,8 +2597,8 @@ void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*>
 	var(1, 0) = (matXk(1, 3) - matXk(1, 0)) / 4;
 	var(2, 0) = (matXk(2, 3) - matXk(2, 0)) / 4;
 
-	for(int k = 0; k < currentSector->landmarks->size(); k++){
-		s_landmark* landmark = currentSector->landmarks->at(k);
+	for(int k = 0; k < currentSector->landmarksSize(); k++){
+		s_landmark* landmark = currentSector->landmarkAt(k);
 		Matrix state(STATE_VARIABLES, 1);
 		float distance = 0, angle = 0;
 		state(0, 0) = matXk(0, 0);
@@ -2584,8 +2617,8 @@ void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*>
 	for(float x = matXk(0, 0); x < (matXk(0, 3) + var(0, 0)/4); x+=var(0, 0)){
 		for(float y = matXk(1, 0); y < (matXk(1, 3) + var(1, 0)/4); y+=var(1, 0)){
 			for(float th = matXk(2, 0); th < (matXk(2, 3) + var(2, 0)/4); th+=var(2, 0)){
-				for(int k = 0; k < currentSector->landmarks->size(); k++){
-					s_landmark* landmark = currentSector->landmarks->at(k);
+				for(int k = 0; k < currentSector->landmarksSize(); k++){
+					s_landmark* landmark = currentSector->landmarkAt(k);
 					Matrix state(STATE_VARIABLES, 1);
 					float distance = 0, angle = 0;
 					state(0, 0) = x;
@@ -2613,8 +2646,8 @@ void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*>
 	var(1, 0) = (matXk(1, 2) - matXk(1, 1)) / 4;
 	var(2, 0) = (matXk(2, 2) - matXk(2, 1)) / 4;
 
-	for(int k = 0; k < currentSector->landmarks->size(); k++){
-		s_landmark* landmark = currentSector->landmarks->at(k);
+	for(int k = 0; k < currentSector->landmarksSize(); k++){
+		s_landmark* landmark = currentSector->landmarkAt(k);
 		Matrix state(STATE_VARIABLES, 1);
 		float distance = 0, angle = 0;
 		state(0, 0) = matXk(0, 1);
@@ -2633,8 +2666,8 @@ void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*>
 	for(float x = matXk(0, 1); x < (matXk(0, 2) + var(0, 0)/4); x+=var(0, 0)){
 		for(float y = matXk(1, 1); y < (matXk(1, 2) + var(1, 0)/4); y+=var(1, 0)){
 			for(float th = matXk(2, 1); th < (matXk(2, 2) + var(2, 0)/4); th+=var(2, 0)){
-				for(int k = 0; k < currentSector->landmarks->size(); k++){
-					s_landmark* landmark = currentSector->landmarks->at(k);
+				for(int k = 0; k < currentSector->landmarksSize(); k++){
+					s_landmark* landmark = currentSector->landmarkAt(k);
 					Matrix state(STATE_VARIABLES, 1);
 					float distance = 0, angle = 0;
 					state(0, 0) = x;
@@ -2771,10 +2804,15 @@ void GeneralController::stopRobotTracking(){
 	if(keepRobotTracking == YES){
 		keepRobotTracking = MAYBE;
 		std::cout << "Stopping robot tracking thread" << std::endl;
-		pthread_cancel(trackThread);
-		keepRobotTracking = NO;
-		//while(keepRobotTracking != NO) Sleep(100);
+		//pthread_cancel(trackThread);
+		//keepRobotTracking = NO;
+		while(keepRobotTracking != NO) Sleep(100);
 		std::cout << "Stopped robot tracking thread" << std::endl;
+
+		for(int i = 0; i < kalmanFuzzy->size(); i++){
+			delete kalmanFuzzy->at(i);
+		}
+		kalmanFuzzy->clear();
 	}
 }
 
@@ -2839,6 +2877,7 @@ void* GeneralController::streamingThread(void* object){
 		self->vcSecond.release();
 	}
 	self->streamingActive = NO;
+	delete udp_client;
 	return NULL;
 }
 
@@ -2846,14 +2885,14 @@ void* GeneralController::serverStatusThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	while(ros::ok()){
 		std::ostringstream buffer_str;
-		buffer_str << "$DORIS|" << self->currentSector->id << "," << self->emotionsTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingFeaturesTimestamp.str() << "," + self->mappingSitesTimestamp.str();
+		buffer_str << "$DORIS|" << self->currentSector->getId() << "," << self->emotionsTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingFeaturesTimestamp.str() << "," + self->mappingSitesTimestamp.str();
 
 		if(self->spdUDPClient != NULL){
 			self->spdUDPClient->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());
 		}
 		for(int i = 0; i < MAX_CLIENTS; i++){
 			if(self->isConnected(i) && self->isWebSocket(i)){
-				//self->spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
+				self->spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
 			}
 		}
 		Sleep(105);

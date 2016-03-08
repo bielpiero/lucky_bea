@@ -48,10 +48,8 @@ RobotNode::RobotNode(const char* port){
     robot->requestEncoderPackets();
     myRawPose = new ArPose(0.0, 0.0, 0.0);
     
-    gotoPoseAction = new ArActionGoto("goto", ArPose(0.0, 0.0, 0.0), 100, 100, 100);
-    gyroPoseAction = new ArActionInput("Input");
+    gotoPoseAction = new RNActionGoto;
  	robot->addAction(gotoPoseAction, 89);
-    robot->addAction(gyroPoseAction, 90);
     
     this->goalCanceled = false;
 
@@ -75,11 +73,18 @@ RobotNode::RobotNode(const char* port){
     
     //pthread_create(&distanceThread, NULL, securityDistanceThread, (void *)(this)  );
     
-    //pthread_create(&distanceTimerThread, NULL, securityDistanceTimerThread, (void *)(this)  );
+    pthread_create(&distanceTimerThread, NULL, securityDistanceTimerThread, (void *)(this)  );
 }
 
 RobotNode::~RobotNode(){
-	
+    delete myRawPose;
+    delete gotoPoseAction;
+    delete sick;
+    delete laser;
+    delete laserConnector;
+    delete sonar;
+	delete robot;
+    delete connector;
 }
 
 void RobotNode::disconnect(){
@@ -125,17 +130,18 @@ void RobotNode::getLaserScan(void){
 	if(sick != NULL){
 		sick->lockDevice();
         
-		std::vector<ArSensorReading> *currentReadings = sick->getRawReadingsAsVector();
-		ArDrawingData* draw = sick->getCurrentDrawingData();
+		std::vector<ArSensorReading> *currentReadings = new std::vector<ArSensorReading>(*sick->getRawReadingsAsVector());
+		//ArDrawingData* draw = sick->getCurrentDrawingData();
 
 		data = new LaserScan();
 		for(size_t it = 0; it < currentReadings->size(); it++){
 			data->addLaserScanData((float)currentReadings->at(it).getRange() / 1000, (float)currentReadings->at(it).getExtraInt());
 			//data->setScanPrimaryColor(draw->getPrimaryColor().getRed(), draw->getPrimaryColor().getGreen(), draw->getPrimaryColor().getBlue());
-			draw++;
+			//draw++;
 		}
         sick->unlockDevice();
         onLaserScanCompleted(data);
+        currentReadings->clear();
         delete currentReadings;
         delete data;
 	}
@@ -145,6 +151,8 @@ void RobotNode::getLaserScan(void){
 void RobotNode::getRobotPosition(){
 	myPose = new ArPose(robot->getPose());
     onPositionUpdate(myPose->getX()/1e3, myPose->getY()/1e3, myPose->getThRad(), robot->getVel()/1e3, robot->getRotVel()*M_PI/180);
+    delete myPose;
+    myPose = NULL;
 }
 
 void RobotNode::getRawRobotPosition(){
@@ -201,12 +209,14 @@ void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed
     robot->setAbsoluteMaxRotVel(rotSpeed);
     this->goalCanceled = false;
     robot->clearDirectMotion();
+    double distanceLocal = robot->findDistanceTo(newPose);
+    double deltaThetaLocal = robot->findDeltaHeadingTo(newPose);
+    printf("{Distance: %f, DeltaTheta: %f}\n", distanceLocal, deltaThetaLocal);
     if(x == 0.0 && y == 0.0 && theta != 0.0){
-        //gyroPoseAction->setRotVel(rotSpeed);
-        gyroPoseAction->setHeading(theta * 180/M_PI);
-        
+                
     } else {
         gotoPoseAction->setGoal(newPose);
+
     }
     
     robot->setAbsoluteMaxTransVel(this->maxAbsoluteTransVel);
@@ -222,7 +232,6 @@ void RobotNode::setPosition(double x, double y, double theta){
     robot->lock();
     this->goalCanceled = false;
     robot->clearDirectMotion();
-    gyroPoseAction->clear();
     pthread_mutex_lock(&mutexRawPositionLocker);
     myRawPose->setPose(x * 1000, y * 1000, theta * 180 / M_PI);
     pthread_mutex_unlock(&mutexRawPositionLocker);
@@ -484,37 +493,37 @@ void* RobotNode::dataPublishingThread(void* object){
         ArUtil::sleep(10);
     }
     self->keepActiveSensorDataThread = NO;
-    delete self;
     return NULL;
 }
 
 void* RobotNode::securityDistanceThread(void* object){
     RobotNode* self = (RobotNode*)object;
     self->keepActiveSecurityDistanceThread = YES;
+
     while(self->keepActiveSecurityDistanceThread == YES){
         ArSick* sickLaser = (ArSick*)self->laser;
         if(sickLaser != NULL){
             sickLaser->lockDevice();
             
-            std::vector<ArSensorReading> *currentReadings = sickLaser->getRawReadingsAsVector();
+            std::vector<ArSensorReading> *currentReadings = new std::vector<ArSensorReading>(*sickLaser->getRawReadingsAsVector());
             for(size_t it = 0; it < currentReadings->size(); it++){
                 if(sickLaser->getDegrees() == ArSick::DEGREES180){
                     if(sickLaser->getIncrement() == ArSick::INCREMENT_HALF){
                         if(it > MIN_INDEX_LASER_SECURITY_DISTANCE && it < MAX_INDEX_LASER_SECURITY_DISTANCE){
-                            executeLaserSecurityDistance((float)currentReadings->at(it).getRange());
+                            self->executeLaserSecurityDistance((float)currentReadings->at(it).getRange());
                         }
-                    } else if(it > (MIN_INDEX_LASER_SECURITY_DISTANCE / 2) && it < (MIN_INDEX_LASER_SECURITY_DISTANCE / 2){
-                        executeLaserSecurityDistance((float)currentReadings->at(it).getRange());
+                    } else if(it > (MIN_INDEX_LASER_SECURITY_DISTANCE / 2) && it < (MIN_INDEX_LASER_SECURITY_DISTANCE / 2)){
+                        self->executeLaserSecurityDistance((float)currentReadings->at(it).getRange());
                     }
                 }
             }
             sickLaser->unlockDevice();
+            currentReadings->clear();
             delete currentReadings;
         }
         ArUtil::sleep(11);
     }
     self->keepActiveSecurityDistanceThread = NO;
-    delete self;
     return NULL;
 }
 
@@ -524,6 +533,7 @@ void RobotNode::executeLaserSecurityDistance(float value){
             this->doNotMove = true;
             this->robot->stop();
         } else if(this->gotoPoseAction->isActive()){
+            std::cout << "Something is stopping Doris..." << std::endl;
             this->gotoPoseAction->deactivate();
             this->wasDeactivated = true;
             
@@ -544,9 +554,9 @@ void* RobotNode::securityDistanceTimerThread(void* object){
         if(self->wasDeactivated){
             ArUtil::sleep(1000);
             self->timerSecs++;
-            if(timerSecs == securityDistanceWarningTime){
+            if(self->timerSecs == self->securityDistanceWarningTime){
                 self->onSecurityDistanceWarningSignal();
-            } else if(timerSecs == securityDistanceStopTime){
+            } else if(self->timerSecs == self->securityDistanceStopTime){
                 self->robot->lock();
                 self->cancelRobotGoal();
                 //self->gotoPoseAction->cancelGoal();
@@ -559,6 +569,7 @@ void* RobotNode::securityDistanceTimerThread(void* object){
         } else{
             self->timerSecs = 0;
         }
+        ArUtil::sleep(13);
     }
     self->keepActiveSecurityDistanceTimerThread = NO;
     delete self;

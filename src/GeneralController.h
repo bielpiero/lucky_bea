@@ -151,7 +151,8 @@ struct s_site{
 	float ypos;
 };
 
-struct s_sector{
+class MapSector{
+private:
 	int id;
 	std::string name;
 	float width;
@@ -161,6 +162,78 @@ struct s_sector{
 	std::vector<s_landmark*> *landmarks;
 	std::vector<s_feature*> *features;
 	std::vector<s_site*> *sites;
+public:
+	MapSector(){
+		sitesCyclic = false;
+		landmarks = new std::vector<s_landmark*>();
+		features = new std::vector<s_feature*>();
+		sites = new std::vector<s_site*>();
+	}
+	~MapSector(){
+		deleteAllLandmarks();
+        delete landmarks;
+
+        deleteAllFeatures();
+        delete features;
+
+        deleteAllSites();
+        delete sites;
+	}
+
+	void setId(int id){ this->id = id; }
+	float getId(){ return this->id; }
+
+	void setName(std::string name){ this->name = name; }
+	std::string getName(){ return this->name; }
+
+	void setWidth(float width){ this->width = width; }
+	float getWidth(){ return this->width; }
+
+	void setHeight(float height){ this->height = height; }
+	float getHeight(){ return this->height; }
+
+	void setIfSitesCyclic(bool sitesCyclic){ this->sitesCyclic = sitesCyclic; }
+	float isSitesCyclic(){ return this->sitesCyclic; }
+
+	void setSequence(std::string sequence){ this->sequence = sequence; }
+	std::string getSequence(){ return this->sequence; }
+
+	void addSite(s_site* site){ sites->push_back(site); }
+	void addFeature(s_feature* feature){ features->push_back(feature); }
+	void addLandmark(s_landmark* landmark){ landmarks->push_back(landmark); }
+
+	s_site* siteAt(int index) { return sites->at(index); }
+	s_feature* featureAt(int index) { return features->at(index); }
+	s_landmark* landmarkAt(int index) { return landmarks->at(index); }
+
+	void deleteSiteAt(int index) { sites->erase(sites->begin() + index); }
+	void deleteFeatureAt(int index) { features->erase(features->begin() + index); }
+	void deleteLandmarkAt(int index) { landmarks->erase(landmarks->begin() + index); }	
+
+	size_t sitesSize() { return sites->size(); }
+	size_t featuresSize() { return features->size(); }
+	size_t landmarksSize() { return landmarks->size(); }
+
+	void deleteAllSites() {  
+		for (int i = 0; i < sites->size(); i++) {
+            delete sites->at(i);
+        }
+        sites->clear();
+    }
+
+    void deleteAllFeatures(){
+    	for (int i = 0; i < features->size(); i++) {
+            delete features->at(i);
+        }
+        features->clear();
+    }
+
+    void deleteAllLandmarks(){
+    	for (int i = 0; i < landmarks->size(); i++) {
+            delete landmarks->at(i);
+        }
+        landmarks->clear();
+    }
 };
 
 
@@ -226,6 +299,8 @@ public:
 	void onBatteryChargeStateChanged(char battery);
 	void onSonarsDataUpdate(std::vector<PointXY*>* data);
 	void onLaserScanCompleted(LaserScan* laser);
+	void onSecurityDistanceWarningSignal();
+    void onSecurityDistanceStopSignal();
 	
 	void initializeKalmanVariables();
 	
@@ -270,8 +345,8 @@ private:
 	
 	unsigned char keepRobotTracking;
 	unsigned char keepTourAlive;
-	std::vector<s_sector*>* navSectors;
-	s_sector* currentSector;
+	std::vector<MapSector*>* navSectors;
+	MapSector* currentSector;
 	s_robot* robotConfig;
 
 	pthread_t trackThread;

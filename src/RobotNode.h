@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include "Aria.h"
+
+#include "RNActionGoto.h"
 
 #define NONE -1
 
@@ -72,13 +73,13 @@ public:
     ~LaserScan(){
         ranges->clear();
         intensities->clear();
-        delete [] ranges;
-        delete [] intensities;
+        delete ranges;
+        delete intensities;
         for (int i = 0; i < color->size(); i++) {
             delete color->at(i);
         }
         color->clear();
-        delete [] color;
+        delete color;
     }
 	std::vector<float>* getRanges() { return ranges; }
 	std::vector<float>* getIntensities() { return intensities; }
@@ -109,8 +110,7 @@ private:
 	ArLaserConnector *laserConnector;
 	ArLaser *laser;
     ArSick *sick;
-    ArActionGoto *gotoPoseAction;
-    ArActionInput *gyroPoseAction;
+    RNActionGoto *gotoPoseAction;
     ArRobot *robot;
     ArPose *myPose;
     ArPose *myRawPose;

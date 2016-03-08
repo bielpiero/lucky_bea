@@ -59,8 +59,8 @@ class CSocketNode
 
 public:
 	char*   ip_address;
-	char	Buffer_in[BUFFER_SIZE];	  // Maximun buiffer to send
-	char	Buffer_out[BUFFER_SIZE];
+	unsigned char	Buffer_in[BUFFER_SIZE];	  // Maximun buiffer to send
+	unsigned char	Buffer_out[BUFFER_SIZE];
 	CSocketNode();
 	virtual ~CSocketNode();	
 	int init(const char* address, int port,int type);
@@ -68,9 +68,9 @@ public:
 	int isConnected(int socketIndex);
 	int sendMsg(int socketIndex, const char opr, const char* cad, unsigned long long int length);
 	int wsSendPingMsg(int socketIndex);
-	int sendBytes(int socketIndex, char* cad, unsigned long long int length);
+	int sendBytes(int socketIndex, unsigned char* cad, unsigned long long int length);
 	int receiveMsg(int socketIndex, char* cad, unsigned long long int& size, int timeout=200);		
-	int receiveBytes(int socketIndex, char* cad, unsigned long long int& length, int timeout);
+	int receiveBytes(int socketIndex, unsigned char* cad, unsigned long long int& length, int timeout);
 	int getServerPort();
 
 	bool isWebSocket(int socketIndex);
