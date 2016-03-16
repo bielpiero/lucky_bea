@@ -2,10 +2,14 @@
 #define RN_ACTION_GOTO_H
 
 #include "Aria.h"
+#include "RNPIDController.h"
+
+#define SATURATION_DISTANCE_MM 1000
+#define SATURATION_ANGLE_DEG 20
 
 class RNActionGoto : public ArAction{
 public:
-	RNActionGoto(const char* name = "goto", ArPose goal = ArPose(0.0, 0.0, 0.0), double linearSpeed = 100, double angularSpeed = 50, double minimumDistance = 100, double minimumAngle = 0.1);
+	RNActionGoto(const char* name = "goto", ArPose goal = ArPose(0.0, 0.0, 0.0), double linearSpeed = 100, double angularSpeed = 10, double minimumDistance = 100, double minimumAngle = 1);
 	virtual ~RNActionGoto();
 
 	virtual ArActionDesired* fire(ArActionDesired current);
@@ -15,6 +19,7 @@ public:
 
 	void cancelGoal(void);
 	void setGoal(ArPose goal);
+	ArPose getGoal(void);
 
 	double getLinearSpeed(void);
 	void setLinearSpeed(double speed);
@@ -28,15 +33,27 @@ public:
 	double getMinimumAngle(void);
 	void setMinimumAngle(double angle);
 
+	double getActionDistance(void);
+	void setActionDistance(double distance);
+
+	double getActionDegrees(void);
+	void setActionDegrees(double degrees);
+
 private:
 	ArPose goal;
 	ArPose previousGoal;
+
+	RNPIDController* linearController;
+	RNPIDController* angularController;
+
 	double linearSpeed;
 	double angularSpeed;
 	double minimumDistance;
 	double minimumAngle;
+	double actionDistance;
+	double actionDegrees;
 	double directionToTurn;
-	ArActionDesired myDesired;
+	ArActionDesired* myDesired;
 	enum RNState{
 		STATE_NO_GOAL,
 		STATE_ACHIEVED_GOAL,

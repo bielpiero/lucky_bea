@@ -13,7 +13,7 @@
 			<landmark id="9" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="900" ypos="167"/>
 		</landmarks>
 		<features>
-			<feature id="1" name="charger" width="50" height="25" xpos="645" ypos="340"/>
+			<feature id="1" name="charger" width="50" height="25" xpos="700" ypos="370"/>
 			<feature id="0" name="door" width="137" height="10" xpos="70" ypos="0"/>
 			<feature id="2" name="brown closet" width="40" height="92" xpos="45" ypos="170"/>
 			<feature id="3" name="Left table 1" width="92" height="120" xpos="420" ypos="62"/>
@@ -24,12 +24,12 @@
 			<feature id="8" name="Right table 3" width="67" height="106" xpos="535" ypos="365"/>
 			<feature id="9" name="Right table 4" width="80" height="180" xpos="745" ypos="320"/>
 		</features>
-		<sites cyclic="yes" sequence="0,1,2,3,4,5">
+		<sites cyclic="yes" sequence="0,1,2,3">
 			<site id="0" name="site a" radius="0" tsec="0" xpos="102" ypos="139"/>
 			<site id="2" name="site c" radius="0" tsec="0" xpos="164" ypos="233"/>
-			<site id="3" name="site d" radius="0" tsec="0" xpos="597" ypos="193"/>
+			<site id="3" name="site d" radius="0" tsec="0" xpos="600" ypos="214"/>
 			<site id="5" name="newdos" radius="0" tsec="0" xpos="442" ypos="300"/>
-			<site id="1" name="site p" radius="0" tsec="0" xpos="284" ypos="135"/>
+			<site id="™" name="site p" radius="0" tsec="0" xpos="324" ypos="135"/>
 			<site id="6" name="nuevo2" radius="10" tsec="0" xpos="621" ypos="407"/>
 		</sites>
 	</sector>

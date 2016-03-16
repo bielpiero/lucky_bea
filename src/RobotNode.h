@@ -125,7 +125,6 @@ private:
     bool isGoingForward;
     bool wasDeactivated;
     bool doNotMove;
-    bool goalCanceled;
     char prevBatteryChargeState;
 
     long int prevLeftEncoderData;
@@ -164,7 +163,6 @@ public:
 	void move(double distance, double speed = 200);
     void moveAtSpeed(double linearVelocity, double angularVelocity);
     void stopRobot(void);
-    void cancelRobotGoal();
 
     void getBatterChargeStatus(void);
     void getBumpersStatus(void);
@@ -203,7 +201,6 @@ private:
 	void getRawPoseFromOdometry();
     bool checkForwardLimitTransition(double enc_k, double enc_k_1);
     bool checkBackwardLimitTransition(double enc_k, double enc_k_1);
-    void executeLaserSecurityDistance(float value);
     
 protected:
 	virtual void onLaserScanCompleted(LaserScan* data) = 0;

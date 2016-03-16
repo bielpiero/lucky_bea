@@ -44,8 +44,10 @@ GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):Robo
 	xmlSectorsFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_SECTORS_PATH;
 	xmlRobotConfigFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_ROBOT_CONFIG_PATH;
 
+	//std::string servo_positions;
+	//setGesture("26", servo_positions);
 	ttsLipSync = new DorisLipSync(this->maestroControllers, ros::package::getPath(PACKAGE_NAME));
-	ttsLipSync->textToViseme("Hola, Me llamo Doris");
+	//ttsLipSync->textToViseme("Hola, ya estoy lista para funcionar");
 
 	navSectors = NULL;
 	currentSector = NULL;
@@ -243,9 +245,9 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x13:
 			if(granted){
 				getPositions(cad, x, y, theta);
-				stopRobotTracking();
+				//stopRobotTracking();
 				setRobotPosition(x, y, theta);
-				trackRobot();
+				//trackRobot();
 				sendMsg(socketIndex, 0x13, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				std::cout << "Command 0x13. Set Robot position denied to " << getClientIPAddress(socketIndex) << std::endl;
@@ -1605,7 +1607,8 @@ void GeneralController::setSitesExecutionSequence(char* cad){
 						if(sites_root_node != NULL){
 							xml_attribute<> *where = sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR);
 							sites_root_node->remove_attribute(where);
-							sites_root_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_SEQUENCE_STR, cad));
+							sites_root_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_SEQUENCE_STR, data.at(1).c_str()));
+							getTimestamp(mappingSitesTimestamp);
 						}
 					}
 				}
@@ -2092,7 +2095,7 @@ void GeneralController::onSecurityDistanceWarningSignal(){
 }
 
 void GeneralController::onSecurityDistanceStopSignal(){
-	printf("Doris Stopped. Could not achieve goal %d...\n", lastSiteVisitedIndex);
+	printf("Doris Stopped. Could not achieve goal %d...\n", lastSiteVisitedIndex + 1);
 }
 
 void GeneralController::startSitesTour(){
@@ -2126,7 +2129,6 @@ void* GeneralController::sitesTourThread(void* object){
         }
 	}
 	self->keepTourAlive = NO;
-    //delete self;
 	return NULL;
 }
 
@@ -2201,6 +2203,7 @@ void GeneralController::initializeKalmanVariables(){
 void GeneralController::trackRobot(){
 	stopRobotTracking();
 	initializeKalmanVariables();
+	Sleep(1000);
 	std::cout << "Tracking Doris..." << std::endl;
 	//pthread_create(&trackThread, NULL, trackRobotThread, (void *)(this));
 	pthread_create(&trackThread, NULL, trackRobotProbabilisticThread, (void *)(this));
@@ -2279,7 +2282,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		Matrix newPosition = self->robotRawEncoderPosition + Wk * zl;
 
-		self->setPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
+		self->setRobotPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
 		Sleep(29);
 	}
 	self->keepRobotTracking = NO;
@@ -2885,6 +2888,7 @@ void* GeneralController::serverStatusThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	while(ros::ok()){
 		std::ostringstream buffer_str;
+		buffer_str.clear();
 		buffer_str << "$DORIS|" << self->currentSector->getId() << "," << self->emotionsTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingFeaturesTimestamp.str() << "," + self->mappingSitesTimestamp.str();
 
 		if(self->spdUDPClient != NULL){
@@ -2892,7 +2896,7 @@ void* GeneralController::serverStatusThread(void* object){
 		}
 		for(int i = 0; i < MAX_CLIENTS; i++){
 			if(self->isConnected(i) && self->isWebSocket(i)){
-				self->spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
+				//self->spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
 			}
 		}
 		Sleep(105);

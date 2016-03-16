@@ -10,6 +10,10 @@ void signalHandler(int s){
 	continue_execution = false;
 	//robot->stopVideoStreaming();
 	//robot->Close();
+	if(robot != NULL){
+    	delete robot;
+    	robot = NULL;
+    }
 	if(ros::ok()){
 		ros::shutdown();
 	}
@@ -50,8 +54,10 @@ int main(int argc, char** argv){
 			ros::spin();
 			ROS_INFO( "Lucky Bea: Quitting... \n" );	
 	    }
-	    
-	    delete robot;
+	    if(robot != NULL){
+	    	delete robot;
+	    	robot = NULL;
+	    }
 
 	}	
     

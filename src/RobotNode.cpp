@@ -50,8 +50,6 @@ RobotNode::RobotNode(const char* port){
     
     gotoPoseAction = new RNActionGoto;
  	robot->addAction(gotoPoseAction, 89);
-    
-    this->goalCanceled = false;
 
  	laserConnector = new ArLaserConnector(argparser, robot, connector);
 	if(!laserConnector->connectLasers(false, false, true)){
@@ -65,13 +63,16 @@ RobotNode::RobotNode(const char* port){
 	} else {
 		printf("Connected to SICK LMS200 laser.\n");
 	}
+    this->keepActiveSecurityDistanceTimerThread = NO;
+    this->keepActiveSecurityDistanceThread = NO;
+    this->keepActiveSensorDataThread = NO;
 
     pthread_create(&sensorDataThread, NULL, dataPublishingThread, (void *)(this)  );
     printf("Connection Timeout: %d\n", robot->getConnectionTimeoutTime());
     printf("TicksMM: %d, DriftFactor: %d, RevCount: %d\n", getTicksMM(), getDriftFactor(), getRevCount());
     printf("DiffConvFactor: %f, DistConvFactor: %f, AngleConvFactor: %f\n", getDiffConvFactor(), getDistConvFactor(), getAngleConvFactor());
     
-    //pthread_create(&distanceThread, NULL, securityDistanceThread, (void *)(this)  );
+    pthread_create(&distanceThread, NULL, securityDistanceThread, (void *)(this)  );
     
     pthread_create(&distanceTimerThread, NULL, securityDistanceTimerThread, (void *)(this)  );
 }
@@ -98,25 +99,26 @@ void RobotNode::disconnect(){
 }
 
 void RobotNode::finishThreads(){
+    
     if (keepActiveSecurityDistanceTimerThread == YES) {
         keepActiveSecurityDistanceTimerThread = MAYBE;
-        while (keepActiveSecurityDistanceTimerThread != NONE) {
+        while (keepActiveSecurityDistanceTimerThread != NO) {
             ArUtil::sleep(10);
         }
         printf("Stopped Security Distance Timer Thread\n");
     }
-    
+
     if (keepActiveSecurityDistanceThread == YES) {
         keepActiveSecurityDistanceThread = MAYBE;
-        while (keepActiveSecurityDistanceThread != NONE) {
+        while (keepActiveSecurityDistanceThread != NO) {
             ArUtil::sleep(10);
         }
         printf("Stopped Security Distance Thread\n");
     }
-    
+
     if (keepActiveSensorDataThread == YES) {
         keepActiveSensorDataThread = MAYBE;
-        while (keepActiveSensorDataThread != NONE) {
+        while (keepActiveSensorDataThread != NO) {
             ArUtil::sleep(10);
         }
         printf("Stopped Robot Data Aquisition Thread\n");
@@ -162,6 +164,7 @@ void RobotNode::getRawRobotPosition(){
 
 void RobotNode::stopRobot(){
     robot->lock();
+    gotoPoseAction->cancelGoal();
     robot->stop();
     robot->unlock();
 }
@@ -181,10 +184,12 @@ void RobotNode::moveAtSpeed(double linearVelocity, double angularVelocity){
     isDirectMotion = true;
     isGoingForward = false;
     robot->lock();
-    //gotoPoseAction->cancelGoal();
-    cancelRobotGoal();
+    gotoPoseAction->cancelGoal();
+    robot->clearDirectMotion();
     if(linearVelocity == 0.0 && angularVelocity == 0.0){
         robot->stop();
+        robot->setVel(0);
+        robot->setRotVel(0);
         isDirectMotion = false;
     } else {
         if(linearVelocity > 0.0){
@@ -207,17 +212,10 @@ void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed
     
     robot->setAbsoluteMaxTransVel(transSpeed);
     robot->setAbsoluteMaxRotVel(rotSpeed);
-    this->goalCanceled = false;
-    robot->clearDirectMotion();
-    double distanceLocal = robot->findDistanceTo(newPose);
-    double deltaThetaLocal = robot->findDeltaHeadingTo(newPose);
-    printf("{Distance: %f, DeltaTheta: %f}\n", distanceLocal, deltaThetaLocal);
-    if(x == 0.0 && y == 0.0 && theta != 0.0){
-                
-    } else {
-        gotoPoseAction->setGoal(newPose);
 
-    }
+    robot->clearDirectMotion();
+    
+    gotoPoseAction->setGoal(newPose);   
     
     robot->setAbsoluteMaxTransVel(this->maxAbsoluteTransVel);
     robot->setAbsoluteMaxRotVel(this->maxAbsoluteRotVel);
@@ -230,12 +228,13 @@ void RobotNode::setPosition(double x, double y, double theta){
     ArPose newPose(x * 1000, y * 1000);
     newPose.setThRad(theta);
     robot->lock();
-    this->goalCanceled = false;
+
     robot->clearDirectMotion();
     pthread_mutex_lock(&mutexRawPositionLocker);
     myRawPose->setPose(x * 1000, y * 1000, theta * 180 / M_PI);
     pthread_mutex_unlock(&mutexRawPositionLocker);
     robot->moveTo(newPose);
+
     robot->unlock();
 }
 
@@ -261,7 +260,7 @@ bool RobotNode::isGoalAchieved(){
 }
 
 bool RobotNode::isGoalCanceled(){
-    return this->goalCanceled;
+    return gotoPoseAction->haveCanceledGoal();
 }
 
 void RobotNode::setSonarStatus(bool enabled){
@@ -466,11 +465,6 @@ double RobotNode::getDeltaDistance(){
     return deltaDistance;
 }
 
-void RobotNode::cancelRobotGoal(){
-    this->gotoPoseAction->cancelGoal();
-    this->goalCanceled = true;
-}
-
 void RobotNode::getBatterChargeStatus(void){
     char s = robot->getChargeState();
     if(s != prevBatteryChargeState){
@@ -506,20 +500,44 @@ void* RobotNode::securityDistanceThread(void* object){
             sickLaser->lockDevice();
             
             std::vector<ArSensorReading> *currentReadings = new std::vector<ArSensorReading>(*sickLaser->getRawReadingsAsVector());
-            for(size_t it = 0; it < currentReadings->size(); it++){
+            bool thereIsSomethingInFront = false;
+            for(size_t it = 0; it < currentReadings->size() and not thereIsSomethingInFront; it++){
                 if(sickLaser->getDegrees() == ArSick::DEGREES180){
                     if(sickLaser->getIncrement() == ArSick::INCREMENT_HALF){
                         if(it > MIN_INDEX_LASER_SECURITY_DISTANCE && it < MAX_INDEX_LASER_SECURITY_DISTANCE){
-                            self->executeLaserSecurityDistance((float)currentReadings->at(it).getRange());
+                            if((float)(currentReadings->at(it).getRange() / 1000.0) < SECURITY_DISTANCE){
+                                thereIsSomethingInFront = true;
+                            }
                         }
                     } else if(it > (MIN_INDEX_LASER_SECURITY_DISTANCE / 2) && it < (MIN_INDEX_LASER_SECURITY_DISTANCE / 2)){
-                        self->executeLaserSecurityDistance((float)currentReadings->at(it).getRange());
+                        if((float)(currentReadings->at(it).getRange() / 1000.0) < SECURITY_DISTANCE){
+                            thereIsSomethingInFront = true;
+                        }
                     }
                 }
             }
+
             sickLaser->unlockDevice();
             currentReadings->clear();
             delete currentReadings;
+            if(thereIsSomethingInFront){
+                if(self->isDirectMotion and self->isGoingForward and not self->doNotMove){
+                    self->doNotMove = true;
+                    self->robot->stop();
+                } else if(self->gotoPoseAction->isActive()){
+                    printf("%s\n", "Deactivated...");
+                    self->gotoPoseAction->deactivate();
+                    self->wasDeactivated = true;
+                    
+                }
+            } else {
+                self->doNotMove = false;
+                if(self->wasDeactivated){
+                    printf("%s\n", "Activated...");
+                    self->wasDeactivated = false;
+                    self->gotoPoseAction->activate();
+                }
+            }
         }
         ArUtil::sleep(11);
     }
@@ -527,39 +545,18 @@ void* RobotNode::securityDistanceThread(void* object){
     return NULL;
 }
 
-void RobotNode::executeLaserSecurityDistance(float value){
-    if((value / 1000.0) < SECURITY_DISTANCE){
-        if(this->isDirectMotion && this->isGoingForward && !this->doNotMove){
-            this->doNotMove = true;
-            this->robot->stop();
-        } else if(this->gotoPoseAction->isActive()){
-            std::cout << "Something is stopping Doris..." << std::endl;
-            this->gotoPoseAction->deactivate();
-            this->wasDeactivated = true;
-            
-        }
-    } else {
-        this->doNotMove = false;
-        if(this->wasDeactivated){
-            this->wasDeactivated = false;
-            this->gotoPoseAction->activate();
-        }
-    }
-}
-
 void* RobotNode::securityDistanceTimerThread(void* object){
     RobotNode* self = (RobotNode*)object;
     self->keepActiveSecurityDistanceTimerThread = YES;
     while(self->keepActiveSecurityDistanceTimerThread == YES){
         if(self->wasDeactivated){
-            ArUtil::sleep(1000);
+            ArUtil::sleep(987);
             self->timerSecs++;
             if(self->timerSecs == self->securityDistanceWarningTime){
                 self->onSecurityDistanceWarningSignal();
             } else if(self->timerSecs == self->securityDistanceStopTime){
                 self->robot->lock();
-                self->cancelRobotGoal();
-                //self->gotoPoseAction->cancelGoal();
+                self->gotoPoseAction->cancelGoal();
                 self->robot->clearDirectMotion();
                 self->robot->unlock();
                 self->wasDeactivated = false;
@@ -572,6 +569,5 @@ void* RobotNode::securityDistanceTimerThread(void* object){
         ArUtil::sleep(13);
     }
     self->keepActiveSecurityDistanceTimerThread = NO;
-    delete self;
     return NULL;
 }
