@@ -1,4 +1,4 @@
-#include "base64.h"
+#include "crypt/base64.h"
 
 const std::string Base64::codes="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 

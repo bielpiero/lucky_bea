@@ -245,9 +245,9 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x13:
 			if(granted){
 				getPositions(cad, x, y, theta);
-				//stopRobotTracking();
+				stopRobotTracking();
 				setRobotPosition(x, y, theta);
-				//trackRobot();
+				trackRobot();
 				sendMsg(socketIndex, 0x13, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				std::cout << "Command 0x13. Set Robot position denied to " << getClientIPAddress(socketIndex) << std::endl;

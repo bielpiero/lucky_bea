@@ -197,6 +197,8 @@ private:
 	static void* dataPublishingThread(void* object);
     
     void finishThreads();
+    void lockRobot();
+    void unlockRobot();
 	void computePositionFromEncoders();
 	void getRawPoseFromOdometry();
     bool checkForwardLimitTransition(double enc_k, double enc_k_1);

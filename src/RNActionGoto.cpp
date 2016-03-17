@@ -47,7 +47,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	if(this->currentState == STATE_GOING_TO_GOAL){
 		double distanceLocal = myRobot->getPose().findDistanceTo(this->goal);
     	double deltaThetaLocal = myRobot->findDeltaHeadingTo(this->goal);
-    	printf("{Distance: %f, DeltaTheta: %f}\n", distanceLocal, deltaThetaLocal);
+    	//printf("{Distance: %f, DeltaTheta: %f}\n", distanceLocal, deltaThetaLocal);
     	if(ArMath::fabs(deltaThetaLocal) > this->minimumAngle){
     		//turn to point to goal
 
@@ -59,7 +59,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     		} else {
     			angVel *= -1;
     		}
-    		printf("{angVel after correction: %f}\n", angVel);
+    		//printf("{angVel after correction: %f}\n", angVel);
     		myDesired->setRotVel(angVel);
     		
     	} else if(distanceLocal > minimumDistance){
@@ -73,13 +73,15 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     		} else {
     			linVel *= -1;
     		}
-    		printf("{linVel after correction: %f}\n", linVel);
+    		//printf("{linVel after correction: %f}\n", linVel);
     		myDesired->setVel(linVel);
     	} else {
     		myDesired->setVel(0);
     		myDesired->setRotVel(0);
     		currentState = STATE_ACHIEVED_GOAL;
     	}
+    } else {
+    	return NULL;
     }
     return myDesired;
 }
@@ -93,9 +95,10 @@ bool RNActionGoto::haveCanceledGoal(void){
 }
 
 void RNActionGoto::cancelGoal(void){
-	myDesired->setVel(0);
-	myDesired->setRotVel(0);
+	//myDesired->setVel(0);
+	//myDesired->setRotVel(0);
 	this->currentState = STATE_NO_GOAL;
+
 }
 
 void RNActionGoto::setGoal(ArPose goal){

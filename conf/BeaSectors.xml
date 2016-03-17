@@ -25,11 +25,11 @@
 			<feature id="9" name="Right table 4" width="80" height="180" xpos="745" ypos="320"/>
 		</features>
 		<sites cyclic="yes" sequence="0,1,2,3">
-			<site id="0" name="site a" radius="0" tsec="0" xpos="102" ypos="139"/>
-			<site id="2" name="site c" radius="0" tsec="0" xpos="164" ypos="233"/>
-			<site id="3" name="site d" radius="0" tsec="0" xpos="600" ypos="214"/>
-			<site id="5" name="newdos" radius="0" tsec="0" xpos="442" ypos="300"/>
-			<site id="™" name="site p" radius="0" tsec="0" xpos="324" ypos="135"/>
+			<site id="0" name="site a" radius="0" tsec="0" xpos="222" ypos="121"/>
+			<site id="2" name="site c" radius="0" tsec="0" xpos="477" ypos="158"/>
+			<site id="3" name="site d" radius="0" tsec="0" xpos="631" ypos="241"/>
+			<site id="1" name="newdos" radius="0" tsec="0" xpos="348" ypos="258"/>
+			<site id="4" name="site p" radius="0" tsec="0" xpos="324" ypos="135"/>
 			<site id="6" name="nuevo2" radius="10" tsec="0" xpos="621" ypos="407"/>
 		</sites>
 	</sector>

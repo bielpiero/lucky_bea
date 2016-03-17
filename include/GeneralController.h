@@ -1,14 +1,7 @@
 #ifndef GENERAL_CONTROLLER_H
 #define GENERAL_CONTROLLER_H
 
-#include <iostream>
-#include <vector>
-#include <fstream>
-#include <sstream>
-#include <cmath>
-#include <string>
-#include <cstring>
-#include <ctime>
+
 #include "SocketNode2.h"
 #include "SerialPort.h"
 #include "stdxros.hpp"
@@ -30,9 +23,9 @@
 
 #define PACKAGE_NAME "lucky_bea"
 
-#define XML_FILE_PATH "/src/conf/BeaConSuerte.xml"
-#define XML_FILE_SECTORS_PATH "/src/conf/BeaSectors.xml"
-#define XML_FILE_ROBOT_CONFIG_PATH "/src/conf/BeaRobotConfig.xml"
+#define XML_FILE_PATH "/conf/BeaConSuerte.xml"
+#define XML_FILE_SECTORS_PATH "/conf/BeaSectors.xml"
+#define XML_FILE_ROBOT_CONFIG_PATH "/conf/BeaRobotConfig.xml"
 
 #define PERMISSION_ACCEPTED 0
 #define PERMISSION_REQUESTED 1

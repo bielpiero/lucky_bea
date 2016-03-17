@@ -98,14 +98,14 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(include ${catkin_INCLUDE_DIRS})
 include_directories( /usr/local/Aria/include)
 link_directories(/usr/local/Aria/lib)
-link_directories(src/lib)
+link_directories(lib/)
 
 ## Declare a cpp library
 # add_library(lucky_bea_socketnode src/SocketNode2.cpp)
 
 ## Declare a cpp executable
 file(GLOB_RECURSE lucky_bea_SOURCES src/*.cpp)
-file(GLOB_RECURSE lucky_bea_HEADERS src/*.h)
+file(GLOB_RECURSE lucky_bea_HEADERS include/*.h)
 
 set(lucky_bea_INCLUDE_DIRS "")
 foreach(_headerFile ${lucky_bea_HEADERS})

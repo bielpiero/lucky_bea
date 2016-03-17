@@ -127,7 +127,7 @@ void RobotNode::finishThreads(){
 
 void RobotNode::getLaserScan(void){
     LaserScan* data = NULL;
-	//robot->lock();
+	//this->lockRobot();
 	sick = (ArSick*)laser;
 	if(sick != NULL){
 		sick->lockDevice();
@@ -147,7 +147,7 @@ void RobotNode::getLaserScan(void){
         delete currentReadings;
         delete data;
 	}
-	//robot->unlock();
+	//this->unlockRobot();
 }
 
 void RobotNode::getRobotPosition(){
@@ -163,27 +163,27 @@ void RobotNode::getRawRobotPosition(){
 }
 
 void RobotNode::stopRobot(){
-    robot->lock();
+    this->lockRobot();
     gotoPoseAction->cancelGoal();
     robot->stop();
-    robot->unlock();
+    this->unlockRobot();
 }
 
 void RobotNode::move(double distance, double speed){
-	robot->lock();
+	this->lockRobot();
 	robot->setAbsoluteMaxTransVel(speed);
 
 	robot->move(distance);
 
 	robot->setAbsoluteMaxTransVel(this->maxAbsoluteTransVel);
-	robot->unlock();
+	this->unlockRobot();
 
 }
 
 void RobotNode::moveAtSpeed(double linearVelocity, double angularVelocity){
     isDirectMotion = true;
     isGoingForward = false;
-    robot->lock();
+    this->lockRobot();
     gotoPoseAction->cancelGoal();
     robot->clearDirectMotion();
     if(linearVelocity == 0.0 && angularVelocity == 0.0){
@@ -195,39 +195,41 @@ void RobotNode::moveAtSpeed(double linearVelocity, double angularVelocity){
         if(linearVelocity > 0.0){
             isGoingForward = true;
         }
-        
+        printf("{LinVel: %f, AngVel: %f}\n", linearVelocity, angularVelocity);
         robot->setVel(linearVelocity*1e3);
 
         robot->setRotVel(angularVelocity*180/M_PI);
     }
     
-    robot->unlock();
+    this->unlockRobot();
 }
 
 void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed, double rotSpeed){
     ArPose newPose(x * 1000, y * 1000);
     newPose.setThRad(theta);
-    robot->lock();
+
     isDirectMotion = false;
-    
-    robot->setAbsoluteMaxTransVel(transSpeed);
-    robot->setAbsoluteMaxRotVel(rotSpeed);
+    this->lockRobot();
+    //robot->setAbsoluteMaxTransVel(transSpeed);
+    //robot->setAbsoluteMaxRotVel(rotSpeed);
 
     robot->clearDirectMotion();
     
-    gotoPoseAction->setGoal(newPose);   
+    gotoPoseAction->setGoal(newPose);
     
-    robot->setAbsoluteMaxTransVel(this->maxAbsoluteTransVel);
-    robot->setAbsoluteMaxRotVel(this->maxAbsoluteRotVel);
+    //robot->setAbsoluteMaxTransVel(this->maxAbsoluteTransVel);
+    //robot->setAbsoluteMaxRotVel(this->maxAbsoluteRotVel);
     
-    robot->unlock();
+    this->unlockRobot();
     ArUtil::sleep(100);
 }
 
 void RobotNode::setPosition(double x, double y, double theta){
     ArPose newPose(x * 1000, y * 1000);
     newPose.setThRad(theta);
-    robot->lock();
+    
+    this->lockRobot();
+    
 
     robot->clearDirectMotion();
     pthread_mutex_lock(&mutexRawPositionLocker);
@@ -235,11 +237,12 @@ void RobotNode::setPosition(double x, double y, double theta){
     pthread_mutex_unlock(&mutexRawPositionLocker);
     robot->moveTo(newPose);
 
-    robot->unlock();
+    
+    this->unlockRobot();
 }
 
 void RobotNode::setMotorsStatus(bool enabled){
-    robot->lock();
+    this->lockRobot();
     if (enabled) {
         if(!robot->isEStopPressed()){
             robot->enableMotors();
@@ -248,7 +251,7 @@ void RobotNode::setMotorsStatus(bool enabled){
     } else {
         robot->disableMotors();
     }
-    robot->unlock();
+    this->unlockRobot();
 }
 
 bool RobotNode::getMotorsStatus(){
@@ -264,13 +267,13 @@ bool RobotNode::isGoalCanceled(){
 }
 
 void RobotNode::setSonarStatus(bool enabled){
-    robot->lock();
+    this->lockRobot();
     if (enabled) {
         robot->enableSonar();        
     } else {
         robot->disableSonar();
     }
-    robot->unlock();
+    this->unlockRobot();
 }
 
 bool RobotNode::getSonarsStatus(){
@@ -425,6 +428,20 @@ void RobotNode::getRawPoseFromOdometry(){
 
 }
 
+void RobotNode::lockRobot(){
+    while(this->robot->lock() != 0){
+        ArUtil::sleep(5);
+        printf("trying to lock...\n");
+    }
+}
+
+void RobotNode::unlockRobot(){
+    while(this->robot->unlock() != 0){
+        ArUtil::sleep(5);
+        printf("trying to unlock...\n");
+    }
+}
+
 int RobotNode::getDriftFactor(){
     return robot->getOrigRobotConfig()->getDriftFactor();
 }
@@ -525,7 +542,6 @@ void* RobotNode::securityDistanceThread(void* object){
                     self->doNotMove = true;
                     self->robot->stop();
                 } else if(self->gotoPoseAction->isActive()){
-                    printf("%s\n", "Deactivated...");
                     self->gotoPoseAction->deactivate();
                     self->wasDeactivated = true;
                     
@@ -533,7 +549,6 @@ void* RobotNode::securityDistanceThread(void* object){
             } else {
                 self->doNotMove = false;
                 if(self->wasDeactivated){
-                    printf("%s\n", "Activated...");
                     self->wasDeactivated = false;
                     self->gotoPoseAction->activate();
                 }
@@ -555,10 +570,10 @@ void* RobotNode::securityDistanceTimerThread(void* object){
             if(self->timerSecs == self->securityDistanceWarningTime){
                 self->onSecurityDistanceWarningSignal();
             } else if(self->timerSecs == self->securityDistanceStopTime){
-                self->robot->lock();
+                self->lockRobot();
                 self->gotoPoseAction->cancelGoal();
                 self->robot->clearDirectMotion();
-                self->robot->unlock();
+                self->unlockRobot();
                 self->wasDeactivated = false;
                 self->timerSecs = 0;
                 self->onSecurityDistanceStopSignal();
