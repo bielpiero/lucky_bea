@@ -451,7 +451,7 @@ void* CSocketNode::launchThread(void* p){
 			}
 
 		}
-		Sleep(10);
+		RNUtils::sleep(10);
 	}
 	self->thread_status=0;
 	return NULL;
@@ -467,7 +467,7 @@ int CSocketNode::closeConnection(){
 	if(thread_status==1){
 		//wait until thread terminates
 		thread_status=2;
-		while(thread_status!=0)Sleep(100);
+		while(thread_status!=0)RNUtils::sleep(100);
 	}
 	for(int i = 0; i < MAX_CLIENTS; i++){
 		if(socket_conn[i].getSocket() != INVALID_SOCKET){
@@ -537,10 +537,10 @@ void CSocketNode::setLastTokenOwner(int token){
 }
 
 wsFrameType CSocketNode::wsParseHandshake(char* buffer, unsigned long long int size, Handshake* hs){
-	std::vector<std::string> strings = split(buffer, WS_EOL);
+	std::vector<std::string> strings = RNUtils::split(buffer, WS_EOL);
 
 	for(int i = 0; i < strings.size(); i++){
-		std::vector<std::string> spCurrentString = split((char*)strings[i].c_str(), " ");
+		std::vector<std::string> spCurrentString = RNUtils::split((char*)strings[i].c_str(), " ");
 		if(spCurrentString[0] == hostField){
 			hs->setHost(spCurrentString[1]);
 		} else if(spCurrentString[0] == originField){
@@ -647,21 +647,7 @@ wsFrameType CSocketNode::wsParseInputFrame(unsigned char* bufferIn, unsigned lon
 	}
 }
 
-std::vector<std::string> CSocketNode::split(char* buffer, const char* delimiter){
-	std::vector<std::string> result;
 
-	char* current;
-
-	current = std::strtok(buffer, delimiter);
-
-	while(current != NULL){
-		result.push_back(std::string(current));
-		current = std::strtok(NULL, delimiter);
-	}
-	delete current;
-	return result;
-
-}
 
 void* CSocketNode::pingTimerThread(void* p){
 	CSocketNode* self=(CSocketNode*)p;
@@ -671,7 +657,7 @@ void* CSocketNode::pingTimerThread(void* p){
 		for(int i = 0; i < MAX_CLIENTS; i++){
 			if(self->isConnected(i) and self->isWebSocket(i)){
 				self->wsSendPingMsg(i);
-				Sleep(10000);
+				RNUtils::sleep(10000);
 			}
 		}
 	}

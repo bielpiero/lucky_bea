@@ -60,11 +60,11 @@ GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):Robo
 	spdWSServer->init("", 0, SOCKET_SERVER);
 	spdWSServer->startThread();
 
-	getTimestamp(emotionsTimestamp);
-	getTimestamp(mappingEnvironmentTimestamp);
-	getTimestamp(mappingLandmarksTimestamp);
-	getTimestamp(mappingFeaturesTimestamp);
-	getTimestamp(mappingSitesTimestamp);
+	RNUtils::getTimestamp(emotionsTimestamp);
+	RNUtils::getTimestamp(mappingEnvironmentTimestamp);
+	RNUtils::getTimestamp(mappingLandmarksTimestamp);
+	RNUtils::getTimestamp(mappingFeaturesTimestamp);
+	RNUtils::getTimestamp(mappingSitesTimestamp);
 
 	pthread_t serverInfoThread;
 	pthread_create(&serverInfoThread, NULL, serverStatusThread, (void *)(this));
@@ -90,13 +90,12 @@ void GeneralController::onConnection(int socketIndex) //callback for client and 
 {
 	if(isConnected(socketIndex)) {
 		clientsConnected++;
-
-		std::cout << "Client "<< this->getClientIPAddress(socketIndex) << " is Connected to Doris, using port " << this->getClientPort(socketIndex) << std::endl;	
+		RNUtils::printLn("Client %s is Connected to Doris, using port %d", this->getClientIPAddress(socketIndex), this->getClientPort(socketIndex));
 	} else {
 		if(socketIndex == getTokenOwner()){
 			setTokenOwner(NONE);
 		}
-		std::cout << "Disconnected..." << std::endl;
+		RNUtils::printLn("Client %s has disonnected from Doris", this->getClientIPAddress(socketIndex));
 		clientsConnected--;
 		if(clientsConnected == 0){
 			setTokenOwner(NONE);
@@ -109,7 +108,7 @@ void GeneralController::onConnection(int socketIndex) //callback for client and 
 			stopCurrentTour();
 		}
 	}
-	std::cout << "Clients connected: " << clientsConnected << std::endl;
+	RNUtils::printLn("Clients connected: %d", clientsConnected);
 }
 void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int length){//callback for client and server
 	cad[length] = 0;
@@ -137,90 +136,89 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 	float x, y, theta;
 
 	bool granted = isPermissionNeeded(function) && (socketIndex == getTokenOwner());
-	printf("Function: %d executed from: %s\n", function, getClientIPAddress(socketIndex));
+	RNUtils::printLn("Function: %d executed from: %s", function, getClientIPAddress(socketIndex));
 	switch (function){
 		case 0x00:
-			std::cout << "Command 0x00. Static Faces Requested" << std::endl;
+			RNUtils::printLn("Command 0x00. Static Faces Requested");
 			getGestures("0", gestures);
 			sendMsg(socketIndex, 0x00, (char*)gestures.c_str(), (unsigned int)(gestures.length())); 
 			break;
 		case 0x01:
-			std::cout << "Command 0x01. Dynamic Faces Requested" << std::endl;
+			RNUtils::printLn("Command 0x01. Dynamic Faces Requested");
 			getGestures("1", gestures);
 			sendMsg(socketIndex, 0x01, (char*)gestures.c_str(), (unsigned int)(gestures.length()));
 			break;
 		case 0x02:
-			std::cout << "Command 0x02. Saving New Static Face" << std::endl;
+			RNUtils::printLn("Command 0x02. Saving New Static Face");
 			saveGesture(cad, 0);
 			break;
 		case 0x03:
-			std::cout << "Command 0x03. Saving New Dynamic Face" << std::endl;
+			RNUtils::printLn("Command 0x03. Saving New Dynamic Face");
 			saveGesture(cad, 1);
 			break;
 		case 0x04:
-			std::cout << "Command 0x04. Modifying Static Face" << std::endl;
+			RNUtils::printLn("Command 0x04. Modifying Static Face");
 			if(granted){
 				modifyGesture(cad, 0);
 			} else {
-				std::cout << "Command 0x04. Modifying Static Face denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x04. Modifying Static Face denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x04, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x05:
-			std::cout << "Command 0x05. Modifying Dynamic Face" << std::endl;
+			RNUtils::printLn("Command 0x05. Modifying Dynamic Face");
 			if(granted){
 				modifyGesture(cad, 1);
 			} else {
-				std::cout << "Command 0x05. Modifying Dynamic Face denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x05. Modifying Dynamic Face denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x05, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x06:
-			std::cout << "Command 0x06. Removing Face" << std::endl;
+			RNUtils::printLn("Command 0x06. Removing Face");
 			if(granted){
 				removeGesture(cad);
 			} else {
-				std::cout << "Command 0x06. Removing Face denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x06. Removing Face denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x06, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x07:
-			std::cout << "Command 0x07. Setting Gesture Id: " << cad << std::endl;
+			RNUtils::printLn("Command 0x07. Setting Gesture Id: %s", cad);
 			if(granted){
 				gestures = "";
 				setGesture(cad, servo_positions);
 				sendMsg(socketIndex, 0x07, (char*)servo_positions.c_str(), (unsigned int)servo_positions.length());
 			} else {
-				std::cout << "Command 0x07. Setting Gesture denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x07. Setting Gesture denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x07, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x08:
             getPololuInstruction(cad, card_id, port, servo_position);            
-			//std::cout << "Command 0x08. Moving from CardId: " << (int)card_id << " Servo: " << (int)port << " To Position: " << servo_position << std::endl;
 			setServoPosition(card_id, port, servo_position);
 			break;
 		case 0x09:
-			std::cout << "Command 0x09. Sending current positions" << std::endl;
+			RNUtils::printLn("Command 0x09. Sending current positions");
 			//SendServoPositions(servo_positions);
 			//SendMsg(socketIndex, 0x09, (char*)servo_positions.c_str(), (int)(servo_positions.length()));
 			break;
 		case 0x0A:
-			std::cout << "Command 0x0A. Stopping any Dynamic Face" << std::endl;
+			RNUtils::printLn("Command 0x0A. Stopping any Dynamic Face");
 			if(granted){
 				stopDynamicGesture();
 			} else {
-				std::cout << "Command 0x0A. Stopping any Dynamic Face denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x0A. Stopping any Dynamic Face denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x0A, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x0B:
-			std::cout << "Command 0x0B. Text to speech message" << std::endl;
+			RNUtils::printLn("Command 0x0B. Text to speech message");
 			if(granted){
 				ttsLipSync->textToViseme(cad);
 				sendMsg(socketIndex, 0x08, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
-				std::cout << "Command 0x0B. Text to speech message denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x0B. Text to speech message denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x0B, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
@@ -229,7 +227,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				getVelocities(cad, lin_vel, ang_vel);
 				moveRobot(lin_vel, ang_vel);
 			} else {
-				std::cout << "Command 0x10. Robot teleoperation denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x10. Robot teleoperation denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x10, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 
@@ -250,7 +248,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				trackRobot();
 				sendMsg(socketIndex, 0x13, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
-				std::cout << "Command 0x13. Set Robot position denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x13. Set Robot position denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x13, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			
@@ -261,7 +259,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				moveRobotToPosition(x, y, theta);
 				sendMsg(socketIndex, 0x14, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
-				std::cout << "Command 0x14. Moving Robot to position denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x14. Moving Robot to position denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x14, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
@@ -275,7 +273,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				loadSector(mapId);
 				sendMsg(socketIndex, 0x16, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
-				std::cout << "Command 0x16. Setting Map into Robot denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x16. Setting Map into Robot denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x16, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
@@ -323,7 +321,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				jsonRobotOpSuccess = "{\"robot\":{\"index\":\"" + number_converter.str() + "\",\"error\":\"0\"}}";
 				sendMsg(socketIndex, 0x1B, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
-				std::cout << "Command 0x1B. Adding site to map denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x1B. Adding site to map denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x1B, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
@@ -333,7 +331,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				modifyMapInformationSite(cad);
 				sendMsg(socketIndex, 0x1C, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
-				std::cout << "Command 0x1C. Modifying site to map denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x1C. Modifying site to map denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x1C, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
@@ -343,7 +341,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				deleteMapInformationSite(cad);
 				sendMsg(socketIndex, 0x1D, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
-				std::cout << "Command 0x1D. Delete site to map denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x1D. Delete site to map denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x1D, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
@@ -352,7 +350,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(granted){
 				setSitesExecutionSequence(cad);
 			} else {
-				std::cout << "Command 0x1E. Setting sites sequence denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x1E. Setting sites sequence denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x1E, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
@@ -364,7 +362,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				jsonRobotOpSuccess = "{\"robot\":{\"index\":\"" + number_converter.str() + "\",\"error\":\"0\"}}";
 				sendMsg(socketIndex, 0x1F, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
-				std::cout << "Command 0x1F. Adding feature to map denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x1F. Adding feature to map denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x1F, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
@@ -374,7 +372,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				modifyMapInformationFeatures(cad);
 				sendMsg(socketIndex, 0x20, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
-				std::cout << "Command 0x20. Modifying feature to map denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x20. Modifying feature to map denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x20, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
@@ -384,7 +382,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				deleteMapInformationFeatures(cad);
 				sendMsg(socketIndex, 0x21, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
-				std::cout << "Command 0x21. Delete feature to map denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x21. Delete feature to map denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x21, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
@@ -402,7 +400,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(granted){
 				acceptTransferRobotControl(socketIndex, cad);
 			} else {
-				std::cout << "Command 0x7D. Accept transfering robot control denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x7D. Accept transfering robot control denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x7D, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
@@ -411,7 +409,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				releaseRobotControl(socketIndex);
 				setTokenOwner(NONE);
 			} else {
-				std::cout << "Command 0x7E. Release Robot control denied to " << getClientIPAddress(socketIndex) << std::endl;
+				RNUtils::printLn("Command 0x7E. Release Robot control denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x7E, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 
@@ -420,7 +418,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			initializeSPDPort(socketIndex, cad);
 			break;
 		default:
-			std::cout << "Command Not Recognized.." << std::endl;
+			RNUtils::printLn("Command Not Recognized..");
 			break;
 			
 	}
@@ -845,7 +843,7 @@ void GeneralController::setGesture(std::string face_id, std::string& servo_posit
 				bufferOut_str << "]}";
 
 				if(tipo == "1"){
-					std::cout << "This is a dynamic face" << std::endl;
+					RNUtils::printLn("This is a dynamic face");
 					dynamic_face_info *data = new dynamic_face_info;
 					data->object = this;
 					data->id_gesto = face_id;
@@ -938,7 +936,7 @@ void* GeneralController::dynamicFaceThread(void* object){
 	the_file.close();
 	
 
-	usleep(1000*atoi(selected_dynamic_face.ts.c_str()));
+	RNUtils::sleep(atoi(selected_dynamic_face.ts.c_str()));
 
 	while(node->object->continue_dynamic_thread){
 		for(int i=0; i<selected_dynamic_face.secuences.size(); i++){
@@ -954,7 +952,7 @@ void* GeneralController::dynamicFaceThread(void* object){
 				node->object->setServoAcceleration(card_id, servo_id, acceleration);
 			}
 			
-			usleep(1000*atoi(selected_dynamic_face.secuences[i].tsec.c_str()));
+			RNUtils::sleep(atoi(selected_dynamic_face.secuences[i].tsec.c_str()));
 		}
 	}
 }
@@ -965,7 +963,7 @@ void GeneralController::loadSector(int sectorId){
 		if(navSectors->at(i)->getId() == sectorId){
 			found = true;
 			currentSector = navSectors->at(i);
-			getTimestamp(mappingEnvironmentTimestamp);
+			RNUtils::getTimestamp(mappingEnvironmentTimestamp);
 		}
 	}
 }
@@ -1289,7 +1287,7 @@ void GeneralController::getMapInformationSitesSequence(int mapId, std::string& m
 }
 
 void GeneralController::addMapInformationSite(char* cad, int& indexAssigned){
-	std::vector<std::string> data = split(cad, ",");
+	std::vector<std::string> data = RNUtils::split(cad, ",");
 	if(data.size() == ADD_SITE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
@@ -1374,7 +1372,7 @@ void GeneralController::addMapInformationSite(char* cad, int& indexAssigned){
 					        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(5).c_str()));
 
 					        sites_root_node->append_node(new_sites_node);
-					        getTimestamp(mappingSitesTimestamp);
+					        RNUtils::getTimestamp(mappingSitesTimestamp);
 						}
 					}
 				}
@@ -1387,12 +1385,12 @@ void GeneralController::addMapInformationSite(char* cad, int& indexAssigned){
 		}
 	    
 	} else {
-		std::cout << "Unable to add new site. Invalid number of arguments..." << std::endl;
+		RNUtils::printLn("Unable to add new site. Invalid number of arguments...");
 	}
 }
 
 void GeneralController::modifyMapInformationSite(char* cad){
-	std::vector<std::string> data = split(cad, ",");
+	std::vector<std::string> data = RNUtils::split(cad, ",");
 	if(data.size() == MODIFY_SITE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
@@ -1464,7 +1462,7 @@ void GeneralController::modifyMapInformationSite(char* cad){
 							        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_TIME_STR, data.at(4).c_str()));
 							        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(5).c_str()));
 							        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(6).c_str()));
-									getTimestamp(mappingSitesTimestamp);
+									RNUtils::getTimestamp(mappingSitesTimestamp);
 								}
 							}
 						}
@@ -1479,12 +1477,12 @@ void GeneralController::modifyMapInformationSite(char* cad){
 		    
 		}
 	} else {
-		std::cout << "Unable to edit site. Invalid number of parameters.." << std::endl;
+		RNUtils::printLn("Unable to edit site. Invalid number of parameters..");
 	}
 }
 
 void GeneralController::deleteMapInformationSite(char* cad){
-	std::vector<std::string> data = split(cad, ",");
+	std::vector<std::string> data = RNUtils::split(cad, ",");
 	if(data.size() == DELETE_SITE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
@@ -1552,7 +1550,7 @@ void GeneralController::deleteMapInformationSite(char* cad){
 							}
 							if(toDelete != NULL){
 								sites_root_node->remove_node(toDelete);
-								getTimestamp(mappingSitesTimestamp);
+								RNUtils::getTimestamp(mappingSitesTimestamp);
 							}
 
 						}
@@ -1567,12 +1565,12 @@ void GeneralController::deleteMapInformationSite(char* cad){
 		    
 		}
 	} else {
-		std::cout << "Unable to delete site. Invalid number of parameters.." << std::endl;
+		RNUtils::printLn("Unable to delete site. Invalid number of parameters..");
 	}    
 }
 
 void GeneralController::setSitesExecutionSequence(char* cad){
-	std::vector<std::string> data = split(cad, "|");
+	std::vector<std::string> data = RNUtils::split(cad, "|");
 	if(data.size() == SITE_SEQUENCE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
@@ -1608,7 +1606,7 @@ void GeneralController::setSitesExecutionSequence(char* cad){
 							xml_attribute<> *where = sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR);
 							sites_root_node->remove_attribute(where);
 							sites_root_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_SEQUENCE_STR, data.at(1).c_str()));
-							getTimestamp(mappingSitesTimestamp);
+							RNUtils::getTimestamp(mappingSitesTimestamp);
 						}
 					}
 				}
@@ -1622,12 +1620,12 @@ void GeneralController::setSitesExecutionSequence(char* cad){
 		    
 		}
 	} else {
-		std::cout << "Unable to set site sequence. Invalid number or parameters" << std::endl;
+		RNUtils::printLn("Unable to set site sequence. Invalid number or parameters");
 	}
 }
 
 void GeneralController::addMapInformationFeatures(char* cad, int& indexAssigned){
-std::vector<std::string> data = split(cad, ",");
+std::vector<std::string> data = RNUtils::split(cad, ",");
 	if(data.size() == ADD_FEATURE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
@@ -1710,7 +1708,7 @@ std::vector<std::string> data = split(cad, ",");
 					        new_feature_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(5).c_str()));
 
 					        features_root_node->append_node(new_feature_node);
-					        getTimestamp(mappingFeaturesTimestamp);
+					        RNUtils::getTimestamp(mappingFeaturesTimestamp);
 						}
 					}
 				}
@@ -1723,12 +1721,12 @@ std::vector<std::string> data = split(cad, ",");
 		}
 	    
 	} else {
-		std::cout << "Unable to add new feature. Invalid number of arguments..." << std::endl;
+		RNUtils::printLn("Unable to add new feature. Invalid number of arguments...");
 	}
 }
 
 void GeneralController::modifyMapInformationFeatures(char* cad){
-	std::vector<std::string> data = split(cad, ",");
+	std::vector<std::string> data = RNUtils::split(cad, ",");
 	if(data.size() == MODIFY_FEATURE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
@@ -1800,7 +1798,7 @@ void GeneralController::modifyMapInformationFeatures(char* cad){
 							        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_HEIGHT_STR, data.at(4).c_str()));
 							        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(5).c_str()));
 							        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(6).c_str()));
-									getTimestamp(mappingFeaturesTimestamp);
+									RNUtils::getTimestamp(mappingFeaturesTimestamp);
 								}
 							}
 						}
@@ -1815,12 +1813,12 @@ void GeneralController::modifyMapInformationFeatures(char* cad){
 		    
 		}
 	} else {
-		std::cout << "Unable to edit feature. Invalid number of parameters.." << std::endl;
+		RNUtils::printLn("Unable to edit feature. Invalid number of parameters..");
 	}
 }
 
 void GeneralController::deleteMapInformationFeatures(char* cad){
-	std::vector<std::string> data = split(cad, ",");
+	std::vector<std::string> data = RNUtils::split(cad, ",");
 	if(data.size() == DELETE_FEATURE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
@@ -1888,7 +1886,7 @@ void GeneralController::deleteMapInformationFeatures(char* cad){
 							}
 							if(toDelete != NULL){
 								features_root_node->remove_node(toDelete);
-								getTimestamp(mappingFeaturesTimestamp);
+								RNUtils::getTimestamp(mappingFeaturesTimestamp);
 							}
 
 						}
@@ -1903,7 +1901,7 @@ void GeneralController::deleteMapInformationFeatures(char* cad){
 		    
 		}
 	} else {
-		std::cout << "Unable to delete feature. Invalid number of parameters.." << std::endl;
+		RNUtils::printLn("Unable to delete feature. Invalid number of parameters..");
 	}    
 }
 
@@ -1924,12 +1922,12 @@ void GeneralController::moveRobot(float lin_vel, float angular_vel){
 	} else {
 		this->stopRobot();
 	}
-	Sleep(100);
+	RNUtils::sleep(100);
 	ros::spinOnce();
 }
 
 void GeneralController::setRobotPosition(float x, float y, float theta){
-	ROS_INFO("new position is: {x: %f, y: %f, theta: %f}", x, y, theta);
+	RNUtils::printLn("new position is: {x: %f, y: %f, theta: %f}", x, y, theta);
 	this->setPosition(x, y, theta);	
 }
 
@@ -1938,7 +1936,7 @@ void GeneralController::setRobotPosition(Matrix Xk){
 }
 
 void GeneralController::moveRobotToPosition(float x, float y, float theta){
-	ROS_INFO("Moving to position: {x: %f, y: %f, theta: %f}", x, y, theta);
+	RNUtils::printLn("Moving to position: {x: %f, y: %f, theta: %f}", x, y, theta);
 	this->gotoPosition(x, y, theta);
 }
 
@@ -2020,7 +2018,7 @@ void GeneralController::onBatteryChargeStateChanged(char battery){
 					setChargerPosition = true;
 					float xpos = currentSector->featureAt(i)->xpos;
 					float ypos = currentSector->featureAt(i)->ypos;
-					Sleep(100);
+					RNUtils::sleep(100);
 					setRobotPosition(xpos, ypos, M_PI/2);
 				}
 			}
@@ -2061,7 +2059,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 					temp(0, 0) = distMean;
 					temp(1, 0) = angleMean;
 					landmarks.push_back(temp);
-					//ROS_INFO("landmark @ {d: %f, a: %f}", distMean, angleMean);
+					//RNUtils::printLn("landmark @ {d: %f, a: %f}", distMean, angleMean);
 				}
 				dataMean.clear();
 				dataAngles.clear();
@@ -2080,7 +2078,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 				temp(0, 0) = distMean;
 				temp(1, 0) = angleMean;
 				landmarks.push_back(temp);
-				//ROS_INFO("landmark @ {d: %f, a: %f}", distMean, angleMean);
+				//RNUtils::printLn("landmark @ {d: %f, a: %f}", distMean, angleMean);
 			}
 			dataMean.clear();
 			dataAngles.clear();
@@ -2091,33 +2089,33 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 }
 
 void GeneralController::onSecurityDistanceWarningSignal(){
-	printf("Alert on something is blocking Doris to achieve goal...\n");
+	RNUtils::printLn("Alert on something is blocking Doris to achieve goal...");
 }
 
 void GeneralController::onSecurityDistanceStopSignal(){
-	printf("Doris Stopped. Could not achieve goal %d...\n", lastSiteVisitedIndex + 1);
+	RNUtils::printLn("Doris Stopped. Could not achieve goal %d...", lastSiteVisitedIndex + 1);
 }
 
 void GeneralController::startSitesTour(){
 	pthread_t tourThread;
 	stopCurrentTour();
 	
-	std::cout << "Starting tour in current sector..." << std::endl;
+	RNUtils::printLn("Starting tour in current sector...");
 	pthread_create(&tourThread, NULL, sitesTourThread, (void *)(this));
 }
 
 void* GeneralController::sitesTourThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	self->keepTourAlive = YES;
-    std::vector<std::string> spltdSequence = self->split((char*)self->currentSector->getSequence().c_str(), ",");
+    std::vector<std::string> spltdSequence = RNUtils::split((char*)self->currentSector->getSequence().c_str(), ",");
 	
 	while(ros::ok() && self->keepTourAlive == YES){
         int goalIndex = self->lastSiteVisitedIndex + 1;
 		float xpos = self->currentSector->siteAt(goalIndex)->xpos;
 		float ypos = self->currentSector->siteAt(goalIndex)->ypos;
-		Sleep(100);
+		RNUtils::sleep(100);
 		self->moveRobotToPosition(xpos, ypos, 0.0);
-		while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) Sleep(100);
+		while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) RNUtils::sleep(100);
         if (self->isGoalAchieved()) {
             self->lastSiteVisitedIndex++;
             if (self->currentSector->isSitesCyclic() && (self->lastSiteVisitedIndex == (spltdSequence.size() - 1))) {
@@ -2135,9 +2133,9 @@ void* GeneralController::sitesTourThread(void* object){
 void GeneralController::stopCurrentTour(){
 	if(keepTourAlive == YES){
 		keepTourAlive = MAYBE;
-		std::cout << "Stopping all tours..." << std::endl;
-		while(keepTourAlive != NO) Sleep(100);
-		ROS_INFO("All tours stopped...");
+		RNUtils::printLn("Stopping all tours...");
+		while(keepTourAlive != NO) RNUtils::sleep(100);
+		RNUtils::printLn("All tours stopped...");
 	}
 }
 
@@ -2203,8 +2201,8 @@ void GeneralController::initializeKalmanVariables(){
 void GeneralController::trackRobot(){
 	stopRobotTracking();
 	initializeKalmanVariables();
-	Sleep(1000);
-	std::cout << "Tracking Doris..." << std::endl;
+	RNUtils::sleep(1000);
+	RNUtils::printLn("Tracking Doris...");
 	//pthread_create(&trackThread, NULL, trackRobotThread, (void *)(this));
 	pthread_create(&trackThread, NULL, trackRobotProbabilisticThread, (void *)(this));
 }
@@ -2256,19 +2254,19 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		Matrix zkl;
 		self->getObservations(zkl);
 
-		//printf("\n\nSeen landmarks: %d\n", self->landmarks.size());
+		//RNUtils::printLn("\n\nSeen landmarks: %d\n", self->landmarks.size());
 		pthread_mutex_lock(&self->mutexLandmarkLocker);
 		Matrix zl(2 * self->currentSector->landmarksSize(), 1);
 		for (int i = 0; i < self->landmarks.size(); i++){
 			Matrix l = self->landmarks.at(i);
-			//printf("landmarks {d: %f, a: %f}\n", l(0, 0), l(1, 0));
+			//RNUtils::printLn("landmarks {d: %f, a: %f}\n", l(0, 0), l(1, 0));
 
 			for (int j = 0; j < zkl.rows_size(); j+=2){
 
 				float mahalanobisDistance = std::sqrt(std::pow((l(0, 0) - zkl(j, 0))/self->R(j, j), 2) + std::pow((l(1, 0) - zkl(j + 1, 0))/self->R(j + 1, j + 1), 2));
-				//ROS_INFO("Mahalanobis Distance: %f", mahalanobisDistance);
+				//RNUtils::printLn("Mahalanobis Distance: %f", mahalanobisDistance);
 				if(mahalanobisDistance <= alpha){
-					//printf("Matched landmark: {d: %d, a: %d}. MHD: %f\n", j, j+1, mahalanobisDistance);
+					//RNUtils::printLn("Matched landmark: {d: %d, a: %d}. MHD: %f\n", j, j+1, mahalanobisDistance);
 					zl(j, 0) = l(0, 0) - zkl(j, 0);
 					zl(j + 1, 0) = l(1, 0) - zkl(j + 1, 0);
 				}
@@ -2283,7 +2281,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		Matrix newPosition = self->robotRawEncoderPosition + Wk * zl;
 
 		self->setRobotPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
-		Sleep(29);
+		RNUtils::sleep(29);
 	}
 	self->keepRobotTracking = NO;
 	return NULL;
@@ -2304,7 +2302,7 @@ void* GeneralController::trackRobotThread(void* object){
 	
 	while(ros::ok() && self->keepRobotTracking == YES){
 		//1 - Prediction
-		//ROS_INFO("1 - Prediction");
+		//RNUtils::printLn("1 - Prediction");
 
 		pk1 = Pk;
 		
@@ -2325,9 +2323,9 @@ void* GeneralController::trackRobotThread(void* object){
 		matXk(2, 2) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexC();
 		matXk(2, 3) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexD();
 		
-		std::cout << "Position Xk(k|k): " << std::endl;
+		RNUtils::printLn("Position Xk(k|k): ");
 		matXk.print();
-        std::cout << "Pk(k|k): " << std::endl;
+        RNUtils::printLn("Pk(k|k): ");
 		Pk.print();
 
 		Ak(0, 2) = -self->robotRawDeltaPosition(0, 0) * std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
@@ -2350,10 +2348,10 @@ void* GeneralController::trackRobotThread(void* object){
 
 		//Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
 		Pk = (Ak * pk1 * ~Ak);
-        std::cout << "Pk(k+1|k): " << std::endl;
+        RNUtils::printLn("Pk(k+1|k): ");
 		Pk.print();
 		// 2 - Observation
-		//ROS_INFO("2 - Observation");
+		//RNUtils::printLn("2 - Observation");
 		
 		Hk = Matrix(2 * self->currentSector->landmarksSize(), STATE_VARIABLES);
 		for(int i = 0, zIndex = 0; i < self->currentSector->landmarksSize(); i++, zIndex += 2){
@@ -2371,22 +2369,18 @@ void* GeneralController::trackRobotThread(void* object){
 		self->getObservationsTrapezoids(zklWNoise, zklWONoise);
 
 		for(int i = 0; i < zklWONoise.size(); i++){
-		    std::cout << "Zkl Trap " << i  << ": (";
-			std::cout << zklWONoise.at(i)->getVertexA() << ", ";
-			std::cout << zklWONoise.at(i)->getVertexB() << ", ";
-			std::cout << zklWONoise.at(i)->getVertexC() << ", ";
-			std::cout << zklWONoise.at(i)->getVertexD() << ")" << std::endl;
+		    RNUtils::printLn("Zkl Trap [%d]: (%f, %f, %f, %f)", zklWONoise.at(i)->getVertexA(), zklWONoise.at(i)->getVertexB(), zklWONoise.at(i)->getVertexC(), zklWONoise.at(i)->getVertexD());
 		}
 		
 		// 3 - Matching
-		//ROS_INFO("3 - Matching");
-		ROS_INFO("Seen landmarks: %d", self->landmarks.size());
+		//RNUtils::printLn("3 - Matching");
+		RNUtils::printLn("Seen landmarks: %d", self->landmarks.size());
 		pthread_mutex_lock(&self->mutexLandmarkLocker);
 		Matrix zl(2 * self->currentSector->landmarksSize(), TRAP_VERTEX);
 		for (int i = 0; i < self->landmarks.size(); i++){
 			Matrix l = self->landmarks.at(i);
 			int mode = 0;
-			ROS_INFO("landmarks {d: %f, a: %f}", l(0, 0), l(1, 0));
+			RNUtils::printLn("landmarks {d: %f, a: %f}", l(0, 0), l(1, 0));
 
 			for (int j = 0; j < zklWONoise.size(); j+=2){
 				float mdDistance = zklWONoise.at(j)->evaluate(l(0, 0));
@@ -2406,7 +2400,7 @@ void* GeneralController::trackRobotThread(void* object){
 				float mdAngle = tempTrap->evaluate(l(1, 0));
 				
 				if(mdDistance >= alpha && mdAngle >= alpha){
-					ROS_INFO("Matched landmark: {d: %d, a: %d}", j, j+1);
+					RNUtils::printLn("Matched landmark: {d: %d, a: %d}", j, j+1);
 					
 					Matrix tempY(1, TRAP_VERTEX);
 					tempY(0, 0) = l(0, 0) - zklWONoise.at(j)->getVertexA();
@@ -2428,7 +2422,7 @@ void* GeneralController::trackRobotThread(void* object){
 		}
 		pthread_mutex_unlock(&self->mutexLandmarkLocker);
 		// 4 - Correction
-		//ROS_INFO("4 - Correction");	
+		//RNUtils::printLn("4 - Correction");	
 		//Matrix matXk(STATE_VARIABLES, TRAP_VERTEX);
 
 		matXk(0, 0) = self->kalmanFuzzy->at(X_INDEX)->getVertexA();
@@ -2446,7 +2440,7 @@ void* GeneralController::trackRobotThread(void* object){
 		matXk(2, 2) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexC();
 		matXk(2, 3) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexD();
 
-		std::cout << "Position Xk(k+1|k): " << std::endl;
+		RNUtils::printLn("Position Xk(k+1|k): ");
 		matXk.print();
 
 		Matrix matThk(1, TRAP_VERTEX);
@@ -2468,7 +2462,7 @@ void* GeneralController::trackRobotThread(void* object){
 
 		Matrix stateVariation = self->multTrapMatrix(Wk, zl);
 		stateVariation = Wk * zl;
-		std::cout << "State Variation: " << std::endl;
+		RNUtils::printLn("State Variation: ");
 		stateVariation.print();
 		matXk = matXk + stateVariation;
 
@@ -2483,7 +2477,6 @@ void* GeneralController::trackRobotThread(void* object){
         float thkn = fuzzy::fstats::expectation(matThk(0, 0), matThk(0, 1), matThk(0, 2), matThk(0, 3));
                 
 		matThk = self->normalizeAngles(matThk);
-		//std::cout << "normalizeAngles:" << std::endl << matThk;	
 
 		matXk(2, 0) = matThk(0, 0);
 		matXk(2, 1) = matThk(0, 1);
@@ -2507,7 +2500,7 @@ void* GeneralController::trackRobotThread(void* object){
 		
 		self->setRobotPosition(xkn, ykn, thkn);
 		
-		Sleep(10);
+		RNUtils::sleep(10);
 		//self->keepRobotTracking = NO;
 	}
 	self->keepRobotTracking = NO;
@@ -2806,11 +2799,11 @@ bool GeneralController::isFouthQuadrant(float angle){
 void GeneralController::stopRobotTracking(){
 	if(keepRobotTracking == YES){
 		keepRobotTracking = MAYBE;
-		std::cout << "Stopping robot tracking thread" << std::endl;
+		RNUtils::printLn("Stopping robot tracking thread");
 		//pthread_cancel(trackThread);
 		//keepRobotTracking = NO;
-		while(keepRobotTracking != NO) Sleep(100);
-		std::cout << "Stopped robot tracking thread" << std::endl;
+		while(keepRobotTracking != NO) RNUtils::sleep(100);
+		RNUtils::printLn("Stopped robot tracking thread");
 
 		for(int i = 0; i < kalmanFuzzy->size(); i++){
 			delete kalmanFuzzy->at(i);
@@ -2831,11 +2824,11 @@ void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice, in
 	vc = cv::VideoCapture(videoDevice);
 
 	if(vc.isOpened()){
-		std::cout << "Streaming from camera device: " << videoDevice << std::endl;
+		RNUtils::printLn("Streaming from camera device: %d", videoDevice);
 		pthread_create(&t1, NULL, streamingThread, (void *)(data));
 	} else {
 		vc.release();
-		std::cout << "Could not open device: " << videoDevice << std::endl;
+		RNUtils::printLn("Could not open device: %d", videoDevice);
 	}	
 	 
 
@@ -2844,8 +2837,8 @@ void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice, in
 void GeneralController::stopVideoStreaming(){
 	if(streamingActive == YES){
 		streamingActive = MAYBE;
-		std::cout << "Stopping video streaming" << std::endl;
-		while(streamingActive != NO) Sleep(100);
+		RNUtils::printLn("Stopping video streaming");
+		while(streamingActive != NO) RNUtils::sleep(100);
 	}
 }
 
@@ -2872,7 +2865,7 @@ void* GeneralController::streamingThread(void* object){
 		self->vc >> frame;
 		cv::imencode(".jpg", frame, buff, params);
 		udp_client->sendData(&buff[0], buff.size());
-		Sleep(30);
+		RNUtils::sleep(30);
 	}
 	udp_client->closeConnection();
 	self->vc.release();
@@ -2899,15 +2892,7 @@ void* GeneralController::serverStatusThread(void* object){
 				//self->spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
 			}
 		}
-		Sleep(105);
+		RNUtils::sleep(105);
 	}
 	return NULL;
-}
-
-void GeneralController::getTimestamp(std::ostringstream& timestamp){
-	std::time_t ltTime = std::time(NULL);
-	std::tm *tstamp = std::localtime(&ltTime);
-
-	timestamp.str("");
-	timestamp << tstamp->tm_year + 1900 << "-" << tstamp->tm_mon + 1 << "-" << tstamp->tm_mday << " " << tstamp->tm_hour << ":" << tstamp->tm_min << ":" << tstamp->tm_sec;
 }

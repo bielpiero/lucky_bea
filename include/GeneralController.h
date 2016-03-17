@@ -392,8 +392,6 @@ private:
 
 	void getCameraDevicePort(char* cad, int& device, int& port);
 	void beginVideoStreaming(int socketIndex, int videoDevice, int port);
-
-	void getTimestamp(std::ostringstream& timestamp);
 	
 	static void* streamingThread(void*);
 	static void* trackRobotThread(void*);

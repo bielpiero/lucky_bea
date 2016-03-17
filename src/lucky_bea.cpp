@@ -37,8 +37,10 @@ int main(int argc, char** argv){
 	ros::NodeHandle nh;
 
 	if(argc == 1 || argc == 3){
-		ROS_INFO("Lucky Bea for Doris. To control the IC Group Robot named Doris");
-		ROS_INFO("Press Ctrl+C to exit");
+		RNUtils::printLn("Testing");
+		
+		RNUtils::printLn("Lucky Bea for Doris. To control the IC Group Robot named Doris");
+		RNUtils::printLn("Press Ctrl+C to exit");
 		std::string port = "/dev/ttyS0";
 		if(argc == 3){
 			if(strcmp(argv[1], "-p") == 0){
@@ -48,11 +50,11 @@ int main(int argc, char** argv){
 	    robot = new GeneralController(nh, port.c_str());
 	    if(robot->init("", 14004, SOCKET_SERVER) == 0){
 	    	robot->startThread();
-		    ROS_INFO("No clients connected...");
+		    RNUtils::printLn("No clients connected...");
 			//robot->trackRobot();
 			//robot->OnConnection();
 			ros::spin();
-			ROS_INFO( "Lucky Bea: Quitting... \n" );	
+			RNUtils::printLn( "Lucky Bea: Quitting... \n" );	
 	    }
 	    if(robot != NULL){
 	    	delete robot;

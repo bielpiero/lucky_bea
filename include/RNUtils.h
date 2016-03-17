@@ -1,6 +1,13 @@
 #ifndef RN_UTILS_H
 #define RN_UTILS_H
 
+#include <sys/stat.h>
+#include <sys/time.h>   
+#include <sys/types.h>   
+#include <unistd.h>
+#include <pthread.h>
+#include <errno.h>
+
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -9,19 +16,15 @@
 #include <string>
 #include <cstring>
 #include <ctime>
+#include <cstdio>
+#include <cstdarg>
 
-class
-
-void printLn(char* _format, ...){
-
-	char buffer[256];
-	va_list arguments;
-	va_start(arguments, _format);
-
-	
-	vsprintf(buffer, _format, arguments);
-	printf(buffer);
-	va_end(arguments);
-}
+class RNUtils{
+public:
+	static void sleep(int milliseconds);
+	static void printLn(const char* _format, ...);
+	static std::vector<std::string> split(char* buffer, const char* delimiter);
+	static void getTimestamp(std::ostringstream& timestamp);
+};
 
 #endif

@@ -5,20 +5,13 @@
 #if !defined(AFX_SOCKETNODE_H__895095F5_AD65_4FF5_973F_0DD16E9BC2FE__INCLUDED_)
 #define AFX_SOCKETNODE_H__895095F5_AD65_4FF5_973F_0DD16E9BC2FE__INCLUDED_
 
-#include <sys/stat.h>
-#include <sys/time.h>   
-#include <sys/types.h>   
-#include <unistd.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <pthread.h>
-#include <errno.h>	
-#include <string.h>
-#include <vector>
-#include <cstring>
+
+#include "RNUtils.h"
 
 #include "handshake.h"
 #include "crypt/base64.h"
@@ -30,7 +23,6 @@
 #define SOCKET_ERROR -1
 #define SD_BOTH SHUT_RDWR
 #define closesocket(x) close(x)
-#define Sleep(x) usleep(x*1000)
 
 #define MAX_CLIENTS 10
 #define CLIENT_DEFAULT_INDEX 0
@@ -84,7 +76,6 @@ public:
 
 	void startThread();//launch a 10 ms thread loop over the following actions
 	void handleConnection();//manages all connection and reconnection
-	std::vector<std::string> split(char* buffer, const char* delimiter);
 protected:
 	virtual void onConnection(int socketIndex) = 0;//callback for client and server
 	virtual void onMsg(int socketIndex, char* cad, unsigned long long int length) = 0;//callback for client and server
