@@ -4,6 +4,7 @@
 
 
 const float GeneralController::LASER_MAX_RANGE = 11.6;
+const float GeneralController::LANDMARK_RADIUS = 0.045;
 
 GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):RobotNode(port){
 	this->nh = nh_;
@@ -25,7 +26,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):Robo
 	this->spdUDPPort = 0;
 
     this->lastSiteVisitedIndex = NONE;
-	
+	landmarks = new std::vector<RNLandmark*>();
 	kalmanFuzzy = new std::vector<fuzzy::trapezoid*>();
 	
 	robotState = Matrix(3, 1);
@@ -79,6 +80,12 @@ GeneralController::~GeneralController(void){
 	stopRobotTracking();
 	stopCurrentTour();
 	pthread_mutex_destroy(&mutexLandmarkLocker);
+
+	for(int i = 0; i < landmarks->size(); i++){
+		delete landmarks->at(i);
+	}
+	landmarks->clear();
+	delete landmarks;
 	delete maestroControllers;
 	delete kalmanFuzzy;
 	delete ttsLipSync;
@@ -2036,55 +2043,71 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 
 	std::vector<int> dataIndices = stats::findIndicesHigherThan(dataIntensities, 0);
 	pthread_mutex_lock(&mutexLandmarkLocker);
-	landmarks.clear();
-	
-	std::vector<float> dataMean;
-	std::vector<float> dataAngles;
-	if(dataIndices.size() > 0){
-		for(int i = 0; i < dataIndices.size() - 1; i++){
+
+	for(int i = 0; i < landmarks->size(); i++){
+		delete landmarks->at(i);
+	}
+	landmarks->clear();
+	RNLandmark* current = new RNLandmark;
+
+
+	for(int i = 0; i < dataIndices.size(); i++){
+		if(i < dataIndices.size() - 1){
 			if((dataIndices[i + 1] - dataIndices[i]) <= 10){
-				dataMean.push_back(data->at(dataIndices[i]));
-				dataAngles.push_back((angle_min + ((float)dataIndices[i] * angle_increment)));
+				current->addPoint(data->at(dataIndices[i]), (angle_min + ((float)dataIndices[i] * angle_increment)));
 				
 			} else {
-				if(dataMean.size() > 1){
-					Matrix temp = Matrix(2, 1);
-		
-					dataMean.push_back(data->at(dataIndices[i]));
-					dataAngles.push_back((angle_min + ((float)dataIndices[i] * angle_increment)));
-				
-					float distMean = stats::expectation(dataMean);
-					float angleMean = stats::expectation(dataAngles);
-					
-					temp(0, 0) = distMean;
-					temp(1, 0) = angleMean;
-					landmarks.push_back(temp);
-					//RNUtils::printLn("landmark @ {d: %f, a: %f}", distMean, angleMean);
+				current->addPoint(data->at(dataIndices[i]), (angle_min + ((float)dataIndices[i] * angle_increment)));
+				if(current->size() > 1){
+					landmarks->push_back(current);
 				}
-				dataMean.clear();
-				dataAngles.clear();
+				current = new RNLandmark;
 			}
-		}
-
-		if(dataMean.size() > 0){
-			Matrix temp = Matrix(2, 1);
-			if(dataMean.size() > 1){
-				dataMean.push_back(data->at(dataIndices[dataIndices.size() - 1]));
-				dataAngles.push_back((angle_min + ((float)dataIndices[dataIndices.size() - 1] * angle_increment)));
-			
-				float distMean = stats::expectation(dataMean);
-				float angleMean = stats::expectation(dataAngles);
-				
-				temp(0, 0) = distMean;
-				temp(1, 0) = angleMean;
-				landmarks.push_back(temp);
-				//RNUtils::printLn("landmark @ {d: %f, a: %f}", distMean, angleMean);
+		} else {
+			if((dataIndices[i] - dataIndices[i - 1]) <= 10){
+				current->addPoint(data->at(dataIndices[i]), (angle_min + ((float)dataIndices[i] * angle_increment)));
+				if(current->size() > 1){
+					landmarks->push_back(current);
+				}
+			} else if(current->size() > 0){
+				if(current->size() > 1){
+					landmarks->push_back(current);
+				}
 			}
-			dataMean.clear();
-			dataAngles.clear();
 		}
 	}
+	for(int i = 0; i < landmarks->size(); i++){
+		//RNUtils::printLn("Questa Merda prima alla correzione [%d] è {d: %f, a: %f}", i, landmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, landmarks->at(i)->getPointsYMean());
+		Matrix Pkl = Matrix::eye(2);
+		Matrix Rkl = std::pow(0.003, 2) * Matrix::eye(landmarks->at(i)->size());
+		Matrix Zk(landmarks->at(i)->size(), 1);
+		Matrix Zke(landmarks->at(i)->size(), 1);
+		Matrix Hkl(landmarks->at(i)->size(), 2);
+		Matrix Pc(2, 1);
+		Pc(0, 0) = landmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS;
+		Pc(1, 0) = landmarks->at(i)->getPointsYMean();
+		for(int j = 0; j < landmarks->at(i)->size(); j++){
+			
 
+			Zk(j, 0) = landmarks->at(i)->getPointAt(j)->getX();
+
+			Zke(j, 0) = Pc(0, 0) * cos(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()) - LANDMARK_RADIUS * cos(asin((Pc(0, 0) / LANDMARK_RADIUS) * sin(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY())));
+
+			float calc = (1 / LANDMARK_RADIUS) * (1 / std::sqrt(1 - ((std::pow(Pc(0, 0), 2) * std::pow(sin(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()), 2))/(std::pow(LANDMARK_RADIUS, 2)))));
+			Hkl(j, 0) = cos(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()) + Pc(0, 0) * std::pow(sin(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()), 2) * calc;
+			Hkl(j, 1) = -Pc(0, 0) * sin(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()) + std::pow(Pc(0, 0), 2) * sin(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()) * cos(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()) * calc;
+		}
+
+		Matrix Skl = Hkl * Pkl * ~Hkl + Rkl;
+		Matrix Wkl = Pkl * ~Hkl * !Skl;
+		Pc = Pc + (Wkl * (Zk - Zke));
+
+		landmarks->at(i)->setPointsXMean(Pc(0, 0));
+		landmarks->at(i)->setPointsYMean(Pc(1, 0));
+
+		//RNUtils::printLn("Questa Merda dopo della correzione [%d] è {d: %f, a: %f}", i, landmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, landmarks->at(i)->getPointsYMean());
+		
+	}
 	pthread_mutex_unlock(&mutexLandmarkLocker);
 }
 
@@ -2257,18 +2280,18 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		//RNUtils::printLn("\n\nSeen landmarks: %d\n", self->landmarks.size());
 		pthread_mutex_lock(&self->mutexLandmarkLocker);
 		Matrix zl(2 * self->currentSector->landmarksSize(), 1);
-		for (int i = 0; i < self->landmarks.size(); i++){
-			Matrix l = self->landmarks.at(i);
+		for (int i = 0; i < self->landmarks->size(); i++){
+			RNLandmark* lndmrk = self->landmarks->at(i);
 			//RNUtils::printLn("landmarks {d: %f, a: %f}\n", l(0, 0), l(1, 0));
 
 			for (int j = 0; j < zkl.rows_size(); j+=2){
 
-				float mahalanobisDistance = std::sqrt(std::pow((l(0, 0) - zkl(j, 0))/self->R(j, j), 2) + std::pow((l(1, 0) - zkl(j + 1, 0))/self->R(j + 1, j + 1), 2));
+				float mahalanobisDistance = std::sqrt(std::pow((lndmrk->getPointsXMean() - zkl(j, 0))/self->R(j, j), 2) + std::pow((lndmrk->getPointsYMean() - zkl(j + 1, 0))/self->R(j + 1, j + 1), 2));
 				//RNUtils::printLn("Mahalanobis Distance: %f", mahalanobisDistance);
 				if(mahalanobisDistance <= alpha){
 					//RNUtils::printLn("Matched landmark: {d: %d, a: %d}. MHD: %f\n", j, j+1, mahalanobisDistance);
-					zl(j, 0) = l(0, 0) - zkl(j, 0);
-					zl(j + 1, 0) = l(1, 0) - zkl(j + 1, 0);
+					zl(j, 0) = lndmrk->getPointsXMean() - zkl(j, 0);
+					zl(j + 1, 0) = lndmrk->getPointsYMean() - zkl(j + 1, 0);
 				}
 			}
 		}
@@ -2374,16 +2397,16 @@ void* GeneralController::trackRobotThread(void* object){
 		
 		// 3 - Matching
 		//RNUtils::printLn("3 - Matching");
-		RNUtils::printLn("Seen landmarks: %d", self->landmarks.size());
+		RNUtils::printLn("Seen landmarks: %d", self->landmarks->size());
 		pthread_mutex_lock(&self->mutexLandmarkLocker);
 		Matrix zl(2 * self->currentSector->landmarksSize(), TRAP_VERTEX);
-		for (int i = 0; i < self->landmarks.size(); i++){
-			Matrix l = self->landmarks.at(i);
+		for (int i = 0; i < self->landmarks->size(); i++){
+			RNLandmark* lndmrk = self->landmarks->at(i);
 			int mode = 0;
-			RNUtils::printLn("landmarks {d: %f, a: %f}", l(0, 0), l(1, 0));
+			RNUtils::printLn("landmarks {d: %f, a: %f}", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
 
 			for (int j = 0; j < zklWONoise.size(); j+=2){
-				float mdDistance = zklWONoise.at(j)->evaluate(l(0, 0));
+				float mdDistance = zklWONoise.at(j)->evaluate(lndmrk->getPointsXMean());
 
 				Matrix tempZkl(1, TRAP_VERTEX);
 				tempZkl(0, 0) = zklWONoise.at(j+1)->getVertexA();
@@ -2391,28 +2414,28 @@ void* GeneralController::trackRobotThread(void* object){
 				tempZkl(0, 2) = zklWONoise.at(j+1)->getVertexC();
 				tempZkl(0, 3) = zklWONoise.at(j+1)->getVertexD();
 
-				if(self->isThirdQuadrant(l(1, 0))){
+				if(self->isThirdQuadrant(lndmrk->getPointsYMean())){
 					mode = 1;
 				}
 
 				tempZkl = self->denormalizeAngles(tempZkl, mode);
 				fuzzy::trapezoid* tempTrap = new fuzzy::trapezoid("", tempZkl(0, 0), tempZkl(0, 1), tempZkl(0, 2), tempZkl(0, 3));
-				float mdAngle = tempTrap->evaluate(l(1, 0));
+				float mdAngle = tempTrap->evaluate(lndmrk->getPointsYMean());
 				
 				if(mdDistance >= alpha && mdAngle >= alpha){
 					RNUtils::printLn("Matched landmark: {d: %d, a: %d}", j, j+1);
 					
 					Matrix tempY(1, TRAP_VERTEX);
-					tempY(0, 0) = l(0, 0) - zklWONoise.at(j)->getVertexA();
-					tempY(0, 1) = l(0, 0) - zklWONoise.at(j)->getVertexB();
-					tempY(0, 2) = l(0, 0) - zklWONoise.at(j)->getVertexC();
-					tempY(0, 3) = l(0, 0) - zklWONoise.at(j)->getVertexD();
+					tempY(0, 0) = lndmrk->getPointsXMean() - zklWONoise.at(j)->getVertexA();
+					tempY(0, 1) = lndmrk->getPointsXMean() - zklWONoise.at(j)->getVertexB();
+					tempY(0, 2) = lndmrk->getPointsXMean() - zklWONoise.at(j)->getVertexC();
+					tempY(0, 3) = lndmrk->getPointsXMean() - zklWONoise.at(j)->getVertexD();
 
 					for (int k = 0; k < tempY.cols_size(); k++){
 						zl(j, k) = tempY(0, k);
 					}
 
-					tempY = l(1, 0) - tempZkl;
+					tempY = lndmrk->getPointsYMean() - tempZkl;
 
 					for (int k = 0; k < tempY.cols_size(); k++){
 						zl(j+1, k) = tempY(0, k);

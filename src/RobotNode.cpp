@@ -387,7 +387,7 @@ void RobotNode::computePositionFromEncoders(){
 
     deltaDistance = (deltaLeftMM + deltaRightMM) / 2.0;
     deltaDegrees = robot->getPose().getThRad() - myRawPose->getThRad();
-    //deltaDegrees = (deltaRightRad - deltaLeftRad) * getDiffConvFactor();
+    //deltaDegrees = (deltaRightRad - deltaLeftRad) * robotLength;
 
     getRawPoseFromOdometry();
 

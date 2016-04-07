@@ -4,7 +4,7 @@
 			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="65" ypos="148"/>
 			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="180" ypos="312"/>
 			<landmark id="2" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="263" ypos="52"/>
-			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="375" ypos="312"/>
+			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="380" ypos="312"/>
 			<landmark id="4" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="420" ypos="122"/>
 			<landmark id="5" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="535" ypos="312"/>
 			<landmark id="6" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="570" ypos="122"/>

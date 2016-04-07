@@ -40,5 +40,34 @@ void RNUtils::getTimestamp(std::ostringstream& timestamp){
 	std::tm *tstamp = std::localtime(&ltTime);
 
 	timestamp.str("");
-	timestamp << tstamp->tm_year + 1900 << "-" << tstamp->tm_mon + 1 << "-" << tstamp->tm_mday << " " << tstamp->tm_hour << ":" << tstamp->tm_min << ":" << tstamp->tm_sec;
+	timestamp << tstamp->tm_year + 1900 << "-";
+	if((tstamp->tm_mon + 1) < 10){
+		timestamp << "0" << tstamp->tm_mon + 1 << "-";
+	} else {
+		timestamp << tstamp->tm_mon + 1 << "-";
+	}
+
+	if(tstamp->tm_mday < 10){
+		timestamp << "0" << tstamp->tm_mday << ", ";
+	} else {
+		timestamp << tstamp->tm_mday << ", ";
+	}
+
+	if(tstamp->tm_hour < 10){
+		timestamp << "0" << tstamp->tm_hour << ":";
+	} else {
+		timestamp << tstamp->tm_hour << ":";
+	}
+
+	if(tstamp->tm_min < 10){
+		timestamp << "0" << tstamp->tm_min << ":";
+	} else {
+		timestamp << tstamp->tm_min << ":";
+	}
+
+	if(tstamp->tm_sec < 10){
+		timestamp << "0" << tstamp->tm_sec;
+	} else {
+		timestamp << tstamp->tm_sec;
+	}
 }

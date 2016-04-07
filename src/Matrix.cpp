@@ -7,7 +7,10 @@ Matrix::Matrix(unsigned int rows, unsigned int cols){
 }
 
 Matrix::~Matrix(){
-
+	for (int i = 0; i < data.size(); i++){
+		data.at(i).clear();
+	}
+	data.clear();
 }
 
 void Matrix::operator=(const Matrix& rhs){
