@@ -404,7 +404,6 @@ private:
 	unsigned char keepTourAlive;
 
 	int currentMapId;
-	std::vector<MapSector*>* navSectors;
 	MapSector* currentSector;
 	s_robot* robotConfig;
 

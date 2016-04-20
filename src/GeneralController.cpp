@@ -50,8 +50,7 @@ GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):Robo
 	//setGesture("26", servo_positions);
 	ttsLipSync = new DorisLipSync(this->maestroControllers, ros::package::getPath(PACKAGE_NAME));
 	//ttsLipSync->textToViseme("Hola, ya estoy lista para funcionar");
-
-	navSectors = NULL;
+	currentMapId = NONE;
 	currentSector = NULL;
 	loadRobotConfig();
 	pthread_mutex_init(&mutexLandmarkLocker, NULL);
@@ -90,7 +89,7 @@ GeneralController::~GeneralController(void){
 	delete kalmanFuzzy;
 	delete ttsLipSync;
 	delete spdWSServer;
-	delete navSectors;
+	delete currentSector;
 }
 
 void GeneralController::onConnection(int socketIndex) //callback for client and server
@@ -989,113 +988,106 @@ void GeneralController::getMapId(char* cad, int& mapId){
 }
 
 void GeneralController::loadSector(int mapId, int sectorId){
-	/*bool found = false;
-	for(int i = 0; i < navSectors->size() and not found; i++){
-		if(navSectors->at(i)->getId() == sectorId){
-			found = true;
-			currentSector = navSectors->at(i);
-			RNUtils::getTimestamp(mappingEnvironmentTimestamp);
-		}
-	}*/
-}
+	this->currentMapId = mapId;
+	std::string filename;
 
-/*void GeneralController::loadSectors(){
+	getMapFilename(mapId, filename);
+
 	xml_document<> doc;
-    xml_node<>* root_node;
-	
-	std::string buffer_str = "";
-	
-    std::ifstream the_file(xmlSectorsPath.c_str());
-	
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
+    xml_node<>* root_node;  
 
-	doc.parse<0>(&buffer[0]);
-	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+    std::string fullSectorPath = xmlSectorsPath + filename;
+    std::ifstream the_file(fullSectorPath.c_str());
+    std::vector<char> buffer = std::vector<char>((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+    buffer.push_back('\0');
+    doc.parse<0>(&buffer[0]);
 
-	navSectors = new std::vector<MapSector*>();
-	
-	if(root_node != NULL){
-		for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){	
-			MapSector* navSector = new MapSector;
+    if(currentSector != NULL){
+    	delete currentSector;
+    	currentSector = NULL;
+    }
+    currentSector = new MapSector;
+    if(root_node != NULL){
+    	bool found = false;
+    	for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){	
+    		int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+    		if(xmlSectorId == sectorId){
+    			found = true;
+    			currentSector->setId(xmlSectorId);
+				currentSector->setName(std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value()));
+				currentSector->setWidth((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())/100);
+				currentSector->setHeight((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())/100);
+				xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
+				if(landmarks_root_node->first_node() !=  NULL){
+					for(xml_node<>* landmark_node = landmarks_root_node->first_node(XML_ELEMENT_LANDMARK_STR); landmark_node; landmark_node = landmark_node->next_sibling()){
+						s_landmark* tempLandmark = new s_landmark;
 
-			int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+						tempLandmark->id = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+						tempLandmark->varMinX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100;
+						tempLandmark->varMaxX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100;
+						tempLandmark->varMinY = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100;
+						tempLandmark->varMaxY = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100;
+						tempLandmark->xpos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
+						tempLandmark->ypos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
 
-			navSector->setId(xmlSectorId);
-			navSector->setName(std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value()));
-			navSector->setWidth((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())/100);
-			navSector->setHeight((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())/100);
-
-			xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
-			if(landmarks_root_node->first_node() !=  NULL){
-				for(xml_node<>* landmark_node = landmarks_root_node->first_node(XML_ELEMENT_LANDMARK_STR); landmark_node; landmark_node = landmark_node->next_sibling()){
-					s_landmark* tempLandmark = new s_landmark;
-
-					tempLandmark->id = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-					tempLandmark->varMinX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100;
-					tempLandmark->varMaxX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100;
-					tempLandmark->varMinY = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100;
-					tempLandmark->varMaxY = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100;
-					tempLandmark->xpos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
-					tempLandmark->ypos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
-
-					navSector->addLandmark(tempLandmark);
-				}
-			}
-
-			xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
-			if(features_root_node->first_node() !=  NULL){
-				for(xml_node<>* features_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); features_node; features_node = features_node->next_sibling()){
-					s_feature* tempFeature = new s_feature;
-
-					tempFeature->id = atoi(features_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-					tempFeature->name = std::string(features_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-					tempFeature->width = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100;
-					tempFeature->height = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100;
-					tempFeature->xpos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
-					tempFeature->ypos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
-
-					navSector->addFeature(tempFeature);
-					
-				}
-			}
-
-			xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
-			if(sites_root_node->first_attribute()){
-				if(sites_root_node->first_attribute(XML_ATTRIBUTE_CYCLIC_STR)){
-					std::string cyclic(sites_root_node->first_attribute(XML_ATTRIBUTE_CYCLIC_STR)->value());
-					if(cyclic == "yes"){
-						navSector->setIfSitesCyclic(true);
+						currentSector->addLandmark(tempLandmark);
 					}
 				}
 
-				if(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)){
-					std::string sequence(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)->value());
-					navSector->setSequence(sequence);
-				}
-			}
-			
-			
-			if(sites_root_node->first_node() !=  NULL){
-				for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
-					s_site* tempSite = new s_site;
+				xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
+				if(features_root_node->first_node() !=  NULL){
+					for(xml_node<>* features_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); features_node; features_node = features_node->next_sibling()){
+						s_feature* tempFeature = new s_feature;
 
-					tempSite->id = atoi(site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-					tempSite->name = std::string(site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-					tempSite->radius = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_RADIUS_STR)->value())) / 100;
-					tempSite->tsec = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_TIME_STR)->value()));
-					tempSite->xpos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
-					tempSite->ypos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
+						tempFeature->id = atoi(features_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+						tempFeature->name = std::string(features_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+						tempFeature->width = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100;
+						tempFeature->height = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100;
+						tempFeature->xpos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
+						tempFeature->ypos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
 
-					navSector->addSite(tempSite);
+						currentSector->addFeature(tempFeature);
+						
+					}
 				}
-			}
-			navSectors->push_back(navSector);
-		}
-	}
-	the_file.close();
-	
-}*/
+
+				xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+				if(sites_root_node->first_attribute()){
+					if(sites_root_node->first_attribute(XML_ATTRIBUTE_CYCLIC_STR)){
+						std::string cyclic(sites_root_node->first_attribute(XML_ATTRIBUTE_CYCLIC_STR)->value());
+						if(cyclic == "yes"){
+							currentSector->setIfSitesCyclic(true);
+						}
+					}
+
+					if(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)){
+						std::string sequence(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)->value());
+						currentSector->setSequence(sequence);
+					}
+				}
+				
+				
+				if(sites_root_node->first_node() !=  NULL){
+					for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
+						s_site* tempSite = new s_site;
+
+						tempSite->id = atoi(site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+						tempSite->name = std::string(site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+						tempSite->radius = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_RADIUS_STR)->value())) / 100;
+						tempSite->tsec = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_TIME_STR)->value()));
+						tempSite->xpos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
+						tempSite->ypos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
+
+						currentSector->addSite(tempSite);
+					}
+				}
+    		}
+    	}
+
+    }
+
+    the_file.close();
+}
 
 void GeneralController::loadRobotConfig(){
 	xml_document<> doc;
@@ -1522,7 +1514,7 @@ void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, convert.str().c_str()));
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_NAME_STR, data.at(2).c_str()));
-				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_VARIANCE_STR, data.at(3).c_str()));
+				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_RADIUS_STR, data.at(3).c_str()));
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_TIME_STR, data.at(4).c_str()));
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(5).c_str()));
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(6).c_str()));
@@ -2907,13 +2899,13 @@ void* GeneralController::serverStatusThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	while(ros::ok()){
 		std::ostringstream buffer_str;
-		int mapId = NONE;
+		int mapId = self->currentMapId;
 		int sectorId = NONE;
 		if(self->currentSector != NULL){
 			sectorId = self->currentSector->getId();
 		}
 		buffer_str.clear();
-		buffer_str << "$DORIS|" << mapId << "," << sectorId << "," << self->emotionsTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingFeaturesTimestamp.str() << "," + self->mappingSitesTimestamp.str();
+		buffer_str << "$DORIS|" << mapId << "," << sectorId << "," << self->emotionsTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingLandmarksTimestamp.str() << "," << self->mappingFeaturesTimestamp.str() << "," + self->mappingSitesTimestamp.str();
 
 		if(self->spdUDPClient != NULL){
 			self->spdUDPClient->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());
