@@ -1,0 +1,37 @@
+<sectors>
+	<sector id="0" name="Machine Hall" width="902" height="452">
+		<landmarks>
+			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="65" ypos="148"/>
+			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="180" ypos="312"/>
+			<landmark id="2" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="263" ypos="52"/>
+			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="380" ypos="312"/>
+			<landmark id="4" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="420" ypos="122"/>
+			<landmark id="5" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="535" ypos="312"/>
+			<landmark id="6" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="570" ypos="122"/>
+			<landmark id="7" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="725" ypos="272"/>
+			<landmark id="8" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="745" ypos="122"/>
+			<landmark id="9" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="900" ypos="167"/>
+		</landmarks>
+		<features>
+			<feature id="1" name="charger" width="50" height="25" xpos="700" ypos="370"/>
+			<feature id="0" name="door" width="137" height="10" xpos="70" ypos="0"/>
+			<feature id="2" name="brown closet" width="40" height="92" xpos="45" ypos="170"/>
+			<feature id="3" name="Left table 1" width="92" height="120" xpos="420" ypos="62"/>
+			<feature id="4" name="Left table 2" width="92" height="120" xpos="570" ypos="62"/>
+			<feature id="5" name="Left table 3" width="92" height="120" xpos="745" ypos="62"/>
+			<feature id="6" name="Right table 1" width="67" height="106" xpos="180" ypos="365"/>
+			<feature id="7" name="Right table 2" width="67" height="106" xpos="375" ypos="365"/>
+			<feature id="8" name="Right table 3" width="67" height="106" xpos="535" ypos="365"/>
+			<feature id="9" name="Right table 4" width="80" height="180" xpos="745" ypos="320"/>
+		</features>
+		<sites cyclic="yes" sequence="0,1,2,3">
+			<site id="0" name="site a" radius="0" tsec="0" xpos="222" ypos="121"/>
+			<site id="2" name="site c" radius="0" tsec="0" xpos="477" ypos="158"/>
+			<site id="3" name="site d" radius="0" tsec="0" xpos="631" ypos="241"/>
+			<site id="1" name="newdos" radius="0" tsec="0" xpos="348" ypos="258"/>
+			<site id="4" name="site p" radius="0" tsec="0" xpos="324" ypos="135"/>
+			<site id="6" name="nuevo2" radius="10" tsec="0" xpos="621" ypos="407"/>
+		</sites>
+	</sector>
+</sectors>
+

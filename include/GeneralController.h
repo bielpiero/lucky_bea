@@ -24,7 +24,8 @@
 #define PACKAGE_NAME "lucky_bea"
 
 #define XML_FILE_PATH "/conf/BeaConSuerte.xml"
-#define XML_FILE_SECTORS_PATH "/conf/BeaSectors.xml"
+#define XML_FILE_MAPS_PATH "/conf/BeaMaps.xml"
+#define XML_FILE_SECTORS_PATH "/maps/"
 #define XML_FILE_ROBOT_CONFIG_PATH "/conf/BeaRobotConfig.xml"
 
 #define PERMISSION_ACCEPTED 0
@@ -41,15 +42,15 @@
 
 #define TRAP_VERTEX 4
 
-#define ADD_SITE_VARIABLE_LENGTH 6
-#define MODIFY_SITE_VARIABLE_LENGTH 7
-#define DELETE_SITE_VARIABLE_LENGTH 2
+#define ADD_SITE_VARIABLE_LENGTH 7
+#define MODIFY_SITE_VARIABLE_LENGTH 8
+#define DELETE_SITE_VARIABLE_LENGTH 3
 
 #define SITE_SEQUENCE_VARIABLE_LENGTH 2
 
-#define ADD_FEATURE_VARIABLE_LENGTH 6
-#define MODIFY_FEATURE_VARIABLE_LENGTH 7
-#define DELETE_FEATURE_VARIABLE_LENGTH 2
+#define ADD_FEATURE_VARIABLE_LENGTH 7
+#define MODIFY_FEATURE_VARIABLE_LENGTH 8
+#define DELETE_FEATURE_VARIABLE_LENGTH 3
 
 using namespace rapidxml;
 
@@ -302,7 +303,8 @@ private:
 	unsigned int clientsConnected;
 	
 	std::string xmlFaceFullPath;
-	std::string xmlSectorsFullPath;
+	std::string xmlMapsFullPath;
+	std::string xmlSectorsPath;
 	std::string xmlRobotConfigFullPath;
 	
 	std::ostringstream emotionsTimestamp;
@@ -400,6 +402,8 @@ private:
 	
 	unsigned char keepRobotTracking;
 	unsigned char keepTourAlive;
+
+	int currentMapId;
 	std::vector<MapSector*>* navSectors;
 	MapSector* currentSector;
 	s_robot* robotConfig;
@@ -408,8 +412,9 @@ private:
 
 	pthread_mutex_t mutexLandmarkLocker;
 
-	void loadSectors();
-	void loadSector(int sectorId);
+	void getMapId(char* cad, int& mapId);
+
+	void loadSector(int mapId, int sectorId);
 	void loadRobotConfig();
 	
 	void initializeSPDPort(int socketIndex, char* cad);
@@ -422,23 +427,25 @@ private:
 	void moveRobotToPosition(float x, float y, float th);
 	void getPositions(char* cad, float& x, float& y, float& theta);
 
-	void getMapId(char* cad, int& mapId);
+	void getMapSectorId(char* cad, int& mapId, int& sectorId);
 	void getMapsAvailable(std::string& mapsAvailable);
-	void getMapInformationLandmarks(int mapId, std::string& mapInformation);
-	void getMapInformationFeatures(int mapId, std::string& mapInformation);
-	void getMapInformationSites(int mapId, std::string& mapInformation);
-	void getMapInformationSitesSequence(int mapId, std::string& mapInformation);
+	void getMapFilename(int mapId, std::string& filename);
+	void getSectorsAvailable(int mapId, std::string& sectorsAvailable);
+	void getSectorInformationLandmarks(int mapId, int sectorId, std::string& sectorInformation);
+	void getSectorInformationFeatures(int mapId, int sectorId, std::string& sectorInformation);
+	void getSectorInformationSites(int mapId, int sectorId, std::string& sectorInformation);
+	void getSectorInformationSitesSequence(int mapId, int sectorId, std::string& sectorInformation);
 
 	//sites functions
-	void addMapInformationSite(char* cad, int& indexAssigned);
-	void modifyMapInformationSite(char* cad);
-	void deleteMapInformationSite(char* cad);
+	void addSectorInformationSite(char* cad, int& indexAssigned);
+	void modifySectorInformationSite(char* cad);
+	void deleteSectorInformationSite(char* cad);
 	void setSitesExecutionSequence(char* cad);
 
 	//features functions
-	void addMapInformationFeatures(char* cad, int& indexAssigned);
-	void modifyMapInformationFeatures(char* cad);
-	void deleteMapInformationFeatures(char* cad);
+	void addSectorInformationFeatures(char* cad, int& indexAssigned);
+	void modifySectorInformationFeatures(char* cad);
+	void deleteSectorInformationFeatures(char* cad);
 	
 	void startSitesTour();
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);

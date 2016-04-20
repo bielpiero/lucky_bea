@@ -2,7 +2,7 @@
 #include "DorisLipSync.h"
 
 DorisLipSync::DorisLipSync (SerialPort* mc, std::string packagePath) {
-	lastWord[0] = '\0';
+	lastWord = "";
 	xmlLipSyncFullPath = packagePath + XML_FILE_LIP_SYNC_PATH;
 	xmlVisemesCodesFullPath = packagePath + XML_FILE_VISEMES_CODES_PATH;
 	this->mc = mc;
@@ -16,13 +16,13 @@ int DorisLipSync::numberOfSyllables (const char *word) {
 	return numSyl;
 }
 
-int * DorisLipSync::syllablePositions (const char *word) {
-	process (word);
+std::vector<int> DorisLipSync::syllablePositions (const char *word) {
+	process (std::string(word));
 	return positions;
 }
 
 int DorisLipSync::stressedSyllable (const char *word) {
-	process (word);
+	process (std::string(word));
 	return stressed;
 }
 
@@ -105,7 +105,7 @@ void DorisLipSync::textToViseme(const char *str){
 	//std::cout<<"\n "<<std::endl;
 
 
-	int *pointerPositions;
+	std::vector<int> pointerPositions;
 	int i,j,k;
 	int storeSillableWeight;
 	string actualSyllable="";
@@ -125,11 +125,11 @@ void DorisLipSync::textToViseme(const char *str){
 //__________________
 
 	for(i=0; i <= (numSil - 1); i++){
-		storeSillableWeight = (pointerPositions[i+1]-pointerPositions[i]);
+		storeSillableWeight = (pointerPositions.at(i + 1) - pointerPositions.at(i));
 		k=0;
 
 
-		for(j=pointerPositions[i];j<=((storeSillableWeight-1)+pointerPositions[i]);){
+		for(j=pointerPositions[i];j<=((storeSillableWeight-1)+pointerPositions.at(i));){
 			actualSyllable+=text[j];
 			k++;
 
@@ -984,9 +984,9 @@ void DorisLipSync::selectMotion(char *visemeCod, float timetoSync){
 	}
 }
 
-void DorisLipSync::process (const char *word) {
-	if (strcmp (word, lastWord) != 0) {
-		strcpy (lastWord, word);
+void DorisLipSync::process (std::string word) {
+	if(word != lastWord){
+		lastWord = word;
 		syllablePositions ();
 	}
 }
@@ -996,16 +996,18 @@ void DorisLipSync::process (const char *word) {
 /**************************************************************/
 
 void DorisLipSync::syllablePositions () {
-	wordLength      = strlen (lastWord);
+	wordLength      = lastWord.length();
 	stressedFound   = false;
 	stressed        = 0;
 	numSyl          = 0;
 	letterAccent    = -1;
 
 	// It looks for syllables in the word
-
+	positions.clear();
 	for (int i = 0; i < wordLength;) {
-		positions [numSyl++] = i;  // It marks the beginning of the current syllable
+		positions.push_back(i);
+		numSyl++;
+		//positions [numSyl++] = i;  // It marks the beginning of the current syllable
 
 		// Syllables consist of three parts: onSet, nucleus and coda
 
@@ -1022,8 +1024,8 @@ void DorisLipSync::syllablePositions () {
 	if (!stressedFound) {
 		if (numSyl < 2) stressed = numSyl;  // Monosyllables
 		else {                              // Polysyllables
-			char endLetter      = tolower (lastWord [wordLength - 1]);
-			char previousLetter = tolower (lastWord [wordLength - 2]);
+			char endLetter      = tolower(lastWord.at(wordLength - 1));
+			char previousLetter = tolower(lastWord.at(wordLength - 2));
 
 			if ((!isConsonant (endLetter) || (endLetter == 'y')) ||
 				(((endLetter == 'n') || (endLetter == 's') || !isConsonant (previousLetter))))
@@ -1032,8 +1034,8 @@ void DorisLipSync::syllablePositions () {
 				stressed = numSyl;		// Stressed last syllable
 		}
 	}
-
-	positions [numSyl] = -1;  // It marks the end of found syllables
+	positions.push_back(-1);
+	//positions [numSyl] = -1;  // It marks the end of found syllables
 }
 
 /************************************/
@@ -1042,20 +1044,20 @@ void DorisLipSync::syllablePositions () {
 
 
 bool DorisLipSync::hiatus () {
-	char accented = tolower (lastWord [letterAccent]);
+	char accented = tolower (lastWord.at(letterAccent));
 
 	if ((letterAccent > 1) &&  // hiatus is only possible if there is accent
-		(tolower(lastWord [letterAccent - 1]) == 'u') &&
-		(tolower(lastWord [letterAccent - 2]) == 'q'))
+		(tolower(lastWord.at(letterAccent - 1)) == 'u') &&
+		(tolower(lastWord.at(letterAccent - 2)) == 'q'))
 	    return false; // The 'u' letter belonging "qu" doesn't form hiatus
 
 	// The central character of a hiatus must be a close-vowel with written accent
 
 	if ((accented == 'í') || (accented == 'ì') || (accented == 'ú') || (accented == 'ù')) {
 
-		if ((letterAccent > 0) && openVowel (lastWord [letterAccent - 1])) return true;
+		if ((letterAccent > 0) && openVowel (lastWord.at(letterAccent - 1))) return true;
 
-		if ((letterAccent < (wordLength - 1)) && openVowel (lastWord [letterAccent + 1])) return true;
+		if ((letterAccent < (wordLength - 1)) && openVowel (lastWord.at(letterAccent + 1))) return true;
 	}
 
 	return false;
@@ -1067,12 +1069,12 @@ bool DorisLipSync::hiatus () {
 /* and pos is changed to the follow position after end of onSet     */
 /********************************************************************/
 
-void DorisLipSync::onSet (const char *pal, int &pos) {
+void DorisLipSync::onSet (std::string pal, int &pos) {
 	// Every initial consonant belongs to the onSet
 
 	char lastConsonant = 'a';
-	while ((pos < wordLength) && ((isConsonant (pal [pos])) && (tolower (pal [pos]) != 'y'))) {
-		lastConsonant = tolower (pal [pos]);
+	while ((pos < wordLength) && ((isConsonant (pal.at(pos))) && (tolower (pal.at(pos)) != 'y'))) {
+		lastConsonant = tolower (pal.at(pos));
 		pos++;
 	}
 
@@ -1081,17 +1083,17 @@ void DorisLipSync::onSet (const char *pal, int &pos) {
 	if (pos < wordLength - 1)
 	// 
 	{
-		if (tolower (pal [pos]) == 'u') {
+		if (tolower (pal.at(pos)) == 'u') {
 			if (lastConsonant == 'q') pos++;
 			else
 				if (lastConsonant == 'g') {
-					char letter = tolower (pal [pos + 1]);
+					char letter = tolower (pal.at(pos + 1));
 					if ((letter == 'e') || (letter == 'é') ||
 						(letter == 'i') || (letter == 'í')) pos ++;
 				}
 		}
 		else { // The 'u' with diaeresis is added to the consonant
-			if ((pal [pos] == 'ü') || (pal [pos] == 'Ü'))
+			if ((pal.at(pos) == 'ü') || (pal.at(pos) == 'Ü'))
 				if (lastConsonant == 'g') pos++;
 		}
 	// eliminar llave
@@ -1104,7 +1106,7 @@ void DorisLipSync::onSet (const char *pal, int &pos) {
 /****************************************************************************/
 
 
-void DorisLipSync::nucleus (const char *pal, int &pos) {
+void DorisLipSync::nucleus (std::string pal, int &pos) {
 	int previous; // Saves the type of previous vowel when two vowels together exists
 	              // 0 = open
 	              // 1 = close with written accent
@@ -1114,12 +1116,12 @@ void DorisLipSync::nucleus (const char *pal, int &pos) {
 
 	// Jumps a letter 'y' to the starting of nucleus, it is as consonant
 
-	if (tolower(pal [pos]) == 'y') pos++;
+	if (tolower(pal.at(pos)) == 'y') pos++;
 
 	// First vowel
 
 	if (pos < wordLength) {
-		switch (pal [pos]) {
+		switch (pal.at(pos)) {
 		// Open-vowel or close-vowel with written accent
 			case 'á': case 'Á': case 'à': case 'À':
 			case 'é': case 'É': case 'è': case 'È':
@@ -1155,7 +1157,7 @@ void DorisLipSync::nucleus (const char *pal, int &pos) {
 
 	bool aitch = false;
 	if (pos < wordLength) {
-		if (tolower(pal [pos]) == 'h') {
+		if (tolower(pal.at(pos)) == 'h') {
 			pos++;
 			aitch = true;
 		}
@@ -1164,7 +1166,7 @@ void DorisLipSync::nucleus (const char *pal, int &pos) {
 	// Second vowel
 
 	if (pos < wordLength) {
-		switch (pal [pos]) {
+		switch (pal.at(pos)) {
 		// Open-vowel with written accent
 			case 'á': case 'Á': case 'à': case 'À':
 			case 'é': case 'É': case 'è': case 'È':
@@ -1204,14 +1206,14 @@ void DorisLipSync::nucleus (const char *pal, int &pos) {
 			case 'i': case 'I':
 			case 'u': case 'U': case 'ü': case 'Ü':
 			if (pos < wordLength - 1) { // ¿Is there a third vowel?
-				if (!isConsonant (pal [pos + 1])) {
-					if (tolower(pal [pos - 1]) == 'h') pos--;
+				if (!isConsonant (pal.at(pos+1))) {
+					if (tolower(pal.at(pos - 1)) == 'h') pos--;
 					return;
 				}
 			}
 
 			// Two equals close-vowels don't form diphthong
-			if (pal [pos] != pal [pos - 1]) pos++;
+			if (pal [pos] != pal.at(pos)) pos++;
 
 			return;  // It is a descendent diphthong
 			break;
@@ -1221,7 +1223,7 @@ void DorisLipSync::nucleus (const char *pal, int &pos) {
 	// Third vowel?
 
 	if (pos < wordLength) {
-		if ((tolower(pal [pos]) == 'i') || (tolower(pal [pos]) == 'u')) { // Close-vowel
+		if ((tolower(pal.at(pos)) == 'i') || (tolower(pal.at(pos)) == 'u')) { // Close-vowel
 			pos++;
 			return;  // It is a triphthong
 		}
@@ -1234,8 +1236,8 @@ void DorisLipSync::nucleus (const char *pal, int &pos) {
 /*****************************************************************************/
 
 
-void DorisLipSync::coda (const char *pal, int &pos) {
-	if ((pos >= wordLength) || (!isConsonant (pal [pos])))
+void DorisLipSync::coda (std::string pal, int &pos) {
+	if ((pos >= wordLength) || (!isConsonant (pal.at(pos))))
 		return; // Syllable hasn't coda
 	else {
 		if (pos == wordLength - 1) // End of word
@@ -1246,15 +1248,15 @@ void DorisLipSync::coda (const char *pal, int &pos) {
 
 		// If there is only a consonant between vowels, it belongs to the following syllable
 
-		if (!isConsonant (pal [pos + 1])) return;
+		if (!isConsonant (pal.at(pos + 1))) return;
 
-		char c1 = tolower (pal [pos]);
-		char c2 = tolower (pal [pos + 1]);
+		char c1 = tolower (pal.at(pos));
+		char c2 = tolower (pal.at(pos + 1));
 
 		// Has the syllable a third consecutive consonant?
 
 		if ((pos < wordLength - 2)) {
-			char c3 = tolower (pal [pos + 2]);
+			char c3 = tolower (pal.at(pos + 2));
 
 			if (!isConsonant (c3)) { // There isn't third consonant
 				// The groups ll, ch and rr begin a syllable

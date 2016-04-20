@@ -12,6 +12,11 @@
 #define XML_ELEMENT_GESTURE_STR "Gesto"
 #define XML_ELEMENT_MOTOR_STR "Motor"
 
+#define XML_ELEMENT_MAPS_STR "maps"
+#define XML_ELEMENT_MAP_STR "map"
+
+#define XML_ATTRIBUTE_FILENAME_STR "filename"
+
 #define XML_ELEMENT_SECTORS_STR "sectors"
 #define XML_ELEMENT_SECTOR_STR "sector"
 #define XML_ELEMENT_LANDMARKS_STR "landmarks"

@@ -23,6 +23,7 @@
 			<feature id="7" name="Right table 2" width="67" height="106" xpos="375" ypos="365"/>
 			<feature id="8" name="Right table 3" width="67" height="106" xpos="535" ypos="365"/>
 			<feature id="9" name="Right table 4" width="80" height="180" xpos="745" ypos="320"/>
+			<feature id="10" name="silaaa" width="20" height="20" xpos="200" ypos="200"/>
 		</features>
 		<sites cyclic="yes" sequence="0,1,2,3">
 			<site id="0" name="site a" radius="0" tsec="0" xpos="222" ypos="121"/>
@@ -31,11 +32,16 @@
 			<site id="1" name="newdos" radius="0" tsec="0" xpos="348" ypos="258"/>
 			<site id="4" name="site p" radius="0" tsec="0" xpos="324" ypos="135"/>
 			<site id="6" name="nuevo2" radius="10" tsec="0" xpos="621" ypos="407"/>
+			<site id="5" name="newsite" var="10" tsec="0" xpos="246" ypos="337"/>
 		</sites>
 	</sector>
 	<sector id="1" name="FM Office" width="400" height="410">
 		<landmarks/>
-		<features/>
+		<features>
+			<feature id="0" name="silla" width="20" height="20" xpos="200" ypos="200"/>
+			<feature id="0" name="silla" width="20" height="20" xpos="200" ypos="200"/>
+			<feature id="1" name="silla" width="20" height="20" xpos="200" ypos="200"/>
+		</features>
 		<sites>
 			<site id="0" name="nuevoFMOffice" radius="10" tsec="0" xpos="180" ypos="334"/>
 		</sites>

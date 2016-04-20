@@ -33,8 +33,10 @@ private:
 	int  stressed;
 	bool stressedFound;
 	int  letterAccent;
-	int  positions [MAX_SYLLABLES + 1];
-	char lastWord [MAX_WORD_LENGTH + 1];
+	std::vector<int> positions;
+	std::string lastWord;
+	//int  positions [MAX_SYLLABLES + 1];
+	//char lastWord [MAX_WORD_LENGTH + 1];
 
 	std::string xmlLipSyncFullPath;
 	std::string xmlVisemesCodesFullPath;
@@ -42,13 +44,13 @@ private:
 	SerialPort* mc;
 	TextToSpeech* tts;
 
-	void onSet   (const char *, int &);
-	void nucleus (const char *, int &);
-	void coda    (const char *, int &);
+	void onSet   (std::string, int &);
+	void nucleus (std::string, int &);
+	void coda    (std::string, int &);
 
 	bool hiatus ();
 
-	void process (const char *);
+	void process (std::string);
 
 	bool openVowel (char);
 	bool isConsonant (char);
@@ -60,7 +62,7 @@ public:
     virtual ~DorisLipSync(){}
 
 	int numberOfSyllables (const char *); /* Returns the number of syllables in a word */
-	int* syllablePositions (const char *); /* Returns an array with the start positions of every syllables */
+	std::vector<int> syllablePositions (const char *); /* Returns an array with the start positions of every syllables */
     int stressedSyllable (const char *);
     char* cutData (char *, int, int); /* Cut the caracter chains in the Start/Stop range */
     char* textNorm(const char *, char); /* normalizes the text by removing the symbols of the string */
