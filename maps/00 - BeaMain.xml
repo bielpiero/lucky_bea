@@ -1,5 +1,5 @@
 <sectors>
-	<sector id="0" name="Machine Hall" width="902" height="452">
+	<sector id="0" name="Machine Hall" width="902" height="452" reference="0">
 		<landmarks>
 			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="65" ypos="148"/>
 			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="180" ypos="312"/>

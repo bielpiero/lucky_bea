@@ -1,11 +1,4 @@
-#include <iostream>
-#include <vector>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
-
+#include "RNUtils.h"
 #include "RNActionGoto.h"
 
 #define NONE -1
@@ -16,7 +9,7 @@
 
 #define FULL_ENCODER_TICKS 32768
 #define MIN_INDEX_LASER_SECURITY_DISTANCE 80
-#define MAX_INDEX_LASER_SECURITY_DISTANCE 240
+#define MAX_INDEX_LASER_SECURITY_DISTANCE 120
 
 #define DEFAULT_SECURITY_DISTANCE_WARNING_TIME 30
 #define DEFAULT_SECURITY_DISTANCE_STOP_TIME 60
@@ -109,12 +102,12 @@ private:
 	ArRobotConnector *connector;
 	ArLaserConnector *laserConnector;
 	ArLaser *laser;
-    ArSick *sick;
     RNActionGoto *gotoPoseAction;
     ArRobot *robot;
     ArPose *myPose;
     ArPose *myRawPose;
     ArSonarDevice *sonar;
+    LaserScan *laserDataScan;
     
     double maxTransVel;
     double maxAbsoluteTransVel;
@@ -192,7 +185,6 @@ public:
 	double getAngleConvFactor();
 
 private:
-	static void* securityDistanceThread(void* object);
     static void* securityDistanceTimerThread(void* object);
 	static void* dataPublishingThread(void* object);
     
@@ -203,6 +195,8 @@ private:
 	void getRawPoseFromOdometry();
     bool checkForwardLimitTransition(double enc_k, double enc_k_1);
     bool checkBackwardLimitTransition(double enc_k, double enc_k_1);
+
+    void securityDistanceChecker();
     
 protected:
 	virtual void onLaserScanCompleted(LaserScan* data) = 0;

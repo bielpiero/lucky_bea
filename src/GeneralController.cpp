@@ -128,6 +128,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 	std::string sectorInformation = "";
 	std::string jsonRobotOpSuccess = "{\"robot\":{\"error\":\"None.\"}}";
 	std::string jsonControlError = "{\"robot\":{\"error\":\"Permission denied.\"}}";
+	std::string jsonSectorNotLoadedError = "{\"robot\":{\"error\":\"No sector loaded.\"}}";
 	std::ostringstream number_converter;
 	
 	unsigned char port = 0;
@@ -243,19 +244,44 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			break;
 		case 0x11:
 			//trackRobot();
-			startSitesTour();
+			if(granted){
+				if(currentSector != NULL){
+					startSitesTour();
+				} else {
+					RNUtils::printLn("Command 0x11. No current sector available to start tour to ", getClientIPAddress(socketIndex));
+					sendMsg(socketIndex, 0x11, (char*)jsonSectorNotLoadedError.c_str(), (unsigned int)jsonSectorNotLoadedError.length());
+				}
+			} else {
+				RNUtils::printLn("Command 0x11. Start robot tour denied to %s", getClientIPAddress(socketIndex));
+				sendMsg(socketIndex, 0x11, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x12:
 			//stopRobotTracking();
-			stopCurrentTour();
+			if(granted){
+				if(currentSector != NULL){
+					stopCurrentTour();
+				} else {
+					RNUtils::printLn("Command 0x12. No current sector available to stop tour to ", getClientIPAddress(socketIndex));
+					sendMsg(socketIndex, 0x12, (char*)jsonSectorNotLoadedError.c_str(), (unsigned int)jsonSectorNotLoadedError.length());
+				}
+			} else {
+				RNUtils::printLn("Command 0x11. Stop robot tour denied to %s", getClientIPAddress(socketIndex));
+				sendMsg(socketIndex, 0x12, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;	
 		case 0x13:
 			if(granted){
 				getPositions(cad, x, y, theta);
 				stopRobotTracking();
-				setRobotPosition(x, y, theta);
-				trackRobot();
-				sendMsg(socketIndex, 0x13, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
+				if(currentSector != NULL){
+					setRobotPosition(x, y, theta);
+					trackRobot();
+					sendMsg(socketIndex, 0x13, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
+				} else {
+					RNUtils::printLn("Command 0x13. No current sector available to set robot position to ", getClientIPAddress(socketIndex));
+					sendMsg(socketIndex, 0x13, (char*)jsonSectorNotLoadedError.c_str(), (unsigned int)jsonSectorNotLoadedError.length());
+				}
 			} else {
 				RNUtils::printLn("Command 0x13. Set Robot position denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x13, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
@@ -1006,6 +1032,7 @@ void GeneralController::loadSector(int mapId, int sectorId){
     	delete currentSector;
     	currentSector = NULL;
     }
+    root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
     currentSector = new MapSector;
     if(root_node != NULL){
     	bool found = false;
@@ -1231,7 +1258,8 @@ void GeneralController::getSectorsAvailable(int mapId, std::string& sectorsAvail
 			buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
 			buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value() << ",";
 			buffer_str << (((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100) << ",";
-			buffer_str << (((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100);
+			buffer_str << (((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100) << ",";
+			buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_REFERENCE_STR)->value();
 
 			if(sector_node->next_sibling() != NULL){
 				buffer_str << "|";
@@ -2037,6 +2065,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 	std::vector<float> dataIntensities = *laser->getIntensities();
 
 	std::vector<int> dataIndices = stats::findIndicesHigherThan(dataIntensities, 0);
+
 	pthread_mutex_lock(&mutexLandmarkLocker);
 
 	for(int i = 0; i < landmarks->size(); i++){
@@ -2049,10 +2078,10 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 	for(int i = 0; i < dataIndices.size(); i++){
 		if(i < dataIndices.size() - 1){
 			if((dataIndices[i + 1] - dataIndices[i]) <= 10){
-				current->addPoint(data->at(dataIndices[i]), (angle_min + ((float)dataIndices[i] * angle_increment)));
+				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
 				
 			} else {
-				current->addPoint(data->at(dataIndices[i]), (angle_min + ((float)dataIndices[i] * angle_increment)));
+				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
 				if(current->size() > 1){
 					landmarks->push_back(current);
 				}
@@ -2060,7 +2089,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 			}
 		} else {
 			if((dataIndices[i] - dataIndices[i - 1]) <= 10){
-				current->addPoint(data->at(dataIndices[i]), (angle_min + ((float)dataIndices[i] * angle_increment)));
+				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
 				if(current->size() > 1){
 					landmarks->push_back(current);
 				}
@@ -2227,9 +2256,8 @@ void GeneralController::trackRobot(){
 
 void* GeneralController::trackRobotProbabilisticThread(void* object){
 	GeneralController* self = (GeneralController*)object;
-		
+	float alpha = 0.2;
 	self->keepRobotTracking = YES;
-	float alpha = 500;
 	Matrix Ak = Matrix::eye(3);
 	Matrix Bk(3, 2);
 	Matrix pk1;
@@ -2271,35 +2299,48 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		}
 		Matrix zkl;
 		self->getObservations(zkl);
+		//RNUtils::printLn("Observation Vector:");
+		//zkl.print();
+		Matrix Sk = Hk * Pk * ~Hk + self->R;
+		Matrix Wk = Pk * ~Hk * !Sk;
 
 		//RNUtils::printLn("\n\nSeen landmarks: %d\n", self->landmarks.size());
 		pthread_mutex_lock(&self->mutexLandmarkLocker);
 		Matrix zl(2 * self->currentSector->landmarksSize(), 1);
+
 		for (int i = 0; i < self->landmarks->size(); i++){
 			RNLandmark* lndmrk = self->landmarks->at(i);
-			//RNUtils::printLn("landmarks {d: %f, a: %f}\n", l(0, 0), l(1, 0));
 
-			for (int j = 0; j < zkl.rows_size(); j+=2){
+			//RNUtils::printLn("landmarks {d: %f, a: %f}\n", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
+			std::vector<float> euclideanDistances;
+			for (int j = 0; j < zkl.rows_size(); j++){
+				euclideanDistances.push_back(std::sqrt(std::pow(zkl(j, 0), 2) + std::pow(lndmrk->getPointsXMean(), 2) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1)))));
+				//RNUtils::printLn("Euclidean Distance[%d]: %f", j, euclideanDistances.at(j));	
+			}
 
-				float mahalanobisDistance = std::sqrt(std::pow((lndmrk->getPointsXMean() - zkl(j, 0))/self->R(j, j), 2) + std::pow((lndmrk->getPointsYMean() - zkl(j + 1, 0))/self->R(j + 1, j + 1), 2));
-				//RNUtils::printLn("Mahalanobis Distance: %f", mahalanobisDistance);
-				if(mahalanobisDistance <= alpha){
-					//RNUtils::printLn("Matched landmark: {d: %d, a: %d}. MHD: %f\n", j, j+1, mahalanobisDistance);
-					zl(j, 0) = lndmrk->getPointsXMean() - zkl(j, 0);
-					zl(j + 1, 0) = lndmrk->getPointsYMean() - zkl(j + 1, 0);
-				}
+			float minorDistance = std::numeric_limits<float>::infinity();
+			int indexFound = NONE;
+			for (int j = 0; j < euclideanDistances.size(); j++){
+				if(euclideanDistances.at(j) < alpha){
+					minorDistance = euclideanDistances.at(j);
+					indexFound = j;
+				}	
+			}
+			
+			//RNUtils::printLn("Matched landmark: {idx : %d, MHD: %f}\n", indexFound, minorDistance);
+			if(indexFound > NONE){
+				zl(2 * indexFound, 0) = lndmrk->getPointsXMean() - zkl(indexFound, 0);
+				zl(2 * indexFound + 1, 0) = lndmrk->getPointsYMean() - zkl(indexFound, 1);
 			}
 		}
 		pthread_mutex_unlock(&self->mutexLandmarkLocker);
-
-		Matrix Sk = Hk * Pk * ~Hk + self->R;
-		Matrix Wk = Pk * ~Hk * !Sk;
 
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		Matrix newPosition = self->robotRawEncoderPosition + Wk * zl;
 
 		self->setRobotPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
 		RNUtils::sleep(29);
+		//self->keepRobotTracking = NO;
 	}
 	self->keepRobotTracking = NO;
 	return NULL;
@@ -2550,7 +2591,7 @@ Matrix GeneralController::multTrapMatrix(Matrix mat, Matrix trap){
 }
 
 void GeneralController::getObservations(Matrix& observations){
-	Matrix result(2 * currentSector->landmarksSize(), 1);
+	Matrix result(currentSector->landmarksSize(), 2);
 
 	for(int k = 0; k < currentSector->landmarksSize(); k++){
 		float distance = 0, angle = 0;
@@ -2558,13 +2599,13 @@ void GeneralController::getObservations(Matrix& observations){
 
 
 		landmarkObservation(robotRawEncoderPosition, landmark, distance, angle);
-		result(2 * k, 0) = distance;
+		result(k, 0) = distance;
 		if(angle > M_PI){
 			angle = angle - 2 * M_PI;
 		} else if(angle < -M_PI){
 			angle = angle + 2 * M_PI;
 		}
-		result(2 * k + 1, 0) = angle;
+		result(k, 1) = angle;
 	}
 
 	observations = result;
@@ -2905,14 +2946,14 @@ void* GeneralController::serverStatusThread(void* object){
 			sectorId = self->currentSector->getId();
 		}
 		buffer_str.clear();
-		buffer_str << "$DORIS|" << mapId << "," << sectorId << "," << self->emotionsTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingLandmarksTimestamp.str() << "," << self->mappingFeaturesTimestamp.str() << "," + self->mappingSitesTimestamp.str();
+		buffer_str << "$DORIS|" << mapId << "," << sectorId << "," << self->emotionsTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingLandmarksTimestamp.str() << "," << self->mappingFeaturesTimestamp.str() << "," + self->mappingSitesTimestamp.str() << "," << self->landmarks->size();
 
 		if(self->spdUDPClient != NULL){
 			self->spdUDPClient->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());
 		}
 		for(int i = 0; i < MAX_CLIENTS; i++){
 			if(self->isConnected(i) && self->isWebSocket(i)){
-				//self->spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
+				self->spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
 			}
 		}
 		RNUtils::sleep(105);

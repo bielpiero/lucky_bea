@@ -48,9 +48,9 @@ void RNUtils::getTimestamp(std::ostringstream& timestamp){
 	}
 
 	if(tstamp->tm_mday < 10){
-		timestamp << "0" << tstamp->tm_mday << ", ";
+		timestamp << "0" << tstamp->tm_mday << " ";
 	} else {
-		timestamp << tstamp->tm_mday << ", ";
+		timestamp << tstamp->tm_mday << " ";
 	}
 
 	if(tstamp->tm_hour < 10){

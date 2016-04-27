@@ -7,9 +7,12 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <iostream>
 #include <vector>
+#include <list>
 #include <fstream>
 #include <sstream>
 #include <cmath>
@@ -18,6 +21,7 @@
 #include <ctime>
 #include <cstdio>
 #include <cstdarg>
+#include <cassert>
 
 class RNUtils{
 public:
