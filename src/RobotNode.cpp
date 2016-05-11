@@ -65,7 +65,6 @@ RobotNode::RobotNode(const char* port){
 		printf("Connected to SICK LMS200 laser.\n");
 	}
     this->keepActiveSecurityDistanceTimerThread = NO;
-    this->keepActiveSecurityDistanceThread = NO;
     this->keepActiveSensorDataThread = NO;
 
     pthread_mutex_init(&mutexRawPositionLocker, NULL);
@@ -109,14 +108,6 @@ void RobotNode::finishThreads(){
         printf("Stopped Security Distance Timer Thread\n");
     }
 
-    if (keepActiveSecurityDistanceThread == YES) {
-        keepActiveSecurityDistanceThread = MAYBE;
-        while (keepActiveSecurityDistanceThread != NO) {
-            ArUtil::sleep(10);
-        }
-        printf("Stopped Security Distance Thread\n");
-    }
-
     if (keepActiveSensorDataThread == YES) {
         keepActiveSensorDataThread = MAYBE;
         while (keepActiveSensorDataThread != NO) {
@@ -133,18 +124,12 @@ void RobotNode::getLaserScan(void){
 		laser->lockDevice();
         
 		const std::list<ArSensorReading*> *currentReadings = new std::list<ArSensorReading*>(*laser->getRawReadings());
-		//ArDrawingData* draw = sick->getCurrentDrawingData();
-        //assert(currentReadings && "La lista del laser esta vacia");
-        //pthread_mutex_lock(&mutexLaserDataLocker);
 		laserDataScan = new LaserScan();
 		for(std::list<ArSensorReading*>::const_iterator it = currentReadings->begin(); it != currentReadings->end(); ++it){
-            //assert(*it);
 			laserDataScan->addLaserScanData((float)(*it)->getRange() / 1000, (float)(*it)->getExtraInt());
-			//data->setScanPrimaryColor(draw->getPrimaryColor().getRed(), draw->getPrimaryColor().getGreen(), draw->getPrimaryColor().getBlue());
-			//draw++;
 		}
         laser->unlockDevice();
-        //pthread_mutex_unlock(&mutexLaserDataLocker);
+
         securityDistanceChecker();
         onLaserScanCompleted(laserDataScan);
 
@@ -219,6 +204,12 @@ void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed
     //robot->setAbsoluteMaxRotVel(rotSpeed);
 
     robot->clearDirectMotion();
+    doNotMove = false;
+    wasDeactivated = false;
+
+    if(not gotoPoseAction->isActive()){
+        gotoPoseAction->activate();
+    }
     
     gotoPoseAction->setGoal(newPose);
     
@@ -506,6 +497,7 @@ void* RobotNode::dataPublishingThread(void* object){
         self->getBumpersStatus();
         self->getRobotPosition();
         self->getSonarsScan();
+        self->onSensorsScanCompleted();
         ArUtil::sleep(10);
     }
     self->keepActiveSensorDataThread = NO;
@@ -558,6 +550,7 @@ void* RobotNode::securityDistanceTimerThread(void* object){
                 self->robot->clearDirectMotion();
                 self->unlockRobot();
                 self->wasDeactivated = false;
+                self->doNotMove = false;
                 self->timerSecs = 0;
                 self->onSecurityDistanceStopSignal();
             }

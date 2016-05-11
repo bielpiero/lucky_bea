@@ -3,8 +3,8 @@
 RNActionGoto::RNActionGoto(const char* name, ArPose goal, double linearSpeed, double angularSpeed, double minimumDistance, double minimumAngle) :
 ArAction(name, "BP Implementation for turning and moving to a point"){
 
-	this->actionDistance = 1000;
-	this->actionDegrees = 10;
+	this->actionDistance = SATURATION_DISTANCE_MM;
+	this->actionDegrees = SATURATION_ANGLE_DEG;
 	myDesired = new ArActionDesired;
 	
 
@@ -45,8 +45,14 @@ RNActionGoto::~RNActionGoto(){
 
 ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	if(this->currentState == STATE_GOING_TO_GOAL){
-		double distanceLocal = myRobot->getPose().findDistanceTo(this->goal);
-    	double deltaThetaLocal = myRobot->findDeltaHeadingTo(this->goal);
+		double deltaThetaLocal, distanceLocal;
+		if(this->goal.getTh() != 0){
+			distanceLocal = 0;
+			deltaThetaLocal = -myRobot->getPose().getTh() + this->goal.getTh();
+		} else {
+			distanceLocal = myRobot->getPose().findDistanceTo(this->goal);
+	    	deltaThetaLocal = myRobot->findDeltaHeadingTo(this->goal);
+	    }
     	//printf("{Distance: %f, DeltaTheta: %f}\n", distanceLocal, deltaThetaLocal);
     	if(ArMath::fabs(deltaThetaLocal) > this->minimumAngle){
     		//turn to point to goal
@@ -83,6 +89,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     } else {
     	return NULL;
     }
+	
     return myDesired;
 }
 

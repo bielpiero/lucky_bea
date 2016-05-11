@@ -8,7 +8,7 @@
 #define MAYBE 2
 
 #define FULL_ENCODER_TICKS 32768
-#define MIN_INDEX_LASER_SECURITY_DISTANCE 80
+#define MIN_INDEX_LASER_SECURITY_DISTANCE 90
 #define MAX_INDEX_LASER_SECURITY_DISTANCE 120
 
 #define DEFAULT_SECURITY_DISTANCE_WARNING_TIME 30
@@ -133,7 +133,6 @@ private:
     unsigned int securityDistanceStopTime;
     
     char keepActiveSensorDataThread;
-    char keepActiveSecurityDistanceThread;
     char keepActiveSecurityDistanceTimerThread;
     
     static const float SECURITY_DISTANCE;
@@ -207,4 +206,5 @@ protected:
 	virtual void onBatteryChargeStateChanged(char data) = 0;
     virtual void onSecurityDistanceWarningSignal() = 0;
     virtual void onSecurityDistanceStopSignal() = 0;
+    virtual void onSensorsScanCompleted() = 0;
 };

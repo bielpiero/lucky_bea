@@ -143,6 +143,8 @@ struct s_site{
 	float radius;
 	float xpos;
 	float ypos;
+	int linkedFeatureId;
+	int linkedSectorId;
 };
 
 class MapSector{
@@ -199,6 +201,42 @@ public:
 	s_site* siteAt(int index) { return sites->at(index); }
 	s_feature* featureAt(int index) { return features->at(index); }
 	s_landmark* landmarkAt(int index) { return landmarks->at(index); }
+
+	s_site* findSiteById(int id) { 
+		bool found = false;
+		int index = NONE;
+		for (int i = 0; i < sites->size() and not found; i++){
+			if(sites->at(i)->id == id){
+				found = true;
+				index = i;
+			}
+		}
+		if(index != NONE){
+			return sites->at(index);
+		} else {
+			return NULL;
+		}
+	}
+
+	s_feature* findFeatureById(int id) { 
+		bool found = false;
+		int index = NONE;
+		for (int i = 0; i < features->size() and not found; i++){
+			if(features->at(i)->id == id){
+				found = true;
+				index = i;
+			}
+		}
+		if(index != NONE){
+			return features->at(index);
+		} else {
+			return NULL;
+		}
+	}
+
+	void deleteSite(s_site* obj) { sites->erase(std::remove(sites->begin(), sites->end(), obj), sites->end()); }
+	void deleteFeature(s_feature* obj) { features->erase(std::remove(features->begin(), features->end(), obj), features->end()); }
+	void deleteLandmark(s_landmark* obj) { landmarks->erase(std::remove(landmarks->begin(), landmarks->end(), obj), landmarks->end()); }
 
 	void deleteSiteAt(int index) { sites->erase(sites->begin() + index); }
 	void deleteFeatureAt(int index) { features->erase(features->begin() + index); }
@@ -357,6 +395,7 @@ public:
 	void onLaserScanCompleted(LaserScan* laser);
 	void onSecurityDistanceWarningSignal();
     void onSecurityDistanceStopSignal();
+    void onSensorsScanCompleted();
 	
 	void initializeKalmanVariables();
 	
@@ -465,9 +504,6 @@ private:
 	static void* trackRobotThread(void*);
 	static void* trackRobotProbabilisticThread(void*);
 	static void* sitesTourThread(void*);
-
-	static void* serverStatusThread(void*);
-	
 };
 
 #endif

@@ -64,10 +64,6 @@ GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):Robo
 	RNUtils::getTimestamp(mappingLandmarksTimestamp);
 	RNUtils::getTimestamp(mappingFeaturesTimestamp);
 	RNUtils::getTimestamp(mappingSitesTimestamp);
-
-	pthread_t serverInfoThread;
-	pthread_create(&serverInfoThread, NULL, serverStatusThread, (void *)(this));
-
 }
 
 
@@ -146,7 +142,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 	float x, y, theta;
 
 	bool granted = isPermissionNeeded(function) && (socketIndex == getTokenOwner());
-	RNUtils::printLn("Function: %d executed from: %s", function, getClientIPAddress(socketIndex));
+	RNUtils::printLn("Function: 0x%x (%d) executed from: %s", function, function, getClientIPAddress(socketIndex));
 	switch (function){
 		case 0x00:
 			RNUtils::printLn("Command 0x00. Static Faces Requested");
@@ -266,7 +262,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 					sendMsg(socketIndex, 0x12, (char*)jsonSectorNotLoadedError.c_str(), (unsigned int)jsonSectorNotLoadedError.length());
 				}
 			} else {
-				RNUtils::printLn("Command 0x11. Stop robot tour denied to %s", getClientIPAddress(socketIndex));
+				RNUtils::printLn("Command 0x12. Stop robot tour denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x12, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;	
@@ -558,7 +554,7 @@ void GeneralController::initializeSPDPort(int socketIndex, char* cad){
 
 void GeneralController::getMapSectorId(char* cad, int& mapId, int& sectorId){
 	char* current_number;
-	int values[2];
+	int values[2] = { -1, -1 };
 	int index = 0;
 	current_number = std::strtok(cad, ",");
 	//
@@ -573,7 +569,7 @@ void GeneralController::getMapSectorId(char* cad, int& mapId, int& sectorId){
 
 void GeneralController::getPositions(char* cad, float& x, float& y, float& theta){
 	char* current_number;
-	float values[3];
+	float values[3] = { -1, -1, -1 };
 	int index = 0;
 	current_number = std::strtok(cad, ",");
 
@@ -590,7 +586,7 @@ void GeneralController::getPositions(char* cad, float& x, float& y, float& theta
 
 void GeneralController::getCameraDevicePort(char* cad, int& device, int& port){
 	char* current_number;
-	int values[2];
+	int values[2] = { -1, -1 };
 	int index = 0;
 	current_number = std::strtok(cad, ":");
 	//
@@ -605,7 +601,7 @@ void GeneralController::getCameraDevicePort(char* cad, int& device, int& port){
 
 void GeneralController::getPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value){
 	char* current_number;
-	int values[3];
+	int values[3]  = { -1, -1, -1 };
 	int index = 0;
 	current_number = std::strtok(cad, ",");
 	//
@@ -621,7 +617,7 @@ void GeneralController::getPololuInstruction(char* cad, unsigned char& card_id, 
 
 void GeneralController::getVelocities(char* cad, float& lin_vel, float& ang_vel){
 	char* current_number;
-	float values[2];
+	float values[2] = { -1, -1 };
 	int index = 0;
 	current_number = std::strtok(cad, ",");
 	
@@ -1104,6 +1100,17 @@ void GeneralController::loadSector(int mapId, int sectorId){
 						tempSite->tsec = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_TIME_STR)->value()));
 						tempSite->xpos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
 						tempSite->ypos = ((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
+						if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)){
+							tempSite->linkedFeatureId = atoi(site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)->value());
+						} else {
+							tempSite->linkedFeatureId = NONE;
+						}
+
+						if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
+							tempSite->linkedSectorId = atoi(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value());
+						} else {
+							tempSite->linkedSectorId = NONE;
+						}
 
 						currentSector->addSite(tempSite);
 					}
@@ -1240,37 +1247,40 @@ void GeneralController::getSectorsAvailable(int mapId, std::string& sectorsAvail
 	std::ostringstream buffer_str;
 	std::string filename;
 	buffer_str.clear();
+	if(mapId > NONE){
+		getMapFilename(mapId, filename);
 
-	getMapFilename(mapId, filename);
+		xml_document<> doc;
+	    xml_node<>* root_node;  
 
-	xml_document<> doc;
-    xml_node<>* root_node;  
+	    std::string fullSectorPath = xmlSectorsPath + filename;
+	    std::ifstream the_file(fullSectorPath.c_str());
+	    std::vector<char> buffer = std::vector<char>((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+	    buffer.push_back('\0');
+	    doc.parse<0>(&buffer[0]);
 
-    std::string fullSectorPath = xmlSectorsPath + filename;
-    std::ifstream the_file(fullSectorPath.c_str());
-    std::vector<char> buffer = std::vector<char>((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-    buffer.push_back('\0');
-    doc.parse<0>(&buffer[0]);
+	    root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+		if(root_node != NULL){
+			for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){
+				buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
+				buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value() << ",";
+				buffer_str << (((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100) << ",";
+				buffer_str << (((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100) << ",";
+				buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_REFERENCE_STR)->value();
 
-    root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
-	if(root_node != NULL){
-		for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){
-			buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
-			buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value() << ",";
-			buffer_str << (((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100) << ",";
-			buffer_str << (((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100) << ",";
-			buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_REFERENCE_STR)->value();
-
-			if(sector_node->next_sibling() != NULL){
-				buffer_str << "|";
+				if(sector_node->next_sibling() != NULL){
+					buffer_str << "|";
+				}
+				
 			}
-			
-		}
-    }
-    the_file.close();
+	    }
+	    the_file.close();
 
-	sectorsAvailable = buffer_str.str();
-	buffer_str.clear();
+		sectorsAvailable = buffer_str.str();
+		buffer_str.clear();
+	} else {
+		RNUtils::printLn("Invalid map id..");
+	}
 }
 
 void GeneralController::getMapsAvailable(std::string& mapsAvailable){
@@ -1310,49 +1320,52 @@ void GeneralController::getSectorInformationLandmarks(int mapId, int sectorId, s
 
 	std::ostringstream buffer_str;
 	buffer_str.clear();
-
 	std::string filename;
-	getMapFilename(mapId, filename);
-	std::string fullSectorPath = xmlSectorsPath + filename;
-	xml_document<> doc;
-    xml_node<>* root_node;       
-	
-    std::ifstream the_file(fullSectorPath.c_str());
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);
-	
-	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
-	if(root_node != NULL){
-		bool found = false;
-		for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
-			int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-			if(sectorId == xmlSectorId){
-				found = true;
-				xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
-				if(landmarks_root_node->first_node() !=  NULL){
-					for(xml_node<>* landmark_node = landmarks_root_node->first_node(XML_ELEMENT_LANDMARK_STR); landmark_node; landmark_node = landmark_node->next_sibling()){
-						buffer_str << landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
-						buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100) << ",";
-						buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100) << ",";
-						buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100) << ",";
-						buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100) << ",";
-						buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100) << ",";
-						buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100);
+	if(mapId > NONE){
+		getMapFilename(mapId, filename);
+		std::string fullSectorPath = xmlSectorsPath + filename;
+		xml_document<> doc;
+	    xml_node<>* root_node;       
+		
+	    std::ifstream the_file(fullSectorPath.c_str());
+	    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+		buffer.push_back('\0');
+		
+		doc.parse<0>(&buffer[0]);
+		
+		root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+		if(root_node != NULL){
+			bool found = false;
+			for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
+				int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+				if(sectorId == xmlSectorId){
+					found = true;
+					xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
+					if(landmarks_root_node->first_node() !=  NULL){
+						for(xml_node<>* landmark_node = landmarks_root_node->first_node(XML_ELEMENT_LANDMARK_STR); landmark_node; landmark_node = landmark_node->next_sibling()){
+							buffer_str << landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
+							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100) << ",";
+							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100) << ",";
+							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100) << ",";
+							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100) << ",";
+							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100) << ",";
+							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100);
 
-						if(landmark_node->next_sibling() != NULL){
-							buffer_str << "|";
+							if(landmark_node->next_sibling() != NULL){
+								buffer_str << "|";
+							}
 						}
 					}
 				}
 			}
-		}
-    }
-    the_file.close();
-	
-	sectorInformation = buffer_str.str();
-	buffer_str.clear();
+	    }
+	    the_file.close();
+		
+		sectorInformation = buffer_str.str();
+		buffer_str.clear();
+	} else {
+		RNUtils::printLn("Invalid map id..");
+	}
 }
 
 
@@ -1362,46 +1375,50 @@ void GeneralController::getSectorInformationFeatures(int mapId, int sectorId, st
 	buffer_str.clear();
 
 	std::string filename;
-	getMapFilename(mapId, filename);
-	std::string fullSectorPath = xmlSectorsPath + filename;
-	xml_document<> doc;
-    xml_node<>* root_node;       
-	
-    std::ifstream the_file(fullSectorPath.c_str());
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);
-	
-	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
-	if(root_node != NULL){
-		bool found = false;
-		for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
-			int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-			if(sectorId == xmlSectorId){
-				found = true;
-				xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
-				if(features_root_node->first_node() !=  NULL){
-					for(xml_node<>* feature_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); feature_node; feature_node = feature_node->next_sibling()){
-						buffer_str << feature_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
-						buffer_str << feature_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value() << ",";
-						buffer_str << (((float)atoi(feature_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100) << ",";
-						buffer_str << (((float)atoi(feature_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100) << ",";
-						buffer_str << (((float)atoi(feature_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100) << ",";
-						buffer_str << (((float)atoi(feature_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100);
+	if(mapId > NONE){
+		getMapFilename(mapId, filename);
+		std::string fullSectorPath = xmlSectorsPath + filename;
+		xml_document<> doc;
+	    xml_node<>* root_node;       
+		
+	    std::ifstream the_file(fullSectorPath.c_str());
+	    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+		buffer.push_back('\0');
+		
+		doc.parse<0>(&buffer[0]);
+		
+		root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+		if(root_node != NULL){
+			bool found = false;
+			for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
+				int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+				if(sectorId == xmlSectorId){
+					found = true;
+					xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
+					if(features_root_node->first_node() !=  NULL){
+						for(xml_node<>* feature_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); feature_node; feature_node = feature_node->next_sibling()){
+							buffer_str << feature_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
+							buffer_str << feature_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value() << ",";
+							buffer_str << (((float)atoi(feature_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100) << ",";
+							buffer_str << (((float)atoi(feature_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100) << ",";
+							buffer_str << (((float)atoi(feature_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100) << ",";
+							buffer_str << (((float)atoi(feature_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100);
 
-						if(feature_node->next_sibling() != NULL){
-							buffer_str << "|";
+							if(feature_node->next_sibling() != NULL){
+								buffer_str << "|";
+							}
 						}
 					}
 				}
 			}
-		}
-    }
-    the_file.close();
+	    }
+	    the_file.close();
 
-	sectorInformation = buffer_str.str();
-	buffer_str.clear();
+		sectorInformation = buffer_str.str();
+		buffer_str.clear();
+	} else {
+		RNUtils::printLn("Invalid map id..");
+	}
 }
 
 void GeneralController::getSectorInformationSites(int mapId, int sectorId, std::string& sectorInformation){
@@ -1410,87 +1427,107 @@ void GeneralController::getSectorInformationSites(int mapId, int sectorId, std::
 	buffer_str.clear();
 
 	std::string filename;
-	getMapFilename(mapId, filename);
-	std::string fullSectorPath = xmlSectorsPath + filename;
-	xml_document<> doc;
-    xml_node<>* root_node;       
-	
-    std::ifstream the_file(fullSectorPath.c_str());
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);
-	
-	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
-	if(root_node != NULL){
-		bool found = false;
-		for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
-			int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-			if(sectorId == xmlSectorId){
-				found = true;
-				xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
-				if(sites_root_node->first_node() !=  NULL){
-					for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
-						buffer_str << site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
-						buffer_str << site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value() << ",";
-						buffer_str << (((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100) << ",";
-						buffer_str << (((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100) << ",";
-						buffer_str << (((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_RADIUS_STR)->value())) / 100);
+	if(mapId > NONE){
+		getMapFilename(mapId, filename);
+		std::string fullSectorPath = xmlSectorsPath + filename;
+		xml_document<> doc;
+	    xml_node<>* root_node;       
+		
+	    std::ifstream the_file(fullSectorPath.c_str());
+	    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+		buffer.push_back('\0');
+		
+		doc.parse<0>(&buffer[0]);
+		
+		root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+		if(root_node != NULL){
+			bool found = false;
+			for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
+				int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+				if(sectorId == xmlSectorId){
+					found = true;
+					xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+					if(sites_root_node->first_node() !=  NULL){
+						for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
+							buffer_str << site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
+							buffer_str << site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value() << ",";
+							buffer_str << (((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100) << ",";
+							buffer_str << (((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100) << ",";
+							buffer_str << (((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_RADIUS_STR)->value())) / 100) << ",";
 
-						if(site_node->next_sibling() != NULL){
-							buffer_str << "|";
+							if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)){
+								buffer_str << site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)->value() << ",";
+							} else {
+								buffer_str << NONE << ",";
+							}
+
+							if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
+								buffer_str << site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value();
+							} else {
+								buffer_str << NONE;
+							}
+
+							if(site_node->next_sibling() != NULL){
+								buffer_str << "|";
+							}
 						}
 					}
 				}
 			}
-		}
-    }
-    the_file.close();
+	    }
+	    the_file.close();
 
-	sectorInformation = buffer_str.str();
-	buffer_str.clear();
+		sectorInformation = buffer_str.str();
+		buffer_str.clear();
+	} else {
+		RNUtils::printLn("Invalid map id..");
+	}
 }
 
 void GeneralController::getSectorInformationSitesSequence(int mapId, int sectorId, std::string& sectorInformation){
 	sectorInformation = "";
 
 	std::string filename;
-	getMapFilename(mapId, filename);
-	std::string fullSectorPath = xmlSectorsPath + filename;
-	xml_document<> doc;
-    xml_node<>* root_node;       
-	
-    std::ifstream the_file(fullSectorPath.c_str());
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);
-	
-	root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
-	if(root_node != NULL){
-		bool found = false;
-		for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
-			int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-			if(sectorId == xmlSectorId){
-				found = true;
-				xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+	if(mapId > NONE){
+		getMapFilename(mapId, filename);
+		std::string fullSectorPath = xmlSectorsPath + filename;
+		xml_document<> doc;
+	    xml_node<>* root_node;       
+		
+	    std::ifstream the_file(fullSectorPath.c_str());
+	    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+		buffer.push_back('\0');
+		
+		doc.parse<0>(&buffer[0]);
+		
+		root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+		if(root_node != NULL){
+			bool found = false;
+			for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
+				int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+				if(sectorId == xmlSectorId){
+					found = true;
+					xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
 
-				if(sites_root_node->first_attribute()){
-					
-					if(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)){
-						std::string sequence(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)->value());
-						sectorInformation = sequence;
+					if(sites_root_node->first_attribute()){
+						
+						if(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)){
+							std::string sequence(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)->value());
+							sectorInformation = sequence;
+						}
 					}
 				}
 			}
-		}
-    }
-    the_file.close();
+	    }
+	    the_file.close();
+	} else {
+		RNUtils::printLn("Invalid map id..");
+	}
 }
 
 void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 	std::vector<std::string> data = RNUtils::split(cad, ",");
-	if(data.size() == ADD_SITE_VARIABLE_LENGTH){
+	if(data.size() >= ADD_SITE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
 		int sectorId = atoi(data.at(1).c_str());
@@ -1546,8 +1583,39 @@ void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_TIME_STR, data.at(4).c_str()));
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(5).c_str()));
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(6).c_str()));
+				        if(data.size() >= ADD_SITE_VARIABLE_LENGTH + 1){
+				        	new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR, data.at(7).c_str()));
+				        }
+
+				        if(data.size() >= ADD_SITE_VARIABLE_LENGTH + 2){
+				        	new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR, data.at(8).c_str()));
+				        }
 
 				        sites_root_node->append_node(new_sites_node);
+
+			        	if(mapId == currentMapId and sectorId == currentSector->getId()){
+				        	s_site* tempSite = new s_site;
+
+				        	tempSite->id = indexAssigned;
+							tempSite->name = data.at(2);
+							tempSite->radius = ((float)atoi(data.at(3).c_str())) / 100;
+							tempSite->tsec = ((float)atoi(data.at(4).c_str()));
+							tempSite->xpos = ((float)atoi(data.at(5).c_str())) / 100;
+							tempSite->ypos = ((float)atoi(data.at(6).c_str())) / 100;
+							if(data.size() >= ADD_SITE_VARIABLE_LENGTH + 1){
+								tempSite->linkedFeatureId = atoi(data.at(7).c_str());
+							} else {
+								tempSite->linkedFeatureId = NONE;
+							}
+
+							if(data.size() >= ADD_SITE_VARIABLE_LENGTH + 2){
+								tempSite->linkedSectorId = atoi(data.at(8).c_str());
+							} else {
+								tempSite->linkedSectorId = NONE;
+							}
+				        	currentSector->addSite(tempSite);
+				        }
+
 				        RNUtils::getTimestamp(mappingSitesTimestamp);
 					}
 				}
@@ -1566,61 +1634,90 @@ void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 
 void GeneralController::modifySectorInformationSite(char* cad){
 	std::vector<std::string> data = RNUtils::split(cad, ",");
-	if(data.size() == MODIFY_SITE_VARIABLE_LENGTH){
+	if(data.size() >= MODIFY_SITE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
 		int sectorId = atoi(data.at(1).c_str());
 		int siteId = atoi(data.at(2).c_str());
 
-			std::string filename;
-			getMapFilename(mapId, filename);
-			std::string fullSectorPath = xmlSectorsPath + filename;
+		std::string filename;
+		getMapFilename(mapId, filename);
+		std::string fullSectorPath = xmlSectorsPath + filename;
 
-			xml_document<> doc;
-		    xml_node<>* root_node;       
-			
-		    std::ifstream the_file(fullSectorPath.c_str());
-		    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-			buffer.push_back('\0');
-			
-			doc.parse<0>(&buffer[0]);
-			
-			root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
-			if(root_node != NULL){
-				found = false;
-				for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
-					int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-					if(xmlSectorId == sectorId){
-						found = true;
-						xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
-						if(sites_root_node != NULL){
-							bool siteFound = false;
-							for(xml_node<> *where = sites_root_node->first_node(XML_ELEMENT_SITE_STR); where and not siteFound; where = where->next_sibling()){
-								int indexToDelete = atoi(where->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-								if(indexToDelete == siteId){
-									siteFound = true;
-									where->remove_all_attributes();
-									std::ostringstream convert;
-									convert << siteId;
+		xml_document<> doc;
+	    xml_node<>* root_node;       
+		
+	    std::ifstream the_file(fullSectorPath.c_str());
+	    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+		buffer.push_back('\0');
+		
+		doc.parse<0>(&buffer[0]);
+		
+		root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+		if(root_node != NULL){
+			found = false;
+			for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
+				int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+				if(xmlSectorId == sectorId){
+					found = true;
+					xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+					if(sites_root_node != NULL){
+						bool siteFound = false;
+						for(xml_node<> *where = sites_root_node->first_node(XML_ELEMENT_SITE_STR); where and not siteFound; where = where->next_sibling()){
+							int indexToDelete = atoi(where->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+							if(indexToDelete == siteId){
+								siteFound = true;
+								where->remove_all_attributes();
+								std::ostringstream convert;
+								convert << siteId;
 
-					        		where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, convert.str().c_str()));
-									where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_NAME_STR, data.at(3).c_str()));
-							        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_RADIUS_STR, data.at(4).c_str()));
-							        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_TIME_STR, data.at(5).c_str()));
-							        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(6).c_str()));
-							        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(7).c_str()));
-									RNUtils::getTimestamp(mappingSitesTimestamp);
-								}
+				        		where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, convert.str().c_str()));
+								where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_NAME_STR, data.at(3).c_str()));
+						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_RADIUS_STR, data.at(4).c_str()));
+						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_TIME_STR, data.at(5).c_str()));
+						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(6).c_str()));
+						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(7).c_str()));
+
+						        if(data.size() >= MODIFY_SITE_VARIABLE_LENGTH + 1){
+						        	where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR, data.at(8).c_str()));
+						        }
+
+						        if(data.size() >= MODIFY_SITE_VARIABLE_LENGTH + 2){
+						        	where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR, data.at(9).c_str()));
+						        }
+								RNUtils::getTimestamp(mappingSitesTimestamp);
 							}
 						}
 					}
 				}
-		    }
-		    the_file.close();
+			}
+	    }
+	    the_file.close();
 
-		    std::ofstream the_new_file(fullSectorPath.c_str());
-		    the_new_file << doc;
-		    the_new_file.close();
+	    std::ofstream the_new_file(fullSectorPath.c_str());
+	    the_new_file << doc;
+	    the_new_file.close();
+
+		if(mapId == currentMapId and sectorId == currentSector->getId()){
+        	s_site* tempSite = currentSector->findSiteById(siteId);
+
+        	tempSite->name = data.at(3);
+			tempSite->radius = ((float)atoi(data.at(4).c_str())) / 100;
+			tempSite->tsec = ((float)atoi(data.at(5).c_str()));
+			tempSite->xpos = ((float)atoi(data.at(6).c_str())) / 100;
+			tempSite->ypos = ((float)atoi(data.at(7).c_str())) / 100;
+			if(data.size() >= MODIFY_SITE_VARIABLE_LENGTH + 1){
+				tempSite->linkedFeatureId = atoi(data.at(8).c_str());
+			} else {
+				tempSite->linkedFeatureId = NONE;
+			}
+
+			if(data.size() >= MODIFY_SITE_VARIABLE_LENGTH + 2){
+				tempSite->linkedSectorId = atoi(data.at(9).c_str());
+			} else {
+				tempSite->linkedSectorId = NONE;
+			}
+		}
 	} else {
 		RNUtils::printLn("Unable to edit site. Invalid number of parameters..");
 	}
@@ -1680,7 +1777,11 @@ void GeneralController::deleteSectorInformationSite(char* cad){
 	    std::ofstream the_new_file(fullSectorPath.c_str());
 	    the_new_file << doc;
 	    the_new_file.close();
-		    
+		   
+		if(mapId == currentMapId and sectorId == currentSector->getId()){
+        	s_site* tempSite = currentSector->findSiteById(siteId);
+        	currentSector->deleteSite(tempSite);
+        }
 		
 	} else {
 		RNUtils::printLn("Unable to delete site. Invalid number of parameters..");
@@ -1695,42 +1796,47 @@ void GeneralController::setSitesExecutionSequence(char* cad){
 		int mapId = atoi(dataInfoMap.at(0).c_str());
 		int sectorId = atoi(dataInfoMap.at(1).c_str());
 
-			std::string filename;
-			getMapFilename(mapId, filename);
-			std::string fullSectorPath = xmlSectorsPath + filename;
+		std::string filename;
+		getMapFilename(mapId, filename);
+		std::string fullSectorPath = xmlSectorsPath + filename;
 
-			xml_document<> doc;
-		    xml_node<>* root_node;       
-			
-		    std::ifstream the_file(fullSectorPath.c_str());
-		    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-			buffer.push_back('\0');
-			
-			doc.parse<0>(&buffer[0]);
-			
-			root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
-			if(root_node != NULL){
-				found = false;
-				for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
-					int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-					if(xmlSectorId == sectorId){
-						found = true;
-						xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
-						if(sites_root_node != NULL){
-							xml_attribute<> *where = sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR);
-							sites_root_node->remove_attribute(where);
-							sites_root_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_SEQUENCE_STR, data.at(1).c_str()));
-							RNUtils::getTimestamp(mappingSitesTimestamp);
-						}
+		xml_document<> doc;
+	    xml_node<>* root_node;       
+		
+	    std::ifstream the_file(fullSectorPath.c_str());
+	    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+		buffer.push_back('\0');
+		
+		doc.parse<0>(&buffer[0]);
+		
+		root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+		if(root_node != NULL){
+			found = false;
+			for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){
+				int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+				if(xmlSectorId == sectorId){
+					found = true;
+					xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+					if(sites_root_node != NULL){
+						xml_attribute<> *where = sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR);
+						sites_root_node->remove_attribute(where);
+						sites_root_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_SEQUENCE_STR, data.at(1).c_str()));
+						RNUtils::getTimestamp(mappingSitesTimestamp);
 					}
 				}
-		    }
+			}
+	    }
 
-		    the_file.close();
+	    the_file.close();
 
-		    std::ofstream the_new_file(fullSectorPath.c_str());
-		    the_new_file << doc;
-		    the_new_file.close();
+	    std::ofstream the_new_file(fullSectorPath.c_str());
+	    the_new_file << doc;
+	    the_new_file.close();
+
+	    if(mapId == currentMapId and sectorId == currentSector->getId()){
+
+        	currentSector->setSequence(data.at(1));
+        }
 		    
 		
 	} else {
@@ -1797,6 +1903,19 @@ void GeneralController::addSectorInformationFeatures(char* cad, int& indexAssign
 				        new_feature_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(6).c_str()));
 
 				        features_root_node->append_node(new_feature_node);
+
+				        if(mapId == currentMapId and sectorId == currentSector->getId()){
+				        	s_feature* tempFeature = new s_feature;
+
+							tempFeature->id = indexAssigned;
+							tempFeature->name = data.at(2);
+							tempFeature->width = ((float)atoi(data.at(3).c_str())) / 100;
+							tempFeature->height = ((float)atoi(data.at(4).c_str())) / 100;
+							tempFeature->xpos = ((float)atoi(data.at(5).c_str())) / 100;
+							tempFeature->ypos = ((float)atoi(data.at(6).c_str())) / 100;
+
+							currentSector->addFeature(tempFeature);
+				        }
 				        RNUtils::getTimestamp(mappingFeaturesTimestamp);
 					}
 				}
@@ -1856,6 +1975,7 @@ void GeneralController::modifySectorInformationFeatures(char* cad){
 						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_HEIGHT_STR, data.at(5).c_str()));
 						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(6).c_str()));
 						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(7).c_str()));
+
 								RNUtils::getTimestamp(mappingFeaturesTimestamp);
 							}
 						}
@@ -1868,6 +1988,16 @@ void GeneralController::modifySectorInformationFeatures(char* cad){
 	    std::ofstream the_new_file(fullSectorPath.c_str());
 	    the_new_file << doc;
 	    the_new_file.close();
+
+	    if(mapId == currentMapId and sectorId == currentSector->getId()){
+        	s_feature* tempFeature = currentSector->findFeatureById(featureId);
+
+			tempFeature->name = data.at(3);
+			tempFeature->width = ((float)atoi(data.at(4).c_str())) / 100;
+			tempFeature->height = ((float)atoi(data.at(5).c_str())) / 100;
+			tempFeature->xpos = ((float)atoi(data.at(6).c_str())) / 100;
+			tempFeature->ypos = ((float)atoi(data.at(7).c_str())) / 100;
+        }
 		    
 
 	} else {
@@ -1930,6 +2060,11 @@ void GeneralController::deleteSectorInformationFeatures(char* cad){
 	    the_new_file << doc;
 	    the_new_file.close();
 
+	    if(mapId == currentMapId and sectorId == currentSector->getId()){
+        	s_feature* tempFeature = currentSector->findFeatureById(featureId);
+        	currentSector->deleteFeature(tempFeature);
+        }
+
 	} else {
 		RNUtils::printLn("Unable to delete feature. Invalid number of parameters..");
 	}    
@@ -1952,8 +2087,8 @@ void GeneralController::moveRobot(float lin_vel, float angular_vel){
 	} else {
 		this->stopRobot();
 	}
-	RNUtils::sleep(100);
-	ros::spinOnce();
+	//RNUtils::sleep(100);
+	//ros::spinOnce();
 }
 
 void GeneralController::setRobotPosition(float x, float y, float theta){
@@ -2140,7 +2275,13 @@ void GeneralController::onSecurityDistanceWarningSignal(){
 }
 
 void GeneralController::onSecurityDistanceStopSignal(){
-	RNUtils::printLn("Doris Stopped. Could not achieve goal %d...", lastSiteVisitedIndex + 1);
+	if(currentSector != NULL){
+		std::vector<std::string> spltdSequence = RNUtils::split((char*)currentSector->getSequence().c_str(), ",");
+		if(lastSiteVisitedIndex > 0 and (lastSiteVisitedIndex < spltdSequence.size() - 1)){
+			int goalId = atoi(spltdSequence.at(lastSiteVisitedIndex + 1).c_str());
+			RNUtils::printLn("Doris Stopped. Could not achieve next goal from current position...");
+		}
+	}
 }
 
 void GeneralController::startSitesTour(){
@@ -2158,19 +2299,40 @@ void* GeneralController::sitesTourThread(void* object){
 	
 	while(ros::ok() && self->keepTourAlive == YES){
         int goalIndex = self->lastSiteVisitedIndex + 1;
-		float xpos = self->currentSector->siteAt(goalIndex)->xpos;
-		float ypos = self->currentSector->siteAt(goalIndex)->ypos;
-		RNUtils::sleep(100);
-		self->moveRobotToPosition(xpos, ypos, 0.0);
-		while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) RNUtils::sleep(100);
-        if (self->isGoalAchieved()) {
-            self->lastSiteVisitedIndex++;
-            if (self->currentSector->isSitesCyclic() && (self->lastSiteVisitedIndex == (spltdSequence.size() - 1))) {
-                self->lastSiteVisitedIndex = NONE;
-            }
+        int goalId = atoi(spltdSequence.at(goalIndex).c_str());
+        s_site* currentSite = NULL;
+        if(goalIndex > 0){
+        	currentSite = self->currentSector->findSiteById(atoi(spltdSequence.at(goalIndex - 1).c_str()));
         }
-        if (self->isGoalCanceled()) {
-            self->keepTourAlive = NO;
+        s_site* destinationSite = self->currentSector->findSiteById(goalId);
+        
+        RNUtils::sleep(100);
+        if(destinationSite != NULL){
+        	if(destinationSite->linkedFeatureId != NONE){
+        		s_feature* linkedFeature = self->currentSector->findFeatureById(destinationSite->linkedFeatureId);
+        		if(linkedFeature->name == SEMANTIC_FEATURE_DOOR_STR){
+        			if(currentSite != NULL){
+        				RNUtils::printLn("Yohooo.... Door site detected. Creating a virtual point at {x: %f, y: %f}", currentSite->xpos, destinationSite->ypos);
+        				self->moveRobotToPosition(currentSite->xpos, destinationSite->ypos, 0.0);
+        				while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) RNUtils::sleep(100);
+        			}
+        		}
+        	}
+
+        	self->moveRobotToPosition(destinationSite->xpos, destinationSite->ypos, 0.0);
+        	while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) RNUtils::sleep(100);
+        	if (self->isGoalAchieved()) {
+	            self->lastSiteVisitedIndex++;
+	            if (self->currentSector->isSitesCyclic() && (self->lastSiteVisitedIndex == (spltdSequence.size() - 1))) {
+	                self->lastSiteVisitedIndex = NONE;
+	            }
+	        }
+	        if (self->isGoalCanceled()) {
+	            self->keepTourAlive = NO;
+	        }
+        } else {
+        	RNUtils::printLn("Non existing site %d. Check sequence...", goalId);
+        	self->keepTourAlive = NO;
         }
 	}
 	self->keepTourAlive = NO;
@@ -2297,6 +2459,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 			Hk(zIndex + 1, 1) = -((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0))/(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
 			Hk(zIndex + 1, 2) = -1.0;
 		}
+		
 		Matrix zkl;
 		self->getObservations(zkl);
 		//RNUtils::printLn("Observation Vector:");
@@ -2304,7 +2467,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		Matrix Sk = Hk * Pk * ~Hk + self->R;
 		Matrix Wk = Pk * ~Hk * !Sk;
 
-		//RNUtils::printLn("\n\nSeen landmarks: %d\n", self->landmarks.size());
+		//RNUtils::printLn("\n\nSeen landmarks: %d\n", self->landmarks->size());
 		pthread_mutex_lock(&self->mutexLandmarkLocker);
 		Matrix zl(2 * self->currentSector->landmarksSize(), 1);
 
@@ -2338,9 +2501,10 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		Matrix newPosition = self->robotRawEncoderPosition + Wk * zl;
 
-		self->setRobotPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
-		RNUtils::sleep(29);
-		//self->keepRobotTracking = NO;
+
+		self->setPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
+
+		RNUtils::sleep(30);
 	}
 	self->keepRobotTracking = NO;
 	return NULL;
@@ -2936,27 +3100,23 @@ void* GeneralController::streamingThread(void* object){
 	return NULL;
 }
 
-void* GeneralController::serverStatusThread(void* object){
-	GeneralController* self = (GeneralController*)object;
-	while(ros::ok()){
-		std::ostringstream buffer_str;
-		int mapId = self->currentMapId;
-		int sectorId = NONE;
-		if(self->currentSector != NULL){
-			sectorId = self->currentSector->getId();
-		}
-		buffer_str.clear();
-		buffer_str << "$DORIS|" << mapId << "," << sectorId << "," << self->emotionsTimestamp.str() << "," << self->mappingEnvironmentTimestamp.str() << "," << self->mappingLandmarksTimestamp.str() << "," << self->mappingFeaturesTimestamp.str() << "," + self->mappingSitesTimestamp.str() << "," << self->landmarks->size();
-
-		if(self->spdUDPClient != NULL){
-			self->spdUDPClient->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());
-		}
-		for(int i = 0; i < MAX_CLIENTS; i++){
-			if(self->isConnected(i) && self->isWebSocket(i)){
-				self->spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
-			}
-		}
-		RNUtils::sleep(105);
+void GeneralController::onSensorsScanCompleted(){
+	std::ostringstream buffer_str;
+	int mapId = currentMapId;
+	int sectorId = NONE;
+	if(currentSector != NULL){
+		sectorId = currentSector->getId();
 	}
-	return NULL;
+	buffer_str.clear();
+	buffer_str << "$DORIS|" << mapId << "," << sectorId << "," << emotionsTimestamp.str() << "," << mappingEnvironmentTimestamp.str() << "," << mappingLandmarksTimestamp.str() << "," << mappingFeaturesTimestamp.str() << "," + mappingSitesTimestamp.str() << "," << landmarks->size();
+
+	if(spdUDPClient != NULL){
+		spdUDPClient->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());
+	}
+	for(int i = 0; i < MAX_CLIENTS; i++){
+		if(isConnected(i) && isWebSocket(i)){
+			spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
+		}
+	}
+
 }
