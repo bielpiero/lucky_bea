@@ -71,3 +71,36 @@ void RNUtils::getTimestamp(std::ostringstream& timestamp){
 		timestamp << tstamp->tm_sec;
 	}
 }
+
+void RNUtils::getBezierCurve(std::vector<PointXY> bezierPointXYs, std::vector<PointXY> &bezierCurve){
+	int n = bezierPointXYs.size() - 1;
+	for(float t = 0; t < 1.0; t+=0.01){
+		float px = 0, py = 0;
+		for(unsigned int j = 0; j < bezierPointXYs.size(); j++){
+			int b = binomialCoeff(n, j);
+			px += b * std::pow((1.0 - t), (n - j)) * std::pow(t, j) * bezierPointXYs.at(j).getX();
+			py += b * std::pow((1.0 - t), (n - j)) * std::pow(t, j) * bezierPointXYs.at(j).getY();
+		}
+		bezierCurve.push_back(PointXY(px, py));
+	}
+}
+
+int RNUtils::binomialCoeff(int n, int k){
+	int result = 1;
+	if(k == 0 or n == k){
+		result = 1;
+	} else if(k > n){
+		result = 0;
+	} else if(k == 1){
+		result = n;
+	} else {
+		for(int i = 1; i <= k; i++){
+			result *= (n -(k - i));
+			if(result < 0){
+				return -1;
+			}
+			result /= i;
+		}
+	}
+	return result;
+}

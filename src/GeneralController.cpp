@@ -1038,6 +1038,7 @@ void GeneralController::loadSector(int mapId, int sectorId){
     			found = true;
     			currentSector->setId(xmlSectorId);
 				currentSector->setName(std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value()));
+				currentSector->setPolygon(std::string(sector_node->first_attribute(XML_ATTRIBUTE_POLYGON_STR)->value()));
 				currentSector->setWidth((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())/100);
 				currentSector->setHeight((float)atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())/100);
 				xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
@@ -2503,7 +2504,14 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 
 
 		self->setPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
+		float angle = 0;
+		bool isInsidePolygon = self->currentSector->checkPointXYInPolygon(PointXY(newPosition(0, 0), newPosition(1, 0)), angle);
 
+		if(isInsidePolygon){
+			RNUtils::printLn("PointXY is in polygon...");
+		} else {
+			RNUtils::printLn("PointXY is not in polygon...");
+		}
 		RNUtils::sleep(30);
 	}
 	self->keepRobotTracking = NO;
@@ -3038,7 +3046,7 @@ void GeneralController::stopRobotTracking(){
 void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice, int port){
 	pthread_t t1;
 	stopVideoStreaming();
-	s_video_streamer_data* data = new s_video_streamer_data;
+	/*s_video_streamer_data* data = new s_video_streamer_data;
 	
 	data->socketIndex = socketIndex;
 	data->port = port;
@@ -3052,7 +3060,7 @@ void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice, in
 	} else {
 		vc.release();
 		RNUtils::printLn("Could not open device: %d", videoDevice);
-	}	
+	}	*/
 	 
 
 }
@@ -3066,7 +3074,7 @@ void GeneralController::stopVideoStreaming(){
 }
 
 void* GeneralController::streamingThread(void* object){
-	s_video_streamer_data* data = (s_video_streamer_data*)object;
+	/*s_video_streamer_data* data = (s_video_streamer_data*)object;
 	
 	int socketIndex = data->socketIndex;
 	int port = data->port;
@@ -3096,7 +3104,7 @@ void* GeneralController::streamingThread(void* object){
 		self->vcSecond.release();
 	}
 	self->streamingActive = NO;
-	delete udp_client;
+	delete udp_client;*/
 	return NULL;
 }
 

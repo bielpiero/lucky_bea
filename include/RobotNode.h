@@ -1,32 +1,12 @@
 #include "RNUtils.h"
 #include "RNActionGoto.h"
 
-#define NONE -1
-
-#define YES 1
-#define NO 0
-#define MAYBE 2
-
 #define FULL_ENCODER_TICKS 32768
 #define MIN_INDEX_LASER_SECURITY_DISTANCE 90
 #define MAX_INDEX_LASER_SECURITY_DISTANCE 120
 
 #define DEFAULT_SECURITY_DISTANCE_WARNING_TIME 30
 #define DEFAULT_SECURITY_DISTANCE_STOP_TIME 60
-
-class PointXY{
-private:
-	double x, y;
-public:
-	PointXY(double x, double y){
-		this->x = x;
-		this->y = y;
-	}
-	~PointXY(){}
-
-	double getX(){ return this->x; }
-	double getY(){ return this->y; }
-};
 
 class LsColor{
 private:

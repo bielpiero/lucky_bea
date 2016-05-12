@@ -20,8 +20,41 @@
 #include <cstring>
 #include <ctime>
 #include <cstdio>
+#include <cstdlib>
 #include <cstdarg>
 #include <cassert>
+
+#include "Aria.h"
+
+
+
+#define NONE -1
+
+#define YES 1
+#define NO 0
+#define MAYBE 2
+
+class PointXY{
+private:
+	double x, y;
+public:
+	PointXY(){
+		this->x = 0.0;
+		this->y = 0.0;
+	}
+	PointXY(double x, double y){
+		this->x = x;
+		this->y = y;
+	}
+	~PointXY(){}
+
+	double getX(){ return this->x; }
+	double getY(){ return this->y; }
+	
+	void setX(double x){ this->x = x; }
+	void setY(double y){ this->y = y; }
+};
+
 
 class RNUtils{
 public:
@@ -29,6 +62,8 @@ public:
 	static void printLn(const char* _format, ...);
 	static std::vector<std::string> split(char* buffer, const char* delimiter);
 	static void getTimestamp(std::ostringstream& timestamp);
+	static void getBezierCurve(std::vector<PointXY> bezierPointXYs, std::vector<PointXY> &bezierCurve);
+	static int binomialCoeff(int n, int k);
 };
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef RN_ACTION_GOTO_H
 #define RN_ACTION_GOTO_H
 
-#include "Aria.h"
+#include "RNUtils.h"
 #include "RNPIDController.h"
 
 #define SATURATION_DISTANCE_MM 1000

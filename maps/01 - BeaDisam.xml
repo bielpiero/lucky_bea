@@ -1,5 +1,5 @@
 <sectors sequence="0,1,0">
-	<sector id="0" name="Mobile Robots" width="900" height="427" reference="2">
+	<sector id="0" name="Mobile Robots" width="900" height="427" reference="2" polygon="m 0 0 l 0 427 l 900 0 l 0 -427 z">
 		<landmarks>
 			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="65" ypos="200"/>
 			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="320"/>
@@ -12,7 +12,9 @@
 			<landmark id="8" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="740" ypos="135"/>
 			<landmark id="9" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="165" ypos="0"/>
 			<landmark id="10" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="0" ypos="25"/>
-			<landmark id="10" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="40" ypos="147"/>
+			<landmark id="11" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="40" ypos="147"/>
+			<landmark id="12" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="18" ypos="-149"/>
+			<landmark id="13" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="-149"/>
 		</landmarks>
 		<features>
 			<feature id="2" name="charger" width="50" height="25" xpos="700" ypos="370"/>
@@ -34,7 +36,7 @@
 			<site id="3" name="site d" radius="10" tsec="0" xpos="193" ypos="112"/>
 			<site id="4" name="doorway" radius="10" tsec="0" xpos="80" ypos="0" linked-feature-id="0" linked-sector-id="3"/>
 			<site id="5" name="doorway" radius="10" tsec="0" xpos="0" ypos="65" linked-feature-id="1" linked-sector-id="1"/>
-			<site id="6" name="new" radius="10" tsec="0" xpos="300" ypos="100" linked-feature-id="0"/>
+			<site id="6" name="new" radius="10" tsec="0" xpos="300" ypos="71"/>
 		</sites>
 	</sector>
 	<sector id="1" name="MR-FM Hall" width="160" height="400" reference="2">

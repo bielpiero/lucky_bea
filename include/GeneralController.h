@@ -4,15 +4,16 @@
 
 #include "SocketNode2.h"
 #include "SerialPort.h"
-#include "stdxros.hpp"
 #include "UDPClient.h"
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
 #include "xmldefs.h"
 #include "semdefs.h"
+#include "stdxros.hpp"
 #include "RobotNode.h"
 #include "RobotDataStreamer.h"
 #include "DorisLipSync.h"
+#include "MapSector.h"
 
 #include "Matrix.h"
 #include "stats.h"
@@ -115,157 +116,6 @@ struct s_navigation_params{
 
 struct s_robot{
 	s_navigation_params* navParams;
-};
-
-struct s_landmark{
-	int id;
-	float varMinX;
-	float varMaxX;
-	float varMinY;
-	float varMaxY;
-	float xpos;
-	float ypos;
-};
-
-struct s_feature{
-	int id;
-	std::string name;
-	float width;
-	float height;
-	float xpos;
-	float ypos;
-};
-
-struct s_site{
-	int id;
-	std::string name;
-	float tsec;
-	float radius;
-	float xpos;
-	float ypos;
-	int linkedFeatureId;
-	int linkedSectorId;
-};
-
-class MapSector{
-private:
-	int id;
-	std::string name;
-	float width;
-	float height;
-	bool sitesCyclic;
-	std::string sequence;
-	std::vector<s_landmark*> *landmarks;
-	std::vector<s_feature*> *features;
-	std::vector<s_site*> *sites;
-public:
-	MapSector(){
-		sitesCyclic = false;
-		landmarks = new std::vector<s_landmark*>();
-		features = new std::vector<s_feature*>();
-		sites = new std::vector<s_site*>();
-	}
-	~MapSector(){
-		deleteAllLandmarks();
-        delete landmarks;
-
-        deleteAllFeatures();
-        delete features;
-
-        deleteAllSites();
-        delete sites;
-	}
-
-	void setId(int id){ this->id = id; }
-	float getId(){ return this->id; }
-
-	void setName(std::string name){ this->name = name; }
-	std::string getName(){ return this->name; }
-
-	void setWidth(float width){ this->width = width; }
-	float getWidth(){ return this->width; }
-
-	void setHeight(float height){ this->height = height; }
-	float getHeight(){ return this->height; }
-
-	void setIfSitesCyclic(bool sitesCyclic){ this->sitesCyclic = sitesCyclic; }
-	float isSitesCyclic(){ return this->sitesCyclic; }
-
-	void setSequence(std::string sequence){ this->sequence = sequence; }
-	std::string getSequence(){ return this->sequence; }
-
-	void addSite(s_site* site){ sites->push_back(site); }
-	void addFeature(s_feature* feature){ features->push_back(feature); }
-	void addLandmark(s_landmark* landmark){ landmarks->push_back(landmark); }
-
-	s_site* siteAt(int index) { return sites->at(index); }
-	s_feature* featureAt(int index) { return features->at(index); }
-	s_landmark* landmarkAt(int index) { return landmarks->at(index); }
-
-	s_site* findSiteById(int id) { 
-		bool found = false;
-		int index = NONE;
-		for (int i = 0; i < sites->size() and not found; i++){
-			if(sites->at(i)->id == id){
-				found = true;
-				index = i;
-			}
-		}
-		if(index != NONE){
-			return sites->at(index);
-		} else {
-			return NULL;
-		}
-	}
-
-	s_feature* findFeatureById(int id) { 
-		bool found = false;
-		int index = NONE;
-		for (int i = 0; i < features->size() and not found; i++){
-			if(features->at(i)->id == id){
-				found = true;
-				index = i;
-			}
-		}
-		if(index != NONE){
-			return features->at(index);
-		} else {
-			return NULL;
-		}
-	}
-
-	void deleteSite(s_site* obj) { sites->erase(std::remove(sites->begin(), sites->end(), obj), sites->end()); }
-	void deleteFeature(s_feature* obj) { features->erase(std::remove(features->begin(), features->end(), obj), features->end()); }
-	void deleteLandmark(s_landmark* obj) { landmarks->erase(std::remove(landmarks->begin(), landmarks->end(), obj), landmarks->end()); }
-
-	void deleteSiteAt(int index) { sites->erase(sites->begin() + index); }
-	void deleteFeatureAt(int index) { features->erase(features->begin() + index); }
-	void deleteLandmarkAt(int index) { landmarks->erase(landmarks->begin() + index); }	
-
-	size_t sitesSize() { return sites->size(); }
-	size_t featuresSize() { return features->size(); }
-	size_t landmarksSize() { return landmarks->size(); }
-
-	void deleteAllSites() {  
-		for (int i = 0; i < sites->size(); i++) {
-            delete sites->at(i);
-        }
-        sites->clear();
-    }
-
-    void deleteAllFeatures(){
-    	for (int i = 0; i < features->size(); i++) {
-            delete features->at(i);
-        }
-        features->clear();
-    }
-
-    void deleteAllLandmarks(){
-    	for (int i = 0; i < landmarks->size(); i++) {
-            delete landmarks->at(i);
-        }
-        landmarks->clear();
-    }
 };
 
 class RNLandmark{
@@ -412,8 +262,8 @@ private:
 	ros::NodeHandle nh;
 
 	//OpenCV
-	cv::VideoCapture vc;
-	cv::VideoCapture vcSecond;
+	//cv::VideoCapture vc;
+	//cv::VideoCapture vcSecond;
 	//possibilistic navigation
 	Matrix robotVelocity;
 	Matrix robotEncoderPosition;

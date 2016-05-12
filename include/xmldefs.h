@@ -16,6 +16,7 @@
 #define XML_ELEMENT_MAP_STR "map"
 
 #define XML_ATTRIBUTE_FILENAME_STR "filename"
+#define XML_ATTRIBUTE_POLYGON_STR "polygon"
 
 #define XML_ELEMENT_SECTORS_STR "sectors"
 #define XML_ELEMENT_SECTOR_STR "sector"
