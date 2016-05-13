@@ -1,8 +1,8 @@
 <robot cameras="2">
 	<navigation-params alpha="70">
 		<initial-position>
-			<x-zone x1="-20" x2="-15" x3="15" x4="20"/> <!-- centimeters -->
-			<y-zone x1="-20" x2="-15" x3="15" x4="20"/> <!-- centimeters -->
+			<x-zone x1="-40" x2="-30" x3="30" x4="40"/> <!-- centimeters -->
+			<y-zone x1="-40" x2="-30" x3="30" x4="40"/> <!-- centimeters -->
 			<th-zone x1="-0.033798" x2="-0.02618" x3="0.02618" x4="0.033798"/> <!-- radians -->
 		</initial-position>
 		<process-noise>

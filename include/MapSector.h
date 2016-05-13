@@ -20,6 +20,7 @@ struct s_feature{
 	float height;
 	float xpos;
 	float ypos;
+	int linkedSectorId;
 };
 
 struct s_site{
@@ -30,7 +31,6 @@ struct s_site{
 	float xpos;
 	float ypos;
 	int linkedFeatureId;
-	int linkedSectorId;
 };
 
 class MapSector{
@@ -83,8 +83,10 @@ public:
 	s_landmark* landmarkAt(int index);
 
 	s_site* findSiteById(int id);
-
 	s_feature* findFeatureById(int id);
+
+	std::vector<s_site*> findSitesByName(std::string name);
+	std::vector<s_feature*> findFeaturesByName(std::string name);
 
 	void deleteSite(s_site* obj);
 	void deleteFeature(s_feature* obj);

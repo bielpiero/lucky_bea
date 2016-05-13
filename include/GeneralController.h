@@ -293,6 +293,7 @@ private:
 	unsigned char keepTourAlive;
 
 	int currentMapId;
+	int nextSectorId;
 	MapSector* currentSector;
 	s_robot* robotConfig;
 

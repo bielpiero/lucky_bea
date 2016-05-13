@@ -50,8 +50,9 @@ GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):Robo
 	//setGesture("26", servo_positions);
 	ttsLipSync = new DorisLipSync(this->maestroControllers, ros::package::getPath(PACKAGE_NAME));
 	//ttsLipSync->textToViseme("Hola, ya estoy lista para funcionar");
-	currentMapId = NONE;
-	currentSector = NULL;
+	this->currentMapId = NONE;
+	this->currentSector = NULL;
+	this->nextSectorId = NONE;
 	loadRobotConfig();
 	pthread_mutex_init(&mutexLandmarkLocker, NULL);
 
@@ -1070,6 +1071,12 @@ void GeneralController::loadSector(int mapId, int sectorId){
 						tempFeature->xpos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
 						tempFeature->ypos = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
 
+						if(features_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
+							tempFeature->linkedSectorId = atoi(features_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value());
+						} else {
+							tempFeature->linkedSectorId = NONE;
+						}
+
 						currentSector->addFeature(tempFeature);
 						
 					}
@@ -1105,12 +1112,6 @@ void GeneralController::loadSector(int mapId, int sectorId){
 							tempSite->linkedFeatureId = atoi(site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)->value());
 						} else {
 							tempSite->linkedFeatureId = NONE;
-						}
-
-						if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
-							tempSite->linkedSectorId = atoi(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value());
-						} else {
-							tempSite->linkedSectorId = NONE;
 						}
 
 						currentSector->addSite(tempSite);
@@ -1405,6 +1406,13 @@ void GeneralController::getSectorInformationFeatures(int mapId, int sectorId, st
 							buffer_str << (((float)atoi(feature_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100) << ",";
 							buffer_str << (((float)atoi(feature_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100);
 
+							if(feature_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
+								buffer_str << "," << feature_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value();
+							} else {
+								buffer_str << "," << NONE;
+							}
+
+
 							if(feature_node->next_sibling() != NULL){
 								buffer_str << "|";
 							}
@@ -1454,20 +1462,15 @@ void GeneralController::getSectorInformationSites(int mapId, int sectorId, std::
 							buffer_str << site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value() << ",";
 							buffer_str << (((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100) << ",";
 							buffer_str << (((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100) << ",";
-							buffer_str << (((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_RADIUS_STR)->value())) / 100) << ",";
+							buffer_str << (((float)atoi(site_node->first_attribute(XML_ATTRIBUTE_RADIUS_STR)->value())) / 100);
 
 							if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)){
-								buffer_str << site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)->value() << ",";
+								buffer_str << "," << site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)->value();
 							} else {
-								buffer_str << NONE << ",";
+								buffer_str << "," << NONE;
 							}
 
-							if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
-								buffer_str << site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value();
-							} else {
-								buffer_str << NONE;
-							}
-
+							
 							if(site_node->next_sibling() != NULL){
 								buffer_str << "|";
 							}
@@ -1588,10 +1591,6 @@ void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 				        	new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR, data.at(7).c_str()));
 				        }
 
-				        if(data.size() >= ADD_SITE_VARIABLE_LENGTH + 2){
-				        	new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR, data.at(8).c_str()));
-				        }
-
 				        sites_root_node->append_node(new_sites_node);
 
 			        	if(mapId == currentMapId and sectorId == currentSector->getId()){
@@ -1607,12 +1606,6 @@ void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 								tempSite->linkedFeatureId = atoi(data.at(7).c_str());
 							} else {
 								tempSite->linkedFeatureId = NONE;
-							}
-
-							if(data.size() >= ADD_SITE_VARIABLE_LENGTH + 2){
-								tempSite->linkedSectorId = atoi(data.at(8).c_str());
-							} else {
-								tempSite->linkedSectorId = NONE;
 							}
 				        	currentSector->addSite(tempSite);
 				        }
@@ -1683,9 +1676,7 @@ void GeneralController::modifySectorInformationSite(char* cad){
 						        	where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR, data.at(8).c_str()));
 						        }
 
-						        if(data.size() >= MODIFY_SITE_VARIABLE_LENGTH + 2){
-						        	where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR, data.at(9).c_str()));
-						        }
+						        
 								RNUtils::getTimestamp(mappingSitesTimestamp);
 							}
 						}
@@ -1711,13 +1702,7 @@ void GeneralController::modifySectorInformationSite(char* cad){
 				tempSite->linkedFeatureId = atoi(data.at(8).c_str());
 			} else {
 				tempSite->linkedFeatureId = NONE;
-			}
-
-			if(data.size() >= MODIFY_SITE_VARIABLE_LENGTH + 2){
-				tempSite->linkedSectorId = atoi(data.at(9).c_str());
-			} else {
-				tempSite->linkedSectorId = NONE;
-			}
+			}			
 		}
 	} else {
 		RNUtils::printLn("Unable to edit site. Invalid number of parameters..");
@@ -1847,7 +1832,7 @@ void GeneralController::setSitesExecutionSequence(char* cad){
 
 void GeneralController::addSectorInformationFeatures(char* cad, int& indexAssigned){
 	std::vector<std::string> data = RNUtils::split(cad, ",");
-	if(data.size() == ADD_FEATURE_VARIABLE_LENGTH){
+	if(data.size() >= ADD_FEATURE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
 		int sectorId = atoi(data.at(1).c_str());
@@ -1903,6 +1888,10 @@ void GeneralController::addSectorInformationFeatures(char* cad, int& indexAssign
 				        new_feature_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(5).c_str()));
 				        new_feature_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(6).c_str()));
 
+				        if(data.size() >= ADD_FEATURE_VARIABLE_LENGTH + 1){
+				        	new_feature_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR, data.at(7).c_str()));
+				        }
+
 				        features_root_node->append_node(new_feature_node);
 
 				        if(mapId == currentMapId and sectorId == currentSector->getId()){
@@ -1914,6 +1903,12 @@ void GeneralController::addSectorInformationFeatures(char* cad, int& indexAssign
 							tempFeature->height = ((float)atoi(data.at(4).c_str())) / 100;
 							tempFeature->xpos = ((float)atoi(data.at(5).c_str())) / 100;
 							tempFeature->ypos = ((float)atoi(data.at(6).c_str())) / 100;
+
+							if(data.size() >= ADD_FEATURE_VARIABLE_LENGTH + 1){
+								tempFeature->linkedSectorId = atoi(data.at(7).c_str());
+							} else {
+								tempFeature->linkedSectorId = NONE;
+							}
 
 							currentSector->addFeature(tempFeature);
 				        }
@@ -1933,7 +1928,7 @@ void GeneralController::addSectorInformationFeatures(char* cad, int& indexAssign
 
 void GeneralController::modifySectorInformationFeatures(char* cad){
 	std::vector<std::string> data = RNUtils::split(cad, ",");
-	if(data.size() == MODIFY_FEATURE_VARIABLE_LENGTH){
+	if(data.size() >= MODIFY_FEATURE_VARIABLE_LENGTH){
 		bool found = false;
 		int mapId = atoi(data.at(0).c_str());
 		int sectorId = atoi(data.at(1).c_str());
@@ -1977,6 +1972,10 @@ void GeneralController::modifySectorInformationFeatures(char* cad){
 						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(6).c_str()));
 						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(7).c_str()));
 
+						        if(data.size() >= MODIFY_FEATURE_VARIABLE_LENGTH + 1){
+						        	where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR, data.at(8).c_str()));
+						        }
+
 								RNUtils::getTimestamp(mappingFeaturesTimestamp);
 							}
 						}
@@ -1998,9 +1997,13 @@ void GeneralController::modifySectorInformationFeatures(char* cad){
 			tempFeature->height = ((float)atoi(data.at(5).c_str())) / 100;
 			tempFeature->xpos = ((float)atoi(data.at(6).c_str())) / 100;
 			tempFeature->ypos = ((float)atoi(data.at(7).c_str())) / 100;
+			
+			if(data.size() >= MODIFY_FEATURE_VARIABLE_LENGTH + 1){
+				tempFeature->linkedSectorId = atoi(data.at(8).c_str());
+			} else {
+				tempFeature->linkedSectorId = NONE;
+			}
         }
-		    
-
 	} else {
 		RNUtils::printLn("Unable to edit feature. Invalid number of parameters..");
 	}
@@ -2146,6 +2149,19 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 	
 	robotVelocity(0, 0) = transSpeed;
 	robotVelocity(1, 0) = rotSpeed;
+	if(currentSector != NULL){
+		std::vector<s_feature*> doors = currentSector->findFeaturesByName(std::string(SEMANTIC_FEATURE_DOOR_STR));
+		float distance = std::numeric_limits<float>::infinity();
+		int index = NONE;
+		for(int i = 0; i < doors.size(); i++){
+			float fromHereXY = std::sqrt(std::pow((robotEncoderPosition(0, 0) - doors.at(i)->xpos), 2) + std::pow((robotEncoderPosition(1, 0) - doors.at(i)->ypos), 2));
+			if(distance > fromHereXY){
+				distance = fromHereXY;
+				index = doors.at(i)->linkedSectorId;
+			}
+		}
+		this->nextSectorId = index;
+	}
 	
 	char* bump = new char[256];
 	sprintf(bump, "$POSE_VEL|%.4f,%.4f,%.4f,%.4f,%.4f", robotEncoderPosition(0, 0), robotEncoderPosition(1, 0), robotEncoderPosition(2, 0), robotVelocity(0, 0), robotVelocity(1, 0));
@@ -2460,7 +2476,6 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 			Hk(zIndex + 1, 1) = -((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0))/(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
 			Hk(zIndex + 1, 2) = -1.0;
 		}
-		
 		Matrix zkl;
 		self->getObservations(zkl);
 		//RNUtils::printLn("Observation Vector:");
@@ -2507,10 +2522,12 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		float angle = 0;
 		bool isInsidePolygon = self->currentSector->checkPointXYInPolygon(PointXY(newPosition(0, 0), newPosition(1, 0)), angle);
 
-		if(isInsidePolygon){
-			RNUtils::printLn("PointXY is in polygon...");
-		} else {
-			RNUtils::printLn("PointXY is not in polygon...");
+		if(!isInsidePolygon){
+			self->loadSector(self->currentMapId, self->nextSectorId);
+			RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", self->nextSectorId, self->currentSector->getName().c_str());
+			self->nextSectorId = NONE;
+			//new position
+			self->initializeKalmanVariables();
 		}
 		RNUtils::sleep(30);
 	}

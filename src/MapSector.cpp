@@ -127,6 +127,28 @@ s_feature* MapSector::findFeatureById(int id) {
 	}
 }
 
+std::vector<s_site*> MapSector::findSitesByName(std::string name){
+	int index = NONE;
+	std::vector<s_site*> values; 
+	for (int i = 0; i < sites->size(); i++){
+		if(sites->at(i)->name == name){
+			values.push_back(sites->at(i));
+		}
+	}
+	return values;
+}
+
+std::vector<s_feature*> MapSector::findFeaturesByName(std::string name){
+	int index = NONE;
+	std::vector<s_feature*> values;
+	for (int i = 0; i < features->size(); i++){
+		if(features->at(i)->name == name){
+			values.push_back(features->at(i));
+		}
+	}
+	return values;
+}
+
 void MapSector::deleteSite(s_site* obj) { 
 	sites->erase(std::remove(sites->begin(), sites->end(), obj), sites->end()); 
 }

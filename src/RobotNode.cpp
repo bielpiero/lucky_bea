@@ -414,13 +414,13 @@ bool RobotNode::checkBackwardLimitTransition(double enc_k, double enc_k_1){
 
 void RobotNode::getRawPoseFromOdometry(){
     double x = 0, y = 0, th = 0;
-    pthread_mutex_lock(&mutexRawPositionLocker);
+    //pthread_mutex_lock(&mutexRawPositionLocker);
     x = myRawPose->getX() + (deltaDistance * cos(myRawPose->getThRad() + deltaDegrees/2.0));
     y = myRawPose->getY() + (deltaDistance * sin(myRawPose->getThRad() + deltaDegrees/2.0));
     th = myRawPose->getThRad() + deltaDegrees;
-    
-    myRawPose->setPose(x, y, th * 180 / M_PI);
-    pthread_mutex_unlock(&mutexRawPositionLocker);
+    this->setPosition(x / 1000.0, y / 1000.0, th);
+    //myRawPose->setPose(x, y, th * 180 / M_PI);
+    //pthread_mutex_unlock(&mutexRawPositionLocker);
 
 }
 
