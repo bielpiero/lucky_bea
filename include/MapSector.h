@@ -21,6 +21,8 @@ struct s_feature{
 	float xpos;
 	float ypos;
 	int linkedSectorId;
+    float xcoord;
+    float ycoord;
 };
 
 struct s_site{

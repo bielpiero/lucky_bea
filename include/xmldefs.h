@@ -56,6 +56,8 @@
 #define XML_ATTRIBUTE_TIME_STR "tsec"
 #define XML_ATTRIBUTE_X_POSITION_STR "xpos"
 #define XML_ATTRIBUTE_Y_POSITION_STR "ypos"
+#define XML_ATTRIBUTE_X_COORD_STR "xcoord"
+#define XML_ATTRIBUTE_Y_COORD_STR "ycoord"
 #define XML_ATTRIBUTE_LINKED_FEATURE_ID_STR "linked-feature-id"
 #define XML_ATTRIBUTE_LINKED_SECTOR_ID_STR "linked-sector-id"
 #define XML_ATTRIBUTE_REFERENCE_STR "reference"

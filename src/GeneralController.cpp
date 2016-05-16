@@ -53,6 +53,8 @@ GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):Robo
 	this->currentMapId = NONE;
 	this->currentSector = NULL;
 	this->nextSectorId = NONE;
+    this->nXCoord = 0;
+    this->nYCoord = 0;
 	loadRobotConfig();
 	pthread_mutex_init(&mutexLandmarkLocker, NULL);
 
@@ -1076,8 +1078,20 @@ void GeneralController::loadSector(int mapId, int sectorId){
 						} else {
 							tempFeature->linkedSectorId = NONE;
 						}
-
-						currentSector->addFeature(tempFeature);
+                        
+                        if(features_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)){
+                            tempFeature->xcoord = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)->value())) / 100;
+                        } else {
+                            tempFeature->xcoord = 0.0;
+                        }
+                        
+                        if(features_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)){
+                            tempFeature->ycoord = ((float)atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)->value())) / 100;
+                        } else {
+                            tempFeature->ycoord = 0.0;
+                        }
+                        
+                        currentSector->addFeature(tempFeature);
 						
 					}
 				}
@@ -2153,14 +2167,20 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 		std::vector<s_feature*> doors = currentSector->findFeaturesByName(std::string(SEMANTIC_FEATURE_DOOR_STR));
 		float distance = std::numeric_limits<float>::infinity();
 		int index = NONE;
+        float nXCoord = 0;
+        float nYCoord = 0;
 		for(int i = 0; i < doors.size(); i++){
 			float fromHereXY = std::sqrt(std::pow((robotEncoderPosition(0, 0) - doors.at(i)->xpos), 2) + std::pow((robotEncoderPosition(1, 0) - doors.at(i)->ypos), 2));
 			if(distance > fromHereXY){
 				distance = fromHereXY;
 				index = doors.at(i)->linkedSectorId;
+                nXCoord = doors.at(i)->xcoord;
+                nYCoord = doors.at(i)->ycoord;
 			}
 		}
 		this->nextSectorId = index;
+        this->nXCoord = nXCoord;
+        this->nYCoord = nYCoord;
 	}
 	
 	char* bump = new char[256];
@@ -2527,6 +2547,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 			RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", self->nextSectorId, self->currentSector->getName().c_str());
 			self->nextSectorId = NONE;
 			//new position
+            self->setPosition(newPosition(0, 0) + this->nXCoord, newPosition(1, 0) + this->nYCoord, newPosition(2, 0));
 			self->initializeKalmanVariables();
 		}
 		RNUtils::sleep(30);

@@ -18,8 +18,8 @@
 		</landmarks>
 		<features>
 			<feature id="2" name="charger" width="50" height="25" xpos="700" ypos="370"/>
-			<feature id="0" name="door" width="137" height="10" xpos="80" ypos="0" linked-sector-id="3"/>
-			<feature id="1" name="door" width="10" height="80" xpos="0" ypos="65" linked-sector-id="1"/>
+			<feature id="0" name="door" width="137" height="10" xpos="80" ypos="0" linked-sector-id="3" xcoord="-18" ycoord="1174"/>
+			<feature id="1" name="door" width="10" height="80" xpos="0" ypos="65" linked-sector-id="1" xcoord="160" ycoord="0"/>
 			<feature id="3" name="brown closet" width="40" height="92" xpos="45" ypos="170"/>
 			<feature id="4" name="Left table 1" width="92" height="120" xpos="420" ypos="62"/>
 			<feature id="5" name="Left table 2" width="92" height="120" xpos="570" ypos="62"/>
@@ -46,10 +46,10 @@
 			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="25"/>
 		</landmarks>
 		<features>
-			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="2"/>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="2" xcoord="420" ycoord="0"/>
 			<feature id="1" name="door" width="80" height="10" xpos="60" ypos="0"/>
 			<feature id="2" name="door" width="80" height="10" xpos="60" ypos="400"/>
-			<feature id="3" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="0"/>
+			<feature id="3" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="0" xcoord="-160" ycoord="0"/>
 		</features>
 		<sites cyclic="no" sequence="0,2,0">
 			<site id="0" name="doorway" radius="10" tsec="0" xpos="160" ypos="60" linked-feature-id="3"/>
@@ -57,10 +57,10 @@
 			<site id="2" name="hall" radius="10" tsec="0" xpos="100" ypos="300"/>
 		</sites>
 	</sector>
-	<sector id="2" name="FM Office" width="420" height="310" reference="0" polygon="m 0 0 l 0 310 l 420 0 l 0 -310 z">
+	<sector id="2" name="FM Office" width="310" height="420" reference="2" polygon="m 0 0 l 0 420 l 310 0 l 0 -420 z">
 		<landmarks/>
 		<features>
-			<feature id="0" name="door" width="137" height="10" xpos="78" ypos="310" linked-sector-id="1"/>
+			<feature id="0" name="door" width="137" height="10" xpos="78" ypos="310" linked-sector-id="1" xcoord="-420" ycoord="0"/>
 			<feature id="1" name="Table 1" width="180" height="92" xpos="327" ypos="134"/>
 			<feature id="2" name="Table 2" width="92" height="180" xpos="373" ypos="90"/>
 		</features>
@@ -73,14 +73,14 @@
 	</sector>
 	<sector id="3" name="Computer Vision" width="1340" height="1174" reference="2" polygon="m 0 0 l 0 1174 l 1340 0 l 0 -1174 z">
 		<landmarks>
-			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="18" ypos="1025"/>
-			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="875"/>
-			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="1174"/>
+			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="0" ypos="1025"/>
+			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="142" ypos="875"/>
+			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="142" ypos="1174"/>
 		</landmarks>
 		<features>
-			<feature id="0" name="door" width="137" height="10" xpos="1340" ypos="0" linked-sector-id="0"/>
-			<feature id="1" name="door" width="137" height="10" xpos="80" ypos="0" linked-sector-id="7"/>
-			<feature id="2" name="door" width="10" height="80" xpos="0" ypos="65" linked-sector-id="5"/>
+			<feature id="0" name="door" width="137" height="10" xpos="1340" ypos="0" linked-sector-id="0" xcoord="18" ycoord="-1174"/>
+			<feature id="1" name="door" width="137" height="10" xpos="80" ypos="0" linked-sector-id="7" xcoord="0" ycoord="900"/>
+			<feature id="2" name="door" width="10" height="80" xpos="0" ypos="65" linked-sector-id="5" xcoord="400" ycoord="280"/>
 		</features>
 		<sites/>
 	</sector>
@@ -89,7 +89,7 @@
 		<features/>
 		<sites/>
 	</sector>
-	<sector id="5" name="Workshop Place" width="400" height="400" reference="0">
+	<sector id="5" name="Workshop Place" width="400" height="400" reference="2" polygon="m 0 0 l 0 400 l 400 0 l 0 -400 z">
 		<landmarks/>
 		<features/>
 		<sites/>
@@ -99,7 +99,7 @@
 		<features/>
 		<sites/>
 	</sector>
-	<sector id="7" name="Main Hall" width="900" height="410" reference="0">
+	<sector id="7" name="Main Hall" width="300" height="900" reference="2" polygon="m 0 0 l 0 900 l 300 0 l 0 -900 z">
 		<landmarks/>
 		<features/>
 		<sites/>

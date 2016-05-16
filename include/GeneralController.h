@@ -294,6 +294,8 @@ private:
 
 	int currentMapId;
 	int nextSectorId;
+    float nXCoord;
+    float nYCoord;
 	MapSector* currentSector;
 	s_robot* robotConfig;
 
