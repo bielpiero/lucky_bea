@@ -38,7 +38,7 @@
 			<site id="5" name="doorway" radius="10" tsec="0" xpos="0" ypos="65" linked-feature-id="1"/>
 		</sites>
 	</sector>
-	<sector id="1" name="MR-FM Hall" width="160" height="400" reference="2">
+	<sector id="1" name="MR-FM Hall" width="160" height="400" reference="2" polygon="m 0 0 l 0 400 l 160 0 l 0 -400 z">
 		<landmarks>
 			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="15" ypos="120"/>
 			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="115" ypos="240"/>
@@ -46,10 +46,10 @@
 			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="25"/>
 		</landmarks>
 		<features>
-			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60"/>
-			<feature id="1" name="door" width="80" height="10" xpos="60" ypos="0" linked-sector-id="2"/>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="2"/>
+			<feature id="1" name="door" width="80" height="10" xpos="60" ypos="0"/>
 			<feature id="2" name="door" width="80" height="10" xpos="60" ypos="400"/>
-			<feature id="3" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="1"/>
+			<feature id="3" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="0"/>
 		</features>
 		<sites cyclic="no" sequence="0,2,0">
 			<site id="0" name="doorway" radius="10" tsec="0" xpos="160" ypos="60" linked-feature-id="3"/>
@@ -57,15 +57,15 @@
 			<site id="2" name="hall" radius="10" tsec="0" xpos="100" ypos="300"/>
 		</sites>
 	</sector>
-	<sector id="2" name="FM Office" width="420" height="310" reference="0">
+	<sector id="2" name="FM Office" width="420" height="310" reference="0" polygon="m 0 0 l 0 310 l 420 0 l 0 -310 z">
 		<landmarks/>
 		<features>
-			<feature id="0" name="door" width="137" height="10" xpos="78" ypos="310"/>
+			<feature id="0" name="door" width="137" height="10" xpos="78" ypos="310" linked-sector-id="1"/>
 			<feature id="1" name="Table 1" width="180" height="92" xpos="327" ypos="134"/>
 			<feature id="2" name="Table 2" width="92" height="180" xpos="373" ypos="90"/>
 		</features>
 		<sites>
-			<site id="0" name="doorway" radius="10" tsec="0" xpos="78" ypos="310" linked-feature-id="0" linked-sector-id="1"/>
+			<site id="0" name="doorway" radius="10" tsec="0" xpos="78" ypos="310" linked-feature-id="0"/>
 			<site id="1" name="nuevoFMOffice" radius="10" tsec="0" xpos="180" ypos="334"/>
 			<site id="2" name="nuevoFMOffice" radius="10" tsec="0" xpos="180" ypos="334"/>
 			<site id="3" name="nuevoFMOffice" radius="10" tsec="0" xpos="180" ypos="334"/>
