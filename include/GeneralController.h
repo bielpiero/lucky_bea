@@ -1,7 +1,9 @@
 #ifndef GENERAL_CONTROLLER_H
 #define GENERAL_CONTROLLER_H
 
+#include <opencv2/opencv.hpp>
 
+#include "RobotNode.h"
 #include "SocketNode2.h"
 #include "SerialPort.h"
 #include "UDPClient.h"
@@ -10,7 +12,7 @@
 #include "xmldefs.h"
 #include "semdefs.h"
 
-#include "RobotNode.h"
+
 #include "RobotDataStreamer.h"
 #include "DorisLipSync.h"
 #include "MapSector.h"

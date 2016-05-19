@@ -219,7 +219,6 @@ CMakeFiles/lucky_bea.dir/src/GeneralController.cpp.o: include/ftd2xx.h
 CMakeFiles/lucky_bea.dir/src/GeneralController.cpp.o: include/handshake.h
 CMakeFiles/lucky_bea.dir/src/GeneralController.cpp.o: include/semdefs.h
 CMakeFiles/lucky_bea.dir/src/GeneralController.cpp.o: include/stats.h
-CMakeFiles/lucky_bea.dir/src/GeneralController.cpp.o: include/stdxros.hpp
 CMakeFiles/lucky_bea.dir/src/GeneralController.cpp.o: include/xml/rapidxml.hpp
 CMakeFiles/lucky_bea.dir/src/GeneralController.cpp.o: include/xml/rapidxml_print.hpp
 CMakeFiles/lucky_bea.dir/src/GeneralController.cpp.o: include/xmldefs.h
@@ -1462,7 +1461,6 @@ CMakeFiles/lucky_bea.dir/src/lucky_bea.cpp.o: include/ftd2xx.h
 CMakeFiles/lucky_bea.dir/src/lucky_bea.cpp.o: include/handshake.h
 CMakeFiles/lucky_bea.dir/src/lucky_bea.cpp.o: include/semdefs.h
 CMakeFiles/lucky_bea.dir/src/lucky_bea.cpp.o: include/stats.h
-CMakeFiles/lucky_bea.dir/src/lucky_bea.cpp.o: include/stdxros.hpp
 CMakeFiles/lucky_bea.dir/src/lucky_bea.cpp.o: include/xml/rapidxml.hpp
 CMakeFiles/lucky_bea.dir/src/lucky_bea.cpp.o: include/xml/rapidxml_print.hpp
 CMakeFiles/lucky_bea.dir/src/lucky_bea.cpp.o: include/xmldefs.h

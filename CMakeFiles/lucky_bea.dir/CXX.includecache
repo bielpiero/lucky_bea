@@ -1839,6 +1839,8 @@ xml/rapidxml.hpp
 include/xml/rapidxml.hpp
 
 include/GeneralController.h
+RobotNode.h
+include/RobotNode.h
 SocketNode2.h
 include/SocketNode2.h
 SerialPort.h
@@ -1853,10 +1855,8 @@ xmldefs.h
 include/xmldefs.h
 semdefs.h
 include/semdefs.h
-stdxros.hpp
-include/stdxros.hpp
-RobotNode.h
-include/RobotNode.h
+opencv2/opencv
+-
 RobotDataStreamer.h
 include/RobotDataStreamer.h
 DorisLipSync.h
@@ -2348,10 +2348,6 @@ limits
 vector
 -
 stdexcept
--
-
-include/stdxros.hpp
-opencv2/opencv.hpp
 -
 
 include/xml/rapidxml.hpp

@@ -220,7 +220,6 @@ CMakeFiles/lucky_bea.dir/src/GeneralController.cpp.o
  include/handshake.h
  include/semdefs.h
  include/stats.h
- include/stdxros.hpp
  include/xml/rapidxml.hpp
  include/xml/rapidxml_print.hpp
  include/xmldefs.h
@@ -1463,7 +1462,6 @@ CMakeFiles/lucky_bea.dir/src/lucky_bea.cpp.o
  include/handshake.h
  include/semdefs.h
  include/stats.h
- include/stdxros.hpp
  include/xml/rapidxml.hpp
  include/xml/rapidxml_print.hpp
  include/xmldefs.h
