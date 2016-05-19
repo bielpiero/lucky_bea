@@ -94,7 +94,7 @@ private:
 
 	TCPSocketClient socket_conn[MAX_CLIENTS];
 	int socket_server;
-	
+	pthread_t socketsThread;
 
 	struct sockaddr_in socket_address, socket_server_address;
 	

@@ -7,7 +7,6 @@ const float GeneralController::LASER_MAX_RANGE = 11.6;
 const float GeneralController::LANDMARK_RADIUS = 0.045;
 
 GeneralController::GeneralController(const char* port):RobotNode(port){
-	//this->nh = nh_;
 	
 	this->maestroControllers = new SerialPort();
 
@@ -40,7 +39,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	Q = Matrix(2, 2);
 	R = Matrix(3, 3);
 	spdUDPClient = NULL;
-	//ros::package::getPath(PACKAGE_NAME)
+
 	xmlFaceFullPath = XML_FILE_PATH;
 	xmlMapsFullPath = XML_FILE_MAPS_PATH;
 	xmlSectorsPath = XML_FILE_SECTORS_PATH;
@@ -71,24 +70,26 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 
 GeneralController::~GeneralController(void){
-	disconnect();
-    closeConnection();
-	stopDynamicGesture();
-	stopVideoStreaming();
-	stopRobotTracking();
-	stopCurrentTour();
-	pthread_mutex_destroy(&mutexLandmarkLocker);
 
-	for(int i = 0; i < landmarks->size(); i++){
-		delete landmarks->at(i);
-	}
-	landmarks->clear();
-	delete landmarks;
+	stopCurrentTour();
+	stopRobotTracking();
+	pthread_mutex_destroy(&mutexLandmarkLocker);
 	delete maestroControllers;
 	delete kalmanFuzzy;
 	delete ttsLipSync;
 	delete spdWSServer;
 	delete currentSector;
+	
+	for(int i = 0; i < landmarks->size(); i++){
+		delete landmarks->at(i);
+	}
+	landmarks->clear();
+	delete landmarks;
+
+	stopDynamicGesture();
+	stopVideoStreaming();
+    closeConnection();
+    disconnect();	
 }
 
 void GeneralController::onConnection(int socketIndex) //callback for client and server

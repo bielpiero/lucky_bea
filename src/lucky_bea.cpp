@@ -8,13 +8,14 @@ bool continue_execution = true;
 void signalHandler(int s){
 	RNUtils::printLn("Shutdown application Requested.");
 	RNUtils::printLn("Lucky Bea: Quitting..." );	
-	continue_execution = false;
+	
 	//robot->stopVideoStreaming();
 	//robot->Close();
+	
 	if(robot != NULL){
     	delete robot;
-    	robot = NULL;
     }
+    RNUtils::setStatus(false);
 	RNUtils::printLn("Succesfully closed...\n");
 	exit(1);
 
@@ -29,11 +30,7 @@ int main(int argc, char** argv){
 
     sigaction(SIGINT, &sigIntHandler, NULL);
     sigaction(SIGTERM, &sigIntHandler, NULL);
-	
-	//ros::init(argc, argv, "lucky_bea");
-	//ros::start();
-	//ros::NodeHandle nh;
-
+    RNUtils::setStatus(true);
 	if(argc == 1 || argc == 3){
 		RNUtils::printLn("Testing");
 		
@@ -49,17 +46,8 @@ int main(int argc, char** argv){
 	    if(robot->init("", 14004, SOCKET_SERVER) == 0){
 	    	robot->startThread();
 		    RNUtils::printLn("No clients connected...");
-			//robot->trackRobot();
-			//robot->OnConnection();
-			//ros::spin();
-			while(true){
-				RNUtils::sleep(1); 
-			}
-			RNUtils::printLn( "Lucky Bea: Quitting..." );	
-	    }
-	    if(robot != NULL){
-	    	delete robot;
-	    	robot = NULL;
+
+			RNUtils::spin();
 	    }
 
 	}	

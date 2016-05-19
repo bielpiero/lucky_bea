@@ -424,8 +424,8 @@ bool CSocketNode::isWebSocket(int socketIndex){
 void* CSocketNode::launchThread(void* p){
 	CSocketNode* self=(CSocketNode*) p;
 
-	self->thread_status=1;
-	while(self->thread_status==1) {
+	self->thread_status = 1;
+	while(RNUtils::ok() and self->thread_status == 1) {
 
 		self->handleConnection();
 		if(self->type == SOCKET_SERVER){
@@ -453,22 +453,23 @@ void* CSocketNode::launchThread(void* p){
 		}
 		RNUtils::sleep(10);
 	}
-	self->thread_status=0;
+	self->thread_status = 0;
 	return NULL;
 }
 
 void CSocketNode::startThread(){
-	pthread_t t1;
-	pthread_create(&t1,NULL,launchThread, (void *) (this)  );
+	pthread_create(&socketsThread, NULL, launchThread, (void *) (this)  );
 }
 
 
 int CSocketNode::closeConnection(){
-	if(thread_status==1){
-		//wait until thread terminates
-		thread_status=2;
-		while(thread_status!=0)RNUtils::sleep(100);
+
+	if(thread_status == 1){
+		thread_status = 2;
+		pthread_cancel(socketsThread);
+		//while(thread_status != 0) RNUtils::sleep(1);
 	}
+	RNUtils::printLn("Finished Connections Thread...");
 	for(int i = 0; i < MAX_CLIENTS; i++){
 		if(socket_conn[i].getSocket() != INVALID_SOCKET){
 			shutdown(socket_conn[i].getSocket(), SD_BOTH);
@@ -478,6 +479,7 @@ int CSocketNode::closeConnection(){
 	}
 	
 	closesocket(socket_server);
+	RNUtils::printLn("Sockets Connections all closed..");
 	return 1;
 }
 

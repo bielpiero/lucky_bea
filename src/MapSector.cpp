@@ -190,6 +190,7 @@ void MapSector::deleteAllSites() {
         delete sites->at(i);
     }
     sites->clear();
+    RNUtils::printLn("Deleted all sites..");
 }
 
 void MapSector::deleteAllFeatures(){
@@ -197,6 +198,7 @@ void MapSector::deleteAllFeatures(){
         delete features->at(i);
     }
     features->clear();
+    RNUtils::printLn("Deleted all features..");
 }
 
 void MapSector::deleteAllLandmarks(){
@@ -204,6 +206,7 @@ void MapSector::deleteAllLandmarks(){
         delete landmarks->at(i);
     }
     landmarks->clear();
+    RNUtils::printLn("Deleted all landmarks..");
 }
 
 void MapSector::deletePolygon(){
@@ -211,6 +214,7 @@ void MapSector::deletePolygon(){
         delete polygon->at(i);
     }
     polygon->clear();
+    RNUtils::printLn("Deleted all polygon points..");
 }
 
 void MapSector::setPolygon(std::string polygon){

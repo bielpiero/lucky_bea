@@ -12,7 +12,6 @@
 #include "xmldefs.h"
 #include "semdefs.h"
 
-
 #include "RobotDataStreamer.h"
 #include "DorisLipSync.h"
 #include "MapSector.h"
@@ -262,11 +261,11 @@ private:
 
 	UDPClient* spdUDPClient;
 	RobotDataStreamer* spdWSServer;
-	//ros::NodeHandle nh;
+	
 
 	//OpenCV
-	//cv::VideoCapture vc;
-	//cv::VideoCapture vcSecond;
+	cv::VideoCapture vc;
+	cv::VideoCapture vcSecond;
 	//possibilistic navigation
 	Matrix robotVelocity;
 	Matrix robotEncoderPosition;

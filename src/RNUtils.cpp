@@ -1,5 +1,7 @@
 #include "RNUtils.h"
 
+bool RNUtils::status = false;
+
 void RNUtils::printLn(const char* _format, ...){
 	std::ostringstream timestamp;
 	getTimestamp(timestamp);
@@ -36,6 +38,21 @@ std::vector<std::string> RNUtils::split(char* buffer, const char* delimiter){
 	delete[] buffer_in;
 	return result;
 }
+
+void RNUtils::spin(){
+	while(RNUtils::ok()){
+		sleep(1);
+	}
+}
+
+bool RNUtils::ok(){
+	return RNUtils::status;
+}
+
+void RNUtils::setStatus(bool m_status){
+	RNUtils::status = m_status;
+}
+
 
 void RNUtils::getTimestamp(std::ostringstream& timestamp){
 	std::time_t ltTime = std::time(NULL);

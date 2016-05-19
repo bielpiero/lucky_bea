@@ -41,7 +41,6 @@
 			<site id="0" name="site a" radius="10" tsec="0" xpos="640" ypos="240"/>
 			<site id="8" name="site o" radius="10" tsec="0" xpos="59" ypos="285"/>
 			<site id="9" name="site t" radius="10" tsec="0" xpos="284" ypos="73"/>
-			<site id="10" name="site q" radius="10" tsec="0" xpos="854" ypos="295"/>
 			<site id="11" name="site t" radius="10" tsec="0" xpos="857" ypos="76"/>
 			<site id="12" name="site y" radius="10" tsec="0" xpos="623" ypos="365"/>
 			<site id="13" name="site z" radius="10" tsec="0" xpos="661" ypos="81"/>

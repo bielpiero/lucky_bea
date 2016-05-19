@@ -58,6 +58,8 @@ public:
 
 
 class RNUtils{
+private:
+	static bool status;
 public:
 	static void sleep(int milliseconds);
 	static void printLn(const char* _format, ...);
@@ -67,6 +69,9 @@ public:
 	static int binomialCoeff(int n, int k);
 	static std::string toLowercase(std::string str);
 	static std::string toUppercase(std::string str);
+	static void spin();
+	static bool ok();
+	static void setStatus(bool status);
 };
 
 #endif
