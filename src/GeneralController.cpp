@@ -6,8 +6,8 @@
 const float GeneralController::LASER_MAX_RANGE = 11.6;
 const float GeneralController::LANDMARK_RADIUS = 0.045;
 
-GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):RobotNode(port){
-	this->nh = nh_;
+GeneralController::GeneralController(const char* port):RobotNode(port){
+	//this->nh = nh_;
 	
 	this->maestroControllers = new SerialPort();
 
@@ -40,15 +40,15 @@ GeneralController::GeneralController(ros::NodeHandle nh_, const char* port):Robo
 	Q = Matrix(2, 2);
 	R = Matrix(3, 3);
 	spdUDPClient = NULL;
-
-	xmlFaceFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_PATH;
-	xmlMapsFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_MAPS_PATH;
-	xmlSectorsPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_SECTORS_PATH;
-	xmlRobotConfigFullPath = ros::package::getPath(PACKAGE_NAME) + XML_FILE_ROBOT_CONFIG_PATH;
+	//ros::package::getPath(PACKAGE_NAME)
+	xmlFaceFullPath = XML_FILE_PATH;
+	xmlMapsFullPath = XML_FILE_MAPS_PATH;
+	xmlSectorsPath = XML_FILE_SECTORS_PATH;
+	xmlRobotConfigFullPath = XML_FILE_ROBOT_CONFIG_PATH;
 
 	//std::string servo_positions;
 	//setGesture("26", servo_positions);
-	ttsLipSync = new DorisLipSync(this->maestroControllers, ros::package::getPath(PACKAGE_NAME));
+	ttsLipSync = new DorisLipSync(this->maestroControllers, "");
 	//ttsLipSync->textToViseme("Hola, ya estoy lista para funcionar");
 	this->currentMapId = NONE;
 	this->currentSector = NULL;
@@ -1593,8 +1593,9 @@ void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 						xml_node<>* new_sites_node = doc.allocate_node(node_element, XML_ELEMENT_SITE_STR);
 
 						std::ostringstream convert;
+						convert.str("");
 						convert << indexAssigned;
-
+						RNUtils::printLn("New Site Index Assigned: %s", convert.str().c_str());
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, convert.str().c_str()));
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_NAME_STR, data.at(2).c_str()));
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_RADIUS_STR, data.at(3).c_str()));
@@ -2165,23 +2166,31 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 	robotVelocity(1, 0) = rotSpeed;
 	if(currentSector != NULL){
 		std::vector<s_feature*> doors = currentSector->findFeaturesByName(std::string(SEMANTIC_FEATURE_DOOR_STR));
-		float distance = std::numeric_limits<float>::infinity();
-		int index = NONE;
-        float nXCoord = 0;
-        float nYCoord = 0;
-		for(int i = 0; i < doors.size(); i++){
-			float fromHereXY = std::sqrt(std::pow((robotEncoderPosition(0, 0) - doors.at(i)->xpos), 2) + std::pow((robotEncoderPosition(1, 0) - doors.at(i)->ypos), 2));
-			if(distance > fromHereXY){
-				distance = fromHereXY;
-				index = doors.at(i)->linkedSectorId;
-                nXCoord = doors.at(i)->xcoord;
-                nYCoord = doors.at(i)->ycoord;
+		if(doors.size() > 0){
+			float distance = std::numeric_limits<float>::infinity();
+			int index = NONE;
+	        float nXCoord = 0;
+	        float nYCoord = 0;
+			for(int i = 0; i < doors.size(); i++){
+				float fromHereXY = std::sqrt(std::pow((robotEncoderPosition(0, 0) - doors.at(i)->xpos), 2) + std::pow((robotEncoderPosition(1, 0) - doors.at(i)->ypos), 2));
+				if(distance > fromHereXY){
+					distance = fromHereXY;
+					index = doors.at(i)->linkedSectorId;
+	                nXCoord = doors.at(i)->xcoord;
+	                nYCoord = doors.at(i)->ycoord;
+				}
 			}
-		}
-		this->nextSectorId = index;
-        this->nXCoord = nXCoord;
-        this->nYCoord = nYCoord;
+			this->nextSectorId = index;
+	        this->nXCoord = nXCoord;
+	        this->nYCoord = nYCoord;
+	    }
+	    if(RNUtils::toLowercase(currentSector->getName()).find(SEMANTIC_HALLWAY_STR) < std::string(SEMANTIC_HALLWAY_STR).length()){
+	    	this->hallwayDetected = true;
+	    } else {
+	    	this->hallwayDetected = false;
+	    }
 	}
+
 	
 	char* bump = new char[256];
 	sprintf(bump, "$POSE_VEL|%.4f,%.4f,%.4f,%.4f,%.4f", robotEncoderPosition(0, 0), robotEncoderPosition(1, 0), robotEncoderPosition(2, 0), robotVelocity(0, 0), robotVelocity(1, 0));
@@ -2332,36 +2341,62 @@ void GeneralController::startSitesTour(){
 void* GeneralController::sitesTourThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 	self->keepTourAlive = YES;
+
     std::vector<std::string> spltdSequence = RNUtils::split((char*)self->currentSector->getSequence().c_str(), ",");
+    bool movedToCenter = false;
 	
-	while(ros::ok() && self->keepTourAlive == YES){
+	while(self->keepTourAlive == YES){
         int goalIndex = self->lastSiteVisitedIndex + 1;
+        RNUtils::printLn("Goal Index: %d, lastSiteVisitedIndex: %d, splitted: %d, sequence: %s", goalIndex, self->lastSiteVisitedIndex, spltdSequence.size(), (char*)self->currentSector->getSequence().c_str());
         int goalId = atoi(spltdSequence.at(goalIndex).c_str());
-        s_site* currentSite = NULL;
-        if(goalIndex > 0){
-        	currentSite = self->currentSector->findSiteById(atoi(spltdSequence.at(goalIndex - 1).c_str()));
-        }
         s_site* destinationSite = self->currentSector->findSiteById(goalId);
         
         RNUtils::sleep(100);
         if(destinationSite != NULL){
+        	s_feature* linkedFeature = NULL;
         	if(destinationSite->linkedFeatureId != NONE){
-        		s_feature* linkedFeature = self->currentSector->findFeatureById(destinationSite->linkedFeatureId);
-        		if(linkedFeature->name == SEMANTIC_FEATURE_DOOR_STR){
-        			if(currentSite != NULL){
-        				RNUtils::printLn("Yohooo.... Door site detected. Creating a virtual point at {x: %f, y: %f}", currentSite->xpos, destinationSite->ypos);
-        				self->moveRobotToPosition(currentSite->xpos, destinationSite->ypos, 0.0);
-        				while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) RNUtils::sleep(100);
-        			}
-        		}
+        		linkedFeature = self->currentSector->findFeatureById(destinationSite->linkedFeatureId);
         	}
+
+        	PointXY phantomPoint(destinationSite->xpos, destinationSite->ypos);
+
+        	if(linkedFeature != NULL and linkedFeature->name == SEMANTIC_FEATURE_DOOR_STR){
+    			if(linkedFeature->width > linkedFeature->height){
+    				phantomPoint.setY(self->robotRawDeltaPosition(1, 0));
+    			} else {
+    				phantomPoint.setX(self->robotRawDeltaPosition(0, 0));
+    			}
+    			RNUtils::printLn("Door site detected. Creating a virtual point at {x: %f, y: %f}", phantomPoint.getX(), phantomPoint.getY());
+    			self->moveRobotToPosition(phantomPoint.getX(), phantomPoint.getY(), 0.0);
+    			while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) RNUtils::sleep(100);
+    		}
+    		if(self->hallwayDetected and not movedToCenter){
+    			if(self->currentSector->getWidth() < self->currentSector->getHeight()){
+    				phantomPoint.setX(self->currentSector->getWidth() / 2.0);
+    				phantomPoint.setY(self->robotRawDeltaPosition(1, 0));
+    				
+    			} else {
+    				phantomPoint.setX(self->robotRawDeltaPosition(0, 0));
+    				phantomPoint.setY(self->currentSector->getHeight() / 2.0);
+    			}
+
+				movedToCenter = true;
+				RNUtils::printLn("Site in hallway zone. Creating a virtual point at {x: %f, y: %f}", phantomPoint.getX(), phantomPoint.getY());
+				self->moveRobotToPosition(phantomPoint.getX(), phantomPoint.getY(), 0.0);
+				while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) RNUtils::sleep(100);
+    			
+    		}
 
         	self->moveRobotToPosition(destinationSite->xpos, destinationSite->ypos, 0.0);
         	while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) RNUtils::sleep(100);
         	if (self->isGoalAchieved()) {
 	            self->lastSiteVisitedIndex++;
-	            if (self->currentSector->isSitesCyclic() && (self->lastSiteVisitedIndex == (spltdSequence.size() - 1))) {
+	            if (self->currentSector->isSitesCyclic()){
+	            	self->lastSiteVisitedIndex = NONE;
+	            	movedToCenter = false;
+	            } else if((self->lastSiteVisitedIndex == (spltdSequence.size() - 1))) {
 	                self->lastSiteVisitedIndex = NONE;
+	                self->stopRobot();
 	            }
 	        }
 	        if (self->isGoalCanceled()) {
@@ -2463,7 +2498,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 	Matrix Hk;
 	Matrix Pk = self->P;
 	
-	while(ros::ok() && self->keepRobotTracking == YES){
+	while(self->keepRobotTracking == YES){
 		pk1 = Pk;
 
 		Ak(0, 2) = -self->robotRawDeltaPosition(0, 0) * std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
@@ -2547,7 +2582,8 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 			RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", self->nextSectorId, self->currentSector->getName().c_str());
 			self->nextSectorId = NONE;
 			//new position
-            self->setPosition(newPosition(0, 0) + this->nXCoord, newPosition(1, 0) + this->nYCoord, newPosition(2, 0));
+			self->lastSiteVisitedIndex = 0;
+            self->setPosition(newPosition(0, 0) + self->nXCoord, newPosition(1, 0) + self->nYCoord, newPosition(2, 0));
 			self->initializeKalmanVariables();
 		}
 		RNUtils::sleep(30);
@@ -2569,7 +2605,7 @@ void* GeneralController::trackRobotThread(void* object){
 	Matrix Hk;
 	Matrix Pk = self->P;
 	
-	while(ros::ok() && self->keepRobotTracking == YES){
+	while(self->keepRobotTracking == YES){
 		//1 - Prediction
 		//RNUtils::printLn("1 - Prediction");
 

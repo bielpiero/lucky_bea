@@ -1,0 +1,1 @@
+/home/doris/lucky_bea/CMakeFiles/lucky_bea.dir

@@ -175,6 +175,9 @@ void RobotNode::moveAtSpeed(double linearVelocity, double angularVelocity){
     isGoingForward = false;
     this->lockRobot();
     gotoPoseAction->cancelGoal();
+    if(gotoPoseAction->isActive()){
+        gotoPoseAction->deactivate();
+    }
     robot->clearDirectMotion();
     if(linearVelocity == 0.0 && angularVelocity == 0.0){
         robot->stop();

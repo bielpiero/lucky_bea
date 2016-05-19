@@ -9,7 +9,7 @@
 #include "xml/rapidxml.hpp"
 #include "xmldefs.h"
 #include "semdefs.h"
-#include "stdxros.hpp"
+
 #include "RobotNode.h"
 #include "RobotDataStreamer.h"
 #include "DorisLipSync.h"
@@ -24,10 +24,10 @@
 
 #define PACKAGE_NAME "lucky_bea"
 
-#define XML_FILE_PATH "/conf/BeaConSuerte.xml"
-#define XML_FILE_MAPS_PATH "/conf/BeaMaps.xml"
-#define XML_FILE_SECTORS_PATH "/maps/"
-#define XML_FILE_ROBOT_CONFIG_PATH "/conf/BeaRobotConfig.xml"
+#define XML_FILE_PATH "conf/BeaConSuerte.xml"
+#define XML_FILE_MAPS_PATH "conf/BeaMaps.xml"
+#define XML_FILE_SECTORS_PATH "maps/"
+#define XML_FILE_ROBOT_CONFIG_PATH "conf/BeaRobotConfig.xml"
 
 #define PERMISSION_ACCEPTED 0
 #define PERMISSION_REQUESTED 1
@@ -202,7 +202,8 @@ private:
 	std::ostringstream mappingSitesTimestamp;
 		
 public:
-	GeneralController(ros::NodeHandle nh_, const char* port);
+	//GeneralController(ros::NodeHandle nh_, const char* port);
+	GeneralController(const char* port);
 	~GeneralController(void);
 	
 	virtual void onConnection(int socketIndex);//callback for client and server
@@ -259,7 +260,7 @@ private:
 
 	UDPClient* spdUDPClient;
 	RobotDataStreamer* spdWSServer;
-	ros::NodeHandle nh;
+	//ros::NodeHandle nh;
 
 	//OpenCV
 	//cv::VideoCapture vc;
@@ -294,6 +295,7 @@ private:
 
 	int currentMapId;
 	int nextSectorId;
+	bool hallwayDetected;
     float nXCoord;
     float nYCoord;
 	MapSector* currentSector;

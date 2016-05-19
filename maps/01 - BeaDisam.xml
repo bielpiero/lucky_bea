@@ -14,7 +14,8 @@
 			<landmark id="10" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="0" ypos="25"/>
 			<landmark id="11" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="40" ypos="147"/>
 			<landmark id="12" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="18" ypos="-149"/>
-			<landmark id="13" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="-299"/>
+			<landmark id="13" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="171" ypos="-299"/>
+			<landmark id="14" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="-145" ypos="120"/>
 		</landmarks>
 		<features>
 			<feature id="2" name="charger" width="50" height="25" xpos="700" ypos="370"/>
@@ -29,16 +30,25 @@
 			<feature id="9" name="Right table 3" width="67" height="106" xpos="535" ypos="365"/>
 			<feature id="10" name="Right table 4" width="80" height="180" xpos="745" ypos="320"/>
 		</features>
-		<sites cyclic="no" sequence="0,1,2,3,5">
-			<site id="0" name="site a" radius="10" tsec="0" xpos="640" ypos="240"/>
-			<site id="1" name="site b" radius="10" tsec="0" xpos="440" ypos="240"/>
+		<sites cyclic="no" sequence="2,3,5">
 			<site id="2" name="site c" radius="10" tsec="0" xpos="240" ypos="240"/>
-			<site id="3" name="site d" radius="10" tsec="0" xpos="193" ypos="112"/>
+			<site id="3" name="site d" radius="10" tsec="0" xpos="120" ypos="120"/>
 			<site id="4" name="doorway" radius="10" tsec="0" xpos="80" ypos="0" linked-feature-id="0"/>
 			<site id="5" name="doorway" radius="10" tsec="0" xpos="0" ypos="65" linked-feature-id="1"/>
+			<site id="1" name="site b" radius="10" tsec="0" xpos="440" ypos="240"/>
+			<site id="6" name="site e" radius="10" tsec="0" xpos="277" ypos="370"/>
+			<site id="7" name="site g" radius="10" tsec="0" xpos="806" ypos="171"/>
+			<site id="0" name="site a" radius="10" tsec="0" xpos="640" ypos="240"/>
+			<site id="8" name="site o" radius="10" tsec="0" xpos="59" ypos="285"/>
+			<site id="9" name="site t" radius="10" tsec="0" xpos="284" ypos="73"/>
+			<site id="10" name="site q" radius="10" tsec="0" xpos="854" ypos="295"/>
+			<site id="11" name="site t" radius="10" tsec="0" xpos="857" ypos="76"/>
+			<site id="12" name="site y" radius="10" tsec="0" xpos="623" ypos="365"/>
+			<site id="13" name="site z" radius="10" tsec="0" xpos="661" ypos="81"/>
+			<site id="14" name="site x" radius="10" tsec="0" xpos="493" ypos="152"/>
 		</sites>
 	</sector>
-	<sector id="1" name="MR-FM Hall" width="160" height="400" reference="2" polygon="m 0 0 l 0 400 l 160 0 l 0 -400 z">
+	<sector id="1" name="MR-FM Hallway" width="160" height="400" reference="2" polygon="m 0 0 l 0 400 l 160 0 l 0 -400 z">
 		<landmarks>
 			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="15" ypos="120"/>
 			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="115" ypos="240"/>
@@ -54,7 +64,7 @@
 		<sites cyclic="no" sequence="0,2,0">
 			<site id="0" name="doorway" radius="10" tsec="0" xpos="160" ypos="60" linked-feature-id="3"/>
 			<site id="1" name="doorway" radius="10" tsec="0" xpos="0" ypos="60" linked-feature-id="1"/>
-			<site id="2" name="hall" radius="10" tsec="0" xpos="100" ypos="300"/>
+			<site id="2" name="hallway" radius="10" tsec="0" xpos="100" ypos="300"/>
 		</sites>
 	</sector>
 	<sector id="2" name="FM Office" width="310" height="420" reference="2" polygon="m 0 0 l 0 420 l 310 0 l 0 -420 z">
@@ -74,11 +84,11 @@
 	<sector id="3" name="Computer Vision" width="1340" height="1174" reference="2" polygon="m 0 0 l 0 1174 l 1340 0 l 0 -1174 z">
 		<landmarks>
 			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="0" ypos="1025"/>
-			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="142" ypos="875"/>
-			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="142" ypos="1174"/>
+			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="153" ypos="875"/>
+			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="1174"/>
 		</landmarks>
 		<features>
-			<feature id="0" name="door" width="137" height="10" xpos="1340" ypos="0" linked-sector-id="0" xcoord="18" ycoord="-1174"/>
+			<feature id="0" name="door" width="137" height="10" xpos="80" ypos="1174" linked-sector-id="0" xcoord="18" ycoord="-1174"/>
 			<feature id="1" name="door" width="137" height="10" xpos="80" ypos="0" linked-sector-id="7" xcoord="0" ycoord="900"/>
 			<feature id="2" name="door" width="10" height="80" xpos="0" ypos="65" linked-sector-id="5" xcoord="400" ycoord="280"/>
 		</features>
@@ -99,7 +109,7 @@
 		<features/>
 		<sites/>
 	</sector>
-	<sector id="7" name="Main Hall" width="300" height="900" reference="2" polygon="m 0 0 l 0 900 l 300 0 l 0 -900 z">
+	<sector id="7" name="Main Hallway" width="300" height="900" reference="2" polygon="m 0 0 l 0 900 l 300 0 l 0 -900 z">
 		<landmarks/>
 		<features/>
 		<sites/>

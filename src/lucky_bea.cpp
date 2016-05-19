@@ -6,7 +6,8 @@ GeneralController *robot;
 bool continue_execution = true;
 
 void signalHandler(int s){
-	printf("Shutdown application Requested. Stopping Services...\n");
+	RNUtils::printLn("Shutdown application Requested.");
+	RNUtils::printLn("Lucky Bea: Quitting..." );	
 	continue_execution = false;
 	//robot->stopVideoStreaming();
 	//robot->Close();
@@ -14,10 +15,7 @@ void signalHandler(int s){
     	delete robot;
     	robot = NULL;
     }
-	if(ros::ok()){
-		ros::shutdown();
-	}
-	printf("Succesfully closed...\n");
+	RNUtils::printLn("Succesfully closed...\n");
 	exit(1);
 
 }
@@ -32,9 +30,9 @@ int main(int argc, char** argv){
     sigaction(SIGINT, &sigIntHandler, NULL);
     sigaction(SIGTERM, &sigIntHandler, NULL);
 	
-	ros::init(argc, argv, "lucky_bea");
-	ros::start();
-	ros::NodeHandle nh;
+	//ros::init(argc, argv, "lucky_bea");
+	//ros::start();
+	//ros::NodeHandle nh;
 
 	if(argc == 1 || argc == 3){
 		RNUtils::printLn("Testing");
@@ -47,14 +45,17 @@ int main(int argc, char** argv){
 				port = std::string(argv[2]);
 			}
 		}
-	    robot = new GeneralController(nh, port.c_str());
+	    robot = new GeneralController(port.c_str());
 	    if(robot->init("", 14004, SOCKET_SERVER) == 0){
 	    	robot->startThread();
 		    RNUtils::printLn("No clients connected...");
 			//robot->trackRobot();
 			//robot->OnConnection();
-			ros::spin();
-			RNUtils::printLn( "Lucky Bea: Quitting... \n" );	
+			//ros::spin();
+			while(true){
+				RNUtils::sleep(1); 
+			}
+			RNUtils::printLn( "Lucky Bea: Quitting..." );	
 	    }
 	    if(robot != NULL){
 	    	delete robot;

@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <cstdarg>
 #include <cassert>
+#include <locale>
 
 #include "Aria.h"
 
@@ -64,6 +65,8 @@ public:
 	static void getTimestamp(std::ostringstream& timestamp);
 	static void getBezierCurve(std::vector<PointXY> bezierPointXYs, std::vector<PointXY> &bezierCurve);
 	static int binomialCoeff(int n, int k);
+	static std::string toLowercase(std::string str);
+	static std::string toUppercase(std::string str);
 };
 
 #endif

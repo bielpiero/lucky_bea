@@ -22,16 +22,18 @@ void RNUtils::sleep(int milliseconds){
 
 std::vector<std::string> RNUtils::split(char* buffer, const char* delimiter){
 	std::vector<std::string> result;
-
+	char* buffer_in = new char[strlen(buffer) + 1];
+	memcpy(buffer_in, buffer, strlen(buffer) + 1);
 	char* current;
 
-	current = std::strtok(buffer, delimiter);
+	current = std::strtok(buffer_in, delimiter);
 
 	while(current != NULL){
 		result.push_back(std::string(current));
 		current = std::strtok(NULL, delimiter);
 	}
 	delete current;
+	delete[] buffer_in;
 	return result;
 }
 
@@ -103,4 +105,24 @@ int RNUtils::binomialCoeff(int n, int k){
 		}
 	}
 	return result;
+}
+
+std::string RNUtils::toLowercase(std::string str){
+	std::ostringstream newString;
+	newString.str("");
+	std::locale loc;
+	for (int i = 0; i < str.length(); i++){
+    	newString << std::tolower(str[i], loc);
+	}
+	return newString.str();
+}
+
+std::string RNUtils::toUppercase(std::string str){
+	std::ostringstream newString;
+	newString.str("");
+	std::locale loc;
+	for (int i = 0; i < str.length(); i++){
+    	newString << std::toupper(str[i], loc);
+	}
+	return newString.str();
 }

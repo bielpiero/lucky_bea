@@ -228,25 +228,25 @@ void MapSector::getPolygonFromString(){
 	for(unsigned int idx = 0; idx < values.size(); ){
 
 		if(values.at(idx) == "m" or values.at(idx) == "M"){
-			px = std::atof(values.at(idx + 1).c_str());
-			py = std::atof(values.at(idx + 2).c_str());
+			px = std::atof(values.at(idx + 1).c_str()) / 100.0;
+			py = std::atof(values.at(idx + 2).c_str()) / 100.0;
 			polygon->push_back(new PointXY(px, py));
 			idx += 3;
 		} else if(values.at(idx) == "l" or values.at(idx) == "L"){
-			px = polygon->at(polygon->size() - 1)->getX() + std::atof(values.at(idx + 1).c_str());
-			py = polygon->at(polygon->size() - 1)->getY() + std::atof(values.at(idx + 2).c_str());
+			px = polygon->at(polygon->size() - 1)->getX() + (std::atof(values.at(idx + 1).c_str()) / 100.0);
+			py = polygon->at(polygon->size() - 1)->getY() + (std::atof(values.at(idx + 2).c_str()) / 100.0);
 			polygon->push_back(new PointXY(px, py));
 			idx += 3;
 		} else if(values.at(idx) == "q" or values.at(idx) == "Q"){
 			std::vector<PointXY> bezierPointXYs;
 			bezierPointXYs.push_back(*polygon->at(polygon->size() - 1));
 
-			px = polygon->at(polygon->size() - 1)->getX() + std::atof(values.at(idx + 1).c_str());
-			py = polygon->at(polygon->size() - 1)->getY() + std::atof(values.at(idx + 2).c_str());
+			px = polygon->at(polygon->size() - 1)->getX() + (std::atof(values.at(idx + 1).c_str()) / 100.0);
+			py = polygon->at(polygon->size() - 1)->getY() + (std::atof(values.at(idx + 2).c_str()) / 100.0);
 			bezierPointXYs.push_back(PointXY(px, py));
 
-			px = polygon->at(polygon->size() - 1)->getX() + std::atof(values.at(idx + 3).c_str());
-			py = polygon->at(polygon->size() - 1)->getY() + std::atof(values.at(idx + 4).c_str());
+			px = polygon->at(polygon->size() - 1)->getX() + (std::atof(values.at(idx + 3).c_str()) / 100.0);
+			py = polygon->at(polygon->size() - 1)->getY() + (std::atof(values.at(idx + 4).c_str()) / 100.0);
 			bezierPointXYs.push_back(PointXY(px, py));
 
 			std::vector<PointXY> bezierCurve;
