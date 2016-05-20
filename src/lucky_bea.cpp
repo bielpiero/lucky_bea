@@ -9,9 +9,6 @@ void signalHandler(int s){
 	RNUtils::printLn("Shutdown application Requested.");
 	RNUtils::printLn("Lucky Bea: Quitting..." );	
 	
-	//robot->stopVideoStreaming();
-	//robot->Close();
-	
 	if(robot != NULL){
     	delete robot;
     }
@@ -31,9 +28,8 @@ int main(int argc, char** argv){
     sigaction(SIGINT, &sigIntHandler, NULL);
     sigaction(SIGTERM, &sigIntHandler, NULL);
     RNUtils::setStatus(true);
+    RNUtils::setApplicationPathName(argv[0]);
 	if(argc == 1 || argc == 3){
-		RNUtils::printLn("Testing");
-		
 		RNUtils::printLn("Lucky Bea for Doris. To control the IC Group Robot named Doris");
 		RNUtils::printLn("Press Ctrl+C to exit");
 		std::string port = "/dev/ttyS0";

@@ -40,14 +40,14 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	R = Matrix(3, 3);
 	spdUDPClient = NULL;
 
-	xmlFaceFullPath = XML_FILE_PATH;
-	xmlMapsFullPath = XML_FILE_MAPS_PATH;
-	xmlSectorsPath = XML_FILE_SECTORS_PATH;
-	xmlRobotConfigFullPath = XML_FILE_ROBOT_CONFIG_PATH;
+	xmlFaceFullPath = RNUtils::getApplicationPath() + XML_FILE_PATH;
+	xmlMapsFullPath = RNUtils::getApplicationPath() + XML_FILE_MAPS_PATH;
+	xmlSectorsPath = RNUtils::getApplicationPath() + XML_FILE_SECTORS_PATH;
+	xmlRobotConfigFullPath = RNUtils::getApplicationPath() + XML_FILE_ROBOT_CONFIG_PATH;
 
 	//std::string servo_positions;
 	//setGesture("26", servo_positions);
-	ttsLipSync = new DorisLipSync(this->maestroControllers, "");
+	ttsLipSync = new DorisLipSync(this->maestroControllers, RNUtils::getApplicationPath());
 	//ttsLipSync->textToViseme("Hola, ya estoy lista para funcionar");
 	this->currentMapId = NONE;
 	this->currentSector = NULL;
@@ -3121,21 +3121,21 @@ void GeneralController::stopRobotTracking(){
 void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice, int port){
 	pthread_t t1;
 	stopVideoStreaming();
-	/*s_video_streamer_data* data = new s_video_streamer_data;
+	s_video_streamer_data* data = new s_video_streamer_data;
 	
 	data->socketIndex = socketIndex;
 	data->port = port;
 	data->object = this;
-
+	videoDevice = 3;
 	vc = cv::VideoCapture(videoDevice);
-
+	
 	if(vc.isOpened()){
 		RNUtils::printLn("Streaming from camera device: %d", videoDevice);
 		pthread_create(&t1, NULL, streamingThread, (void *)(data));
 	} else {
 		vc.release();
 		RNUtils::printLn("Could not open device: %d", videoDevice);
-	}	*/
+	}	
 	 
 
 }
@@ -3149,7 +3149,7 @@ void GeneralController::stopVideoStreaming(){
 }
 
 void* GeneralController::streamingThread(void* object){
-	/*s_video_streamer_data* data = (s_video_streamer_data*)object;
+	s_video_streamer_data* data = (s_video_streamer_data*)object;
 	
 	int socketIndex = data->socketIndex;
 	int port = data->port;
@@ -3157,8 +3157,8 @@ void* GeneralController::streamingThread(void* object){
 
 	self->streamingActive = YES;
 
-	cv::Stitcher stitcher = cv::Stitcher::createDefault(true);
-	cv::Stitcher::Status status;
+	//cv::Stitcher stitcher = cv::Stitcher::createDefault(true);
+	//cv::Stitcher::Status status;
 
 	cv::Mat frame;
 	std::vector<uchar> buff;
@@ -3167,7 +3167,7 @@ void* GeneralController::streamingThread(void* object){
 	params[1] = 80;
 	
 	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(socketIndex), port);
-	while(ros::ok() && self->streamingActive == YES){
+	while(RNUtils::ok() && self->streamingActive == YES){
 		self->vc >> frame;
 		cv::imencode(".jpg", frame, buff, params);
 		udp_client->sendData(&buff[0], buff.size());
@@ -3179,7 +3179,7 @@ void* GeneralController::streamingThread(void* object){
 		self->vcSecond.release();
 	}
 	self->streamingActive = NO;
-	delete udp_client;*/
+	delete udp_client;
 	return NULL;
 }
 

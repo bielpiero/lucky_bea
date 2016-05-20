@@ -229,12 +229,14 @@ void MapSector::getPolygonFromString(){
 	polygon->clear();
 	std::vector<std::string> values = RNUtils::split((char*)this->polygonDefinition.c_str(), " ");
 	float px = 0, py = 0;
+	PointXY mPoint;
 	for(unsigned int idx = 0; idx < values.size(); ){
 
 		if(values.at(idx) == "m" or values.at(idx) == "M"){
 			px = std::atof(values.at(idx + 1).c_str()) / 100.0;
 			py = std::atof(values.at(idx + 2).c_str()) / 100.0;
 			polygon->push_back(new PointXY(px, py));
+			mPoint = PointXY(px, py);
 			idx += 3;
 		} else if(values.at(idx) == "l" or values.at(idx) == "L"){
 			px = polygon->at(polygon->size() - 1)->getX() + (std::atof(values.at(idx + 1).c_str()) / 100.0);
@@ -260,7 +262,8 @@ void MapSector::getPolygonFromString(){
 				polygon->push_back(new PointXY(bezierCurve.at(jdx)));
 			}
 			idx += 5;
-		} else {
+		} else if(values.at(idx) == "z" or values.at(idx) == "Z"){
+			polygon->push_back(new PointXY(mPoint));
 			idx++;
 		}
 	}
@@ -269,9 +272,11 @@ void MapSector::getPolygonFromString(){
 float MapSector::getAngle(PointXY a, PointXY b){
 	float result = 0;
 	result = std::atan2(b.getY(), b.getX()) - std::atan2(a.getY(), a.getX());
-	if(result > M_PI){
+	while(result > M_PI){
 		result = result - 2 * M_PI;
-	} else if(result < -M_PI) {
+	} 
+
+	while(result < -M_PI) {
 		result = result + 2 * M_PI;
 	}
 
@@ -282,16 +287,16 @@ bool MapSector::checkPointXYInPolygon(PointXY g, float &angle){
 	PointXY a;
 	PointXY b;
 	bool result = false;
-	for(unsigned int i = 0; i < polygon->size(); i++){
+	for(unsigned int i = 0; i < polygon->size() - 1; i++){
 		a.setX(polygon->at(i)->getX() - g.getX());
 		a.setY(polygon->at(i)->getY() - g.getY());
-		b.setX(polygon->at((i + 1) % polygon->size())->getX() - g.getX());
-		b.setY(polygon->at((i + 1) % polygon->size())->getY() - g.getY());
+		b.setX(polygon->at(i + 1)->getX() - g.getX());
+		b.setY(polygon->at(i + 1)->getY() - g.getY());
 
 		angle += getAngle(a, b);
 	}
 
-	if(std::abs(angle) > (M_PI)){
+	if((std::abs(angle) <= (2 * M_PI)) and (std::abs(angle) > M_PI)){
 		result = true;
 	}
 	return result;

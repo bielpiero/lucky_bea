@@ -1,6 +1,8 @@
 #include "RNUtils.h"
 
 bool RNUtils::status = false;
+std::string RNUtils::applicationPath = "";
+std::string RNUtils::applicationName = "";
 
 void RNUtils::printLn(const char* _format, ...){
 	std::ostringstream timestamp;
@@ -51,6 +53,35 @@ bool RNUtils::ok(){
 
 void RNUtils::setStatus(bool m_status){
 	RNUtils::status = m_status;
+}
+
+void RNUtils::setApplicationPathName(char* str){
+	std::vector<std::string> path = split(str, "/");
+    std::string appPath;
+    if(path.size() > 0){
+    	RNUtils::applicationName = path.at(path.size() - 1);
+    	int i = 0;
+    	if(path.at(0) == "."){
+    		i = 1;
+    	}
+    	for(; i < path.size() - 1; i++){
+    		if(i == 0){
+    			appPath += "/";
+    		}
+    		appPath += path.at(i) + "/";
+    		
+    	}
+    	RNUtils::applicationPath = appPath;
+    }
+    
+}
+
+std::string RNUtils::getApplicationPath(){
+	return RNUtils::applicationPath;
+}
+
+std::string RNUtils::getApplicationName(){
+	return RNUtils::applicationName;
 }
 
 

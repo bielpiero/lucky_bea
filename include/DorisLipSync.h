@@ -22,8 +22,8 @@
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
 
-#define XML_FILE_LIP_SYNC_PATH "/conf/BeaLipSync.xml"
-#define XML_FILE_VISEMES_CODES_PATH "/conf/BeaVisemeCodes.xml"
+#define XML_FILE_LIP_SYNC_PATH "conf/BeaLipSync.xml"
+#define XML_FILE_VISEMES_CODES_PATH "conf/BeaVisemeCodes.xml"
 
 class DorisLipSync 
 {

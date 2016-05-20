@@ -25,12 +25,12 @@
 			<feature id="4" name="Left table 1" width="92" height="120" xpos="420" ypos="62"/>
 			<feature id="5" name="Left table 2" width="92" height="120" xpos="570" ypos="62"/>
 			<feature id="6" name="Left table 3" width="92" height="120" xpos="745" ypos="62"/>
-			<feature id="7" name="Right table 1" width="67" height="106" xpos="180" ypos="365"/>
+			<feature id="7" name="Right table 1" width="67" height="105" xpos="180" ypos="365"/>
 			<feature id="8" name="Right table 2" width="67" height="106" xpos="375" ypos="365"/>
 			<feature id="9" name="Right table 3" width="67" height="106" xpos="535" ypos="365"/>
 			<feature id="10" name="Right table 4" width="80" height="180" xpos="745" ypos="320"/>
 		</features>
-		<sites cyclic="no" sequence="2,3,5">
+		<sites cyclic="no" sequence="12,0,1,2,3,5">
 			<site id="2" name="site c" radius="10" tsec="0" xpos="240" ypos="240"/>
 			<site id="3" name="site d" radius="10" tsec="0" xpos="120" ypos="120"/>
 			<site id="4" name="doorway" radius="10" tsec="0" xpos="80" ypos="0" linked-feature-id="0"/>
@@ -39,12 +39,13 @@
 			<site id="6" name="site e" radius="10" tsec="0" xpos="277" ypos="370"/>
 			<site id="7" name="site g" radius="10" tsec="0" xpos="806" ypos="171"/>
 			<site id="0" name="site a" radius="10" tsec="0" xpos="640" ypos="240"/>
-			<site id="8" name="site o" radius="10" tsec="0" xpos="59" ypos="285"/>
+			<site id="8" name="site o" radius="10" tsec="0" xpos="50" ypos="300"/>
 			<site id="9" name="site t" radius="10" tsec="0" xpos="284" ypos="73"/>
 			<site id="11" name="site t" radius="10" tsec="0" xpos="857" ypos="76"/>
 			<site id="12" name="site y" radius="10" tsec="0" xpos="623" ypos="365"/>
 			<site id="13" name="site z" radius="10" tsec="0" xpos="661" ypos="81"/>
 			<site id="14" name="site x" radius="10" tsec="0" xpos="493" ypos="152"/>
+			<site id="10" name="site w" radius="10" tsec="0" xpos="833" ypos="323"/>
 		</sites>
 	</sector>
 	<sector id="1" name="MR-FM Hallway" width="160" height="400" reference="2" polygon="m 0 0 l 0 400 l 160 0 l 0 -400 z">

@@ -60,6 +60,8 @@ public:
 class RNUtils{
 private:
 	static bool status;
+	static std::string applicationPath;
+	static std::string applicationName;
 public:
 	static void sleep(int milliseconds);
 	static void printLn(const char* _format, ...);
@@ -72,6 +74,9 @@ public:
 	static void spin();
 	static bool ok();
 	static void setStatus(bool status);
+	static void setApplicationPathName(char* str);
+	static std::string getApplicationPath();
+	static std::string getApplicationName();
 };
 
 #endif
