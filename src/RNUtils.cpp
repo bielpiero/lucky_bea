@@ -4,19 +4,25 @@ bool RNUtils::status = false;
 std::string RNUtils::applicationPath = "";
 std::string RNUtils::applicationName = "";
 
+const unsigned long RNUtils::PRINT_BUFFER_SIZE = std::pow(2, 16);
+
+void RNUtils::init(int argc, char** argv){
+    setStatus(true);
+    setApplicationPathName(argv[0]);
+}
+
 void RNUtils::printLn(const char* _format, ...){
 	std::ostringstream timestamp;
 	getTimestamp(timestamp);
 
-	char buffer[14 + timestamp.str().size() + strlen(_format)];
+	char buffer[PRINT_BUFFER_SIZE];
 	sprintf(buffer, "[ DORIS] [%s]: ", timestamp.str().c_str());
 	va_list arguments;
 	va_start(arguments, _format);
 
 	vsprintf(buffer + 13 + timestamp.str().size(), _format, arguments);
-	sprintf(buffer + strlen(buffer), "\n");
 
-	printf("%s", buffer);
+	printf("%s\n", buffer);
 	va_end(arguments);
 }
 
@@ -49,6 +55,10 @@ void RNUtils::spin(){
 
 bool RNUtils::ok(){
 	return RNUtils::status;
+}
+
+void RNUtils::shutdown(){
+    setStatus(false);
 }
 
 void RNUtils::setStatus(bool m_status){

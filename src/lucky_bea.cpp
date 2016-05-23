@@ -12,7 +12,7 @@ void signalHandler(int s){
 	if(robot != NULL){
     	delete robot;
     }
-    RNUtils::setStatus(false);
+    RNUtils::shutdown();
 	RNUtils::printLn("Succesfully closed...\n");
 	exit(1);
 
@@ -27,8 +27,7 @@ int main(int argc, char** argv){
 
     sigaction(SIGINT, &sigIntHandler, NULL);
     sigaction(SIGTERM, &sigIntHandler, NULL);
-    RNUtils::setStatus(true);
-    RNUtils::setApplicationPathName(argv[0]);
+    RNUtils::init(argc, argv);
 	if(argc == 1 || argc == 3){
 		RNUtils::printLn("Lucky Bea for Doris. To control the IC Group Robot named Doris");
 		RNUtils::printLn("Press Ctrl+C to exit");

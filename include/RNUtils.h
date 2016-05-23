@@ -62,7 +62,9 @@ private:
 	static bool status;
 	static std::string applicationPath;
 	static std::string applicationName;
-public:
+    static const unsigned long PRINT_BUFFER_SIZE;
+public: // functions
+    static void init(int argc, char** argv);
 	static void sleep(int milliseconds);
 	static void printLn(const char* _format, ...);
 	static std::vector<std::string> split(char* buffer, const char* delimiter);
@@ -73,10 +75,12 @@ public:
 	static std::string toUppercase(std::string str);
 	static void spin();
 	static bool ok();
-	static void setStatus(bool status);
-	static void setApplicationPathName(char* str);
+    static void shutdown();
 	static std::string getApplicationPath();
 	static std::string getApplicationName();
+private: //functions
+    static void setStatus(bool status);
+    static void setApplicationPathName(char* str);
 };
 
 #endif
