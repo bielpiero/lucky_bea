@@ -4,21 +4,11 @@
 #define MAX_SYLLABLES 1000
 #define MAX_WORD_LENGTH 1000
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <unistd.h>
-
-#include <iostream>
-#include <string>
-#include <fstream>
-#include <vector>
-#include <algorithm>
-
+#include "RNUtils.h"
+#include "TextToSpeech.h"
 #include "SerialPort.h"
 #include "xmldefs.h"
-#include "TextToSpeech.h"
+
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
 
@@ -69,9 +59,9 @@ public:
     char* syllableToViseme(char *); /* Convert the syllable to Viseme */
     void textToViseme(const char *); /* Convert all Syllables in actual Viseme */
     float timeSync(int, int); /* Calculates the time for sync */
-    char* speakingRate(char *); /* Calculates the Speaking Rate*/
-    char* amplitudeWave(char *); /* Calculates the Amplitude of the wave of sound*/
-    int configureEmicTwo(char *, char *); /* Configure Device TTS Emic 2 Parallax */
+    char* speakingRate(const char *); /* Calculates the Speaking Rate*/
+    char* amplitudeWave(const char *); /* Calculates the Amplitude of the wave of sound*/
+    int configureEmicTwo(const char *, const char *); /* Configure Device TTS Emic 2 Parallax */
     void setViseme(std::string id); /* Set the Viseme configuration to the mouth of Doris */    
     void selectMotion(char *, float); /* Set motion configuration to the mouth of Doris */
 

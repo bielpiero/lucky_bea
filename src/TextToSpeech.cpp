@@ -17,8 +17,10 @@ TextToSpeech::~TextToSpeech(){
 }
 
 void TextToSpeech::setString(std::string text){
-    std::string finalString = "S" + text + "\n";
+    std::string nText = normalizeString(text);
+    std::string finalString = "S" + nText + "\n";
     std::cout << "Saying: " << text << "... ";
+
     sendCommand(finalString);
 }
 
@@ -135,6 +137,49 @@ bool TextToSpeech::isEndOfSpeaking(){
         }
     } else {
         //std::cout << "received failed..." << std::endl;
+    }
+    return result;
+}
+
+ std::string TextToSpeech::normalizeString(std::string str){
+    std::string result;
+    unsigned char* str_c = (unsigned char*)str.c_str();
+
+    for(int i = 0; i < str.length(); i++){
+        if(((int)str.at(i)) == SPECIAL_CHARACTER){
+            i++;
+            if(((int)str.at(i)) == SMALL_LETTER_ENIE){
+                result += "\\xF1";
+            } else if(((int)str.at(i)) == CAPITAL_LETTER_ENIE){
+                result += "\\xD1";
+            } else if(((int)str.at(i)) == SMALL_LETTER_A_ACUTE){
+                result += "\\xE1";
+            } else if(((int)str.at(i)) == CAPITAL_LETTER_A_ACUTE){
+                result += "\\xC1";
+            } else if(((int)str.at(i)) == SMALL_LETTER_E_ACUTE){
+                result += "\\xE9";
+            } else if(((int)str.at(i)) == CAPITAL_LETTER_E_ACUTE){
+                result += "\\xC9";
+            } else if(((int)str.at(i)) == SMALL_LETTER_I_ACUTE){
+                result += "\\xED";
+            } else if(((int)str.at(i)) == CAPITAL_LETTER_I_ACUTE){
+                result += "\\xCD";
+            } else if(((int)str.at(i)) == SMALL_LETTER_O_ACUTE){
+                result += "\\xF3";
+            } else if(((int)str.at(i)) == CAPITAL_LETTER_O_ACUTE){
+                result += "\\xD3";
+            } else if(((int)str.at(i)) == SMALL_LETTER_U_ACUTE){
+                result += "\\xFA";
+            } else if(((int)str.at(i)) == CAPITAL_LETTER_U_ACUTE){
+                result += "\\xDA";
+            } else if(((int)str.at(i)) == SMALL_LETTER_U_UMLAUT){
+                result += "\\xFC";
+            } else if(((int)str.at(i)) == CAPITAL_LETTER_U_UMLAUT){
+                result += "\\xDC";
+            }
+        }else{
+            result.push_back(str.at(i));
+        }
     }
     return result;
 }

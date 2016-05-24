@@ -5,8 +5,28 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <clocale>
 #include <pthread.h>
+
 #include "ftd2xx.h"
+#define SPECIAL_CHARACTER -61
+
+#define SMALL_LETTER_ENIE -79
+#define SMALL_LETTER_A_ACUTE -95
+#define SMALL_LETTER_E_ACUTE -87
+#define SMALL_LETTER_I_ACUTE -83
+#define SMALL_LETTER_O_ACUTE -77
+#define SMALL_LETTER_U_ACUTE -70
+#define SMALL_LETTER_U_UMLAUT -68
+
+#define CAPITAL_LETTER_ENIE -111
+#define CAPITAL_LETTER_A_ACUTE -127
+#define CAPITAL_LETTER_E_ACUTE -119
+#define CAPITAL_LETTER_I_ACUTE -115
+#define CAPITAL_LETTER_O_ACUTE -109
+#define CAPITAL_LETTER_U_ACUTE -102
+#define CAPITAL_LETTER_U_UMLAUT -100
+
 
 class TextToSpeech{
 	public:
@@ -25,6 +45,7 @@ class TextToSpeech{
         bool isEndOfSpeaking();
     private:
     	int sendCommand(std::string text);
+        std::string normalizeString(std::string str);
     	FT_HANDLE ftHandle;
 };
 #endif

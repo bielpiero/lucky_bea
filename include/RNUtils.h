@@ -24,6 +24,7 @@
 #include <cstdarg>
 #include <cassert>
 #include <locale>
+#include <algorithm>
 
 #include "Aria.h"
 

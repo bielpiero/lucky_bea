@@ -27,6 +27,9 @@
 #define XML_ELEMENT_SITES_STR "sites"
 #define XML_ELEMENT_SITE_STR "site"
 
+#define XML_ELEMENT_VISEMES_STR "Visemes"
+#define XML_ELEMENT_VISEME_STR "Viseme"
+
 #define XML_ELEMENT_PERMISSIONS_STR "permissions"
 #define XML_ELEMENT_PERMISSION_STR "permission"
 

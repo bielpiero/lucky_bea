@@ -72,11 +72,11 @@ char* DorisLipSync::syllableToViseme(char *syllable){
 	buffer.push_back('\0');
 	doc.parse<0>(&buffer[0]);
 
-	root_node = doc.first_node("Visemes");
+	root_node = doc.first_node(XML_ELEMENT_VISEMES_STR);
 
-	for (xml_node<> * viseme_node = root_node->first_node("Viseme"); viseme_node; viseme_node = viseme_node->next_sibling())
+	for (xml_node<> * viseme_node = root_node->first_node(XML_ELEMENT_VISEME_STR); viseme_node; viseme_node = viseme_node->next_sibling())
 	{
-		iterViseme=viseme_node->first_attribute("name")->value();
+		iterViseme=viseme_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value();
 		viseme = cutData(iterViseme, 1,2);
 		actualSyllable = cutData(iterViseme, 3,(strlen(iterViseme)+1));
     //std::cout <<viseme<<endl;
@@ -96,7 +96,7 @@ void DorisLipSync::textToViseme(const char *str){
 ////////////////////////////
 // Comunication TTS object
 	
-	std::cout << "Text To Say: " << str << std::endl;
+	RNUtils::printLn("Text To Say: %s", str);
 
 	char* text = textNorm(str, '_');
 
@@ -188,40 +188,40 @@ float  DorisLipSync::timeSync(int numOfLetters, int actualspeakingRate){
 	return timetoSync;
 }
 
-char* DorisLipSync::speakingRate(char *Emotion){
+char* DorisLipSync::speakingRate(const char *emotion){
 
 	int selectVel;
 	std::string wx;
 
 
-	selectVel= strcmp(Emotion, "Felicidad");
+	selectVel= strcmp(emotion, "Felicidad");
 	if (selectVel==0) {
 		wx="W200";
 	}
-	selectVel= strcmp(Emotion, "Tristeza");
+	selectVel= strcmp(emotion, "Tristeza");
 	if (selectVel==0) {
 		wx="W60";
     //75
 	}
-	selectVel= strcmp(Emotion, "Sorpresa");
+	selectVel= strcmp(emotion, "Sorpresa");
 	if (selectVel==0) {
 		wx="W200";
 	}
-	selectVel= strcmp(Emotion, "Furia");
+	selectVel= strcmp(emotion, "Furia");
 	if (selectVel==0) {
 		wx="W250";
 	}
-	selectVel= strcmp(Emotion, "Disgusto");
+	selectVel= strcmp(emotion, "Disgusto");
 	if (selectVel==0) {
 		wx="W250";
 	}
 
-	selectVel= strcmp(Emotion, "Miedo");
+	selectVel= strcmp(emotion, "Miedo");
 	if (selectVel==0) {
 		wx="W220";
 	}
 
-	selectVel= strcmp(Emotion, "Neutro");
+	selectVel= strcmp(emotion, "Neutro");
 	if (selectVel==0) {
 		wx="W200";
 	}
@@ -229,7 +229,7 @@ char* DorisLipSync::speakingRate(char *Emotion){
 	return ((char*)wx.c_str());
 }
 
-char*  DorisLipSync::amplitudeWave(char *emotion){
+char*  DorisLipSync::amplitudeWave(const char *emotion){
 
 	int selectVol;
 	std::string vx;
@@ -263,7 +263,7 @@ char*  DorisLipSync::amplitudeWave(char *emotion){
 	return ((char*)vx.c_str());
 }
 
-int DorisLipSync::configureEmicTwo(char *emotion, char *language){
+int DorisLipSync::configureEmicTwo(const char *emotion, const char *language){
 
 	std::string lx;
 	int selectLanguage;
