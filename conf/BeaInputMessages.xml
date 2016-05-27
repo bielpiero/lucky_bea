@@ -1,0 +1,10 @@
+<input-messages>
+	<message id="0" type="0" lang="es" request="hola"/>
+	<message id="1" type="1" lang="es" request="quien eres"/>
+	<message id="2" type="1" lang="es" request="como te llamas"/>
+	<message id="3" type="1" lang="es" request="hola"/>
+	<message id="4" type="1" lang="es" request="hola"/>
+	<message id="5" type="" lang="es" request="hola"/>
+	<message id="6" type="" lang="es" request="hola"/>
+	<message id="7" type="" lang="es" request="hola"/>
+</input-messages>
