@@ -345,9 +345,7 @@ private:
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
 	void getObservationsTrapezoids(std::vector<fuzzy::trapezoid*> &obsWithNoise, std::vector<fuzzy::trapezoid*> &obsWONoise);
 	void getObservations(Matrix &observations);
-	Matrix normalizeAngles(Matrix trap);
-	Matrix denormalizeAngles(Matrix trap, int mode = 0);
-	Matrix multTrapMatrix(Matrix mat, Matrix trap);
+
 	bool isFirstQuadrant(float angle);
 	bool isSecondQuadrant(float angle);
 	bool isThirdQuadrant(float angle);

@@ -15,7 +15,7 @@ void RNUtils::printLn(const char* _format, ...){
 	std::ostringstream timestamp;
 	getTimestamp(timestamp);
 
-	char buffer[PRINT_BUFFER_SIZE];
+	char* buffer = new char[PRINT_BUFFER_SIZE];
 	sprintf(buffer, "[ DORIS] [%s]: ", timestamp.str().c_str());
 	va_list arguments;
 	va_start(arguments, _format);
@@ -24,6 +24,7 @@ void RNUtils::printLn(const char* _format, ...){
 
 	printf("%s\n", buffer);
 	va_end(arguments);
+	delete[] buffer;
 }
 
 void RNUtils::sleep(int milliseconds){

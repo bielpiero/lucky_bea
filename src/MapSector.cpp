@@ -295,8 +295,7 @@ bool MapSector::checkPointXYInPolygon(PointXY g, float &angle){
 
 		angle += getAngle(a, b);
 	}
-
-	if((std::abs(angle) <= (2 * M_PI)) and (std::abs(angle) > M_PI)){
+	if((std::abs(angle) <= (2.00001 * M_PI)) and (std::abs(angle) >= M_PI)){
 		result = true;
 	}
 	return result;

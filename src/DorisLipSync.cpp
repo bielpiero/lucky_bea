@@ -100,11 +100,6 @@ void DorisLipSync::textToViseme(const char *str){
 
 	char* text = textNorm(str, '_');
 
-	//std::cout<<"<<<<<<<DORIS LIPSYNC>>>>>>>\n  "<<std::endl;
-	//std::cout<<"<---Analized text--------->\n"<<text<<std::endl;
-	//std::cout<<"\n "<<std::endl;
-
-
 	std::vector<int> pointerPositions;
 	int i,j,k;
 	int storeSillableWeight;

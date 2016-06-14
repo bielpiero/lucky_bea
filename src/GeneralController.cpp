@@ -546,6 +546,7 @@ void GeneralController::initializeSPDPort(int socketIndex, char* cad){
 		if(this->spdUDPPort <= 0){
 			throw std::invalid_argument("Error!!! Could not initialize SPD streaming");
 		}
+		RNUtils::printLn("Port: %d", this->spdUDPPort);
 		spdUDPClient = new UDPClient(this->getClientIPAddress(socketIndex), this->spdUDPPort);	
 	} else {
 		std::ostringstream convert;
@@ -1821,7 +1822,9 @@ void GeneralController::setSitesExecutionSequence(char* cad){
 					xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
 					if(sites_root_node != NULL){
 						xml_attribute<> *where = sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR);
-						sites_root_node->remove_attribute(where);
+						if(where != NULL){
+							sites_root_node->remove_attribute(where);
+						}
 						sites_root_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_SEQUENCE_STR, data.at(1).c_str()));
 						RNUtils::getTimestamp(mappingSitesTimestamp);
 					}
@@ -2440,9 +2443,12 @@ void GeneralController::initializeKalmanVariables(){
 	
 	fuzzy::trapezoid* wThK1 = new fuzzy::trapezoid("WTh(k + 1)", robotConfig->navParams->observationNoise->thZone->x1, robotConfig->navParams->observationNoise->thZone->x2, robotConfig->navParams->observationNoise->thZone->x3, robotConfig->navParams->observationNoise->thZone->x4);	
 	
-	uX = fuzzy::fstats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
-	uY = fuzzy::fstats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
-	uTh = fuzzy::fstats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
+	//uX = fuzzy::fstats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
+	//uY = fuzzy::fstats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
+	//uTh = fuzzy::fstats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
+	uX = .36;
+	uY = .36;
+	uTh = .05;
 
 	P(0, 0) = uX; 	P(0, 1) = 0; 	P(0, 2) = 0;
 	P(1, 0) = 0; 	P(1, 1) = uY;	P(1, 2) = 0;
@@ -2499,7 +2505,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 	Matrix Hk;
 	Matrix Pk = self->P;
 	
-	while(self->keepRobotTracking == YES){
+	while(RNUtils::ok() and self->keepRobotTracking == YES){
 		pk1 = Pk;
 
 		Ak(0, 2) = -self->robotRawDeltaPosition(0, 0) * std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
@@ -2578,7 +2584,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		float angle = 0;
 		bool isInsidePolygon = self->currentSector->checkPointXYInPolygon(PointXY(newPosition(0, 0), newPosition(1, 0)), angle);
 
-		if(!isInsidePolygon){
+		if(not isInsidePolygon){
 			self->loadSector(self->currentMapId, self->nextSectorId);
 			RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", self->nextSectorId, self->currentSector->getName().c_str());
 			self->nextSectorId = NONE;
@@ -2606,235 +2612,11 @@ void* GeneralController::trackRobotThread(void* object){
 	Matrix Hk;
 	Matrix Pk = self->P;
 	
-	while(self->keepRobotTracking == YES){
-		//1 - Prediction
-		//RNUtils::printLn("1 - Prediction");
-
-		pk1 = Pk;
+	while(RNUtils::ok() and self->keepRobotTracking == YES){
 		
-		Matrix matXk(STATE_VARIABLES, TRAP_VERTEX);
-
-		matXk(0, 0) = self->kalmanFuzzy->at(X_INDEX)->getVertexA();
-		matXk(0, 1) = self->kalmanFuzzy->at(X_INDEX)->getVertexB();
-		matXk(0, 2) = self->kalmanFuzzy->at(X_INDEX)->getVertexC();
-		matXk(0, 3) = self->kalmanFuzzy->at(X_INDEX)->getVertexD();
-
-		matXk(1, 0) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexA();
-		matXk(1, 1) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexB();
-		matXk(1, 2) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexC();
-		matXk(1, 3) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexD();
-
-		matXk(2, 0) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexA();
-		matXk(2, 1) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexB();
-		matXk(2, 2) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexC();
-		matXk(2, 3) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexD();
-		
-		RNUtils::printLn("Position Xk(k|k): ");
-		matXk.print();
-        RNUtils::printLn("Pk(k|k): ");
-		Pk.print();
-
-		Ak(0, 2) = -self->robotRawDeltaPosition(0, 0) * std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-		Ak(1, 2) = self->robotRawDeltaPosition(0, 0) * std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-
-		Bk(0, 0) = std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-		Bk(0, 1) = -0.5 * self->robotRawDeltaPosition(0, 0) * std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-
-		Bk(1, 0) = std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-		Bk(1, 1) = 0.5 * self->robotRawDeltaPosition(0, 0) * std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-
-		Bk(2, 0) = 0.0;
-		Bk(2, 1) = 1.0;
-
-
-		Matrix currentQ = self->Q;
-		if(self->robotRawDeltaPosition(0, 0) == 0.0 and self->robotRawDeltaPosition(1, 0) == 0.0){
-			currentQ = Matrix(2, 2);
-		}
-
-		//Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
-		Pk = (Ak * pk1 * ~Ak);
-        RNUtils::printLn("Pk(k+1|k): ");
-		Pk.print();
-		// 2 - Observation
-		//RNUtils::printLn("2 - Observation");
-		
-		Hk = Matrix(2 * self->currentSector->landmarksSize(), STATE_VARIABLES);
-		for(int i = 0, zIndex = 0; i < self->currentSector->landmarksSize(); i++, zIndex += 2){
-			Hk(zIndex, 0) = -((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0))/std::sqrt(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex, 1) = -((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0))/std::sqrt(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex, 2) = 0.0;
-
-			Hk(zIndex + 1, 0) = ((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0))/(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex + 1, 1) = -((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0))/(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex + 1, 2) = -1.0;
-		}
-
-		std::vector<fuzzy::trapezoid*> zklWNoise;
-		std::vector<fuzzy::trapezoid*> zklWONoise;
-		self->getObservationsTrapezoids(zklWNoise, zklWONoise);
-
-		for(int i = 0; i < zklWONoise.size(); i++){
-		    RNUtils::printLn("Zkl Trap [%d]: (%f, %f, %f, %f)", zklWONoise.at(i)->getVertexA(), zklWONoise.at(i)->getVertexB(), zklWONoise.at(i)->getVertexC(), zklWONoise.at(i)->getVertexD());
-		}
-		
-		// 3 - Matching
-		//RNUtils::printLn("3 - Matching");
-		RNUtils::printLn("Seen landmarks: %d", self->landmarks->size());
-		pthread_mutex_lock(&self->mutexLandmarkLocker);
-		Matrix zl(2 * self->currentSector->landmarksSize(), TRAP_VERTEX);
-		for (int i = 0; i < self->landmarks->size(); i++){
-			RNLandmark* lndmrk = self->landmarks->at(i);
-			int mode = 0;
-			RNUtils::printLn("landmarks {d: %f, a: %f}", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
-
-			for (int j = 0; j < zklWONoise.size(); j+=2){
-				float mdDistance = zklWONoise.at(j)->evaluate(lndmrk->getPointsXMean());
-
-				Matrix tempZkl(1, TRAP_VERTEX);
-				tempZkl(0, 0) = zklWONoise.at(j+1)->getVertexA();
-				tempZkl(0, 1) = zklWONoise.at(j+1)->getVertexB();
-				tempZkl(0, 2) = zklWONoise.at(j+1)->getVertexC();
-				tempZkl(0, 3) = zklWONoise.at(j+1)->getVertexD();
-
-				if(self->isThirdQuadrant(lndmrk->getPointsYMean())){
-					mode = 1;
-				}
-
-				tempZkl = self->denormalizeAngles(tempZkl, mode);
-				fuzzy::trapezoid* tempTrap = new fuzzy::trapezoid("", tempZkl(0, 0), tempZkl(0, 1), tempZkl(0, 2), tempZkl(0, 3));
-				float mdAngle = tempTrap->evaluate(lndmrk->getPointsYMean());
-				
-				if(mdDistance >= alpha && mdAngle >= alpha){
-					RNUtils::printLn("Matched landmark: {d: %d, a: %d}", j, j+1);
-					
-					Matrix tempY(1, TRAP_VERTEX);
-					tempY(0, 0) = lndmrk->getPointsXMean() - zklWONoise.at(j)->getVertexA();
-					tempY(0, 1) = lndmrk->getPointsXMean() - zklWONoise.at(j)->getVertexB();
-					tempY(0, 2) = lndmrk->getPointsXMean() - zklWONoise.at(j)->getVertexC();
-					tempY(0, 3) = lndmrk->getPointsXMean() - zklWONoise.at(j)->getVertexD();
-
-					for (int k = 0; k < tempY.cols_size(); k++){
-						zl(j, k) = tempY(0, k);
-					}
-
-					tempY = lndmrk->getPointsYMean() - tempZkl;
-
-					for (int k = 0; k < tempY.cols_size(); k++){
-						zl(j+1, k) = tempY(0, k);
-					}
-				}
-			}
-		}
-		pthread_mutex_unlock(&self->mutexLandmarkLocker);
-		// 4 - Correction
-		//RNUtils::printLn("4 - Correction");	
-		//Matrix matXk(STATE_VARIABLES, TRAP_VERTEX);
-
-		matXk(0, 0) = self->kalmanFuzzy->at(X_INDEX)->getVertexA();
-		matXk(0, 1) = self->kalmanFuzzy->at(X_INDEX)->getVertexB();
-		matXk(0, 2) = self->kalmanFuzzy->at(X_INDEX)->getVertexC();
-		matXk(0, 3) = self->kalmanFuzzy->at(X_INDEX)->getVertexD();
-
-		matXk(1, 0) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexA();
-		matXk(1, 1) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexB();
-		matXk(1, 2) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexC();
-		matXk(1, 3) = self->kalmanFuzzy->at(X_INDEX + 1)->getVertexD();
-
-		matXk(2, 0) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexA();
-		matXk(2, 1) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexB();
-		matXk(2, 2) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexC();
-		matXk(2, 3) = self->kalmanFuzzy->at(X_INDEX + 2)->getVertexD();
-
-		RNUtils::printLn("Position Xk(k+1|k): ");
-		matXk.print();
-
-		Matrix matThk(1, TRAP_VERTEX);
-		matThk(0, 0) = matXk(2, 0);
-		matThk(0, 1) = matXk(2, 1);
-		matThk(0, 2) = matXk(2, 2);
-		matThk(0, 3) = matXk(2, 3);
-
-		matThk = self->denormalizeAngles(matThk);
-		
-		matXk(2, 0) = matThk(0, 0);
-		matXk(2, 1) = matThk(0, 1);
-		matXk(2, 2) = matThk(0, 2);
-		matXk(2, 3) = matThk(0, 3);
-
-
-		Matrix Sk = Hk * Pk * ~Hk + self->R;
-		Matrix Wk = Pk * ~Hk * !Sk;
-
-		Matrix stateVariation = self->multTrapMatrix(Wk, zl);
-		stateVariation = Wk * zl;
-		RNUtils::printLn("State Variation: ");
-		stateVariation.print();
-		matXk = matXk + stateVariation;
-
-		matThk = matXk(2);
-
-
-		matXk = matXk.sort_cols();
-        Pk = Pk - Wk * Sk * ~Wk;
-
-        float xkn = fuzzy::fstats::expectation(matXk(0, 0), matXk(0, 1), matXk(0, 2), matXk(0, 3));
-        float ykn = fuzzy::fstats::expectation(matXk(1, 0), matXk(1, 1), matXk(1, 2), matXk(1, 3));
-        float thkn = fuzzy::fstats::expectation(matThk(0, 0), matThk(0, 1), matThk(0, 2), matThk(0, 3));
-                
-		matThk = self->normalizeAngles(matThk);
-
-		matXk(2, 0) = matThk(0, 0);
-		matXk(2, 1) = matThk(0, 1);
-		matXk(2, 2) = matThk(0, 2);
-		matXk(2, 3) = matThk(0, 3);
-
-		self->kalmanFuzzy->at(X_INDEX)->setVertexA(matXk(0, 0));
-		self->kalmanFuzzy->at(X_INDEX)->setVertexB(matXk(0, 1));
-		self->kalmanFuzzy->at(X_INDEX)->setVertexC(matXk(0, 2));
-		self->kalmanFuzzy->at(X_INDEX)->setVertexD(matXk(0, 3));
-
-		self->kalmanFuzzy->at(X_INDEX + 1)->setVertexA(matXk(1, 0));
-		self->kalmanFuzzy->at(X_INDEX + 1)->setVertexB(matXk(1, 1));
-		self->kalmanFuzzy->at(X_INDEX + 1)->setVertexC(matXk(1, 2));
-		self->kalmanFuzzy->at(X_INDEX + 1)->setVertexD(matXk(1, 3));
-
-		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexA(matThk(0, 0));
-		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexB(matThk(0, 1));
-		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexC(matThk(0, 2));
-		self->kalmanFuzzy->at(X_INDEX + 2)->setVertexD(matThk(0, 3));	
-		
-		self->setRobotPosition(xkn, ykn, thkn);
-		
-		RNUtils::sleep(10);
-		//self->keepRobotTracking = NO;
 	}
 	self->keepRobotTracking = NO;
 	return NULL;
-}
-
-Matrix GeneralController::multTrapMatrix(Matrix mat, Matrix trap){
-	Matrix result(STATE_VARIABLES, TRAP_VERTEX);
-	for(int i = 0; i < mat.rows_size(); i++){
-		Matrix sumResult(1, TRAP_VERTEX);
-		for(int j = 0; j < mat.cols_size(); j++){
-			Matrix tempResult(1, TRAP_VERTEX);
-			tempResult(0, 0) = mat(i, j) * trap(j, 0);
-			tempResult(0, 1) = mat(i, j) * trap(j, 1);
-			tempResult(0, 2) = mat(i, j) * trap(j, 2);
-			tempResult(0, 3) = mat(i, j) * trap(j, 3);
-
-			//tempResult = tempResult.sort_cols();
-			sumResult = sumResult + tempResult;
-			//sumResult = sumResult.sort_cols();
-		}
-
-		result(i, 0) = sumResult(0, 0);
-		result(i, 1) = sumResult(0, 1);
-		result(i, 2) = sumResult(0, 2);
-		result(i, 3) = sumResult(0, 3);
-	}
-	return result;
 }
 
 void GeneralController::getObservations(Matrix& observations){
@@ -2859,231 +2641,12 @@ void GeneralController::getObservations(Matrix& observations){
 }
 
 void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*> &obsWithNoise, std::vector<fuzzy::trapezoid*> &obsWONoise){
-	
-	fuzzy::trapezoid *trapX = kalmanFuzzy->at(X_INDEX);
-	fuzzy::trapezoid *trapY = kalmanFuzzy->at(X_INDEX + 1);
-	fuzzy::trapezoid *trapTh = kalmanFuzzy->at(X_INDEX + 2);
-
-	Matrix zklt(2 * currentSector->landmarksSize(), 4);
-	Matrix matXk(STATE_VARIABLES, TRAP_VERTEX);
-	matXk(0, 0) = trapX->getVertexA();
-	matXk(0, 1) = trapX->getVertexB();
-	matXk(0, 2) = trapX->getVertexC();
-	matXk(0, 3) = trapX->getVertexD();
-
-	matXk(1, 0) = trapY->getVertexA();
-	matXk(1, 1) = trapY->getVertexB();
-	matXk(1, 2) = trapY->getVertexC();
-	matXk(1, 3) = trapY->getVertexD();
-
-	matXk(2, 0) = trapTh->getVertexA();
-	matXk(2, 1) = trapTh->getVertexB();
-	matXk(2, 2) = trapTh->getVertexC();
-	matXk(2, 3) = trapTh->getVertexD();
-
-	Matrix matThk(1, TRAP_VERTEX);
-	matThk(0, 0) = matXk(2, 0);
-	matThk(0, 1) = matXk(2, 1);
-	matThk(0, 2) = matXk(2, 2);
-	matThk(0, 3) = matXk(2, 3);
-
-	matThk = denormalizeAngles(matThk, 1);
 		
-	matXk(2, 0) = matThk(0, 0);
-	matXk(2, 1) = matThk(0, 1);
-	matXk(2, 2) = matThk(0, 2);
-	matXk(2, 3) = matThk(0, 3);
-
-	Matrix var(STATE_VARIABLES, 1);
-	var(0, 0) = (matXk(0, 3) - matXk(0, 0)) / 4;
-	var(1, 0) = (matXk(1, 3) - matXk(1, 0)) / 4;
-	var(2, 0) = (matXk(2, 3) - matXk(2, 0)) / 4;
-
-	for(int k = 0; k < currentSector->landmarksSize(); k++){
-		s_landmark* landmark = currentSector->landmarkAt(k);
-		Matrix state(STATE_VARIABLES, 1);
-		float distance = 0, angle = 0;
-		state(0, 0) = matXk(0, 0);
-		state(1, 0) = matXk(1, 0);
-		state(2, 0) = matXk(2, 0);
-		landmarkObservation(state, landmark, distance, angle);
-
-		zklt(2*k, 0) = distance;
-		zklt(2*k + 1, 0) = angle;
-
-		zklt(2*k, 3) = distance;
-		zklt(2*k + 1, 3) = angle;
-
-	}
-
-	for(float x = matXk(0, 0); x < (matXk(0, 3) + var(0, 0)/4); x+=var(0, 0)){
-		for(float y = matXk(1, 0); y < (matXk(1, 3) + var(1, 0)/4); y+=var(1, 0)){
-			for(float th = matXk(2, 0); th < (matXk(2, 3) + var(2, 0)/4); th+=var(2, 0)){
-				for(int k = 0; k < currentSector->landmarksSize(); k++){
-					s_landmark* landmark = currentSector->landmarkAt(k);
-					Matrix state(STATE_VARIABLES, 1);
-					float distance = 0, angle = 0;
-					state(0, 0) = x;
-					state(1, 0) = y;
-					state(2, 0) = th;
-					landmarkObservation(state, landmark, distance, angle);
-
-					if(distance < zklt(2*k, 0)){
-	                    zklt(2*k, 0) = distance;
-	            	} else if (distance > zklt(2*k, 3)){
-	                    zklt(2*k, 3) = distance;
-	                }
-
-					if(angle < zklt(2*k + 1, 0)){
-						zklt(2*k + 1, 0) = angle;
-					} else if(angle > zklt(2*k + 1, 3)){
-						zklt(2*k + 1, 3) = angle;
-					}
-				}
-			}
-		}
-	}
-
-	var(0, 0) = (matXk(0, 2) - matXk(0, 1)) / 4;
-	var(1, 0) = (matXk(1, 2) - matXk(1, 1)) / 4;
-	var(2, 0) = (matXk(2, 2) - matXk(2, 1)) / 4;
-
-	for(int k = 0; k < currentSector->landmarksSize(); k++){
-		s_landmark* landmark = currentSector->landmarkAt(k);
-		Matrix state(STATE_VARIABLES, 1);
-		float distance = 0, angle = 0;
-		state(0, 0) = matXk(0, 1);
-		state(1, 0) = matXk(1, 1);
-		state(2, 0) = matXk(2, 1);
-		landmarkObservation(state, landmark, distance, angle);
-
-		zklt(2*k, 1) = distance;
-		zklt(2*k + 1, 1) = angle;
-
-		zklt(2*k, 2) = distance;
-		zklt(2*k + 1, 2) = angle;
-
-	}
-	
-	for(float x = matXk(0, 1); x < (matXk(0, 2) + var(0, 0)/4); x+=var(0, 0)){
-		for(float y = matXk(1, 1); y < (matXk(1, 2) + var(1, 0)/4); y+=var(1, 0)){
-			for(float th = matXk(2, 1); th < (matXk(2, 2) + var(2, 0)/4); th+=var(2, 0)){
-				for(int k = 0; k < currentSector->landmarksSize(); k++){
-					s_landmark* landmark = currentSector->landmarkAt(k);
-					Matrix state(STATE_VARIABLES, 1);
-					float distance = 0, angle = 0;
-					state(0, 0) = x;
-					state(1, 0) = y;
-					state(2, 0) = th;
-					landmarkObservation(state, landmark, distance, angle);
-
-					if(distance < zklt(2*k, 1)){
-						zklt(2*k, 1) = distance;
-					} else if(distance > zklt(2*k, 2)){
-						zklt(2*k, 2) = distance;
-					}
-
-					if(angle < zklt(2*k + 1, 1)){
-						zklt(2*k + 1, 1) = angle;
-					} else if(angle > zklt(2*k + 1, 2)){
-						zklt(2*k + 1, 2) = angle;
-					}
-				}
-			}
-		}
-	}
-	
-	for(int i = 0; i < zklt.rows_size(); i++){
-		Matrix results(1, TRAP_VERTEX);
-		results(0, 0) = zklt(i, 0);
-		results(0, 1) = zklt(i, 1);
-		results(0, 2) = zklt(i, 2);
-		results(0, 3) = zklt(i, 3);
-
-		if((i%2) != 0){
-			results = normalizeAngles(results);
-			obsWONoise.push_back(new fuzzy::trapezoid("", results(0, 0), results(0, 1), results(0, 2), results(0, 3)));
-
-			results(0, 0) += kalmanFuzzy->at(W_INDEX + 1)->getVertexA();
-			results(0, 1) += kalmanFuzzy->at(W_INDEX + 1)->getVertexB();
-			results(0, 2) += kalmanFuzzy->at(W_INDEX + 1)->getVertexC();
-			results(0, 3) += kalmanFuzzy->at(W_INDEX + 1)->getVertexD();
-
-			results = normalizeAngles(results);
-
-		} else {
-			results = results.sort_cols();
-			obsWONoise.push_back(new fuzzy::trapezoid("", results(0, 0), results(0, 1), results(0, 2), results(0, 3)));
-
-			results(0, 0) += kalmanFuzzy->at(W_INDEX)->getVertexA();
-			results(0, 1) += kalmanFuzzy->at(W_INDEX)->getVertexB();
-			results(0, 2) += kalmanFuzzy->at(W_INDEX)->getVertexC();
-			results(0, 3) += kalmanFuzzy->at(W_INDEX)->getVertexD();
-		}
-		
-		obsWithNoise.push_back(new fuzzy::trapezoid("", results(0, 0), results(0, 1), results(0, 2), results(0, 3)));
-	}
 }
 
 void GeneralController::landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle){
 	distance = std::sqrt(std::pow(landmark->xpos - Xk(0, 0), 2) + std::pow(landmark->ypos - Xk(1, 0), 2));
 	angle = std::atan2(landmark->ypos - Xk(1, 0), landmark->xpos - Xk(0, 0)) - Xk(2, 0);
-}
-
-Matrix GeneralController::normalizeAngles(Matrix trap){
-	Matrix tempTrap = trap;
-	Matrix result(1, TRAP_VERTEX);
-
-	for(int j = 0; j < TRAP_VERTEX; j++){
-		if(tempTrap(0, j) > M_PI){
-			tempTrap(0, j) = tempTrap(0, j) - 2 * M_PI;
-		} else if(tempTrap(0, j) < -M_PI){
-			tempTrap(0, j) = tempTrap(0, j) + 2 * M_PI;	
-		}
-	}
-    
-    result = tempTrap.sort_cols();
-
-	return result;
-}
-
-Matrix GeneralController::denormalizeAngles(Matrix trap, int mode){
-	Matrix tempTrap = trap;
-	Matrix result(TRAP_VERTEX, 1);
-
-	if(isThirdQuadrant(tempTrap(0, 0)) &&
-       isSecondQuadrant(tempTrap(0, 1)) &&
-       isSecondQuadrant(tempTrap(0, 2)) &&
-       isSecondQuadrant(tempTrap(0, 3))){
-		tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
-		
-		result = tempTrap.sort_cols();
-
-    } else if(isThirdQuadrant(tempTrap(0, 0)) &&
-              isThirdQuadrant(tempTrap(0, 1)) &&
-              isSecondQuadrant(tempTrap(0, 2)) &&
-              isSecondQuadrant(tempTrap(0, 3))){
-    	if(mode != 1){
-			tempTrap(0, 0) = tempTrap(0, 0) + 2 * M_PI;
-			tempTrap(0, 1) = tempTrap(0, 1) + 2 * M_PI;
-		} else {
-			tempTrap(0, 2) = tempTrap(0, 2) - 2 * M_PI;
-			tempTrap(0, 3) = tempTrap(0, 3) - 2 * M_PI;
-		}
-		result = tempTrap.sort_cols();
-
-    } else if(isThirdQuadrant(tempTrap(0, 0)) &&
-              isThirdQuadrant(tempTrap(0, 1)) &&
-              isThirdQuadrant(tempTrap(0, 2)) &&
-              isFouthQuadrant(tempTrap(0, 3))){
-		tempTrap(0, 3) = tempTrap(0, 3) - 2 * M_PI;
-		result = tempTrap.sort_cols();
-	} else {
-		result = trap;
-	}
-	
-
-	return result;
 }
 
 bool GeneralController::isFirstQuadrant(float angle){
