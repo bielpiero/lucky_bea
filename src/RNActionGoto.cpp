@@ -45,6 +45,7 @@ RNActionGoto::~RNActionGoto(){
 
 ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	if(this->currentState == STATE_GOING_TO_GOAL){
+
 		double deltaThetaLocal, distanceLocal;
 		if(this->goal.getTh() != 0){
 			distanceLocal = 0;
@@ -53,7 +54,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 			distanceLocal = myRobot->getPose().findDistanceTo(this->goal);
 	    	deltaThetaLocal = myRobot->findDeltaHeadingTo(this->goal);
 	    }
-    	//printf("{Distance: %f, DeltaTheta: %f}\n", distanceLocal, deltaThetaLocal);
+    	//RNUtils::printLn("{Distance: %f, DeltaTheta: %f}\n", distanceLocal, deltaThetaLocal);
     	if(ArMath::fabs(deltaThetaLocal) > this->minimumAngle){
     		//turn to point to goal
 

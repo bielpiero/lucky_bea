@@ -1,0 +1,15 @@
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Makefile
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+*.o
+*.obj
+.DS_Store
+.DS_Store?
+._*
+.Spotlight*
+.Trashes
+lucky_bea

@@ -2110,8 +2110,6 @@ void GeneralController::moveRobot(float lin_vel, float angular_vel){
 	} else {
 		this->stopRobot();
 	}
-	//RNUtils::sleep(100);
-	//ros::spinOnce();
 }
 
 void GeneralController::setRobotPosition(float x, float y, float theta){
@@ -2124,7 +2122,6 @@ void GeneralController::setRobotPosition(Matrix Xk){
 }
 
 void GeneralController::moveRobotToPosition(float x, float y, float theta){
-	RNUtils::printLn("Moving to position: {x: %f, y: %f, theta: %f}", x, y, theta);
 	this->gotoPosition(x, y, theta);
 }
 

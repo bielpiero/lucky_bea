@@ -190,17 +190,16 @@ void RobotNode::moveAtSpeed(double linearVelocity, double angularVelocity){
     if(gotoPoseAction->isActive()){
         gotoPoseAction->deactivate();
     }
-    robot->clearDirectMotion();
+    
     if(linearVelocity == 0.0 && angularVelocity == 0.0){
         robot->stop();
-        robot->setVel(0);
-        robot->setRotVel(0);
         isDirectMotion = false;
     } else {
+        robot->clearDirectMotion();
         if(linearVelocity > 0.0){
             isGoingForward = true;
         }
-        printf("{LinVel: %f, AngVel: %f}\n", linearVelocity, angularVelocity);
+        RNUtils::printLn("{LinVel: %f, AngVel: %f}\n", linearVelocity, angularVelocity);
         robot->setVel(linearVelocity*1e3);
 
         robot->setRotVel(angularVelocity*180/M_PI);
@@ -215,40 +214,27 @@ void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed
 
     isDirectMotion = false;
     this->lockRobot();
-    //robot->setAbsoluteMaxTransVel(transSpeed);
-    //robot->setAbsoluteMaxRotVel(rotSpeed);
 
-    robot->clearDirectMotion();
     doNotMove = false;
     wasDeactivated = false;
-
+    robot->clearDirectMotion();
     if(not gotoPoseAction->isActive()){
         gotoPoseAction->activate();
     }
-    
+    RNUtils::printLn("Going to: {x: %f, y: %f, \u03d1: %f}", x, y, theta);
     gotoPoseAction->setGoal(newPose);
-    
-    //robot->setAbsoluteMaxTransVel(this->maxAbsoluteTransVel);
-    //robot->setAbsoluteMaxRotVel(this->maxAbsoluteRotVel);
-    
+        
     this->unlockRobot();
     ArUtil::sleep(100);
 }
 
 void RobotNode::setPosition(double x, double y, double theta){
-    ArPose newPose(x * 1000, y * 1000);
-    newPose.setThRad(theta);
     
     this->lockRobot();
-    
-
-    robot->clearDirectMotion();
     pthread_mutex_lock(&mutexRawPositionLocker);
     myRawPose->setPose(x * 1000, y * 1000, theta * 180 / M_PI);
     pthread_mutex_unlock(&mutexRawPositionLocker);
-    robot->moveTo(newPose);
-
-    
+    robot->moveTo(ArPose(x * 1000, y * 1000, theta * 180 / M_PI));
     this->unlockRobot();
 }
 
@@ -429,11 +415,13 @@ bool RobotNode::checkBackwardLimitTransition(double enc_k, double enc_k_1){
 
 void RobotNode::getRawPoseFromOdometry(){
     double x = 0, y = 0, th = 0;
-    //pthread_mutex_lock(&mutexRawPositionLocker);
+    pthread_mutex_lock(&mutexRawPositionLocker);
     x = myRawPose->getX() + (deltaDistance * cos(myRawPose->getThRad() + deltaDegrees/2.0));
     y = myRawPose->getY() + (deltaDistance * sin(myRawPose->getThRad() + deltaDegrees/2.0));
     th = myRawPose->getThRad() + deltaDegrees;
+    pthread_mutex_unlock(&mutexRawPositionLocker);
     this->setPosition(x / 1000.0, y / 1000.0, th);
+
     //myRawPose->setPose(x, y, th * 180 / M_PI);
     //pthread_mutex_unlock(&mutexRawPositionLocker);
 
@@ -507,8 +495,8 @@ void* RobotNode::dataPublishingThread(void* object){
     ArUtil::sleep(2000);
     while(RNUtils::ok() and self->keepActiveSensorDataThread == YES){
         self->getRawRobotPosition();
-        self->getBatterChargeStatus();
         self->getLaserScan();
+        self->getBatterChargeStatus();
         self->getBumpersStatus();
         self->getRobotPosition();
         self->getSonarsScan();
