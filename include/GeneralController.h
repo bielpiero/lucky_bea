@@ -324,6 +324,7 @@ private:
 	void getMapSectorId(char* cad, int& mapId, int& sectorId);
 	void getMapsAvailable(std::string& mapsAvailable);
 	void getMapFilename(int mapId, std::string& filename);
+	void getMapConnection(int mapId, std::string& connections);
 	void getSectorsAvailable(int mapId, std::string& sectorsAvailable);
 	void getSectorInformationLandmarks(int mapId, int sectorId, std::string& sectorInformation);
 	void getSectorInformationFeatures(int mapId, int sectorId, std::string& sectorInformation);

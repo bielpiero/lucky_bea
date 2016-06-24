@@ -431,6 +431,11 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			getMapsAvailable(mapsAvailable);
 			sendMsg(socketIndex, 0x22, (char*)mapsAvailable.c_str(), (unsigned int)mapsAvailable.length()); 
 			break;
+		case 0x23:
+			getMapId(cad, mapId);
+			getMapConnection(mapId, mapInformation);
+			sendMsg(socketIndex, 0x23, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
+			break;	
 		case 0x30:
 			getCameraDevicePort(cad, videoDevice, videoTxPort);
 			beginVideoStreaming(socketIndex, videoDevice, videoTxPort);
@@ -549,6 +554,7 @@ void GeneralController::initializeSPDPort(int socketIndex, char* cad){
 		RNUtils::printLn("Port: %d", this->spdUDPPort);
 		spdUDPClient = new UDPClient(this->getClientIPAddress(socketIndex), this->spdUDPPort);	
 	} else {
+		RNUtils::printLn("Port: %d", spdWSServer->getServerPort());
 		std::ostringstream convert;
 		convert << spdWSServer->getServerPort();
 		std::string jsonString = "{\"streaming\":{\"port\":\""+ convert.str() + "\",\"error\":\"0\"}}";
@@ -1246,7 +1252,7 @@ void GeneralController::getMapFilename(int mapId, std::string& filename){
 	buffer.push_back('\0');
 	
 	doc.parse<0>(&buffer[0]);
-	
+	filename = "";
 	root_node = doc.first_node(XML_ELEMENT_MAPS_STR);
 	if(root_node != NULL){
 		bool found = false;
@@ -1260,6 +1266,39 @@ void GeneralController::getMapFilename(int mapId, std::string& filename){
     }
     the_file.close();
 }
+
+
+void GeneralController::getMapsAvailable(std::string& mapsAvailable){
+	std::ostringstream buffer_str;
+	buffer_str.clear();
+
+	xml_document<> doc;
+    xml_node<>* root_node;       
+	
+    std::ifstream the_file(xmlMapsFullPath.c_str());
+    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+	buffer.push_back('\0');
+	
+	doc.parse<0>(&buffer[0]);
+	
+	root_node = doc.first_node(XML_ELEMENT_MAPS_STR);
+	if(root_node != NULL){
+		for(xml_node<>* map_node = root_node->first_node(XML_ELEMENT_MAP_STR); map_node; map_node = map_node->next_sibling()){
+			buffer_str << map_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
+			buffer_str << map_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value();
+
+			if(map_node->next_sibling() != NULL){
+				buffer_str << "|";
+			}
+			
+		}
+    }
+    the_file.close();
+
+	mapsAvailable = buffer_str.str();
+	buffer_str.clear();
+}
+
 
 void GeneralController::getSectorsAvailable(int mapId, std::string& sectorsAvailable){
 	std::ostringstream buffer_str;
@@ -1301,38 +1340,54 @@ void GeneralController::getSectorsAvailable(int mapId, std::string& sectorsAvail
 	}
 }
 
-void GeneralController::getMapsAvailable(std::string& mapsAvailable){
+
+void GeneralController::getMapConnection(int mapId, std::string& connections){
 	std::ostringstream buffer_str;
 	buffer_str.clear();
 
-	xml_document<> doc;
-    xml_node<>* root_node;       
-	
-    std::ifstream the_file(xmlMapsFullPath.c_str());
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);
-	
-	root_node = doc.first_node(XML_ELEMENT_MAPS_STR);
-	if(root_node != NULL){
-		for(xml_node<>* map_node = root_node->first_node(XML_ELEMENT_MAP_STR); map_node; map_node = map_node->next_sibling()){
-			buffer_str << map_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
-			buffer_str << map_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value();
+	std::string filename;
+	if(mapId > NONE){
+		getMapFilename(mapId, filename);
 
-			if(map_node->next_sibling() != NULL){
-				buffer_str << "|";
+		std::string fullSectorPath = xmlSectorsPath + filename;
+		xml_document<> doc;
+	    xml_node<>* root_node;       
+		
+	    std::ifstream the_file(fullSectorPath.c_str());
+	    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+		buffer.push_back('\0');
+		
+		doc.parse<0>(&buffer[0]);
+
+		root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+		if(root_node != NULL){
+			for(xml_node<>* sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){				
+				xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
+
+				if(features_root_node->first_node() !=  NULL){
+					for(xml_node<>* feature_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); feature_node; feature_node = feature_node->next_sibling()){
+						if(strcmp(feature_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value(), SEMANTIC_FEATURE_DOOR_STR) == 0){
+							if(feature_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
+								buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << "," << feature_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value();
+							
+								buffer_str << "," << feature_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value();
+							
+								if(sector_node->next_sibling() != NULL){
+									buffer_str << "|";	
+								}
+							}
+						}
+					}	
+				}
 			}
-			
 		}
-    }
-    the_file.close();
+		the_file.close();
+		connections = buffer_str.str();
+	} else {
+		RNUtils::printLn("getMapConnection(). Invalid map id..");
+	}
 
-	mapsAvailable = buffer_str.str();
-	buffer_str.clear();
 }
-
-
 
 void GeneralController::getSectorInformationLandmarks(int mapId, int sectorId, std::string& sectorInformation){
 
@@ -1412,6 +1467,7 @@ void GeneralController::getSectorInformationFeatures(int mapId, int sectorId, st
 				int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 				if(sectorId == xmlSectorId){
 					found = true;
+					buffer_str << sectorId << "|";
 					xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
 					if(features_root_node->first_node() !=  NULL){
 						for(xml_node<>* feature_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); feature_node; feature_node = feature_node->next_sibling()){
@@ -1471,6 +1527,7 @@ void GeneralController::getSectorInformationSites(int mapId, int sectorId, std::
 				int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 				if(sectorId == xmlSectorId){
 					found = true;
+					buffer_str << sectorId << "|";
 					xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
 					if(sites_root_node->first_node() !=  NULL){
 						for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
@@ -2686,7 +2743,6 @@ void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice, in
 	data->socketIndex = socketIndex;
 	data->port = port;
 	data->object = this;
-	videoDevice = 3;
 	vc = cv::VideoCapture(videoDevice);
 	
 	if(vc.isOpened()){

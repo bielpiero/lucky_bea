@@ -90,7 +90,7 @@
 		<features>
 			<feature id="0" name="door" width="137" height="10" xpos="80" ypos="1174" linked-sector-id="0" xcoord="18" ycoord="-1174"/>
 			<feature id="1" name="door" width="137" height="10" xpos="80" ypos="0" linked-sector-id="7" xcoord="0" ycoord="900"/>
-			<feature id="2" name="door" width="10" height="80" xpos="0" ypos="65"/>
+			<feature id="2" name="door" width="10" height="80" xpos="0" ypos="65" linked-sector-id="4" xcoord="400" ycoord="280"/>
 			<feature id="4" name="mesa" width="80" height="360" xpos="195" ypos="990"/>
 			<feature id="5" name="mesa b" width="80" height="360" xpos="395" ypos="989"/>
 		</features>
@@ -101,54 +101,82 @@
 			<site id="3" name="site d" radius="10" tsec="0" xpos="68" ypos="416"/>
 		</sites>
 	</sector>
-	<sector id="4" name="Workshop Receiver" width="350" height="350" reference="0">
+	<sector id="4" name="Workshop Receiver" width="400" height="350" reference="2" polygon="m 0 0 l 0 350 l 400 0 l 0 -350 z">
 		<landmarks/>
-		<features/>
+		<features>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="3" xcoord="420" ycoord="0"/>
+			<feature id="1" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="5" xcoord="-160" ycoord="0"/>
+			<feature id="2" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="6" xcoord="-160" ycoord="0"/>
+		</features>
 		<sites/>
 	</sector>
 	<sector id="5" name="Workshop Place" width="400" height="400" reference="2" polygon="m 0 0 l 0 400 l 400 0 l 0 -400 z">
 		<landmarks/>
-		<features/>
+		<features>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="4" xcoord="420" ycoord="0"/>
+		</features>
 		<sites/>
 	</sector>
-	<sector id="6" name="Offices" width="400" height="400" reference="0">
+	<sector id="6" name="Offices" width="400" height="400" reference="2" polygon="m 0 0 l 0 400 l 400 0 l 0 -400 z">
 		<landmarks/>
-		<features/>
+		<features>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="4" xcoord="420" ycoord="0"/>
+		</features>
 		<sites/>
 	</sector>
 	<sector id="7" name="Main Hallway" width="300" height="900" reference="2" polygon="m 0 0 l 0 900 l 300 0 l 0 -900 z">
 		<landmarks/>
-		<features/>
+		<features>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="3" xcoord="420" ycoord="0"/>
+			<feature id="1" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="8" xcoord="-160" ycoord="0"/>
+			<feature id="2" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="9" xcoord="-160" ycoord="0"/>
+			<feature id="3" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="10" xcoord="-160" ycoord="0"/>
+		</features>
 		<sites/>
 	</sector>
-	<sector id="8" name="Computer Room" width="1400" height="500" reference="0">
+	<sector id="8" name="Computer Room" width="1340" height="500" reference="2" polygon="m 0 0 l 0 500 l 1340 0 l 0 -500 z">
 		<landmarks/>
-		<features/>
+		<features>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="7" xcoord="420" ycoord="0"/>
+		</features>
 		<sites/>
 	</sector>
-	<sector id="9" name="Teleoperation" width="1400" height="500" reference="0">
+	<sector id="9" name="Teleoperation" width="1340" height="500" reference="2" polygon="m 0 0 l 0 500 l 1340 0 l 0 -500 z">
 		<landmarks/>
-		<features/>
+		<features>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="7" xcoord="420" ycoord="0"/>
+		</features>
 		<sites/>
 	</sector>
-	<sector id="10" name="Main Receiver" width="900" height="410" reference="0">
+	<sector id="10" name="Main Receiver" width="900" height="410" reference="2" polygon="m 0 0 l 0 410 l 900 0 l 0 -410 z">
 		<landmarks/>
-		<features/>
+		<features>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="7" xcoord="420" ycoord="0"/>
+			<feature id="1" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="11" xcoord="-160" ycoord="0"/>
+		</features>
 		<sites/>
 	</sector>
-	<sector id="11" name="Bathrooms" width="120" height="300" reference="0">
+	<sector id="11" name="Bathrooms" width="120" height="300" reference="2" polygon="m 0 0 l 0 300 l 120 0 l 0 -300 z">
 		<landmarks/>
-		<features/>
+		<features>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="10" xcoord="420" ycoord="0"/>
+			<feature id="1" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="12" xcoord="-160" ycoord="0"/>
+		</features>
 		<sites/>
 	</sector>
-	<sector id="12" name="Cybernetics Workshop" width="350" height="1000" reference="0">
+	<sector id="12" name="Cybernetics Workshop" width="350" height="1000" reference="2" polygon="m 0 0 l 0 350 l 1000 0 l 0 -350 z">
 		<landmarks/>
-		<features/>
+		<features>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="11" xcoord="420" ycoord="0"/>
+			<feature id="1" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="13" xcoord="-160" ycoord="0"/>
+		</features>
 		<sites/>
 	</sector>
-	<sector id="13" name="Cybernetics Workplace" width="1000" height="500" reference="0">
+	<sector id="13" name="Cybernetics Workplace" width="1000" height="500" reference="2" polygon="m 0 0 l 0 500 l 1000 0 l 0 -500 z">
 		<landmarks/>
-		<features/>
+		<features>
+			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="12" xcoord="420" ycoord="0"/>
+		</features>
 		<sites/>
 	</sector>
 </sectors>
