@@ -97,14 +97,14 @@ s_landmark* MapSector::landmarkAt(int index) {
 
 s_site* MapSector::findSiteById(int id) { 
 	bool found = false;
-	int index = NONE;
+	int index = RN_NONE;
 	for (int i = 0; i < sites->size() and not found; i++){
 		if(sites->at(i)->id == id){
 			found = true;
 			index = i;
 		}
 	}
-	if(index != NONE){
+	if(index != RN_NONE){
 		return sites->at(index);
 	} else {
 		return NULL;
@@ -113,14 +113,14 @@ s_site* MapSector::findSiteById(int id) {
 
 s_feature* MapSector::findFeatureById(int id) { 
 	bool found = false;
-	int index = NONE;
+	int index = RN_NONE;
 	for (int i = 0; i < features->size() and not found; i++){
 		if(features->at(i)->id == id){
 			found = true;
 			index = i;
 		}
 	}
-	if(index != NONE){
+	if(index != RN_NONE){
 		return features->at(index);
 	} else {
 		return NULL;
@@ -128,7 +128,7 @@ s_feature* MapSector::findFeatureById(int id) {
 }
 
 std::vector<s_site*> MapSector::findSitesByName(std::string name){
-	int index = NONE;
+	int index = RN_NONE;
 	std::vector<s_site*> values; 
 	for (int i = 0; i < sites->size(); i++){
 		if(sites->at(i)->name == name){
@@ -139,7 +139,7 @@ std::vector<s_site*> MapSector::findSitesByName(std::string name){
 }
 
 std::vector<s_feature*> MapSector::findFeaturesByName(std::string name){
-	int index = NONE;
+	int index = RN_NONE;
 	std::vector<s_feature*> values;
 	for (int i = 0; i < features->size(); i++){
 		if(features->at(i)->name == name){

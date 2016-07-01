@@ -10,8 +10,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	
 	this->maestroControllers = new SerialPort();
 
-	tokenRequester = NONE;
-	this->setTokenOwner(NONE);
+	tokenRequester = RN_NONE;
+	this->setTokenOwner(RN_NONE);
 
 	clientsConnected = 0;
 	pendingTransferControl = false;
@@ -24,7 +24,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	this->keepRobotTracking = NO;
 	this->spdUDPPort = 0;
 
-    this->lastSiteVisitedIndex = NONE;
+    this->lastSiteVisitedIndex = RN_NONE;
 	landmarks = new std::vector<RNLandmark*>();
 	kalmanFuzzy = new std::vector<fuzzy::trapezoid*>();
 	
@@ -49,13 +49,15 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	//setGesture("26", servo_positions);
 	ttsLipSync = new DorisLipSync(this->maestroControllers, RNUtils::getApplicationPath());
 	//ttsLipSync->textToViseme("Hola, ya estoy lista para funcionar");
-	this->currentMapId = NONE;
+	this->currentMapId = RN_NONE;
 	this->currentSector = NULL;
-	this->nextSectorId = NONE;
+	this->nextSectorId = RN_NONE;
     this->nXCoord = 0;
     this->nYCoord = 0;
 	loadRobotConfig();
 	pthread_mutex_init(&mutexLandmarkLocker, NULL);
+
+	tasks = new RNRecurrentTaskMap(this);
 
 	spdWSServer = new RobotDataStreamer();
 	spdWSServer->init("", 0, SOCKET_SERVER);
@@ -99,12 +101,12 @@ void GeneralController::onConnection(int socketIndex) //callback for client and 
 		RNUtils::printLn("Client %s is Connected to Doris, using port %d", this->getClientIPAddress(socketIndex), this->getClientPort(socketIndex));
 	} else {
 		if(socketIndex == getTokenOwner()){
-			setTokenOwner(NONE);
+			setTokenOwner(RN_NONE);
 		}
 		RNUtils::printLn("Client %s has disonnected from Doris", this->getClientIPAddress(socketIndex));
 		clientsConnected--;
 		if(clientsConnected == 0){
-			setTokenOwner(NONE);
+			setTokenOwner(RN_NONE);
 			if(spdUDPClient != NULL){
 				spdUDPClient->closeConnection();
 				spdUDPClient = NULL;
@@ -457,7 +459,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x7E:
 			if(granted){
 				releaseRobotControl(socketIndex);
-				setTokenOwner(NONE);
+				setTokenOwner(RN_NONE);
 			} else {
 				RNUtils::printLn("Command 0x7E. Release Robot control denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x7E, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
@@ -507,7 +509,7 @@ bool GeneralController::isPermissionNeeded(char function){
 
 void GeneralController::requestRobotControl(int socketIndex){
 	std::string jsonString;
-	if(getTokenOwner() == NONE){
+	if(getTokenOwner() == RN_NONE){
 		setTokenOwner(socketIndex);
 		jsonString = "{\"control\":{\"granted\":\"1\",\"error\":\"0\"}}";
 		sendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
@@ -521,17 +523,17 @@ void GeneralController::requestRobotControl(int socketIndex){
 void GeneralController::acceptTransferRobotControl(int socketIndex, char* acceptance){
 	int acceptValue = atoi(acceptance);
 	std::string jsonString;
-	if(tokenRequester != NONE){
+	if(tokenRequester != RN_NONE){
 		if(acceptValue == YES){
 			setTokenOwner(tokenRequester);
 			releaseRobotControl(socketIndex);
-			tokenRequester = NONE;
+			tokenRequester = RN_NONE;
 			jsonString = "{\"control\":{\"granted\":\"1\",\"error\":\"0\"}}";
 			sendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
 		} else if(acceptValue == NO){
 			jsonString = "{\"control\":{\"granted\":\"0\",\"error\":\"0\"}}";
 			sendMsg(tokenRequester, 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
-			tokenRequester = NONE;
+			tokenRequester = RN_NONE;
 		} else {
 			jsonString = "{\"control\":{\"error\":\"1\"}}";
 			sendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
@@ -870,7 +872,7 @@ void GeneralController::setGesture(std::string face_id, std::string& servo_posit
 			std::string tipo(gesto_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value());
 			
 			if (face_id == id){
-				int currentCardId = NONE;
+				int currentCardId = RN_NONE;
 				std::string nombre(gesto_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
 
 				bufferOut_str << "{\"Gesture\":\"" << nombre << "\",\"Id\":\"" << id << "\",\"Cards\":[";
@@ -882,7 +884,7 @@ void GeneralController::setGesture(std::string face_id, std::string& servo_posit
 					int speed = atoi(motor_node->first_attribute(XML_ATTRIBUTE_SPEED_STR)->value());
 					int acceleration = atoi(motor_node->first_attribute(XML_ATTRIBUTE_ACCELERATION_STR)->value());
 
-					if(currentCardId != NONE){
+					if(currentCardId != RN_NONE){
 						if(currentCardId != card_id){
 							currentCardId = card_id;
 							bufferOut_str << "]},{\"CardId\":\"" << (int)card_id << "\",\"Motors\":[";
@@ -1084,7 +1086,7 @@ void GeneralController::loadSector(int mapId, int sectorId){
 						if(features_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
 							tempFeature->linkedSectorId = atoi(features_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value());
 						} else {
-							tempFeature->linkedSectorId = NONE;
+							tempFeature->linkedSectorId = RN_NONE;
 						}
                         
                         if(features_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)){
@@ -1133,7 +1135,7 @@ void GeneralController::loadSector(int mapId, int sectorId){
 						if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)){
 							tempSite->linkedFeatureId = atoi(site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)->value());
 						} else {
-							tempSite->linkedFeatureId = NONE;
+							tempSite->linkedFeatureId = RN_NONE;
 						}
 
 						currentSector->addSite(tempSite);
@@ -1304,7 +1306,7 @@ void GeneralController::getSectorsAvailable(int mapId, std::string& sectorsAvail
 	std::ostringstream buffer_str;
 	std::string filename;
 	buffer_str.clear();
-	if(mapId > NONE){
+	if(mapId > RN_NONE){
 		getMapFilename(mapId, filename);
 
 		xml_document<> doc;
@@ -1346,7 +1348,7 @@ void GeneralController::getMapConnection(int mapId, std::string& connections){
 	buffer_str.clear();
 
 	std::string filename;
-	if(mapId > NONE){
+	if(mapId > RN_NONE){
 		getMapFilename(mapId, filename);
 
 		std::string fullSectorPath = xmlSectorsPath + filename;
@@ -1394,7 +1396,7 @@ void GeneralController::getSectorInformationLandmarks(int mapId, int sectorId, s
 	std::ostringstream buffer_str;
 	buffer_str.clear();
 	std::string filename;
-	if(mapId > NONE){
+	if(mapId > RN_NONE){
 		getMapFilename(mapId, filename);
 		std::string fullSectorPath = xmlSectorsPath + filename;
 		xml_document<> doc;
@@ -1448,7 +1450,7 @@ void GeneralController::getSectorInformationFeatures(int mapId, int sectorId, st
 	buffer_str.clear();
 
 	std::string filename;
-	if(mapId > NONE){
+	if(mapId > RN_NONE){
 		getMapFilename(mapId, filename);
 		std::string fullSectorPath = xmlSectorsPath + filename;
 		xml_document<> doc;
@@ -1481,7 +1483,7 @@ void GeneralController::getSectorInformationFeatures(int mapId, int sectorId, st
 							if(feature_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
 								buffer_str << "," << feature_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value();
 							} else {
-								buffer_str << "," << NONE;
+								buffer_str << "," << RN_NONE;
 							}
 
 
@@ -1508,7 +1510,7 @@ void GeneralController::getSectorInformationSites(int mapId, int sectorId, std::
 	buffer_str.clear();
 
 	std::string filename;
-	if(mapId > NONE){
+	if(mapId > RN_NONE){
 		getMapFilename(mapId, filename);
 		std::string fullSectorPath = xmlSectorsPath + filename;
 		xml_document<> doc;
@@ -1540,7 +1542,7 @@ void GeneralController::getSectorInformationSites(int mapId, int sectorId, std::
 							if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)){
 								buffer_str << "," << site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)->value();
 							} else {
-								buffer_str << "," << NONE;
+								buffer_str << "," << RN_NONE;
 							}
 
 							
@@ -1565,7 +1567,7 @@ void GeneralController::getSectorInformationSitesSequence(int mapId, int sectorI
 	sectorInformation = "";
 
 	std::string filename;
-	if(mapId > NONE){
+	if(mapId > RN_NONE){
 		getMapFilename(mapId, filename);
 		std::string fullSectorPath = xmlSectorsPath + filename;
 		xml_document<> doc;
@@ -1679,7 +1681,7 @@ void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 							if(data.size() >= ADD_SITE_VARIABLE_LENGTH + 1){
 								tempSite->linkedFeatureId = atoi(data.at(7).c_str());
 							} else {
-								tempSite->linkedFeatureId = NONE;
+								tempSite->linkedFeatureId = RN_NONE;
 							}
 				        	currentSector->addSite(tempSite);
 				        }
@@ -1775,7 +1777,7 @@ void GeneralController::modifySectorInformationSite(char* cad){
 			if(data.size() >= MODIFY_SITE_VARIABLE_LENGTH + 1){
 				tempSite->linkedFeatureId = atoi(data.at(8).c_str());
 			} else {
-				tempSite->linkedFeatureId = NONE;
+				tempSite->linkedFeatureId = RN_NONE;
 			}			
 		}
 	} else {
@@ -1983,7 +1985,7 @@ void GeneralController::addSectorInformationFeatures(char* cad, int& indexAssign
 							if(data.size() >= ADD_FEATURE_VARIABLE_LENGTH + 1){
 								tempFeature->linkedSectorId = atoi(data.at(7).c_str());
 							} else {
-								tempFeature->linkedSectorId = NONE;
+								tempFeature->linkedSectorId = RN_NONE;
 							}
 
 							currentSector->addFeature(tempFeature);
@@ -2077,7 +2079,7 @@ void GeneralController::modifySectorInformationFeatures(char* cad){
 			if(data.size() >= MODIFY_FEATURE_VARIABLE_LENGTH + 1){
 				tempFeature->linkedSectorId = atoi(data.at(8).c_str());
 			} else {
-				tempFeature->linkedSectorId = NONE;
+				tempFeature->linkedSectorId = RN_NONE;
 			}
         }
 	} else {
@@ -2226,7 +2228,7 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 		std::vector<s_feature*> doors = currentSector->findFeaturesByName(std::string(SEMANTIC_FEATURE_DOOR_STR));
 		if(doors.size() > 0){
 			float distance = std::numeric_limits<float>::infinity();
-			int index = NONE;
+			int index = RN_NONE;
 	        float nXCoord = 0;
 	        float nYCoord = 0;
 			for(int i = 0; i < doors.size(); i++){
@@ -2412,7 +2414,7 @@ void* GeneralController::sitesTourThread(void* object){
         RNUtils::sleep(100);
         if(destinationSite != NULL){
         	s_feature* linkedFeature = NULL;
-        	if(destinationSite->linkedFeatureId != NONE){
+        	if(destinationSite->linkedFeatureId != RN_NONE){
         		linkedFeature = self->currentSector->findFeatureById(destinationSite->linkedFeatureId);
         	}
 
@@ -2450,10 +2452,10 @@ void* GeneralController::sitesTourThread(void* object){
         	if (self->isGoalAchieved()) {
 	            self->lastSiteVisitedIndex++;
 	            if (self->currentSector->isSitesCyclic()){
-	            	self->lastSiteVisitedIndex = NONE;
+	            	self->lastSiteVisitedIndex = RN_NONE;
 	            	movedToCenter = false;
 	            } else if((self->lastSiteVisitedIndex == (spltdSequence.size() - 1))) {
-	                self->lastSiteVisitedIndex = NONE;
+	                self->lastSiteVisitedIndex = RN_NONE;
 	                self->stopRobot();
 	            }
 	        }
@@ -2614,7 +2616,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 			}
 
 			float minorDistance = std::numeric_limits<float>::infinity();
-			int indexFound = NONE;
+			int indexFound = RN_NONE;
 			for (int j = 0; j < euclideanDistances.size(); j++){
 				if(euclideanDistances.at(j) < alpha){
 					minorDistance = euclideanDistances.at(j);
@@ -2623,7 +2625,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 			}
 			
 			//RNUtils::printLn("Matched landmark: {idx : %d, MHD: %f}\n", indexFound, minorDistance);
-			if(indexFound > NONE){
+			if(indexFound > RN_NONE){
 				zl(2 * indexFound, 0) = lndmrk->getPointsXMean() - zkl(indexFound, 0);
 				zl(2 * indexFound + 1, 0) = lndmrk->getPointsYMean() - zkl(indexFound, 1);
 			}
@@ -2641,7 +2643,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		if(not isInsidePolygon){
 			self->loadSector(self->currentMapId, self->nextSectorId);
 			RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", self->nextSectorId, self->currentSector->getName().c_str());
-			self->nextSectorId = NONE;
+			self->nextSectorId = RN_NONE;
 			//new position
 			self->lastSiteVisitedIndex = 0;
             self->setPosition(newPosition(0, 0) + self->nXCoord, newPosition(1, 0) + self->nYCoord, newPosition(2, 0));
@@ -2744,15 +2746,15 @@ void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice, in
 	data->port = port;
 	data->object = this;
 	videoDevice = 0;
-	vc = cv::VideoCapture(videoDevice);
+	//vc = cv::VideoCapture(videoDevice);
 	
-	if(vc.isOpened()){
+	/*if(vc.isOpened()){
 		RNUtils::printLn("Streaming from camera device: %d", videoDevice);
 		pthread_create(&t1, NULL, streamingThread, (void *)(data));
 	} else {
 		vc.release();
 		RNUtils::printLn("Could not open device: %d", videoDevice);
-	}	
+	}	*/
 	 
 
 }
@@ -2777,7 +2779,7 @@ void* GeneralController::streamingThread(void* object){
 	//cv::Stitcher stitcher = cv::Stitcher::createDefault(true);
 	//cv::Stitcher::Status status;
 
-	cv::Mat frame;
+	/*cv::Mat frame;
 	std::vector<uchar> buff;
 	std::vector<int> params = vector<int>(2);
 	params[0] = CV_IMWRITE_JPEG_QUALITY;
@@ -2796,14 +2798,14 @@ void* GeneralController::streamingThread(void* object){
 		self->vcSecond.release();
 	}
 	self->streamingActive = NO;
-	delete udp_client;
+	delete udp_client;*/
 	return NULL;
 }
 
 void GeneralController::onSensorsScanCompleted(){
 	std::ostringstream buffer_str;
 	int mapId = currentMapId;
-	int sectorId = NONE;
+	int sectorId = RN_NONE;
 	if(currentSector != NULL){
 		sectorId = currentSector->getId();
 	}

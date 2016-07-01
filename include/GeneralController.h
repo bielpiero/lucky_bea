@@ -1,10 +1,10 @@
 #ifndef GENERAL_CONTROLLER_H
 #define GENERAL_CONTROLLER_H
 
-#include <opencv2/opencv.hpp>
+//#include <opencv2/opencv.hpp>
 
 #include "RobotNode.h"
-#include "RNRecurrentTaskMap.h"
+
 #include "SocketNode2.h"
 #include "SerialPort.h"
 #include "UDPClient.h"
@@ -20,6 +20,13 @@
 #include "Matrix.h"
 #include "stats.h"
 #include "fl/fuzzy.h"
+
+// Task headers
+
+#include "RNRecurrentTaskMap.h"
+#include "RNCameraTask.h"
+
+
 
 #define CONVERTER_BUFFER_SIZE 20
 #define SERVOS_COUNT 16
@@ -204,7 +211,7 @@ private:
 	std::ostringstream mappingSitesTimestamp;
 		
 public:
-	//GeneralController(ros::NodeHandle nh_, const char* port);
+	
 	GeneralController(const char* port);
 	~GeneralController(void);
 	
@@ -262,11 +269,11 @@ private:
 
 	UDPClient* spdUDPClient;
 	RobotDataStreamer* spdWSServer;
-	
+	RNRecurrentTaskMap* tasks;
 
 	//OpenCV
-	cv::VideoCapture vc;
-	cv::VideoCapture vcSecond;
+	//cv::VideoCapture vc;
+	//cv::VideoCapture vcSecond;
 	//possibilistic navigation
 	Matrix robotVelocity;
 	Matrix robotEncoderPosition;

@@ -30,7 +30,7 @@
 
 
 
-#define NONE -1
+#define RN_NONE -1
 
 #define YES 1
 #define NO 0

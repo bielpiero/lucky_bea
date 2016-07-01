@@ -9,23 +9,23 @@ class GeneralController;
 class RNRecurrentTaskMap{
 private:
 	std::vector<RNRecurrentTask*>* tasks;
+	GeneralController* gn;
 public:
 	RNRecurrentTaskMap(GeneralController* gn);
 	virtual ~RNRecurrentTaskMap();
 
-	set
+	void addTask(RNRecurrentTask* task);
+	void removeTask(RNRecurrentTask* task);
+	void removeAllTasks();
+	RNRecurrentTask* findTask(const char* taskName);
 
-	addTask(RNRecurrentTask* task);
-	removeTask(RNRecurrentTask* task);
-	findTask(const char* taskName);
+	void startTask(RNRecurrentTask* task);
+	void startTask(const char* taskName);
+	void startAllTasks();
 
-	startTask(RNRecurrentTask* task);
-	startTask(const char* taskName);
-	startAllTasks();
-
-	stopTask(RNRecurrentTask* task);
-	stopTask(const char* taskName);
-	stopAllTasks();
+	void stopTask(RNRecurrentTask* task);
+	void stopTask(const char* taskName);
+	void stopAllTasks();
 };
 
 #endif
