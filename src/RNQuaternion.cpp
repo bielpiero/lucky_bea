@@ -66,7 +66,7 @@ void RNQuaternion::setScalar(float scalar){
 	this->scalar = scalar;
 }
 
-RNVector3 RNQuaternion::setAxis(RNVector3 axis){
+void RNQuaternion::setAxis(RNVector3 axis){
 	this->axis = axis;
 }
 
@@ -155,12 +155,20 @@ RNQuaternion& RNQuaternion::operator/=(const float& v){
 	return *this *= (1.0 / v);
 }
 
+RNQuaternion operator!(RNQuaternion m){
+	return m.inverse();
+}
+
 bool RNQuaternion::operator==(const RNQuaternion& v) const{
 	return (this->scalar == v.scalar and this->axis == v.axis);
 }
 
 bool RNQuaternion::operator!=(const RNQuaternion& v) const{
 	return not (*this == v);
+}
+
+bool RNQuaternion::isZero(){
+	return (this->scalar == 0.0 and this->axis.isZero());
 }
 
 float RNQuaternion::dot(const RNQuaternion& v) const{
@@ -175,8 +183,16 @@ float RNQuaternion::length2() const{
 	return dot(*this);
 }
 
-RNQuaternion& RNQuaternion::normalize(){
-	return *this /= length();
+RNQuaternion RNQuaternion::norm(){
+	return *this / length();
+}
+
+RNQuaternion RNQuaternion::inverse(){
+	return (this->conjugate() / length2());
+}
+
+RNQuaternion RNQuaternion::conjugate(){
+	return RNQuaternion(this->scalar, -this->axis);
 }
 
 float RNQuaternion::angle(const RNQuaternion& q) const{
@@ -221,6 +237,26 @@ RNQuaternion RNQuaternion::slerp(const RNQuaternion& q, const float& t) const{
 
 const RNQuaternion& RNQuaternion::eye(){
 	static const RNQuaternion result(1);
+	return result;
+}
+
+RNQuaternion RNQuaternion::exp(){
+	return RNQuaternion(std::exp(this->scalar) * std::cos(this->axis.length()), std::exp(this->scalar) * (this->axis.sign() * std::sin(this->axis.length())));
+}
+
+RNQuaternion RNQuaternion::ln(){
+	return RNQuaternion(log2(this->length()), (this->axis.sign() * std::acos(this->scalar / this->length())));
+}
+
+RNQuaternion RNQuaternion::pow(float n){
+	return (n * this->ln()).exp();
+}
+
+RNQuaternion RNQuaternion::sign(){
+	RNQuaternion result;
+	if(not isZero()){
+		result = *this / (length());
+	}
 	return result;
 }
 

@@ -18,7 +18,7 @@
 			<landmark id="14" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="-145" ypos="120"/>
 		</landmarks>
 		<features>
-			<feature id="2" name="charger" width="50" height="25" xpos="700" ypos="370"/>
+			<feature id="2" name="charger" width="50" height="25" xpos="658" ypos="397"/>
 			<feature id="0" name="door" width="137" height="10" xpos="80" ypos="0" linked-sector-id="3" xcoord="-18" ycoord="1174"/>
 			<feature id="1" name="door" width="10" height="80" xpos="0" ypos="65" linked-sector-id="1" xcoord="160" ycoord="0"/>
 			<feature id="3" name="brown closet" width="40" height="92" xpos="45" ypos="170"/>
@@ -32,7 +32,7 @@
 		</features>
 		<sites cyclic="no" sequence="12,0,1,2,3,5">
 			<site id="2" name="site c" radius="10" tsec="0" xpos="240" ypos="240"/>
-			<site id="3" name="site d" radius="10" tsec="0" xpos="120" ypos="120"/>
+			<site id="3" name="site d" radius="10" tsec="0" xpos="164" ypos="94"/>
 			<site id="4" name="doorway" radius="10" tsec="0" xpos="80" ypos="0" linked-feature-id="0"/>
 			<site id="5" name="doorway" radius="10" tsec="0" xpos="0" ypos="65" linked-feature-id="1"/>
 			<site id="1" name="site b" radius="10" tsec="0" xpos="440" ypos="240"/>
@@ -90,15 +90,15 @@
 		<features>
 			<feature id="0" name="door" width="137" height="10" xpos="80" ypos="1174" linked-sector-id="0" xcoord="18" ycoord="-1174"/>
 			<feature id="1" name="door" width="137" height="10" xpos="80" ypos="0" linked-sector-id="7" xcoord="0" ycoord="900"/>
-			<feature id="2" name="door" width="10" height="80" xpos="0" ypos="65" linked-sector-id="4" xcoord="400" ycoord="280"/>
+			<feature id="2" name="door" width="10" height="80" xpos="0" ypos="65"/>
 			<feature id="4" name="mesa" width="80" height="360" xpos="195" ypos="990"/>
 			<feature id="5" name="mesa b" width="80" height="360" xpos="395" ypos="989"/>
 		</features>
 		<sites sequence="0,1,3">
 			<site id="0" name="doorway" radius="10" tsec="0" xpos="80" ypos="1174" linked-feature-id="0"/>
 			<site id="1" name="site b" radius="10" tsec="0" xpos="71" ypos="774"/>
-			<site id="2" name="site c" radius="10" tsec="0" xpos="255" ypos="595"/>
-			<site id="3" name="site d" radius="10" tsec="0" xpos="68" ypos="416"/>
+			<site id="2" name="site c" radius="10" tsec="0" xpos="81" ypos="374"/>
+			<site id="3" name="site d" radius="10" tsec="0" xpos="80" ypos="0"/>
 		</sites>
 	</sector>
 	<sector id="4" name="Workshop Receiver" width="400" height="350" reference="2" polygon="m 0 0 l 0 350 l 400 0 l 0 -350 z">
@@ -127,12 +127,18 @@
 	<sector id="7" name="Main Hallway" width="300" height="900" reference="2" polygon="m 0 0 l 0 900 l 300 0 l 0 -900 z">
 		<landmarks/>
 		<features>
-			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="3" xcoord="420" ycoord="0"/>
-			<feature id="1" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="8" xcoord="-160" ycoord="0"/>
-			<feature id="2" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="9" xcoord="-160" ycoord="0"/>
-			<feature id="3" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="10" xcoord="-160" ycoord="0"/>
+			<feature id="0" name="door" width="80" height="10" xpos="80" ypos="0"/>
+			<feature id="1" name="door" width="10" height="80" xpos="300" ypos="700"/>
+			<feature id="2" name="door" width="10" height="80" xpos="300" ypos="200"/>
+			<feature id="3" name="door" width="80" height="10" xpos="80" ypos="900"/>
 		</features>
-		<sites/>
+		<sites>
+			<site id="0" name="doorway" radius="0" tsec="0" xpos="80" ypos="900"/>
+			<site id="1" name="doorway" radius="0" tsec="0" xpos="80" ypos="0"/>
+			<site id="2" name="doorway" radius="0" tsec="0" xpos="300" ypos="700" linked-feature-id="1"/>
+			<site id="3" name="doorway" radius="0" tsec="0" xpos="300" ypos="200" linked-feature-id="2"/>
+			<site id="4" name="site a" radius="0" tsec="0" xpos="110" ypos="454"/>
+		</sites>
 	</sector>
 	<sector id="8" name="Computer Room" width="1340" height="500" reference="2" polygon="m 0 0 l 0 500 l 1340 0 l 0 -500 z">
 		<landmarks/>
@@ -151,10 +157,15 @@
 	<sector id="10" name="Main Receiver" width="900" height="410" reference="2" polygon="m 0 0 l 0 410 l 900 0 l 0 -410 z">
 		<landmarks/>
 		<features>
-			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="7" xcoord="420" ycoord="0"/>
-			<feature id="1" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="11" xcoord="-160" ycoord="0"/>
+			<feature id="0" name="door" width="80" height="10" xpos="800" ypos="0"/>
+			<feature id="1" name="door" width="10" height="80" xpos="900" ypos="300" linked-sector-id="7" xcoord="420" ycoord="0"/>
+			<feature id="2" name="door" width="80" height="10" xpos="750" ypos="410" linked-sector-id="11" xcoord="-160" ycoord="0"/>
 		</features>
-		<sites/>
+		<sites>
+			<site id="0" name="doorway" radius="0" tsec="0" xpos="900" ypos="300" linked-feature-id="1"/>
+			<site id="1" name="doorway" radius="0" tsec="0" xpos="800" ypos="0" linked-feature-id="0"/>
+			<site id="2" name="doorway" radius="0" tsec="0" xpos="750" ypos="410" linked-feature-id="2"/>
+		</sites>
 	</sector>
 	<sector id="11" name="Bathrooms" width="120" height="300" reference="2" polygon="m 0 0 l 0 300 l 120 0 l 0 -300 z">
 		<landmarks/>

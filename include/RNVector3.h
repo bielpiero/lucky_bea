@@ -13,8 +13,8 @@ class RNVector3{
 private:
 	std::vector<float> data;
 
-	float& operator() (const int pos);
-	const float& operator() (const int pos) const;
+	float& operator() (const unsigned int pos);
+	const float& operator() (const unsigned int pos) const;
 public:
 	RNVector3();
 	virtual ~RNVector3();
@@ -63,8 +63,9 @@ public:
 	float length2() const;
 	float length() const;
 
-	RNVector3& normalize();
+	RNVector3 norm();
 	RNVector3 absolute() const;
+	RNVector3 sign();
 
 	float angle(const RNVector3& v) const;
 

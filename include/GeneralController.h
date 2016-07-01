@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "RobotNode.h"
+#include "RNRecurrentTaskMap.h"
 #include "SocketNode2.h"
 #include "SerialPort.h"
 #include "UDPClient.h"

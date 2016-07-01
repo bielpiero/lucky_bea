@@ -40,8 +40,12 @@ public:
 
 	RNQuaternion& operator/=(const float& v);
 
+	friend RNQuaternion operator!(RNQuaternion m);
+
 	bool operator==(const RNQuaternion& v) const;
 	bool operator!=(const RNQuaternion& v) const;
+
+	bool isZero();
 
 	float getScalar() const;
 	RNVector3 getAxis() const;
@@ -56,13 +60,20 @@ public:
 	float angle(const RNQuaternion& q) const;
 	float angleShortestPath(const RNQuaternion& q) const;
 
-	RNQuaternion& normalize();
+	RNQuaternion exp();
+	RNQuaternion ln();
+	RNQuaternion pow(float n);
+	RNQuaternion sign();
+
+	RNQuaternion norm();
+	RNQuaternion conjugate();
+	RNQuaternion inverse();
 	RNQuaternion slerp(const RNQuaternion& q, const float& t) const;
 
 	static const RNQuaternion& eye();
 
 	void setScalar(float scalar);
-	RNVector3 setAxis(RNVector3 axis);
+	void setAxis(RNVector3 axis);
 
 };
 

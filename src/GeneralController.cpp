@@ -2743,6 +2743,7 @@ void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice, in
 	data->socketIndex = socketIndex;
 	data->port = port;
 	data->object = this;
+	videoDevice = 0;
 	vc = cv::VideoCapture(videoDevice);
 	
 	if(vc.isOpened()){
@@ -2780,7 +2781,7 @@ void* GeneralController::streamingThread(void* object){
 	std::vector<uchar> buff;
 	std::vector<int> params = vector<int>(2);
 	params[0] = CV_IMWRITE_JPEG_QUALITY;
-	params[1] = 80;
+	params[1] = 75;
 	
 	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(socketIndex), port);
 	while(RNUtils::ok() && self->streamingActive == YES){

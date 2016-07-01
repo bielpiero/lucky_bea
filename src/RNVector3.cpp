@@ -15,15 +15,15 @@ RNVector3::RNVector3(const float x, const float y, const float z){
 	data[2] = z;
 }
 
-const float& RNVector3::operator() (const int pos) const{
-	if(pos < 0 && pos >= data.size()){
+const float& RNVector3::operator() (const unsigned int pos) const{
+	if(pos >= data.size()){
 		throw std::invalid_argument("Invalid subscripting dimension");
 	}
 	return data[pos];
 }
 
-float& RNVector3::operator() (const int pos){
-	if(pos < 0 && pos >= data.size()){
+float& RNVector3::operator() (const unsigned int pos){
+	if(pos >= data.size()){
 		throw std::invalid_argument("Invalid subscripting dimension");
 	}
 	return data[pos];
@@ -179,8 +179,16 @@ float RNVector3::length() const{
 	return std::sqrt(length2());
 }
 
-RNVector3& RNVector3::normalize(){
-	return *this /= length();
+RNVector3 RNVector3::norm(){
+	return *this / length();
+}
+
+RNVector3 RNVector3::sign() {
+	RNVector3 result;
+	if(not isZero()){
+		result = *this / (length());
+	}
+	return result;
 }
 
 RNVector3 RNVector3::absolute() const{
