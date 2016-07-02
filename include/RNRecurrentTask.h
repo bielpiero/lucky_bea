@@ -10,7 +10,12 @@ public:
 	RNRecurrentTask(const char* name = "", const char* description = "");
 	~RNRecurrentTask();
 	virtual void task() = 0;
-
+    void go();
+    int done();
+    void reset();
+    void kill();
+    
+    void* runThread(void* object);
 	void setController(GeneralController* gn);
 private:
 	GeneralController* gn;
