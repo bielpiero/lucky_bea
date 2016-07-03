@@ -11,7 +11,7 @@ RNRecurrentTaskMap::~RNRecurrentTaskMap(){
 }
 
 void RNRecurrentTaskMap::addTask(RNRecurrentTask* task){
-
+    task->setController(gn);
 }
 
 void RNRecurrentTaskMap::removeTask(RNRecurrentTask* task){

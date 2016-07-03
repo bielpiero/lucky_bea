@@ -8,7 +8,7 @@ class GeneralController;
 class RNRecurrentTask : public RNAsyncTask{
 public:
 	RNRecurrentTask(const char* name = "", const char* description = "");
-	~RNRecurrentTask();
+	virtual ~RNRecurrentTask();
 	virtual void task() = 0;
     void go();
     int done();

@@ -2,6 +2,7 @@
 
 RNRecurrentTask::RNRecurrentTask(const char* name, const char* description){
     name = "RNRecurrentTask: " + std::string(name);
+    this->description = std::string(description);
     setThreadName(name.c_str());
     running = goRequested = killed = false;
     create();
