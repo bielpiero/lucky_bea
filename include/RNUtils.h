@@ -16,6 +16,7 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include <limits>
 #include <string>
 #include <cstring>
 #include <ctime>

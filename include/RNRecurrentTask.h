@@ -17,6 +17,7 @@ public:
     
     void* runThread(void* object);
 	void setController(GeneralController* gn);
+	std::string getTaskName();
 private:
 	GeneralController* gn;
 	std::string name;

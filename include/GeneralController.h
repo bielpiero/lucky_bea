@@ -4,6 +4,7 @@
 //#include <opencv2/opencv.hpp>
 
 #include "RobotNode.h"
+#include "RNLandmark.h"
 
 #include "SocketNode2.h"
 #include "SerialPort.h"
@@ -127,68 +128,6 @@ struct s_robot{
 	s_navigation_params* navParams;
 };
 
-class RNLandmark{
-private:
-	std::vector<PointXY*>* data;
-	float meanX;
-	float meanY;
-public:
-	RNLandmark(){ 
-		data = new std::vector<PointXY*>(); 
-		meanX = std::numeric_limits<float>::infinity();
-		meanY = std::numeric_limits<float>::infinity();
-	}
-
-	~RNLandmark() {
-		for (int i = 0; i < data->size(); i++) {
-            delete data->at(i);
-        }
-		data->clear();
-		delete data; 
-	}
-	void addPoint(float x, float y){
-		meanX = std::numeric_limits<float>::infinity();
-		meanY = std::numeric_limits<float>::infinity();
-		data->push_back(new PointXY(x, y));
-	}
-	PointXY* getPointAt(int index){
-		return data->at(index);
-	}
-	float getPointsXMean(){
-		if(meanX == std::numeric_limits<float>::infinity()){
-			float sum = 0;
-			for (int i = 0; i < data->size(); i++) {
-	            sum = sum + data->at(i)->getX();
-	        }
-	        meanX = (sum / (float)data->size());
-	    }
-	    return meanX;
-	}
-
-	float getPointsYMean(){
-		if(meanY == std::numeric_limits<float>::infinity()){
-			float sum = 0;
-			for (int i = 0; i < data->size(); i++) {
-	            sum = sum + data->at(i)->getY();
-	        }
-	        meanY = (sum / (float)data->size());
-	    }
-	    return meanY;
-	}
-
-	void setPointsXMean(float mean){
-		this->meanX = mean;
-	}
-	void setPointsYMean(float mean){
-		this->meanY = mean;
-	}
-
-	size_t size(){
-		return data->size();
-	}
-};
-
-
 class GeneralController : public CSocketNode, public RobotNode // la clase GeneralController hereda de la clase CSocketNode
 {
 private:
@@ -263,6 +202,15 @@ public:
 	void stopRobotTracking();
 	void stopCurrentTour();
 	void trackRobot();
+
+	int lockLaserLandmarks();
+	int unlockLaserLandmarks();
+
+	int lockRFIDLandmarks();
+	int unlockRFIDLandmarks();
+
+	int lockVisualLandmarks();
+	int unlockVisualLandmarks();
 private:
 	static const float LASER_MAX_RANGE;
 	static const float LANDMARK_RADIUS;
@@ -270,6 +218,7 @@ private:
 	UDPClient* spdUDPClient;
 	RobotDataStreamer* spdWSServer;
 	RNRecurrentTaskMap* tasks;
+	RNCameraTask* omnidirectionalTask;
 
 	//OpenCV
 	//cv::VideoCapture vc;
@@ -312,7 +261,9 @@ private:
 
 	pthread_t trackThread;
 
-	pthread_mutex_t mutexLandmarkLocker;
+	pthread_mutex_t laserLandmarksLocker;
+	pthread_mutex_t rfidLandmarksLocker;
+	pthread_mutex_t visualLandmarksLocker;
 
 	void getMapId(char* cad, int& mapId);
 

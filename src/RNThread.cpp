@@ -63,9 +63,9 @@ int RNThread::create(RNFunPointer* func, bool joinable, bool lowerPriority){
  		}
  	} else {
  		if(this->threadName.size() == 0){
-			RNUtils::printLn("Created anonymous thread with id %d", this->thread);
+			RNUtils::printLn("Created anonymous thread with id %ld", this->thread);
 		} else {
-			RNUtils::printLn("Created thread %s with Id %d", this->threadName.c_str(), this->thread);
+			RNUtils::printLn("Created thread %s with Id %ld", this->threadName.c_str(), this->thread);
 		} 	
 	}
  	
@@ -168,9 +168,9 @@ void RNThread::threadStarted(){
 	this->isStarted = true;
 	processId = getpid();
 	if(this->threadName.size() == 0){
-		RNUtils::printLn("Anonymous thread (%d) is running with processId %d", this->thread, this->processId);
+		RNUtils::printLn("Anonymous thread (%ld) is running with processId %d", this->thread, this->processId);
 	} else {
-		RNUtils::printLn("Thread %s (%d) is running with processId %d", this->threadName.c_str(), this->thread, this->processId);
+		RNUtils::printLn("Thread %s (%ld) is running with processId %d", this->threadName.c_str(), this->thread, this->processId);
 	}
 }
 
@@ -190,9 +190,9 @@ void RNThread::threadFinished(){
 	this->hasFinished = true;
 
 	if(this->threadName.size() == 0){
-		RNUtils::printLn("Anonymous thread (%d) with processId %d has has finished", this->thread, this->processId);
+		RNUtils::printLn("Anonymous thread (%ld) with processId %d has has finished", this->thread, this->processId);
 	} else {
-		RNUtils::printLn("Thread %s (%d) with processId %d has finished", this->threadName.c_str(), this->thread, this->processId);
+		RNUtils::printLn("Thread %s (%ld) with processId %d has finished", this->threadName.c_str(), this->thread, this->processId);
 	}
 }
 

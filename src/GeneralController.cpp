@@ -55,9 +55,22 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
     this->nXCoord = 0;
     this->nYCoord = 0;
 	loadRobotConfig();
-	pthread_mutex_init(&mutexLandmarkLocker, NULL);
+	pthread_mutex_init(&laserLandmarksLocker, NULL);
+	pthread_mutex_init(&rfidLandmarksLocker, NULL);
+	pthread_mutex_init(&visualLandmarksLocker, NULL);
 
 	tasks = new RNRecurrentTaskMap(this);
+
+	omnidirectionalTask = new RNCameraTask("Omnidirectional Task");
+
+
+	//Tasks added:
+	tasks->addTask(omnidirectionalTask);
+
+
+	//Start all tasks;
+	tasks->startAllTasks();
+
 
 	spdWSServer = new RobotDataStreamer();
 	spdWSServer->init("", 0, SOCKET_SERVER);
@@ -75,7 +88,9 @@ GeneralController::~GeneralController(void){
 
 	stopCurrentTour();
 	stopRobotTracking();
-	pthread_mutex_destroy(&mutexLandmarkLocker);
+	pthread_mutex_destroy(&laserLandmarksLocker);
+	pthread_mutex_destroy(&rfidLandmarksLocker);
+	pthread_mutex_destroy(&visualLandmarksLocker);
 	delete maestroControllers;
 	delete kalmanFuzzy;
 	delete ttsLipSync;
@@ -2307,7 +2322,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 
 	std::vector<int> dataIndices = stats::findIndicesHigherThan(dataIntensities, 0);
 
-	pthread_mutex_lock(&mutexLandmarkLocker);
+	lockLaserLandmarks();
 
 	for(int i = 0; i < landmarks->size(); i++){
 		delete landmarks->at(i);
@@ -2373,7 +2388,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 		//RNUtils::printLn("Questa Merda dopo della correzione [%d] è {d: %f, a: %f}", i, landmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, landmarks->at(i)->getPointsYMean());
 		
 	}
-	pthread_mutex_unlock(&mutexLandmarkLocker);
+	unlockLaserLandmarks();
 }
 
 void GeneralController::onSecurityDistanceWarningSignal(){
@@ -2602,7 +2617,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 		Matrix Wk = Pk * ~Hk * !Sk;
 
 		//RNUtils::printLn("\n\nSeen landmarks: %d\n", self->landmarks->size());
-		pthread_mutex_lock(&self->mutexLandmarkLocker);
+		self->lockLaserLandmarks();
 		Matrix zl(2 * self->currentSector->landmarksSize(), 1);
 
 		for (int i = 0; i < self->landmarks->size(); i++){
@@ -2630,7 +2645,7 @@ void* GeneralController::trackRobotProbabilisticThread(void* object){
 				zl(2 * indexFound + 1, 0) = lndmrk->getPointsYMean() - zkl(indexFound, 1);
 			}
 		}
-		pthread_mutex_unlock(&self->mutexLandmarkLocker);
+		self->unlockLaserLandmarks();
 
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		Matrix newPosition = self->robotRawEncoderPosition + Wk * zl;
@@ -2719,6 +2734,30 @@ bool GeneralController::isThirdQuadrant(float angle){
 
 bool GeneralController::isFouthQuadrant(float angle){
 	return (angle < 0 && angle > (-M_PI/2));
+}
+
+int GeneralController::lockLaserLandmarks(){
+	return pthread_mutex_lock(&laserLandmarksLocker);
+}
+
+int GeneralController::unlockLaserLandmarks(){
+	return pthread_mutex_unlock(&laserLandmarksLocker);
+}
+
+int GeneralController::lockRFIDLandmarks(){
+	return pthread_mutex_lock(&rfidLandmarksLocker);
+}
+
+int GeneralController::unlockRFIDLandmarks(){
+	return pthread_mutex_unlock(&rfidLandmarksLocker);
+}
+
+int GeneralController::lockVisualLandmarks(){
+	return pthread_mutex_lock(&visualLandmarksLocker);
+}
+
+int GeneralController::unlockVisualLandmarks(){
+	return pthread_mutex_unlock(&visualLandmarksLocker);
 }
 
 void GeneralController::stopRobotTracking(){
