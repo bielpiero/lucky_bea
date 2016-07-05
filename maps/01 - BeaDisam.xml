@@ -1,21 +1,21 @@
 <sectors sequence="0,1,0">
 	<sector id="0" name="Mobile Robots" width="900" height="427" reference="2" polygon="m 0 0 l 0 427 l 900 0 l 0 -427 z">
 		<landmarks>
-			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="65" ypos="200"/>
-			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="320"/>
-			<landmark id="2" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="280" ypos="65"/>
-			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="360" ypos="320"/>
-			<landmark id="4" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="420" ypos="135"/>
-			<landmark id="5" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="520" ypos="320"/>
-			<landmark id="6" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="560" ypos="135"/>
-			<landmark id="7" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="725" ypos="280"/>
-			<landmark id="8" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="740" ypos="135"/>
-			<landmark id="9" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="165" ypos="0"/>
-			<landmark id="10" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="0" ypos="25"/>
-			<landmark id="11" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="40" ypos="147"/>
-			<landmark id="12" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="18" ypos="-149"/>
-			<landmark id="13" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="171" ypos="-299"/>
-			<landmark id="14" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="-145" ypos="120"/>
+			<landmark id="0" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="65" ypos="200"/>
+			<landmark id="1" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="320"/>
+			<landmark id="2" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="280" ypos="65"/>
+			<landmark id="3" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="360" ypos="320"/>
+			<landmark id="4" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="420" ypos="135"/>
+			<landmark id="5" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="520" ypos="320"/>
+			<landmark id="6" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="560" ypos="135"/>
+			<landmark id="7" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="725" ypos="280"/>
+			<landmark id="8" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="740" ypos="135"/>
+			<landmark id="9" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="165" ypos="0"/>
+			<landmark id="10" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="0" ypos="25"/>
+			<landmark id="11" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="40" ypos="147"/>
+			<landmark id="12" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="18" ypos="-149"/>
+			<landmark id="13" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="171" ypos="-299"/>
+			<landmark id="14" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="-145" ypos="120"/>
 		</landmarks>
 		<features>
 			<feature id="2" name="charger" width="50" height="25" xpos="658" ypos="397"/>
@@ -50,10 +50,10 @@
 	</sector>
 	<sector id="1" name="MR-FM Hallway" width="160" height="400" reference="2" polygon="m 0 0 l 0 400 l 160 0 l 0 -400 z">
 		<landmarks>
-			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="15" ypos="120"/>
-			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="115" ypos="240"/>
-			<landmark id="2" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="15" ypos="320"/>
-			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="25"/>
+			<landmark id="0" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="15" ypos="120"/>
+			<landmark id="1" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="115" ypos="240"/>
+			<landmark id="2" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="15" ypos="320"/>
+			<landmark id="3" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="25"/>
 		</landmarks>
 		<features>
 			<feature id="0" name="door" width="10" height="80" xpos="0" ypos="60" linked-sector-id="2" xcoord="420" ycoord="0"/>
@@ -83,9 +83,9 @@
 	</sector>
 	<sector id="3" name="Computer Vision" width="1340" height="1174" reference="2" polygon="m 0 0 l 0 1174 l 1340 0 l 0 -1174 z">
 		<landmarks>
-			<landmark id="0" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="0" ypos="1025"/>
-			<landmark id="1" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="153" ypos="875"/>
-			<landmark id="3" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="1174"/>
+			<landmark id="0" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="0" ypos="1025"/>
+			<landmark id="1" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="153" ypos="875"/>
+			<landmark id="3" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="1174"/>
 		</landmarks>
 		<features>
 			<feature id="0" name="door" width="137" height="10" xpos="80" ypos="1174" linked-sector-id="0" xcoord="18" ycoord="-1174"/>

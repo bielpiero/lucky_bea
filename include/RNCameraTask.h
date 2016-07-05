@@ -9,6 +9,7 @@ class RNCameraTask : public RNRecurrentTask{
 public:
 	RNCameraTask(const char* name = "Camera Task", const char* description = "");
 	virtual void task();
+	virtual void onKilled();
 private:
 	cv::VideoCapture capture;
 };

@@ -39,16 +39,20 @@ void RNRecurrentTask::reset(){
         kill();
         create();
         go();
+    } else {
+        create();
+        go();
     }
 }
 
 void RNRecurrentTask::kill(){
-    lock();
+    //lock();
     goRequested = false;
     running = false;
     killed = true;
-    unlock();
+    //unlock();
     cancel();
+    onKilled();
 }
 
 void* RNRecurrentTask::runThread(void* object){

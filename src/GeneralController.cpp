@@ -1,6 +1,9 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "GeneralController.h"
+
+#include "RNRecurrentTask.h"
+#include "RNRecurrentTaskMap.h"
+#include "RNLocalizationTask.h"
+#include "RNCameraTask.h"
 
 
 const float GeneralController::LASER_MAX_RANGE = 11.6;
@@ -25,7 +28,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	this->spdUDPPort = 0;
 
     this->lastSiteVisitedIndex = RN_NONE;
-	landmarks = new std::vector<RNLandmark*>();
+	laserLandmarks = new std::vector<RNLandmark*>();
 	kalmanFuzzy = new std::vector<fuzzy::trapezoid*>();
 	
 	robotState = Matrix(3, 1);
@@ -52,8 +55,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	this->currentMapId = RN_NONE;
 	this->currentSector = NULL;
 	this->nextSectorId = RN_NONE;
-    this->nXCoord = 0;
-    this->nYCoord = 0;
+
 	loadRobotConfig();
 	pthread_mutex_init(&laserLandmarksLocker, NULL);
 	pthread_mutex_init(&rfidLandmarksLocker, NULL);
@@ -61,12 +63,12 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
-	omnidirectionalTask = new RNCameraTask("Omnidirectional Task");
-
+	//omnidirectionalTask = new RNCameraTask("Omnidirectional Task");
+	localization = new RNLocalizationTask();
 
 	//Tasks added:
-	tasks->addTask(omnidirectionalTask);
-
+	//tasks->addTask(omnidirectionalTask);
+	tasks->addTask(localization);
 
 	//Start all tasks;
 	tasks->startAllTasks();
@@ -83,25 +85,30 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	RNUtils::getTimestamp(mappingSitesTimestamp);
 }
 
-
 GeneralController::~GeneralController(void){
-
 	stopCurrentTour();
-	stopRobotTracking();
 	pthread_mutex_destroy(&laserLandmarksLocker);
 	pthread_mutex_destroy(&rfidLandmarksLocker);
 	pthread_mutex_destroy(&visualLandmarksLocker);
+	
+	delete tasks;
 	delete maestroControllers;
+
+	for (int i = 0; i < kalmanFuzzy->size(); i++){
+		delete kalmanFuzzy->at(i);
+	}
+	kalmanFuzzy->clear();
 	delete kalmanFuzzy;
+
 	delete ttsLipSync;
 	delete spdWSServer;
 	delete currentSector;
 	
-	for(int i = 0; i < landmarks->size(); i++){
-		delete landmarks->at(i);
+	for(int i = 0; i < laserLandmarks->size(); i++){
+		delete laserLandmarks->at(i);
 	}
-	landmarks->clear();
-	delete landmarks;
+	laserLandmarks->clear();
+	delete laserLandmarks;
 
 	stopDynamicGesture();
 	stopVideoStreaming();
@@ -260,7 +267,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 
 			break;
 		case 0x11:
-			//trackRobot();
+
 			if(granted){
 				if(currentSector != NULL){
 					startSitesTour();
@@ -274,7 +281,6 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			}
 			break;
 		case 0x12:
-			//stopRobotTracking();
 			if(granted){
 				if(currentSector != NULL){
 					stopCurrentTour();
@@ -290,10 +296,10 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x13:
 			if(granted){
 				getPositions(cad, x, y, theta);
-				stopRobotTracking();
+				localization->kill();
 				if(currentSector != NULL){
 					setRobotPosition(x, y, theta);
-					trackRobot();
+					localization->reset();
 					sendMsg(socketIndex, 0x13, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 				} else {
 					RNUtils::printLn("Command 0x13. No current sector available to set robot position to ", getClientIPAddress(socketIndex));
@@ -1031,6 +1037,7 @@ void* GeneralController::dynamicFaceThread(void* object){
 			RNUtils::sleep(atoi(selected_dynamic_face.secuences[i].tsec.c_str()));
 		}
 	}
+	return NULL;
 }
 
 void GeneralController::getMapId(char* cad, int& mapId){
@@ -2256,8 +2263,7 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 				}
 			}
 			this->nextSectorId = index;
-	        this->nXCoord = nXCoord;
-	        this->nYCoord = nYCoord;
+			nextSectorCoord = PointXY(nXCoord, nYCoord);
 	    }
 	    if(RNUtils::toLowercase(currentSector->getName()).find(SEMANTIC_HALLWAY_STR) < std::string(SEMANTIC_HALLWAY_STR).length()){
 	    	this->hallwayDetected = true;
@@ -2324,10 +2330,10 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 
 	lockLaserLandmarks();
 
-	for(int i = 0; i < landmarks->size(); i++){
-		delete landmarks->at(i);
+	for(int i = 0; i < laserLandmarks->size(); i++){
+		delete laserLandmarks->at(i);
 	}
-	landmarks->clear();
+	laserLandmarks->clear();
 	RNLandmark* current = new RNLandmark;
 
 
@@ -2339,7 +2345,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 			} else {
 				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
 				if(current->size() > 1){
-					landmarks->push_back(current);
+					laserLandmarks->push_back(current);
 				}
 				current = new RNLandmark;
 			}
@@ -2347,45 +2353,45 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 			if((dataIndices[i] - dataIndices[i - 1]) <= 10){
 				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
 				if(current->size() > 1){
-					landmarks->push_back(current);
+					laserLandmarks->push_back(current);
 				}
 			} else if(current->size() > 0){
 				if(current->size() > 1){
-					landmarks->push_back(current);
+					laserLandmarks->push_back(current);
 				}
 			}
 		}
 	}
-	for(int i = 0; i < landmarks->size(); i++){
-		//RNUtils::printLn("Questa Merda prima alla correzione [%d] è {d: %f, a: %f}", i, landmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, landmarks->at(i)->getPointsYMean());
+	for(int i = 0; i < laserLandmarks->size(); i++){
+		//RNUtils::printLn("Questa Merda prima alla correzione [%d] è {d: %f, a: %f}", i, laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, laserLandmarks->at(i)->getPointsYMean());
 		Matrix Pkl = Matrix::eye(2);
-		Matrix Rkl = std::pow(0.003, 2) * Matrix::eye(landmarks->at(i)->size());
-		Matrix Zk(landmarks->at(i)->size(), 1);
-		Matrix Zke(landmarks->at(i)->size(), 1);
-		Matrix Hkl(landmarks->at(i)->size(), 2);
+		Matrix Rkl = std::pow(0.003, 2) * Matrix::eye(laserLandmarks->at(i)->size());
+		Matrix Zk(laserLandmarks->at(i)->size(), 1);
+		Matrix Zke(laserLandmarks->at(i)->size(), 1);
+		Matrix Hkl(laserLandmarks->at(i)->size(), 2);
 		Matrix Pc(2, 1);
-		Pc(0, 0) = landmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS;
-		Pc(1, 0) = landmarks->at(i)->getPointsYMean();
-		for(int j = 0; j < landmarks->at(i)->size(); j++){
+		Pc(0, 0) = laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS;
+		Pc(1, 0) = laserLandmarks->at(i)->getPointsYMean();
+		for(int j = 0; j < laserLandmarks->at(i)->size(); j++){
 			
 
-			Zk(j, 0) = landmarks->at(i)->getPointAt(j)->getX();
+			Zk(j, 0) = laserLandmarks->at(i)->getPointAt(j)->getX();
 
-			Zke(j, 0) = Pc(0, 0) * cos(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()) - LANDMARK_RADIUS * cos(asin((Pc(0, 0) / LANDMARK_RADIUS) * sin(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY())));
+			Zke(j, 0) = Pc(0, 0) * cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) - LANDMARK_RADIUS * cos(asin((Pc(0, 0) / LANDMARK_RADIUS) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY())));
 
-			float calc = (1 / LANDMARK_RADIUS) * (1 / std::sqrt(1 - ((std::pow(Pc(0, 0), 2) * std::pow(sin(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()), 2))/(std::pow(LANDMARK_RADIUS, 2)))));
-			Hkl(j, 0) = cos(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()) + Pc(0, 0) * std::pow(sin(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()), 2) * calc;
-			Hkl(j, 1) = -Pc(0, 0) * sin(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()) + std::pow(Pc(0, 0), 2) * sin(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()) * cos(Pc(1, 0) - landmarks->at(i)->getPointAt(j)->getY()) * calc;
+			float calc = (1 / LANDMARK_RADIUS) * (1 / std::sqrt(1 - ((std::pow(Pc(0, 0), 2) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2))/(std::pow(LANDMARK_RADIUS, 2)))));
+			Hkl(j, 0) = cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + Pc(0, 0) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2) * calc;
+			Hkl(j, 1) = -Pc(0, 0) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + std::pow(Pc(0, 0), 2) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) * cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) * calc;
 		}
 
 		Matrix Skl = Hkl * Pkl * ~Hkl + Rkl;
 		Matrix Wkl = Pkl * ~Hkl * !Skl;
 		Pc = Pc + (Wkl * (Zk - Zke));
 
-		landmarks->at(i)->setPointsXMean(Pc(0, 0));
-		landmarks->at(i)->setPointsYMean(Pc(1, 0));
+		laserLandmarks->at(i)->setPointsXMean(Pc(0, 0));
+		laserLandmarks->at(i)->setPointsYMean(Pc(1, 0));
 
-		//RNUtils::printLn("Questa Merda dopo della correzione [%d] è {d: %f, a: %f}", i, landmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, landmarks->at(i)->getPointsYMean());
+		//RNUtils::printLn("Questa Merda dopo della correzione [%d] è {d: %f, a: %f}", i, laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, laserLandmarks->at(i)->getPointsYMean());
 		
 	}
 	unlockLaserLandmarks();
@@ -2496,181 +2502,131 @@ void GeneralController::stopCurrentTour(){
 }
 
 
-void GeneralController::initializeKalmanVariables(){
-	
-	float uX, uY, uTh;
+int GeneralController::initializeKalmanVariables(){
+	int result = RN_NONE;
+	if(currentSector != NULL){
+		float uX, uY, uTh;
 
-	fuzzy::trapezoid* xxKK = new fuzzy::trapezoid("Xx(k|k)", robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
-	
-	fuzzy::trapezoid* xyKK = new fuzzy::trapezoid("Xy(k|k)", robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
-	
-	fuzzy::trapezoid* xThKK = new fuzzy::trapezoid("XTh(k|k)", robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x1, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x2, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x3, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x4);	
-	
-	fuzzy::trapezoid* vdK1 = new fuzzy::trapezoid("Vd(k + 1)", robotConfig->navParams->processNoise->dZone->x1, robotConfig->navParams->processNoise->dZone->x2, robotConfig->navParams->processNoise->dZone->x3, robotConfig->navParams->processNoise->dZone->x4);
-	
-	fuzzy::trapezoid* vThK1 = new fuzzy::trapezoid("VTh(k + 1)", robotConfig->navParams->processNoise->thZone->x1, robotConfig->navParams->processNoise->thZone->x2, robotConfig->navParams->processNoise->thZone->x3, robotConfig->navParams->processNoise->thZone->x4);	
-	
-	fuzzy::trapezoid* wdK1 = new fuzzy::trapezoid("Wd(k + 1)", robotConfig->navParams->observationNoise->dZone->x1, robotConfig->navParams->observationNoise->dZone->x2, robotConfig->navParams->observationNoise->dZone->x3, robotConfig->navParams->observationNoise->dZone->x4);
-	
-	fuzzy::trapezoid* wThK1 = new fuzzy::trapezoid("WTh(k + 1)", robotConfig->navParams->observationNoise->thZone->x1, robotConfig->navParams->observationNoise->thZone->x2, robotConfig->navParams->observationNoise->thZone->x3, robotConfig->navParams->observationNoise->thZone->x4);	
-	
-	//uX = fuzzy::fstats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
-	//uY = fuzzy::fstats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
-	//uTh = fuzzy::fstats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
-	uX = .36;
-	uY = .36;
-	uTh = .05;
+		fuzzy::trapezoid* xxKK = new fuzzy::trapezoid("Xx(k|k)", robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
+		
+		fuzzy::trapezoid* xyKK = new fuzzy::trapezoid("Xy(k|k)", robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
+		
+		fuzzy::trapezoid* xThKK = new fuzzy::trapezoid("XTh(k|k)", robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x1, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x2, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x3, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x4);	
+		
+		fuzzy::trapezoid* vdK1 = new fuzzy::trapezoid("Vd(k + 1)", robotConfig->navParams->processNoise->dZone->x1, robotConfig->navParams->processNoise->dZone->x2, robotConfig->navParams->processNoise->dZone->x3, robotConfig->navParams->processNoise->dZone->x4);
+		
+		fuzzy::trapezoid* vThK1 = new fuzzy::trapezoid("VTh(k + 1)", robotConfig->navParams->processNoise->thZone->x1, robotConfig->navParams->processNoise->thZone->x2, robotConfig->navParams->processNoise->thZone->x3, robotConfig->navParams->processNoise->thZone->x4);	
+		
+		fuzzy::trapezoid* wdK1 = new fuzzy::trapezoid("Wd(k + 1)", robotConfig->navParams->observationNoise->dZone->x1, robotConfig->navParams->observationNoise->dZone->x2, robotConfig->navParams->observationNoise->dZone->x3, robotConfig->navParams->observationNoise->dZone->x4);
+		
+		fuzzy::trapezoid* wThK1 = new fuzzy::trapezoid("WTh(k + 1)", robotConfig->navParams->observationNoise->thZone->x1, robotConfig->navParams->observationNoise->thZone->x2, robotConfig->navParams->observationNoise->thZone->x3, robotConfig->navParams->observationNoise->thZone->x4);	
+		
+		//uX = fuzzy::fstats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
+		//uY = fuzzy::fstats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
+		//uTh = fuzzy::fstats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
+		uX = .36;
+		uY = .36;
+		uTh = .05;
 
-	P(0, 0) = uX; 	P(0, 1) = 0; 	P(0, 2) = 0;
-	P(1, 0) = 0; 	P(1, 1) = uY;	P(1, 2) = 0;
-	P(2, 0) = 0;	P(2, 1) = 0;	P(2, 2) = uTh;
-	
-	// Variances and Covariances Matrix of Process noise Q
+		P(0, 0) = uX; 	P(0, 1) = 0; 	P(0, 2) = 0;
+		P(1, 0) = 0; 	P(1, 1) = uY;	P(1, 2) = 0;
+		P(2, 0) = 0;	P(2, 1) = 0;	P(2, 2) = uTh;
+		
+		// Variances and Covariances Matrix of Process noise Q
 
-	uX = fuzzy::fstats::uncertainty(vdK1->getVertexA(), vdK1->getVertexB(), vdK1->getVertexC(), vdK1->getVertexD());
-	uTh = fuzzy::fstats::uncertainty(vThK1->getVertexA(), vThK1->getVertexB(), vThK1->getVertexC(), vThK1->getVertexD());
-	
-	Q(0, 0) = uX; 	Q(0, 1) = 0;
-	Q(1, 0) = 0; 	Q(1, 1) = uTh;
+		uX = fuzzy::fstats::uncertainty(vdK1->getVertexA(), vdK1->getVertexB(), vdK1->getVertexC(), vdK1->getVertexD());
+		uTh = fuzzy::fstats::uncertainty(vThK1->getVertexA(), vThK1->getVertexB(), vThK1->getVertexC(), vThK1->getVertexD());
+		
+		Q(0, 0) = uX; 	Q(0, 1) = 0;
+		Q(1, 0) = 0; 	Q(1, 1) = uTh;
 
-	uX = fuzzy::fstats::uncertainty(wdK1->getVertexA(), wdK1->getVertexB(), wdK1->getVertexC(), wdK1->getVertexD());
-	uTh = fuzzy::fstats::uncertainty(wThK1->getVertexA(), wThK1->getVertexB(), wThK1->getVertexC(), wThK1->getVertexD());
+		uX = fuzzy::fstats::uncertainty(wdK1->getVertexA(), wdK1->getVertexB(), wdK1->getVertexC(), wdK1->getVertexD());
+		uTh = fuzzy::fstats::uncertainty(wThK1->getVertexA(), wThK1->getVertexB(), wThK1->getVertexC(), wThK1->getVertexD());
 
-	R =  Matrix(2 * currentSector->landmarksSize(), 2 * currentSector->landmarksSize());
-	for (int i = 0; i < R.cols_size(); i++){
-		if((i % 2) != 0){
-			R(i, i) = uTh;
-		} else {
-			R(i, i) = uX;
+		R =  Matrix(2 * currentSector->landmarksSize(), 2 * currentSector->landmarksSize());
+		for (int i = 0; i < R.cols_size(); i++){
+			if((i % 2) != 0){
+				R(i, i) = uTh;
+			} else {
+				R(i, i) = uX;
+			}
 		}
+
+		kalmanFuzzy->clear();
+		kalmanFuzzy->push_back(xxKK);
+		kalmanFuzzy->push_back(xyKK);
+		kalmanFuzzy->push_back(xThKK);
+		
+		kalmanFuzzy->push_back(vdK1);
+		kalmanFuzzy->push_back(vThK1);
+		
+		kalmanFuzzy->push_back(wdK1);
+		kalmanFuzzy->push_back(wThK1);
+
+		result = 0;
+	} 
+	return result;
+}
+
+Matrix GeneralController::getP(){
+	return P;
+}
+
+Matrix GeneralController::getQ(){
+	return Q;
+}
+
+Matrix GeneralController::getR(){
+	return R;
+}
+
+MapSector* GeneralController::getCurrentSector(){
+	return currentSector;
+}
+
+Matrix GeneralController::getRawEncoderPosition(){
+	return this->robotRawEncoderPosition;
+}
+
+Matrix GeneralController::getRawDeltaPosition(){
+	return this->robotRawDeltaPosition;
+}
+
+int GeneralController::getCurrenMapId(){
+	return this->currentMapId;
+}
+
+int GeneralController::getCurrentSectorId(){
+	int result = RN_NONE;
+	if(currentSector != NULL){
+		result = currentSector->getId();
 	}
-
-	kalmanFuzzy->clear();
-	kalmanFuzzy->push_back(xxKK);
-	kalmanFuzzy->push_back(xyKK);
-	kalmanFuzzy->push_back(xThKK);
-	
-	kalmanFuzzy->push_back(vdK1);
-	kalmanFuzzy->push_back(vThK1);
-	
-	kalmanFuzzy->push_back(wdK1);
-	kalmanFuzzy->push_back(wThK1);
+	return result;
 }
 
-void GeneralController::trackRobot(){
-	stopRobotTracking();
-	initializeKalmanVariables();
-	RNUtils::sleep(1000);
-	RNUtils::printLn("Tracking Doris...");
-	//pthread_create(&trackThread, NULL, trackRobotThread, (void *)(this));
-	pthread_create(&trackThread, NULL, trackRobotProbabilisticThread, (void *)(this));
+int GeneralController::getNextSectorId(){
+	return this->nextSectorId;
 }
 
-void* GeneralController::trackRobotProbabilisticThread(void* object){
-	GeneralController* self = (GeneralController*)object;
-	float alpha = 0.2;
-	self->keepRobotTracking = YES;
-	Matrix Ak = Matrix::eye(3);
-	Matrix Bk(3, 2);
-	Matrix pk1;
-	Matrix Hk;
-	Matrix Pk = self->P;
-	
-	while(RNUtils::ok() and self->keepRobotTracking == YES){
-		pk1 = Pk;
-
-		Ak(0, 2) = -self->robotRawDeltaPosition(0, 0) * std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-		Ak(1, 2) = self->robotRawDeltaPosition(0, 0) * std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-
-		Bk(0, 0) = std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-		Bk(0, 1) = -0.5 * self->robotRawDeltaPosition(0, 0) * std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-
-		Bk(1, 0) = std::sin(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-		Bk(1, 1) = 0.5 * self->robotRawDeltaPosition(0, 0) * std::cos(self->robotRawEncoderPosition(2, 0) + self->robotRawDeltaPosition(1, 0)/2);
-
-		Bk(2, 0) = 0.0;
-		Bk(2, 1) = 1.0;
-
-		Matrix currentQ = self->Q;
-		if(self->robotRawDeltaPosition(0, 0) == 0.0 and self->robotRawDeltaPosition(1, 0) == 0.0){
-			currentQ = Matrix(2, 2);
-		}
-
-		Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
-
-
-		Hk = Matrix(2 * self->currentSector->landmarksSize(), STATE_VARIABLES);
-		for(int i = 0, zIndex = 0; i < self->currentSector->landmarksSize(); i++, zIndex += 2){
-			Hk(zIndex, 0) = -((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0))/std::sqrt(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex, 1) = -((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0))/std::sqrt(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex, 2) = 0.0;
-
-			Hk(zIndex + 1, 0) = ((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0))/(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex + 1, 1) = -((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0))/(std::pow((self->currentSector->landmarkAt(i)->xpos) - self->robotRawEncoderPosition(0, 0), 2) + std::pow((self->currentSector->landmarkAt(i)->ypos) - self->robotRawEncoderPosition(1, 0), 2));
-			Hk(zIndex + 1, 2) = -1.0;
-		}
-		Matrix zkl;
-		self->getObservations(zkl);
-		//RNUtils::printLn("Observation Vector:");
-		//zkl.print();
-		Matrix Sk = Hk * Pk * ~Hk + self->R;
-		Matrix Wk = Pk * ~Hk * !Sk;
-
-		//RNUtils::printLn("\n\nSeen landmarks: %d\n", self->landmarks->size());
-		self->lockLaserLandmarks();
-		Matrix zl(2 * self->currentSector->landmarksSize(), 1);
-
-		for (int i = 0; i < self->landmarks->size(); i++){
-			RNLandmark* lndmrk = self->landmarks->at(i);
-
-			//RNUtils::printLn("landmarks {d: %f, a: %f}\n", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
-			std::vector<float> euclideanDistances;
-			for (int j = 0; j < zkl.rows_size(); j++){
-				euclideanDistances.push_back(std::sqrt(std::pow(zkl(j, 0), 2) + std::pow(lndmrk->getPointsXMean(), 2) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1)))));
-				//RNUtils::printLn("Euclidean Distance[%d]: %f", j, euclideanDistances.at(j));	
-			}
-
-			float minorDistance = std::numeric_limits<float>::infinity();
-			int indexFound = RN_NONE;
-			for (int j = 0; j < euclideanDistances.size(); j++){
-				if(euclideanDistances.at(j) < alpha){
-					minorDistance = euclideanDistances.at(j);
-					indexFound = j;
-				}	
-			}
-			
-			//RNUtils::printLn("Matched landmark: {idx : %d, MHD: %f}\n", indexFound, minorDistance);
-			if(indexFound > RN_NONE){
-				zl(2 * indexFound, 0) = lndmrk->getPointsXMean() - zkl(indexFound, 0);
-				zl(2 * indexFound + 1, 0) = lndmrk->getPointsYMean() - zkl(indexFound, 1);
-			}
-		}
-		self->unlockLaserLandmarks();
-
-		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
-		Matrix newPosition = self->robotRawEncoderPosition + Wk * zl;
-
-
-		self->setPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
-		float angle = 0;
-		bool isInsidePolygon = self->currentSector->checkPointXYInPolygon(PointXY(newPosition(0, 0), newPosition(1, 0)), angle);
-
-		if(not isInsidePolygon){
-			self->loadSector(self->currentMapId, self->nextSectorId);
-			RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", self->nextSectorId, self->currentSector->getName().c_str());
-			self->nextSectorId = RN_NONE;
-			//new position
-			self->lastSiteVisitedIndex = 0;
-            self->setPosition(newPosition(0, 0) + self->nXCoord, newPosition(1, 0) + self->nYCoord, newPosition(2, 0));
-			self->initializeKalmanVariables();
-		}
-		RNUtils::sleep(30);
-	}
-	self->keepRobotTracking = NO;
-	return NULL;
+void GeneralController::setNextSectorId(int id){
+	this->nextSectorId = id;
 }
 
+int GeneralController::getLastVisitedNode(){
+	return this->lastSiteVisitedIndex;
+}
 
+void GeneralController::setLastVisitedNode(int id){
+	this->lastSiteVisitedIndex = id;
+}
+
+std::vector<RNLandmark*>* GeneralController::getLaserLandmarks(){
+	return this->laserLandmarks;
+}
+
+PointXY GeneralController::getNextSectorCoord(){
+	return this->nextSectorCoord;
+}
 
 void* GeneralController::trackRobotThread(void* object){
 	GeneralController* self = (GeneralController*)object;
@@ -2688,36 +2644,6 @@ void* GeneralController::trackRobotThread(void* object){
 	}
 	self->keepRobotTracking = NO;
 	return NULL;
-}
-
-void GeneralController::getObservations(Matrix& observations){
-	Matrix result(currentSector->landmarksSize(), 2);
-
-	for(int k = 0; k < currentSector->landmarksSize(); k++){
-		float distance = 0, angle = 0;
-		s_landmark* landmark = currentSector->landmarkAt(k);
-
-
-		landmarkObservation(robotRawEncoderPosition, landmark, distance, angle);
-		result(k, 0) = distance;
-		if(angle > M_PI){
-			angle = angle - 2 * M_PI;
-		} else if(angle < -M_PI){
-			angle = angle + 2 * M_PI;
-		}
-		result(k, 1) = angle;
-	}
-
-	observations = result;
-}
-
-void GeneralController::getObservationsTrapezoids(std::vector<fuzzy::trapezoid*> &obsWithNoise, std::vector<fuzzy::trapezoid*> &obsWONoise){
-		
-}
-
-void GeneralController::landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle){
-	distance = std::sqrt(std::pow(landmark->xpos - Xk(0, 0), 2) + std::pow(landmark->ypos - Xk(1, 0), 2));
-	angle = std::atan2(landmark->ypos - Xk(1, 0), landmark->xpos - Xk(0, 0)) - Xk(2, 0);
 }
 
 bool GeneralController::isFirstQuadrant(float angle){
@@ -2760,22 +2686,6 @@ int GeneralController::unlockVisualLandmarks(){
 	return pthread_mutex_unlock(&visualLandmarksLocker);
 }
 
-void GeneralController::stopRobotTracking(){
-	if(keepRobotTracking == YES){
-		keepRobotTracking = MAYBE;
-		RNUtils::printLn("Stopping robot tracking thread");
-		//pthread_cancel(trackThread);
-		//keepRobotTracking = NO;
-		while(keepRobotTracking != NO) RNUtils::sleep(100);
-		RNUtils::printLn("Stopped robot tracking thread");
-
-		for(int i = 0; i < kalmanFuzzy->size(); i++){
-			delete kalmanFuzzy->at(i);
-		}
-		kalmanFuzzy->clear();
-	}
-}
-
 void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice, int port){
 	pthread_t t1;
 	stopVideoStreaming();
@@ -2807,7 +2717,7 @@ void GeneralController::stopVideoStreaming(){
 }
 
 void* GeneralController::streamingThread(void* object){
-	s_video_streamer_data* data = (s_video_streamer_data*)object;
+	/*s_video_streamer_data* data = (s_video_streamer_data*)object;
 	
 	int socketIndex = data->socketIndex;
 	int port = data->port;
@@ -2818,7 +2728,7 @@ void* GeneralController::streamingThread(void* object){
 	//cv::Stitcher stitcher = cv::Stitcher::createDefault(true);
 	//cv::Stitcher::Status status;
 
-	/*cv::Mat frame;
+	cv::Mat frame;
 	std::vector<uchar> buff;
 	std::vector<int> params = vector<int>(2);
 	params[0] = CV_IMWRITE_JPEG_QUALITY;
@@ -2849,7 +2759,7 @@ void GeneralController::onSensorsScanCompleted(){
 		sectorId = currentSector->getId();
 	}
 	buffer_str.clear();
-	buffer_str << "$DORIS|" << mapId << "," << sectorId << "," << emotionsTimestamp.str() << "," << mappingEnvironmentTimestamp.str() << "," << mappingLandmarksTimestamp.str() << "," << mappingFeaturesTimestamp.str() << "," + mappingSitesTimestamp.str() << "," << landmarks->size();
+	buffer_str << "$DORIS|" << mapId << "," << sectorId << "," << emotionsTimestamp.str() << "," << mappingEnvironmentTimestamp.str() << "," << mappingLandmarksTimestamp.str() << "," << mappingFeaturesTimestamp.str() << "," + mappingSitesTimestamp.str() << "," << laserLandmarks->size();
 
 	if(spdUDPClient != NULL){
 		spdUDPClient->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());

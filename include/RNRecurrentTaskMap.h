@@ -1,10 +1,9 @@
 #ifndef RN_RECURRENT_TASK_MAP_H
 #define RN_RECURRENT_TASK_MAP_H
 
-#include "RNRecurrentTask.h"
 #include <vector>
 
-class GeneralController;
+#include "RNRecurrentTask.h"
 
 class RNRecurrentTaskMap{
 private:

@@ -1,3 +1,6 @@
+#ifndef MATRIX_H
+#define MATRIX_H
+
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -65,3 +68,4 @@ class Matrix{
 		const size_t rows_size() const;
 		const size_t cols_size() const;
 };
+#endif

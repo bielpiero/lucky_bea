@@ -1,8 +1,6 @@
 #ifndef GENERAL_CONTROLLER_H
 #define GENERAL_CONTROLLER_H
 
-//#include <opencv2/opencv.hpp>
-
 #include "RobotNode.h"
 #include "RNLandmark.h"
 
@@ -24,11 +22,6 @@
 
 // Task headers
 
-#include "RNRecurrentTaskMap.h"
-#include "RNCameraTask.h"
-
-
-
 #define CONVERTER_BUFFER_SIZE 20
 #define SERVOS_COUNT 16
 
@@ -42,10 +35,6 @@
 #define PERMISSION_ACCEPTED 0
 #define PERMISSION_REQUESTED 1
 #define PERMISSION_REJECTED 2
-
-#define STATE_VARIABLES 3
-
-#define MAX_LANDMAKS 20;
 
 #define X_INDEX 0
 #define V_INDEX 3
@@ -66,6 +55,10 @@
 using namespace rapidxml;
 
 class GeneralController;
+
+class RNLocalizationTask;
+class RNCameraTask;
+class RNRecurrentTaskMap;
 
 struct s_motor{
 	std::string idMotor;
@@ -196,12 +189,21 @@ public:
     void onSecurityDistanceStopSignal();
     void onSensorsScanCompleted();
 	
-	void initializeKalmanVariables();
+	int initializeKalmanVariables();
+	void loadSector(int mapId, int sectorId);
 	
 	void stopVideoStreaming();
-	void stopRobotTracking();
 	void stopCurrentTour();
-	void trackRobot();
+
+	int getCurrenMapId();
+	int getCurrentSectorId();
+	int getNextSectorId();
+	int getLastVisitedNode();
+
+	PointXY getNextSectorCoord();
+
+	void setLastVisitedNode(int id);
+	void setNextSectorId(int id);
 
 	int lockLaserLandmarks();
 	int unlockLaserLandmarks();
@@ -211,13 +213,26 @@ public:
 
 	int lockVisualLandmarks();
 	int unlockVisualLandmarks();
+
+	Matrix getP();
+	Matrix getQ();
+	Matrix getR();
+
+	
+	Matrix getRawEncoderPosition();
+	Matrix getRawDeltaPosition();
+
+	MapSector* getCurrentSector();
+	std::vector<RNLandmark*>* getLaserLandmarks();
 private:
 	static const float LASER_MAX_RANGE;
 	static const float LANDMARK_RADIUS;
 
 	UDPClient* spdUDPClient;
 	RobotDataStreamer* spdWSServer;
+	// Tasks Objects
 	RNRecurrentTaskMap* tasks;
+	RNLocalizationTask* localization;
 	RNCameraTask* omnidirectionalTask;
 
 	//OpenCV
@@ -239,7 +254,7 @@ private:
 	int tokenRequester;
     int lastSiteVisitedIndex;
 	
-	std::vector<RNLandmark*>* landmarks;
+	std::vector<RNLandmark*>* laserLandmarks;
 	
 	bool setChargerPosition;
 	bool hasAchievedGoal;
@@ -254,8 +269,7 @@ private:
 	int currentMapId;
 	int nextSectorId;
 	bool hallwayDetected;
-    float nXCoord;
-    float nYCoord;
+	PointXY nextSectorCoord;
 	MapSector* currentSector;
 	s_robot* robotConfig;
 
@@ -266,8 +280,7 @@ private:
 	pthread_mutex_t visualLandmarksLocker;
 
 	void getMapId(char* cad, int& mapId);
-
-	void loadSector(int mapId, int sectorId);
+	
 	void loadRobotConfig();
 	
 	void initializeSPDPort(int socketIndex, char* cad);
@@ -302,9 +315,6 @@ private:
 	void deleteSectorInformationFeatures(char* cad);
 	
 	void startSitesTour();
-	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
-	void getObservationsTrapezoids(std::vector<fuzzy::trapezoid*> &obsWithNoise, std::vector<fuzzy::trapezoid*> &obsWONoise);
-	void getObservations(Matrix &observations);
 
 	bool isFirstQuadrant(float angle);
 	bool isSecondQuadrant(float angle);
@@ -316,7 +326,6 @@ private:
 	
 	static void* streamingThread(void*);
 	static void* trackRobotThread(void*);
-	static void* trackRobotProbabilisticThread(void*);
 	static void* sitesTourThread(void*);
 };
 

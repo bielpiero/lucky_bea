@@ -1,5 +1,5 @@
-#include "GeneralController.h"
 #include "RNRecurrentTaskMap.h"
+#include "GeneralController.h"
 
 RNRecurrentTaskMap::RNRecurrentTaskMap(GeneralController* gn){
 	this->gn = gn;

@@ -85,7 +85,7 @@ void* RNThread::run(void* arg){
 	} else {
 		self->getFunctionPointer()->invoke();
 	}
-
+	RNUtils::sleep(10);
 	return result;
 }
 

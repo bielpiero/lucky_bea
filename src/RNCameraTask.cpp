@@ -7,3 +7,7 @@ RNCameraTask::RNCameraTask(const char* name, const char* description) : RNRecurr
 void RNCameraTask::task(){
 	//RNUtils::printLn("Trying...");
 }
+
+void RNCameraTask::onKilled(){
+	
+}
