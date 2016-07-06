@@ -63,12 +63,13 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
-	//omnidirectionalTask = new RNCameraTask("Omnidirectional Task");
+	omnidirectionalTask = new RNCameraTask("Omnidirectional Task");
 	localization = new RNLocalizationTask();
 
 	//Tasks added:
-	//tasks->addTask(omnidirectionalTask);
 	tasks->addTask(localization);
+	tasks->addTask(omnidirectionalTask);
+	
 
 	//Start all tasks;
 	tasks->startAllTasks();
@@ -90,8 +91,8 @@ GeneralController::~GeneralController(void){
 	pthread_mutex_destroy(&laserLandmarksLocker);
 	pthread_mutex_destroy(&rfidLandmarksLocker);
 	pthread_mutex_destroy(&visualLandmarksLocker);
-	
-	delete tasks;
+
+	//delete tasks;
 	delete maestroControllers;
 
 	for (int i = 0; i < kalmanFuzzy->size(); i++){

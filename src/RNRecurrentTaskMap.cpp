@@ -33,7 +33,6 @@ void RNRecurrentTaskMap::removeTask(RNRecurrentTask* task){
 
 void RNRecurrentTaskMap::removeAllTasks(){
 	for(int i = 0; i < tasks->size(); i++){
-		tasks->at(i)->kill();
 		delete tasks->at(i);
 	}
 	tasks->clear();

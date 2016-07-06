@@ -46,13 +46,17 @@ void RNRecurrentTask::reset(){
 }
 
 void RNRecurrentTask::kill(){
-    //lock();
-    goRequested = false;
-    running = false;
-    killed = true;
-    //unlock();
-    cancel();
-    onKilled();
+    if(running){
+        RNUtils::printLn("Thread %s will be killed...", this->getTaskName().c_str());
+        //lock();
+        goRequested = false;
+        running = false;
+        killed = true;
+        //unlock();
+        stop();
+        cancel();
+        onKilled();
+    }
 }
 
 void* RNRecurrentTask::runThread(void* object){
@@ -63,10 +67,11 @@ void* RNRecurrentTask::runThread(void* object){
         while(not goRequested){
             RNUtils::sleep(10);
         }
-        lock();
+        //lock();
         running = true;
-        unlock();
+        //unlock();
         task();
+        RNUtils::sleep(20);
     }
     threadFinished();
     return NULL;

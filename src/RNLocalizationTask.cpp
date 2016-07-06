@@ -4,6 +4,10 @@ RNLocalizationTask::RNLocalizationTask(const char* name, const char* description
 	enableLocalization = false;
 }
 
+RNLocalizationTask::~RNLocalizationTask(){
+
+}
+
 void RNLocalizationTask::init(){
 	if(gn != NULL and gn->initializeKalmanVariables() == 0){
 		Ak = Matrix::eye(3);
@@ -107,7 +111,7 @@ void RNLocalizationTask::task(){
 	} else {
 		init();
 	}
-	RNUtils::sleep(20);
+	//RNUtils::sleep(20);
 }
 
 void RNLocalizationTask::getObservations(Matrix& observations){
