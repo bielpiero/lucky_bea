@@ -12,9 +12,9 @@ void* RNAsyncTask::runInThisThread(void* arg){
 	joinable = true;
 	isRunning = true;
 	if(this->threadName.size() == 0){
-		RNUtils::printLn("Running anonymous thread with id %ld", this->thread);
+		RNUtils::printLn("Running anonymous thread with id %llu", this->thread);
 	} else {
-		RNUtils::printLn("Running thread %s with Id %ld", this->threadName.c_str(), this->thread);
+		RNUtils::printLn("Running thread %s with Id %llu", this->threadName.c_str(), this->thread);
 	} 
 
 	return runThread(arg);

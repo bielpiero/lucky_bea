@@ -6,16 +6,15 @@ GeneralController *robot;
 bool continue_execution = true;
 
 void signalHandler(int s){
+	RNUtils::shutdown();
 	RNUtils::printLn("Shutdown application Requested.");
 	RNUtils::printLn("Lucky Bea: Quitting..." );	
 	
 	if(robot != NULL){
     	delete robot;
     }
-    RNUtils::shutdown();
 	RNUtils::printLn("Succesfully closed...\n");
-	exit(1);
-
+	exit(0);
 }
 
 int main(int argc, char** argv){

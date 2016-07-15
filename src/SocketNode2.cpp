@@ -466,9 +466,9 @@ int CSocketNode::closeConnection(){
 
 	if(thread_status == 1){
 		thread_status = 2;
-		pthread_cancel(socketsThread);
-		//while(thread_status != 0) RNUtils::sleep(1);
+		while(thread_status != 0) RNUtils::sleep(10);
 	}
+	pthread_cancel(socketsThread);
 	RNUtils::printLn("Finished Connections Thread...");
 	for(int i = 0; i < MAX_CLIENTS; i++){
 		if(socket_conn[i].getSocket() != INVALID_SOCKET){

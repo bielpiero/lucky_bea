@@ -63,17 +63,18 @@ int RNThread::create(RNFunPointer* func, bool joinable, bool lowerPriority){
  		}
  	} else {
  		if(this->threadName.size() == 0){
-			RNUtils::printLn("Created anonymous thread with id %ld", this->thread);
+			RNUtils::printLn("Created anonymous thread with id %llu", this->thread);
 		} else {
-			RNUtils::printLn("Created thread %s with Id %ld", this->threadName.c_str(), this->thread);
+			RNUtils::printLn("Created thread %s with Id %llu", this->threadName.c_str(), this->thread);
 		} 	
 	}
  	
 }
 
 RNThread::~RNThread(){
-	pthread_mutex_destroy(&mutexLocker);
-	delete func;
+	unlock();
+	//pthread_mutex_destroy(&mutexLocker);
+	//delete func;
 }
 
 void* RNThread::run(void* arg){
@@ -168,9 +169,9 @@ void RNThread::threadStarted(){
 	this->isStarted = true;
 	processId = getpid();
 	if(this->threadName.size() == 0){
-		RNUtils::printLn("Anonymous thread (%ld) is running with processId %d", this->thread, this->processId);
+		RNUtils::printLn("Anonymous thread (%llu) is running with processId %d", this->thread, this->processId);
 	} else {
-		RNUtils::printLn("Thread %s (%ld) is running with processId %d", this->threadName.c_str(), this->thread, this->processId);
+		RNUtils::printLn("Thread %s (%llu) is running with processId %d", this->threadName.c_str(), this->thread, this->processId);
 	}
 }
 
@@ -187,13 +188,12 @@ bool RNThread::isThreadRunning() const{
 }
 
 void RNThread::threadFinished(){
-	this->hasFinished = true;
-
 	if(this->threadName.size() == 0){
-		RNUtils::printLn("Anonymous thread (%ld) with processId %d has has finished", this->thread, this->processId);
+		RNUtils::printLn("Anonymous thread (%llu) with processId %d has has finished", this->thread, this->processId);
 	} else {
-		RNUtils::printLn("Thread %s (%ld) with processId %d has finished", this->threadName.c_str(), this->thread, this->processId);
+		RNUtils::printLn("Thread %s (%llu) with processId %d has finished", this->threadName.c_str(), this->thread, this->processId);
 	}
+	this->hasFinished = true;
 }
 
 bool RNThread::hasThreadFinished() const{

@@ -4,6 +4,7 @@
 #include "RNRecurrentTaskMap.h"
 #include "RNLocalizationTask.h"
 #include "RNCameraTask.h"
+#include "RNRFIdentificationTask.h"
 
 
 const float GeneralController::LASER_MAX_RANGE = 11.6;
@@ -65,12 +66,13 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	omnidirectionalTask = new RNCameraTask("Omnidirectional Task");
 	localization = new RNLocalizationTask();
+	rfidTask = new RNRFIdentificationTask();
 
-	//Tasks added:
-	tasks->addTask(localization);
+	////Tasks added:
 	tasks->addTask(omnidirectionalTask);
+	tasks->addTask(localization);
+	tasks->addTask(rfidTask);
 	
-
 	//Start all tasks;
 	tasks->startAllTasks();
 
@@ -87,34 +89,42 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 }
 
 GeneralController::~GeneralController(void){
+
+	//rfidConnection->closeConnection();
+	
+	closeConnection();
+	
+	//pthread_mutex_destroy(&laserLandmarksLocker);
+	//pthread_mutex_destroy(&rfidLandmarksLocker);
+	//pthread_mutex_destroy(&visualLandmarksLocker);
+	stopDynamicGesture();
+	stopVideoStreaming();
 	stopCurrentTour();
-	pthread_mutex_destroy(&laserLandmarksLocker);
-	pthread_mutex_destroy(&rfidLandmarksLocker);
-	pthread_mutex_destroy(&visualLandmarksLocker);
+	disconnect();
 
-	//delete tasks;
-	delete maestroControllers;
-
+	delete tasks;
+	RNUtils::printLn("Deleted tasks...");
 	for (int i = 0; i < kalmanFuzzy->size(); i++){
 		delete kalmanFuzzy->at(i);
 	}
 	kalmanFuzzy->clear();
 	delete kalmanFuzzy;
-
+	RNUtils::printLn("Deleted kalmanFuzzy...");
 	delete ttsLipSync;
+	RNUtils::printLn("Deleted ttsLipSync...");
+	delete maestroControllers;
+	RNUtils::printLn("Deleted maestroControllers...");
 	delete spdWSServer;
+	RNUtils::printLn("Deleted spdWSServer...");
 	delete currentSector;
+	RNUtils::printLn("Deleted currentSector...");
 	
 	for(int i = 0; i < laserLandmarks->size(); i++){
 		delete laserLandmarks->at(i);
 	}
 	laserLandmarks->clear();
 	delete laserLandmarks;
-
-	stopDynamicGesture();
-	stopVideoStreaming();
-    closeConnection();
-    disconnect();	
+	RNUtils::printLn("Deleted laserLandmarks...");
 }
 
 void GeneralController::onConnection(int socketIndex) //callback for client and server
@@ -2623,6 +2633,26 @@ void GeneralController::setLastVisitedNode(int id){
 
 std::vector<RNLandmark*>* GeneralController::getLaserLandmarks(){
 	return this->laserLandmarks;
+}
+
+std::vector<RNLandmark*>* GeneralController::getVisualLandmarks(){
+	return this->visualLandmarks;
+}
+
+std::vector<RNLandmark*>* GeneralController::getRFIDLandmarks(){
+	return this->rfidLandmarks;
+}
+
+void GeneralController::setVisualLandmarks(std::vector<RNLandmark*>* landmarks){
+	lockVisualLandmarks();
+	this->visualLandmarks = landmarks;
+	unlockVisualLandmarks();
+}
+
+void GeneralController::setRFIDLandmarks(std::vector<RNLandmark*>* landmarks){
+	lockRFIDLandmarks();
+	this->rfidLandmarks = landmarks;
+	unlockRFIDLandmarks();
 }
 
 PointXY GeneralController::getNextSectorCoord(){

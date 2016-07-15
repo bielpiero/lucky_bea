@@ -78,35 +78,35 @@ RobotNode::RobotNode(const char* port){
 }
 
 RobotNode::~RobotNode(){
-    robot->stopRunning();
     robot->disableSonar();
     robot->disableMotors();
-    robot->waitForRunExit();
-
+    robot->disconnect();
+    //robot->stopRunning();
     delete sonar;
-    delete robot;
+    RNUtils::printLn("Deleted sonar...");
+    //delete robot;
     delete connector;
+    RNUtils::printLn("Deleted connector...");
     delete myRawPose;
+     RNUtils::printLn("Deleted myRawPose...");
     delete gotoPoseAction;
-    delete laser;
-    delete laserConnector;
-        
-    RNUtils::printLn("Deleted objects...");
+     RNUtils::printLn("Deleted gotoPoseAction...");
+    //delete laser;
+    //RNUtils::printLn("Disconnected from laser...");
+    //delete laserConnector;
+    //RNUtils::printLn("Deleted objects...");
 
-    pthread_mutex_destroy(&mutexRawPositionLocker);
-    Aria::shutdown();
+    //pthread_mutex_destroy(&mutexRawPositionLocker);
+    //robot->waitForRunExit();
+    Aria::exit(0);
     RNUtils::printLn("Destroyed RobotNode...");
-    //finishThreads();
 }
 
 void RobotNode::disconnect(){
-    pthread_cancel(distanceTimerThread);
-    RNUtils::printLn("Destroyed distanceTimerThread...");
-    pthread_cancel(sensorDataThread);
-    RNUtils::printLn("Destroyed sensorDataThread...");
-
-    laser->disconnect();
-    RNUtils::printLn("Disconnected from laser...");
+    finishThreads();
+    RNUtils::printLn("Thread objects finished...");
+    //laser->disconnect();
+    //RNUtils::printLn("Disconnected from laser...");
     
 }
 
@@ -115,18 +115,20 @@ void RobotNode::finishThreads(){
     if (keepActiveSecurityDistanceTimerThread == YES) {
         keepActiveSecurityDistanceTimerThread = MAYBE;
         while (keepActiveSecurityDistanceTimerThread != NO) {
-            ArUtil::sleep(1);
+            ArUtil::sleep(10);
         }
-        
+        pthread_cancel(distanceTimerThread);
     }
-    RNUtils::printLn("Stopped Security Distance Timer Thread\n");
+    
+    RNUtils::printLn("Stopped Security Distance Timer Thread");
     if (keepActiveSensorDataThread == YES) {
         keepActiveSensorDataThread = MAYBE;
         while (keepActiveSensorDataThread != NO) {
-            ArUtil::sleep(1);
+            ArUtil::sleep(10);
         }
+        pthread_cancel(sensorDataThread);
     }
-    RNUtils::printLn("Stopped Robot Data Aquisition Thread\n");
+    RNUtils::printLn("Stopped Robot Data Aquisition Thread");
 }
 
 void RobotNode::getLaserScan(void){

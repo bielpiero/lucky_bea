@@ -48,6 +48,8 @@ target_link_libraries(lucky_bea
   ${OpenCV_LIBRARIES}
   Aria pthread dl rt
   ftd2xx
+  xml2
+  ltkcpp
 )
 
 set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-fPIC")

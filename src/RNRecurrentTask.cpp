@@ -54,8 +54,15 @@ void RNRecurrentTask::kill(){
         killed = true;
         //unlock();
         stop();
+        waitUtilTaskFinished();
         cancel();
         onKilled();
+    }
+}
+
+void RNRecurrentTask::waitUtilTaskFinished(){
+    while(not hasThreadFinished()){
+        RNUtils::sleep(5);
     }
 }
 
@@ -67,13 +74,18 @@ void* RNRecurrentTask::runThread(void* object){
         while(not goRequested){
             RNUtils::sleep(10);
         }
-        //lock();
+        lock();
         running = true;
-        //unlock();
+        unlock();
         task();
+        lock();
+        running = false;
+        unlock();
         RNUtils::sleep(20);
     }
+    RNUtils::printLn("%s threadFinished...", this->name.c_str());
     threadFinished();
+
     return NULL;
 }
 

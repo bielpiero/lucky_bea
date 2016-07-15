@@ -20,6 +20,8 @@ public:
     void* runThread(void* object);
 	void setController(GeneralController* gn);
 	std::string getTaskName();
+private:
+	void waitUtilTaskFinished();
 protected:
 	GeneralController* gn;
 private:

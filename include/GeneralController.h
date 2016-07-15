@@ -7,6 +7,7 @@
 #include "SocketNode2.h"
 #include "SerialPort.h"
 #include "UDPClient.h"
+#include "RNSocketClient.h"
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
 #include "xmldefs.h"
@@ -59,6 +60,7 @@ class GeneralController;
 class RNLocalizationTask;
 class RNCameraTask;
 class RNRecurrentTaskMap;
+class RNRFIdentificationTask;
 
 struct s_motor{
 	std::string idMotor;
@@ -224,6 +226,11 @@ public:
 
 	MapSector* getCurrentSector();
 	std::vector<RNLandmark*>* getLaserLandmarks();
+	std::vector<RNLandmark*>* getVisualLandmarks();
+	std::vector<RNLandmark*>* getRFIDLandmarks();
+
+	void setVisualLandmarks(std::vector<RNLandmark*>* landmarks);
+	void setRFIDLandmarks(std::vector<RNLandmark*>* landmarks);
 private:
 	static const float LASER_MAX_RANGE;
 	static const float LANDMARK_RADIUS;
@@ -234,6 +241,7 @@ private:
 	RNRecurrentTaskMap* tasks;
 	RNLocalizationTask* localization;
 	RNCameraTask* omnidirectionalTask;
+	RNRFIdentificationTask* rfidTask;
 
 	//OpenCV
 	//cv::VideoCapture vc;
@@ -255,6 +263,8 @@ private:
     int lastSiteVisitedIndex;
 	
 	std::vector<RNLandmark*>* laserLandmarks;
+	std::vector<RNLandmark*>* visualLandmarks;
+	std::vector<RNLandmark*>* rfidLandmarks;
 	
 	bool setChargerPosition;
 	bool hasAchievedGoal;

@@ -6,11 +6,11 @@
 #include <sys/types.h>   
 #include <unistd.h>
 #include <pthread.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <iostream>
+#include <cerrno>
 #include <vector>
 #include <list>
 #include <fstream>
