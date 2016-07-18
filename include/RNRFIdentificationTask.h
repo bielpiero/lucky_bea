@@ -45,6 +45,7 @@ private:
 class RNRFIdentificationTask : public RNRecurrentTask{
 public:
 	static const unsigned int RF_BUFFER_SIZE;
+	static const unsigned int RO_SPEC_ID;
 	RNRFIdentificationTask(const char* name = "RF Identification Task", const char* description = "");
 	~RNRFIdentificationTask();
 	int init(void);
@@ -59,13 +60,24 @@ private:
 	int resetDeviceConfiguration();
 	int resetToDefaultConfiguration(void);
 
+	int getReaderCapabilities();
+	int getReaderConfiguration();
+	int setReaderConfiguration();
+
+	int addAccessSpecification();
+	int enableAccessSpecification();
+
 	int deleteAllROSpecs(void);
 	int addROSpec(void);
 	int enableROSpec(void);
 	int startROSpec(void);
 
-	int getDataFromDevice(char* data);
-	void getOneTagData(LLRP::CTagReportData* tag, char* data, int& length);
+	int getDataFromDevice(std::string& data);
+
+	void handleAntennaEvent(LLRP::CAntennaEvent* antennaEvent);
+	void handleReaderExceptionEvent(LLRP::CReaderExceptionEvent* readerExceptionEvent);
+
+	void getOneTagData(LLRP::CTagReportData* tag, std::string& data);
 
 	int checkConnectionStatus();
 	int checkLLRPStatus(LLRP::CLLRPStatus* status, const char* what);
