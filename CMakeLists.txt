@@ -10,10 +10,11 @@ project(lucky_bea)
 find_package(PkgConfig REQUIRED)
 find_package(OpenCV REQUIRED)
 pkg_search_module(LIBUSB_1 REQUIRED libusb-1.0)
+pkg_search_module(SSL_L REQUIRED libssl)
 include_directories(include ${LIBUSB_1_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
-#include_directories(include ${catkin_INCLUDE_DIRS})
 include_directories( /usr/local/Aria/include)
+link_directories(/usr/bin)
 link_directories(/usr/local/Aria/lib)
 link_directories(lib/)
 
@@ -43,15 +44,18 @@ add_dependencies(lucky_bea lucky_bea_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(lucky_bea
-  ${catkin_LIBRARIES}
+  #${catkin_LIBRARIES}
   ${LIBUSB_1_LIBRARIES}
   ${OpenCV_LIBRARIES}
-  Aria pthread dl rt
+  Aria pthread rt
   ftd2xx
   xml2
   ltkcpp
+  ltkcppimpinj
+  dl ssl crypto
 )
-
+set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-m32")
+set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-Wno-write-strings")
 set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-fPIC")
 #set_target_properties(lucky_bea PROPERTIES LINK_FLAGS "-Wl")
 

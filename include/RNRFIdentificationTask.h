@@ -4,6 +4,7 @@
 #include "RNRecurrentTask.h"
 
 #include "rfid/ltkcpp.h"
+#include "rfid/impinj_ltkcpp.h"
 
 #define RFID_READER_VARIABLE_LENGTH 4
 
@@ -57,6 +58,7 @@ private:
 	float convertToMeters(float rssi);
 
 	int connectTo(const char* reader);
+	int enableImpinjExtensions();
 	int resetDeviceConfiguration();
 	int resetToDefaultConfiguration(void);
 
@@ -71,6 +73,7 @@ private:
 	int addROSpec(void);
 	int enableROSpec(void);
 	int startROSpec(void);
+	int stopROSpec(void);
 
 	int getDataFromDevice(std::string& data);
 
@@ -82,12 +85,20 @@ private:
 	int checkConnectionStatus();
 	int checkLLRPStatus(LLRP::CLLRPStatus* status, const char* what);
 
-	LLRP::CMessage* transact(LLRP::CMessage* msg);
+	LLRP::CMessage* transact(LLRP::CMessage* msg, int timeout = 5000);
 	LLRP::CMessage* recvMessage(int msecMax);
 
 private:
 	bool deviceInitialized;
 	int readerDescriptor;
+
+	unsigned short powerLevelIndex;
+	unsigned int deviceModelNumber;
+	short transmitPowerValue;
+
+	unsigned short hopTableId;
+	unsigned short channelIndex;
+
 	static const char* DEVICE_NAME;
 	LLRP::CConnection* conn;
 	std::vector<RFData*>* rfids;

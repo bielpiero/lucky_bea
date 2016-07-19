@@ -1,22 +1,20 @@
-
 /*
- ***************************************************************************
- *  Copyright 2007,2008 Impinj, Inc.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- ***************************************************************************
- */
+ *****************************************************************************
+ *                                                                           *
+ *                 IMPINJ CONFIDENTIAL AND PROPRIETARY                       *
+ *                                                                           *
+ * This source code is the sole property of Impinj, Inc.  Reproduction or    *
+ * utilization of this source code in whole or in part is forbidden without  *
+ * the prior written consent of Impinj, Inc.                                 *
+ *                                                                           *
+ * (c) Copyright Impinj, Inc. 2007,2008. All rights reserved.                *
+ *                                                                           *
+ *****************************************************************************/
+#ifndef __LTKCPP_CONNECTION_H__
+#define __LTKCPP_CONNECTION_H__
+
+// Forward declaration for OpenSSL's BIO object. 
+struct bio_st;
 
 /**
  *****************************************************************************
@@ -26,29 +24,8 @@
  ** @brief  Class for handling two-way LLRP message traffic
  **
  *****************************************************************************/
- 
-#include <time.h>
-
 namespace LLRP
 {
-
-/*
- * @brief   Forward class declaration of platform-specific socket wrapper
- *
- * The definition is in ltkcpp_connection.cpp.
- *
- * On Linux a socket is a simple type (int). On Windows it
- * is a pointer to a specific type defined in a WinSock
- * header (.h) file. Rather than make that header file a
- * prerequisite to every source file that includes this header
- * file (ltkcpp_connection.h), the following CPlatformSocket
- * class opaquely wraps the platform-specific socket.
- *
- * The CConnection class references it by pointer only.
- * The content of the CPlatformSocket is only known
- * within the implementation of CConnection.
- */
-class CPlatformSocket;
 
 /**
  *****************************************************************************
@@ -92,6 +69,9 @@ class CConnection
     openConnectionToReader (
       const char *              pReaderHostName);
 
+    int
+    openSecureConnectionToReader(const char* pReaderHostName);
+
     const char *
     getConnectError (void);
 
@@ -127,8 +107,14 @@ class CConnection
     getRecvError (void);
 
   private:
-    /** The socket handle, platform specific */
-    CPlatformSocket *           m_pPlatformSocket;
+    enum E_LLRP_CONNECTION_TYPE
+    {
+        E_LLRP_CONNECTION_TYPE_UNSECURE,
+        E_LLRP_CONNECTION_TYPE_SSL
+    };
+
+    /** An OpenSSL-provided socket abstraction for both encrypted and unencrypted communication */
+    struct bio_st *                       m_pBio;
 
     /** Error message if openConnectionToReader() or close...() fail */
     const char *                m_pConnectErrorStr;
@@ -176,7 +162,11 @@ class CConnection
         CErrorDetails       ErrorDetails;
     }                           m_Send;
 
-  private:
+private:
+    int initializeSslBio(bio_st** ppBio);
+    int initializeSocketBio(bio_st** ppBio);
+    int openConnectionToReader(const char* pReaderHostName, E_LLRP_CONNECTION_TYPE eType);
+
     EResultCode
     recvAdvance (
       int                           nMaxMS,
@@ -185,8 +175,10 @@ class CConnection
     time_t
     calculateTimeLimit (
       int                           nMaxMS);
-};
 
+    void initializeOpenSSL();
+};
 
 }; /* namespace LLRP */
 
+#endif // __LTKCPP_CONNECTION_H__

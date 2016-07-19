@@ -1,22 +1,17 @@
 
 /*
- ***************************************************************************
- *  Copyright 2007,2008 Impinj, Inc.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- ***************************************************************************
- */
+ *****************************************************************************
+ *                                                                           *
+ *                 IMPINJ CONFIDENTIAL AND PROPRIETARY                       *
+ *                                                                           *
+ * This source code is the sole property of Impinj, Inc.  Reproduction or    *
+ * utilization of this source code in whole or in part is forbidden without  *
+ * the prior written consent of Impinj, Inc.                                 *
+ *                                                                           *
+ * (c) Copyright Impinj, Inc. 2007,2008. All rights reserved.                *
+ *                                                                           *
+ *****************************************************************************/
+
 /**
  *****************************************************************************
  **
@@ -28,27 +23,11 @@
  **
  *****************************************************************************/
 
-#ifndef __LTKCPP_BASE_
-#define __LTKCPP_BASE_
-
-
-/** @def LTKCPP_VERSION
- ** @brief The current version of the LTKCPP build
- ** Version is four each 8-bit numbers:
- ** major, minor, maintenance, progress number
- **/
-/** @def LTKCPP_VERSION_STR
- ** @brief The current version of the LTKCPP build in string format
- **/
-#define LTKCPP_VERSION      0x01000008
-#define LTKCPP_VERSION_STR  "1.0.0.8"
 
 /**
  ** @defgroup LTKCoreElement Core LTK Library classes and functions
  **
  **/
-
-#define BOOL int
 
 /**
  ** @\brief The namespace for the LTKCPP library
@@ -953,6 +932,7 @@ class CTypeRegistry
 };
 
 
+
 typedef std::list<CParameter *> tListOfParameters;
 
 /**
@@ -1809,4 +1789,3 @@ toXMLString (
   int                           nBuffer);
 
 }; /* namespace LLRP */
-#endif /* __LTKCPP_BASE_ */

@@ -53,18 +53,30 @@ void RNRFIdentificationTask::onKilled(){
 int RNRFIdentificationTask::init(void){
 	int result = 0;
 	if(connectTo(DEVICE_NAME) == 0){
-		if(resetDeviceConfiguration() == 0){
-			RNUtils::printLn("Success: resetConfiguration on %s OK...", DEVICE_NAME);
-			if(addROSpec() == 0){
-				RNUtils::printLn("Success: Added readers operation specifications on %s OK...", DEVICE_NAME);
-				if(enableROSpec() == 0){
-					RNUtils::printLn("Success: Enabled readers operation specifications on %s OK...", DEVICE_NAME);
-					this->deviceInitialized = true;
+		if(checkConnectionStatus() == 0){
+			RNUtils::printLn("Success: Connection OK...", DEVICE_NAME);
+			if(enableImpinjExtensions() == 0){
+				RNUtils::printLn("Success: Enable Impinj Extensions on %s OK...", DEVICE_NAME);
+				if(resetDeviceConfiguration() == 0){
+					RNUtils::printLn("Success: Reset default Configuration on %s OK...", DEVICE_NAME);
+					if(addROSpec() == 0){
+						RNUtils::printLn("Success: Added readers operation specifications on %s OK...", DEVICE_NAME);
+						if(enableROSpec() == 0){
+							if(stopROSpec() == 0){
+								RNUtils::printLn("Success: Enabled readers operation specifications on %s OK...", DEVICE_NAME);
+								this->deviceInitialized = true;
+							}
+						} else {
+							result = RN_NONE;
+						}
+					} else {
+						result = RN_NONE;
+					}
 				} else {
 					result = RN_NONE;
 				}
 			} else {
-				result = RN_NONE;
+				result = RN_NONE;	
 			}
 		} else {
 			result = RN_NONE;
@@ -126,16 +138,83 @@ int RNRFIdentificationTask::getReaderCapabilities(){
 	LLRP::CRegulatoryCapabilities *regCap;
 	LLRP::CUHFBandCapabilities *uhfCap;
 	LLRP::CTransmitPowerLevelTableEntry *pwrLvl;
-	LLRP::CGeneralDeviceCapabilities *ceviceCap;
+	LLRP::CGeneralDeviceCapabilities *deviceCap;
 	std::list<LLRP::CTransmitPowerLevelTableEntry*>::iterator pwrLvlIt;
 
 	cmd = new LLRP::CGET_READER_CAPABILITIES();
+	cmd->setMessageID(201);
+	cmd->setRequestedData(LLRP::GetReaderCapabilitiesRequestedData_All);
+
+	message = transact(cmd);
+	delete cmd;
+	if(message != NULL){
+		response = (LLRP::CGET_READER_CAPABILITIES_RESPONSE*)message;
+		if(checkLLRPStatus(response->getLLRPStatus(), "getReaderCapabilities") == 0){
+			if((regCap = response->getRegulatoryCapabilities()) != NULL){
+				if((uhfCap = regCap->getUHFBandCapabilities()) != NULL){
+					pwrLvlIt = uhfCap->endTransmitPowerLevelTableEntry();
+					pwrLvlIt--;
+					pwrLvl = *pwrLvlIt;
+
+					this->powerLevelIndex = pwrLvl->getIndex();
+					this->transmitPowerValue = pwrLvl->getTransmitPowerValue();
+					if((deviceCap = response->getGeneralDeviceCapabilities()) != NULL){
+						if(deviceCap->getDeviceManufacturerName() == 25882){
+							this->deviceModelNumber = deviceCap->getModelName();
+
+						} else {
+							result = RN_NONE;
+						}
+					} else {
+						result = RN_NONE;
+					}
+				} else {
+					result = RN_NONE;	
+				}
+			} else {
+				result = RN_NONE;
+			}
+		} else {
+			result = RN_NONE;
+		}
+		delete message;
+	} else {
+		result = RN_NONE;
+	}
 	return result;
 }
 
 int RNRFIdentificationTask::getReaderConfiguration(){
 	int result = 0;
+	LLRP::CGET_READER_CONFIG* cmd;
+	LLRP::CMessage* message = NULL;
+	LLRP::CGET_READER_CONFIG_RESPONSE* response;
 
+	LLRP::CRFTransmitter* ttx;
+	std::list<LLRP::CAntennaConfiguration*>::iterator antCnfgIt;
+
+	cmd = new LLRP::CGET_READER_CONFIG();
+	cmd->setMessageID(202);
+	cmd->setRequestedData(LLRP::GetReaderConfigRequestedData_All);
+
+	message = transact(cmd);
+	delete cmd;
+	if(message != NULL){
+		response = (LLRP::CGET_READER_CONFIG_RESPONSE*)message;
+		if(checkLLRPStatus(response->getLLRPStatus(), "getReaderConfiguration") == 0){
+			antCnfgIt = response->beginAntennaConfiguration();
+			if(antCnfgIt != response->endAntennaConfiguration()){
+				ttx = (*antCnfgIt)->getRFTransmitter();
+				this->hopTableId = ttx->getHopTableID();
+				this->channelIndex = ttx->getChannelIndex();
+			}
+		} else {
+			result = RN_NONE;
+		}
+		delete message;
+	} else {
+		result = RN_NONE;
+	}
 	return result;
 }
 
@@ -297,6 +376,31 @@ int RNRFIdentificationTask::enableAccessSpecification(){
 	return result;
 }
 
+int RNRFIdentificationTask::enableImpinjExtensions(){
+	int result = 0;
+	LLRP::CIMPINJ_ENABLE_EXTENSIONS* cmd;
+	LLRP::CMessage* message = NULL;
+	LLRP::CIMPINJ_ENABLE_EXTENSIONS_RESPONSE* response;
+
+	cmd = new LLRP::CIMPINJ_ENABLE_EXTENSIONS();
+	cmd->setMessageID(1);
+
+	message = transact(cmd, 10000);
+
+	delete cmd;
+
+	if(message != NULL){
+		response = (LLRP::CIMPINJ_ENABLE_EXTENSIONS_RESPONSE*)message;
+		if(checkLLRPStatus(response->getLLRPStatus(), "enableImpinjExtensions") != 0){
+			result = RN_NONE;
+		}
+		delete message;
+	} else {
+		result = RN_NONE;
+	}
+	return result;
+}
+
 int RNRFIdentificationTask::startROSpec(void){
 	int result = 0;
 	LLRP::CSTART_ROSPEC* cmd;
@@ -314,6 +418,33 @@ int RNRFIdentificationTask::startROSpec(void){
 	if(message != NULL){
 		response = (LLRP::CSTART_ROSPEC_RESPONSE*)message;
 		if(checkLLRPStatus(response->getLLRPStatus(), "startROSpec") != 0){
+			result = RN_NONE;
+		}
+		delete message;
+	} else {
+		result = RN_NONE;
+	}
+	
+	return result;
+}
+
+int RNRFIdentificationTask::stopROSpec(void){
+	int result = 0;
+	LLRP::CSTOP_ROSPEC* cmd;
+	LLRP::CMessage* message = NULL;
+	LLRP::CSTOP_ROSPEC_RESPONSE* response;
+
+	cmd = new LLRP::CSTOP_ROSPEC();
+	cmd->setMessageID(6);
+	cmd->setROSpecID(RO_SPEC_ID);
+
+	message = transact(cmd);
+
+	delete cmd;
+
+	if(message != NULL){
+		response = (LLRP::CSTOP_ROSPEC_RESPONSE*)message;
+		if(checkLLRPStatus(response->getLLRPStatus(), "stopROSpec") != 0){
 			result = RN_NONE;
 		}
 		delete message;
@@ -345,13 +476,9 @@ int RNRFIdentificationTask::getDataFromDevice(std::string& data){
 			for(std::list<LLRP::CTagReportData*>::iterator it = report->beginTagReportData(); it != report->endTagReportData(); it++){
 				std::string oneTag;
 				getOneTagData(*it, oneTag);
-				if((it + 1) != report->endTagReportData()){
-					data += oneTag + ";";
-				} else {
-					data += oneTag;
-				}
+				data += oneTag + ";";
 			}
-
+			data = data.substr(0, data.size() - 1);
 		} else if(typeDesc == &LLRP::CREADER_EVENT_NOTIFICATION::s_typeDescriptor){
 			//future
 			ntf = (LLRP::CREADER_EVENT_NOTIFICATION*)message;
@@ -569,10 +696,10 @@ int RNRFIdentificationTask::checkConnectionStatus(void){
 	return result;
 }
 
-LLRP::CMessage* RNRFIdentificationTask::transact(LLRP::CMessage* msg){
+LLRP::CMessage* RNRFIdentificationTask::transact(LLRP::CMessage* msg, int timeout){
 	LLRP::CMessage* message = NULL;
 	if(readerDescriptor == 0){
-		message = conn->transact(msg, 5000);
+		message = conn->transact(msg, timeout);
 		if(message == NULL){
 			const LLRP::CErrorDetails* error = conn->getRecvError();
 			RNUtils::printLn("Error: Receive Message failed (%s)", error->m_pWhatStr ? error->m_pWhatStr : "No reason");
