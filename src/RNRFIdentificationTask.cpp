@@ -4,20 +4,27 @@ const float RFData::OFFSET = -59;
 const unsigned int RNRFIdentificationTask::RF_BUFFER_SIZE = 65535;
 const unsigned int RNRFIdentificationTask::RO_SPEC_ID = 1111;
 const char* RNRFIdentificationTask::DEVICE_NAME = "speedwayr-11-94-a3.local";
+const unsigned int RNRFIdentificationTask::ANTENNAS_NUMBER = 1;
 
 RNRFIdentificationTask::RNRFIdentificationTask(const char* name, const char* description) : RNRecurrentTask(name, description){
 	conn = NULL;
+	messageId = 0;
 	readerDescriptor = RN_NONE;
 	this->deviceInitialized = false;
 	landmarks = new std::vector<RNLandmark*>();
 	rfids = new std::vector<RFData*>();
+
+	antennasList = new AntennaDataList();
 	
 }
 
 RNRFIdentificationTask::~RNRFIdentificationTask(){
 	if(conn != NULL){
 		if(readerDescriptor == 0){
-			if(resetDeviceConfiguration() == 0){
+			if(stopROSpec() == 0){
+				RNUtils::printLn("Success: Enabled readers operation specifications on %s OK...", DEVICE_NAME);
+			}
+			if(resetToDefaultConfiguration() == 0){
 				RNUtils::printLn("Success: resetConfiguration on %s OK...", DEVICE_NAME);
 			}
 			conn->closeConnectionToReader();
@@ -37,13 +44,7 @@ void RNRFIdentificationTask::task(){
 		}	
 	} else {
 		init();
-	}
-	/*for (int i = 0; i < rfids->size(); i++){
-		float distance = convertToMeters(rfids->at(i)->getRSSi());
-
-		RNUtils::printLn("Distance RF Tag[%s](%d): %f", rfids->at(i)->getTagKey().c_str(), i, rfids->at(i)->getRSSi());
-	}*/
-	
+	}	
 }
 
 void RNRFIdentificationTask::onKilled(){
@@ -57,14 +58,18 @@ int RNRFIdentificationTask::init(void){
 			RNUtils::printLn("Success: Connection OK...", DEVICE_NAME);
 			if(enableImpinjExtensions() == 0){
 				RNUtils::printLn("Success: Enable Impinj Extensions on %s OK...", DEVICE_NAME);
-				if(resetDeviceConfiguration() == 0){
+				if(resetToDefaultConfiguration() == 0){
 					RNUtils::printLn("Success: Reset default Configuration on %s OK...", DEVICE_NAME);
-					if(addROSpec() == 0){
-						RNUtils::printLn("Success: Added readers operation specifications on %s OK...", DEVICE_NAME);
-						if(enableROSpec() == 0){
-							if(stopROSpec() == 0){
-								RNUtils::printLn("Success: Enabled readers operation specifications on %s OK...", DEVICE_NAME);
+					if(getReaderConfiguration() == 0){
+						RNUtils::printLn("Success: Read Configuration on %s OK...", DEVICE_NAME);
+						if(addROSpec() == 0){
+							RNUtils::printLn("Success: Added readers operation specifications on %s OK...", DEVICE_NAME);
+							if(enableROSpec() == 0){
+								
 								this->deviceInitialized = true;
+								
+							} else {
+								result = RN_NONE;
 							}
 						} else {
 							result = RN_NONE;
@@ -96,6 +101,7 @@ int RNRFIdentificationTask::connectTo(const char* reader){
 		if(conn != NULL){
 			delete conn;
 		}
+		LLRP::enrollImpinjTypesIntoRegistry(typeRegistry);
 		conn = new LLRP::CConnection(typeRegistry, RF_BUFFER_SIZE);
 		if(conn != NULL){
 			readerDescriptor = conn->openConnectionToReader(reader);
@@ -142,7 +148,7 @@ int RNRFIdentificationTask::getReaderCapabilities(){
 	std::list<LLRP::CTransmitPowerLevelTableEntry*>::iterator pwrLvlIt;
 
 	cmd = new LLRP::CGET_READER_CAPABILITIES();
-	cmd->setMessageID(201);
+	cmd->setMessageID(messageId++);
 	cmd->setRequestedData(LLRP::GetReaderCapabilitiesRequestedData_All);
 
 	message = transact(cmd);
@@ -190,11 +196,11 @@ int RNRFIdentificationTask::getReaderConfiguration(){
 	LLRP::CMessage* message = NULL;
 	LLRP::CGET_READER_CONFIG_RESPONSE* response;
 
-	LLRP::CRFTransmitter* ttx;
 	std::list<LLRP::CAntennaConfiguration*>::iterator antCnfgIt;
+	std::list<LLRP::CAntennaProperties*>::iterator antPropIt;
 
 	cmd = new LLRP::CGET_READER_CONFIG();
-	cmd->setMessageID(202);
+	cmd->setMessageID(messageId++);
 	cmd->setRequestedData(LLRP::GetReaderConfigRequestedData_All);
 
 	message = transact(cmd);
@@ -202,11 +208,25 @@ int RNRFIdentificationTask::getReaderConfiguration(){
 	if(message != NULL){
 		response = (LLRP::CGET_READER_CONFIG_RESPONSE*)message;
 		if(checkLLRPStatus(response->getLLRPStatus(), "getReaderConfiguration") == 0){
-			antCnfgIt = response->beginAntennaConfiguration();
-			if(antCnfgIt != response->endAntennaConfiguration()){
-				ttx = (*antCnfgIt)->getRFTransmitter();
-				this->hopTableId = ttx->getHopTableID();
-				this->channelIndex = ttx->getChannelIndex();
+			for(antCnfgIt = response->beginAntennaConfiguration(); antCnfgIt != response->endAntennaConfiguration(); antCnfgIt++){
+
+				AntennaData* antData = new AntennaData((*antCnfgIt)->getAntennaID());
+				LLRP::CRFTransmitter* ttx = (*antCnfgIt)->getRFTransmitter();
+				antData->setTxHopTableId(ttx->getHopTableID());
+				antData->setTxchannelIndex(ttx->getChannelIndex());
+				antData->setTxPower(ttx->getTransmitPower());
+
+				LLRP::CRFReceiver* rrx = (*antCnfgIt)->getRFReceiver();
+				antData->setRxSensitivity(rrx->getReceiverSensitivity());
+				bool antFound = false;
+				for(antPropIt = response->beginAntennaProperties(); antPropIt != response->endAntennaProperties() and not antFound; antPropIt++){
+					if((*antPropIt)->getAntennaID() == (*antCnfgIt)->getAntennaID()){
+						antFound = true;
+						antData->setAntennaGain((*antPropIt)->getAntennaGain());
+					}
+				}
+				//std::cout << antData->toString();
+				antennasList->add(antData);
 			}
 		} else {
 			result = RN_NONE;
@@ -235,7 +255,7 @@ int RNRFIdentificationTask::deleteAllROSpecs(void){
 	LLRP::CDELETE_ROSPEC_RESPONSE* response;
 
 	cmd = new LLRP::CDELETE_ROSPEC();
-	cmd->setMessageID(102);
+	cmd->setMessageID(messageId++);
 	cmd->setROSpecID(0);
 
 	message = transact(cmd);
@@ -299,10 +319,36 @@ int RNRFIdentificationTask::addROSpec(void){
     tagReportContentSelector->setEnableTagSeenCount(true);
     tagReportContentSelector->setEnableAccessSpecID(true);
 
+    LLRP::CC1G2EPCMemorySelector* c1g2Memory = new LLRP::CC1G2EPCMemorySelector();
+    c1g2Memory->setEnableCRC(false);
+    c1g2Memory->setEnablePCBits(false);
+    tagReportContentSelector->addAirProtocolEPCMemorySelector(c1g2Memory);
+
     LLRP::CROReportSpec* roReportSpec = new LLRP::CROReportSpec();
     roReportSpec->setROReportTrigger(LLRP::ROReportTriggerType_Upon_N_Tags_Or_End_Of_ROSpec);
     roReportSpec->setN(0);         /* Unlimited */
     roReportSpec->setTagReportContentSelector(tagReportContentSelector);
+    
+    LLRP::CImpinjTagReportContentSelector* impinjTagCnt = new LLRP::CImpinjTagReportContentSelector();
+    
+    LLRP::CImpinjEnableRFPhaseAngle* impinjPhaseAngle = new LLRP::CImpinjEnableRFPhaseAngle();
+    impinjPhaseAngle->setRFPhaseAngleMode(LLRP::ImpinjRFPhaseAngleMode_Enabled);
+
+    LLRP::CImpinjEnablePeakRSSI* impinjPeakRssi= new LLRP::CImpinjEnablePeakRSSI();
+    impinjPeakRssi->setPeakRSSIMode(LLRP::ImpinjPeakRSSIMode_Enabled);
+
+    LLRP::CImpinjEnableRFDopplerFrequency* impinjDopplerFreq= new LLRP::CImpinjEnableRFDopplerFrequency();
+    impinjDopplerFreq->setRFDopplerFrequencyMode(LLRP::ImpinjRFDopplerFrequencyMode_Enabled);
+
+    LLRP::CImpinjEnableSerializedTID* impinjSerializedTID = new LLRP::CImpinjEnableSerializedTID();
+    impinjSerializedTID->setSerializedTIDMode(LLRP::ImpinjSerializedTIDMode_Disabled);
+
+    impinjTagCnt->setImpinjEnableRFPhaseAngle(impinjPhaseAngle);
+    impinjTagCnt->setImpinjEnablePeakRSSI(impinjPeakRssi);
+    impinjTagCnt->setImpinjEnableRFDopplerFrequency(impinjDopplerFreq);
+    impinjTagCnt->setImpinjEnableSerializedTID(impinjSerializedTID);
+
+    roReportSpec->addCustom(impinjTagCnt);
 
     LLRP::CROSpec* rospec = new LLRP::CROSpec();
     rospec->setROSpecID(RO_SPEC_ID);
@@ -317,7 +363,7 @@ int RNRFIdentificationTask::addROSpec(void){
 	LLRP::CADD_ROSPEC_RESPONSE* response;
 
 	cmd = new LLRP::CADD_ROSPEC();
-	cmd->setMessageID(3);
+	cmd->setMessageID(messageId++);
 	cmd->setROSpec(rospec);
 
 	message = transact(cmd);
@@ -350,7 +396,7 @@ int RNRFIdentificationTask::enableROSpec(void){
 	LLRP::CENABLE_ROSPEC_RESPONSE* response;
 
 	cmd = new LLRP::CENABLE_ROSPEC();
-	cmd->setMessageID(4);
+	cmd->setMessageID(messageId++);
 	cmd->setROSpecID(RO_SPEC_ID);
 
 	message = transact(cmd);
@@ -383,9 +429,9 @@ int RNRFIdentificationTask::enableImpinjExtensions(){
 	LLRP::CIMPINJ_ENABLE_EXTENSIONS_RESPONSE* response;
 
 	cmd = new LLRP::CIMPINJ_ENABLE_EXTENSIONS();
-	cmd->setMessageID(1);
+	cmd->setMessageID(messageId++);
 
-	message = transact(cmd, 10000);
+	message = transact(cmd);
 
 	delete cmd;
 
@@ -408,7 +454,7 @@ int RNRFIdentificationTask::startROSpec(void){
 	LLRP::CSTART_ROSPEC_RESPONSE* response;
 
 	cmd = new LLRP::CSTART_ROSPEC();
-	cmd->setMessageID(5);
+	cmd->setMessageID(messageId++);
 	cmd->setROSpecID(RO_SPEC_ID);
 
 	message = transact(cmd);
@@ -435,7 +481,7 @@ int RNRFIdentificationTask::stopROSpec(void){
 	LLRP::CSTOP_ROSPEC_RESPONSE* response;
 
 	cmd = new LLRP::CSTOP_ROSPEC();
-	cmd->setMessageID(6);
+	cmd->setMessageID(messageId++);
 	cmd->setROSpecID(RO_SPEC_ID);
 
 	message = transact(cmd);
@@ -550,26 +596,59 @@ void RNRFIdentificationTask::getOneTagData(LLRP::CTagReportData* tag, std::strin
         	
         }
         bufferOut << ",";
+        int phaseAngleValue = 0, rssiValue = 0, dopplerFrequencyValue = 0;
+        for(std::list<LLRP::CParameter *>::iterator customIt = tag->beginCustom(); customIt != tag->endCustom(); customIt++){
+        	if((*customIt)->m_pType == &LLRP::CImpinjRFPhaseAngle::s_typeDescriptor){
+        		LLRP::CImpinjRFPhaseAngle* phaseAngle = (LLRP::CImpinjRFPhaseAngle*)(*customIt);
+        		phaseAngleValue = phaseAngle->getPhaseAngle();
+        		//RNUtils::printLn("phaseAngle: %d", phaseAngleValue);
+        	} else if((*customIt)->m_pType == &LLRP::CImpinjPeakRSSI::s_typeDescriptor){
+        		LLRP::CImpinjPeakRSSI* rssi = (LLRP::CImpinjPeakRSSI*)(*customIt);
+        		rssiValue = rssi->getRSSI();
+        		//RNUtils::printLn("rssi: %d", rssiValue);
+        	} else if((*customIt)->m_pType == &LLRP::CImpinjRFDopplerFrequency::s_typeDescriptor){
+        		LLRP::CImpinjRFDopplerFrequency* dopplerFrequency = (LLRP::CImpinjRFDopplerFrequency*)(*customIt);
+        		dopplerFrequencyValue = dopplerFrequency->getDopplerFrequency();
+        		//RNUtils::printLn("rssi: %d", rssiValue);
+        	}
+        }
         if(tag->getAntennaID() != NULL){
         	bufferOut << tag->getAntennaID()->getAntennaID();
         	//RNUtils::printLn("antenna: %d", tag->getAntennaID()->getAntennaID());
         }
         bufferOut << ",";
-        if(tag->getPeakRSSI() != NULL){
+
+        if(rssiValue != 0){
+        	bufferOut << ((float)rssiValue) / 100.0;
+        } else if(tag->getPeakRSSI() != NULL){
         	bufferOut << (int)tag->getPeakRSSI()->getPeakRSSI();
+        	
         	//RNUtils::printLn("Peak RSSI: %d", tag->getPeakRSSI()->getPeakRSSI());
         }
         bufferOut << ",";
+
+        if(phaseAngleValue != 0){
+        	bufferOut << ((float)phaseAngleValue) / 100.0;
+        }
+        bufferOut << ",";
+
+        if(dopplerFrequencyValue != 0){
+        	bufferOut << dopplerFrequencyValue;
+        }
+        bufferOut << ",";
+
         if(tag->getChannelIndex() != NULL){
         	bufferOut << tag->getChannelIndex()->getChannelIndex();
         	//RNUtils::printLn("ChannelIndex: %d", tag->getChannelIndex()->getChannelIndex());
         }
         bufferOut << ",";
+
         if(tag->getFirstSeenTimestampUTC() != NULL){
         	bufferOut << tag->getFirstSeenTimestampUTC()->getMicroseconds();
         	//RNUtils::printLn("FSeen-T TS Uptime: %llu", tag->getFirstSeenTimestampUTC()->getMicroseconds());
         }
         bufferOut << ",";
+
         if(tag->getLastSeenTimestampUTC() != NULL){
         	bufferOut << tag->getLastSeenTimestampUTC()->getMicroseconds();
         	//RNUtils::printLn("LSeen-T TS Uptime: %llu", tag->getLastSeenTimestampUTC()->getMicroseconds());
@@ -623,7 +702,7 @@ int RNRFIdentificationTask::resetToDefaultConfiguration(void){
 	LLRP::CSET_READER_CONFIG_RESPONSE* response;
 
 	cmd = new LLRP::CSET_READER_CONFIG();
-	cmd->setMessageID(2);
+	cmd->setMessageID(messageId++);
 	cmd->setResetToFactoryDefault(1);
 
 	message = transact(cmd);
@@ -715,6 +794,13 @@ LLRP::CMessage* RNRFIdentificationTask::recvMessage(int msecMax){
 		if(message == NULL){
 			const LLRP::CErrorDetails* error = conn->getRecvError();
 			RNUtils::printLn("Error: Receive Message failed (%s)", error->m_pWhatStr ? error->m_pWhatStr : "No reason");
+			if(NULL != error->m_pRefType){
+	            RNUtils::printLn("ERROR: ... reference type %s\n", error->m_pRefType->m_pName);
+	        }
+
+	      	if(NULL != error->m_pRefField){
+	            RNUtils::printLn("ERROR: ... reference field %s\n", error->m_pRefField->m_pName);
+	        }
 		}
 	}
 	return message;

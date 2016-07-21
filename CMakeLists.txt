@@ -14,7 +14,6 @@ pkg_search_module(SSL_L REQUIRED libssl)
 include_directories(include ${LIBUSB_1_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories( /usr/local/Aria/include)
-link_directories(/usr/bin)
 link_directories(/usr/local/Aria/lib)
 link_directories(lib/)
 

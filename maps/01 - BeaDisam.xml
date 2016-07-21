@@ -30,7 +30,7 @@
 			<feature id="9" name="Right table 3" width="67" height="106" xpos="535" ypos="365"/>
 			<feature id="10" name="Right table 4" width="80" height="180" xpos="745" ypos="320"/>
 		</features>
-		<sites cyclic="no" sequence="12,0,1,2,3,5">
+		<sites cyclic="no" sequence="12,0,1,2,8">
 			<site id="2" name="site c" radius="10" tsec="0" xpos="240" ypos="240"/>
 			<site id="3" name="site d" radius="10" tsec="0" xpos="164" ypos="94"/>
 			<site id="4" name="doorway" radius="10" tsec="0" xpos="80" ypos="0" linked-feature-id="0"/>

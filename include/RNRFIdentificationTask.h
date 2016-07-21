@@ -2,6 +2,7 @@
 #define RN_RF_IDENTIFICATION_TASK_H
 
 #include "RNRecurrentTask.h"
+#include "AntennaDataList.h"
 
 #include "rfid/ltkcpp.h"
 #include "rfid/impinj_ltkcpp.h"
@@ -43,10 +44,12 @@ private:
 
 };
 
+
 class RNRFIdentificationTask : public RNRecurrentTask{
 public:
 	static const unsigned int RF_BUFFER_SIZE;
 	static const unsigned int RO_SPEC_ID;
+	static const unsigned int ANTENNAS_NUMBER;
 	RNRFIdentificationTask(const char* name = "RF Identification Task", const char* description = "");
 	~RNRFIdentificationTask();
 	int init(void);
@@ -89,6 +92,7 @@ private:
 	LLRP::CMessage* recvMessage(int msecMax);
 
 private:
+	unsigned int messageId;
 	bool deviceInitialized;
 	int readerDescriptor;
 
@@ -96,11 +100,11 @@ private:
 	unsigned int deviceModelNumber;
 	short transmitPowerValue;
 
-	unsigned short hopTableId;
-	unsigned short channelIndex;
-
 	static const char* DEVICE_NAME;
 	LLRP::CConnection* conn;
+
+	AntennaDataList* antennasList;
+	
 	std::vector<RFData*>* rfids;
 	std::vector<RNLandmark*>* landmarks;
 };
