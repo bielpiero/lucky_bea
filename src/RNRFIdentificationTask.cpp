@@ -1,7 +1,7 @@
 #include "RNRFIdentificationTask.h"
 
 const float RFData::OFFSET = -59;
-const unsigned int RNRFIdentificationTask::RF_BUFFER_SIZE = 65535;
+const unsigned int RNRFIdentificationTask::RF_BUFFER_SIZE = 32768;
 const unsigned int RNRFIdentificationTask::RO_SPEC_ID = 1111;
 const char* RNRFIdentificationTask::DEVICE_NAME = "speedwayr-11-94-a3.local";
 const unsigned int RNRFIdentificationTask::ANTENNAS_NUMBER = 1;
@@ -37,11 +37,11 @@ RNRFIdentificationTask::~RNRFIdentificationTask(){
 void RNRFIdentificationTask::task(){
 	if(this->deviceInitialized){
 		std::string data = "";
-		if(startROSpec() == 0){
+		//if(startROSpec() == 0){
 			if(getDataFromDevice(data) == 0){
 				RNUtils::printLn("Success data: %s", data.c_str());
 			}
-		}	
+		//}	
 	} else {
 		init();
 	}	
@@ -280,7 +280,7 @@ int RNRFIdentificationTask::addROSpec(void){
 	int result = 0;
 
 	LLRP::CROSpecStartTrigger* rospecStartTrigger = new LLRP::CROSpecStartTrigger();
-    rospecStartTrigger->setROSpecStartTriggerType(LLRP::ROSpecStartTriggerType_Null);
+    rospecStartTrigger->setROSpecStartTriggerType(LLRP::ROSpecStartTriggerType_Immediate);
 
     LLRP::CROSpecStopTrigger* rospecStopTrigger = new LLRP::CROSpecStopTrigger();
     rospecStopTrigger->setROSpecStopTriggerType(LLRP::ROSpecStopTriggerType_Null);
@@ -291,16 +291,15 @@ int RNRFIdentificationTask::addROSpec(void){
     roBoundarySpec->setROSpecStopTrigger(rospecStopTrigger);
 
     LLRP::CAISpecStopTrigger* aiSpecStopTrigger = new LLRP::CAISpecStopTrigger();
-    aiSpecStopTrigger->setAISpecStopTriggerType(LLRP::AISpecStopTriggerType_Duration);
-    aiSpecStopTrigger->setDurationTrigger(5000);
+    aiSpecStopTrigger->setAISpecStopTriggerType(LLRP::AISpecStopTriggerType_Null);
+    aiSpecStopTrigger->setDurationTrigger(0);
 
     LLRP::CInventoryParameterSpec* inventoryParameterSpec = new LLRP::CInventoryParameterSpec();
-    inventoryParameterSpec->setInventoryParameterSpecID(1234);
+    inventoryParameterSpec->setInventoryParameterSpecID(1);
     inventoryParameterSpec->setProtocolID(LLRP::AirProtocols_EPCGlobalClass1Gen2);
 
     LLRP::llrp_u16v_t antennaIDs = LLRP::llrp_u16v_t(1); /* Modificar para cuando se agregue la segunda antena */
-    antennaIDs.m_pValue[0] = 0;  
-    //antennaIDs.m_pValue[1] = 1;        
+    antennaIDs.m_pValue[0] = 0;     
 
     LLRP::CAISpec* aiSpec = new LLRP::CAISpec();
     aiSpec->setAntennaIDs(antennaIDs);
@@ -326,9 +325,43 @@ int RNRFIdentificationTask::addROSpec(void){
 
     LLRP::CROReportSpec* roReportSpec = new LLRP::CROReportSpec();
     roReportSpec->setROReportTrigger(LLRP::ROReportTriggerType_Upon_N_Tags_Or_End_Of_ROSpec);
-    roReportSpec->setN(0);         /* Unlimited */
+    roReportSpec->setN(1);         /* Unlimited */
     roReportSpec->setTagReportContentSelector(tagReportContentSelector);
+
+    /*// This is used to add Impinj custom fields to the tag report
+    LLRP::CImpinjTagReportContentSelector *impContentSelector = new LLRP::CImpinjTagReportContentSelector();
     
+    // FastID
+    LLRP::CImpinjEnableSerializedTID* enableFastId = new LLRP::CImpinjEnableSerializedTID();
+    enableFastId->setSerializedTIDMode(LLRP::ImpinjSerializedTIDMode_Enabled);
+    impContentSelector->setImpinjEnableSerializedTID(enableFastId); 
+
+    // Optimized read
+    LLRP::CImpinjEnableOptimizedRead *optimizedRead = new LLRP::CImpinjEnableOptimizedRead();
+    optimizedRead->setOptimizedReadMode(LLRP::ImpinjOptimizedReadMode_Enabled);
+
+    // Optimized read TID
+    LLRP::CC1G2Read* tidOpSpec = new LLRP::CC1G2Read();
+    tidOpSpec->setAccessPassword(0);
+    tidOpSpec->setMB(2);
+    tidOpSpec->setOpSpecID(TID_OP_SPEC_ID);
+    tidOpSpec->setWordPointer(0);
+    tidOpSpec->setWordCount(2);
+    optimizedRead->addC1G2Read(tidOpSpec);
+        
+    // Optimized read User memory
+    LLRP::CC1G2Read* umOpSpec = new LLRP::CC1G2Read();
+    umOpSpec->setAccessPassword(0);
+    umOpSpec->setMB(3);
+    umOpSpec->setOpSpecID(USER_MEMORY_OP_SPEC_ID);
+    umOpSpec->setWordPointer(0);
+    umOpSpec->setWordCount(1);
+    optimizedRead->addC1G2Read(umOpSpec);
+       
+    // Add the optimized read operations to the ROReportSpec
+    impContentSelector->setImpinjEnableOptimizedRead(optimizedRead);
+    roReportSpec->addCustom(impContentSelector);*/
+   
     LLRP::CImpinjTagReportContentSelector* impinjTagCnt = new LLRP::CImpinjTagReportContentSelector();
     
     LLRP::CImpinjEnableRFPhaseAngle* impinjPhaseAngle = new LLRP::CImpinjEnableRFPhaseAngle();
@@ -512,7 +545,7 @@ int RNRFIdentificationTask::getDataFromDevice(std::string& data){
 	LLRP::CREADER_EVENT_NOTIFICATION* ntf = NULL;
     LLRP::CReaderEventNotificationData* ntfData = NULL;
 
-	message = recvMessage(7000);
+	message = recvMessage(1500);
 
 	if(message != NULL){
 		typeDesc = message->m_pType;
@@ -522,6 +555,7 @@ int RNRFIdentificationTask::getDataFromDevice(std::string& data){
 			for(std::list<LLRP::CTagReportData*>::iterator it = report->beginTagReportData(); it != report->endTagReportData(); it++){
 				std::string oneTag;
 				getOneTagData(*it, oneTag);
+				//RNUtils::printLn("Y aqui cuanto tarda");
 				data += oneTag + ";";
 			}
 			data = data.substr(0, data.size() - 1);

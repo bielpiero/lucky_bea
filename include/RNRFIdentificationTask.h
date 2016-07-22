@@ -8,6 +8,8 @@
 #include "rfid/impinj_ltkcpp.h"
 
 #define RFID_READER_VARIABLE_LENGTH 4
+#define TID_OP_SPEC_ID          123
+#define USER_MEMORY_OP_SPEC_ID  321
 
 class RFData{
 public:
@@ -88,7 +90,7 @@ private:
 	int checkConnectionStatus();
 	int checkLLRPStatus(LLRP::CLLRPStatus* status, const char* what);
 
-	LLRP::CMessage* transact(LLRP::CMessage* msg, int timeout = 5000);
+	LLRP::CMessage* transact(LLRP::CMessage* msg, int timeout = 2000);
 	LLRP::CMessage* recvMessage(int msecMax);
 
 private:
