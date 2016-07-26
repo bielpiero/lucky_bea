@@ -15,6 +15,7 @@ RNRFIdentificationTask::RNRFIdentificationTask(const char* name, const char* des
 	rfids = new std::vector<RFData*>();
 
 	antennasList = new AntennaDataList();
+	//file = std::fopen("data-rfid-1.65m.txt", "w+");
 	
 }
 
@@ -32,6 +33,9 @@ RNRFIdentificationTask::~RNRFIdentificationTask(){
 		}
 		delete conn;
 	}
+	/*if(!file){
+		std::fclose(file);
+	}*/
 }
 
 void RNRFIdentificationTask::task(){
@@ -327,40 +331,6 @@ int RNRFIdentificationTask::addROSpec(void){
     roReportSpec->setROReportTrigger(LLRP::ROReportTriggerType_Upon_N_Tags_Or_End_Of_ROSpec);
     roReportSpec->setN(1);         /* Unlimited */
     roReportSpec->setTagReportContentSelector(tagReportContentSelector);
-
-    /*// This is used to add Impinj custom fields to the tag report
-    LLRP::CImpinjTagReportContentSelector *impContentSelector = new LLRP::CImpinjTagReportContentSelector();
-    
-    // FastID
-    LLRP::CImpinjEnableSerializedTID* enableFastId = new LLRP::CImpinjEnableSerializedTID();
-    enableFastId->setSerializedTIDMode(LLRP::ImpinjSerializedTIDMode_Enabled);
-    impContentSelector->setImpinjEnableSerializedTID(enableFastId); 
-
-    // Optimized read
-    LLRP::CImpinjEnableOptimizedRead *optimizedRead = new LLRP::CImpinjEnableOptimizedRead();
-    optimizedRead->setOptimizedReadMode(LLRP::ImpinjOptimizedReadMode_Enabled);
-
-    // Optimized read TID
-    LLRP::CC1G2Read* tidOpSpec = new LLRP::CC1G2Read();
-    tidOpSpec->setAccessPassword(0);
-    tidOpSpec->setMB(2);
-    tidOpSpec->setOpSpecID(TID_OP_SPEC_ID);
-    tidOpSpec->setWordPointer(0);
-    tidOpSpec->setWordCount(2);
-    optimizedRead->addC1G2Read(tidOpSpec);
-        
-    // Optimized read User memory
-    LLRP::CC1G2Read* umOpSpec = new LLRP::CC1G2Read();
-    umOpSpec->setAccessPassword(0);
-    umOpSpec->setMB(3);
-    umOpSpec->setOpSpecID(USER_MEMORY_OP_SPEC_ID);
-    umOpSpec->setWordPointer(0);
-    umOpSpec->setWordCount(1);
-    optimizedRead->addC1G2Read(umOpSpec);
-       
-    // Add the optimized read operations to the ROReportSpec
-    impContentSelector->setImpinjEnableOptimizedRead(optimizedRead);
-    roReportSpec->addCustom(impContentSelector);*/
    
     LLRP::CImpinjTagReportContentSelector* impinjTagCnt = new LLRP::CImpinjTagReportContentSelector();
     
@@ -646,6 +616,7 @@ void RNRFIdentificationTask::getOneTagData(LLRP::CTagReportData* tag, std::strin
         		//RNUtils::printLn("rssi: %d", rssiValue);
         	}
         }
+        //std::fprintf(file, "{rssi: %f, ph.a: %f, dplrFreq: %d}\n", (((float)rssiValue) / 100.0), (((float)phaseAngleValue) / 100.0), dopplerFrequencyValue);
         if(tag->getAntennaID() != NULL){
         	bufferOut << tag->getAntennaID()->getAntennaID();
         	//RNUtils::printLn("antenna: %d", tag->getAntennaID()->getAntennaID());
@@ -662,7 +633,7 @@ void RNRFIdentificationTask::getOneTagData(LLRP::CTagReportData* tag, std::strin
         bufferOut << ",";
 
         if(phaseAngleValue != 0){
-        	bufferOut << ((float)phaseAngleValue) / 100.0;
+        	bufferOut << ((float)phaseAngleValue) * 2 * M_PI / 4096.0;
         }
         bufferOut << ",";
 

@@ -106,7 +106,7 @@ private:
 	LLRP::CConnection* conn;
 
 	AntennaDataList* antennasList;
-	
+	std::FILE* file;
 	std::vector<RFData*>* rfids;
 	std::vector<RNLandmark*>* landmarks;
 };

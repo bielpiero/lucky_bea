@@ -53,6 +53,8 @@ target_link_libraries(lucky_bea
   ltkcppimpinj
   dl ssl crypto
 )
+
+set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-Wall")
 set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-m32")
 set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-Wno-write-strings")
 set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-fPIC")
