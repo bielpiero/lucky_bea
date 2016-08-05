@@ -64,14 +64,14 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
-	//omnidirectionalTask = new RNCameraTask("Omnidirectional Task");
+	omnidirectionalTask = new RNCameraTask("Omnidirectional Task");
 	localization = new RNLocalizationTask();
-	rfidTask = new RNRFIdentificationTask();
+	//rfidTask = new RNRFIdentificationTask();
 
 	////Tasks added:
-	//tasks->addTask(omnidirectionalTask);
+	tasks->addTask(omnidirectionalTask);
 	tasks->addTask(localization);
-	tasks->addTask(rfidTask);
+	//tasks->addTask(rfidTask);
 	
 	//Start all tasks;
 	tasks->startAllTasks();
