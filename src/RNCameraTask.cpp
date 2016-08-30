@@ -3,9 +3,10 @@
 const double RNCameraTask::PI_DEGREES = 180.0;
 
 const std::string RNCameraTask::cameraUrl = "http://192.168.1.33/record/current.jpg";
+//const std::string RNCameraTask::cameraUrl = "http://admin:C0n7r01_au70@192.168.1.33/control/faststream.jpg?stream=full&fps=24&noaudio&data=v.mjpg";
 
 RNCameraTask::RNCameraTask(const char* name, const char* description) : RNRecurrentTask(name, description){
-	minContourLengthAllowed = 1000.0;
+	minContourLengthAllowed = 100.0;
 	maxContourLengthAllowed = 4000.0;
 	markerSize = cv::Size(133, 194);
 
@@ -14,25 +15,31 @@ RNCameraTask::RNCameraTask(const char* name, const char* description) : RNRecurr
 	markerCorners2d.push_back(cv::Point2f(markerSize.width - 1, markerSize.height - 1));
 	markerCorners2d.push_back(cv::Point2f(0, markerSize.height - 1));
 
+	markerCorners3d.push_back(cv::Point3f(-.5f, -.5f, 0));
+	markerCorners3d.push_back(cv::Point3f(.5f, -.5f, 0));
+	markerCorners3d.push_back(cv::Point3f(.5f, .5f, 0));
+	markerCorners3d.push_back(cv::Point3f(.5f, .5f, 0));
+
 	camMatrix = cv::Mat(3, 3, CV_32F);
-	camMatrix.at<float>(0, 0) = 3.3609061519256187e+002;
+	camMatrix.at<float>(0, 0) = 2.6959417772420113e+002;
 	camMatrix.at<float>(0, 1) = 0.0;
-	camMatrix.at<float>(0, 2) = 6.3950000000000000e+002;
+	camMatrix.at<float>(0, 2) = 5.1150000000000000e+002;
 	camMatrix.at<float>(1, 0) = 0.0;
-	camMatrix.at<float>(1, 1) = 3.3609061519256187e+002;
-	camMatrix.at<float>(1, 2) = 4.7950000000000000e+002;
+	camMatrix.at<float>(1, 1) = 2.6959417772420113e+002;
+	camMatrix.at<float>(1, 2) = 3.8350000000000000e+002;
 	camMatrix.at<float>(2, 0) = 0.0;
 	camMatrix.at<float>(2, 1) = 0.0;
 	camMatrix.at<float>(2, 2) = 1.0;
 
 	distCoeff = cv::Mat(5, 1, CV_32F);
-	distCoeff.at<float>(0, 0) = -2.1524901378355338e-001;
-	distCoeff.at<float>(1, 0) = 4.0218153464358121e-002;
+	distCoeff.at<float>(0, 0) = -2.6019586095779829e-001;
+	distCoeff.at<float>(1, 0) = 5.5052401922323718e-002;
 	distCoeff.at<float>(2, 0) = 0.0;
 	distCoeff.at<float>(3, 0) = 0.0;
-	distCoeff.at<float>(4, 0) = -3.2911593249722450e-003;
+	distCoeff.at<float>(4, 0) = -4.5449850126361765e-003;
 
 	landmarks = new std::vector<RNLandmark*>();
+	
 }
 
 RNCameraTask::~RNCameraTask(){
@@ -53,8 +60,7 @@ int RNCameraTask::getFrameFromCamera(cv::Mat &frame){
 	if (capture.isOpened()){
 		capture.read(frame);
 		capture.release();
-	}
-	else {
+	} else {
 		result = RN_NONE;
 	}
 	return result;
@@ -93,9 +99,9 @@ void RNCameraTask::findContours(const cv::Mat& input, std::vector<std::vector<cv
 	//contours = allContours;
 }
 
-void RNCameraTask::findCandidates(const std::vector<std::vector<cv::Point> > &contours, std::vector<std::vector<cv::Point2f> >& markerPoints){
+void RNCameraTask::findCandidates(const std::vector<std::vector<cv::Point> > &contours, std::vector<RNMarker>& markerPoints){
 	std::vector<cv::Point>  approxCurve;
-	std::vector<std::vector<cv::Point2f> > possibleMarkersPoints;
+	std::vector<RNMarker> possibleMarkersPoints;
 	for (unsigned int i = 0; i < contours.size(); i++){
 		double eps = contours.at(i).size() * .1;
 		cv::approxPolyDP(contours.at(i), approxCurve, eps, true);
@@ -106,18 +112,21 @@ void RNCameraTask::findCandidates(const std::vector<std::vector<cv::Point> > &co
 				minDist = std::min(minDist, (float)side.dot(side));
 			}
 			
-			if (minDist > this->minContourLengthAllowed && minDist < this->maxContourLengthAllowed){
-				std::vector<cv::Point2f> marker;
+			if (minDist > this->minContourLengthAllowed){
+				RNMarker marker;
 				for (int i = 0; i < approxCurve.size(); i++){
-					marker.push_back(cv::Point2f(approxCurve.at(i).x, approxCurve.at(i).y));
+					marker.addPoint(cv::Point2f(approxCurve.at(i).x, approxCurve.at(i).y));
 				}
 				
-				cv::Point2f v1 = marker.at(1) - marker.at(0);
-				cv::Point2f v2 = marker.at(2) - marker.at(0);
+				cv::Point2f v1 = marker.getPoint(1) - marker.getPoint(0);
+				cv::Point2f v2 = marker.getPoint(2) - marker.getPoint(0);
 				double o = (v1.x * v2.y) - (v1.y * v2.x);
 				if (o < 0.0){
-					std::swap(marker.at(1), marker.at(3));
+					std::swap(marker.getPoint(1), marker.getPoint(3));
 				}
+				marker.setContourIdx(i);
+				marker.setRotatedRect(cv::minAreaRect(approxCurve));
+				marker.setArea(cv::contourArea(approxCurve));
 				possibleMarkersPoints.push_back(marker);
 			}
 		}
@@ -126,25 +135,25 @@ void RNCameraTask::findCandidates(const std::vector<std::vector<cv::Point> > &co
 	std::vector<std::pair<int, int> > closestCandidates;
 
 	for (int i = 0; i < possibleMarkersPoints.size(); i++){
-		std::vector<cv::Point2f> markerA = possibleMarkersPoints.at(i);
+		RNMarker markerA = possibleMarkersPoints.at(i);
 		for (int j = i + 1; j < possibleMarkersPoints.size(); j++){
-			std::vector<cv::Point2f> markerB = possibleMarkersPoints.at(j);
+			RNMarker markerB = possibleMarkersPoints.at(j);
 			float distSquared = 0;
 			for (int k = 0; k < CURVE_SIZE; k++){
-				cv::Point v = markerA.at(k) - markerB.at(k);
+				cv::Point v = markerA.getPoint(k) - markerB.getPoint(k);
 				distSquared += v.dot(v);
 				
 			}
 			distSquared /= 4;
-			if (distSquared < 20000){
+			if (distSquared < 100){
 				closestCandidates.push_back(std::pair<int, int>(i, j));
 			}
 		}
 	}
 	std::vector<bool> removalMask(possibleMarkersPoints.size(), false);
 	for (int i = 0; i < closestCandidates.size(); i++){
-		float p1 = perimeter(possibleMarkersPoints.at(closestCandidates.at(i).first));
-		float p2 = perimeter(possibleMarkersPoints.at(closestCandidates.at(i).second));
+		float p1 = perimeter(possibleMarkersPoints.at(closestCandidates.at(i).first).getMarkerPoints());
+		float p2 = perimeter(possibleMarkersPoints.at(closestCandidates.at(i).second).getMarkerPoints());
 
 		int index;
 		if (p1 > p2){
@@ -161,44 +170,53 @@ void RNCameraTask::findCandidates(const std::vector<std::vector<cv::Point> > &co
 	}
 }
 
-void RNCameraTask::recognizeMarkers(const cv::Mat& inputGrayscale, std::vector<std::vector<cv::Point2f> >& markerPoints){
-	std::vector<std::vector<cv::Point2f> > goodMarkersPoints;
+void RNCameraTask::recognizeMarkers(const cv::Mat& inputGrayscale, std::vector<RNMarker>& markerPoints){
+	std::vector<RNMarker> goodMarkersPoints;
 	for (int i = 0; i < markerPoints.size(); i++){
-		std::vector<cv::Point2f> marker = markerPoints.at(i);
-		cv::Mat markerTransform = cv::getPerspectiveTransform(marker, markerCorners2d);
+		RNMarker marker = markerPoints.at(i);
+		cv::Mat markerTransform = cv::getPerspectiveTransform(marker.getMarkerPoints(), markerCorners2d);
 
 		cv::warpPerspective(inputGrayscale, canonicalMarkerImage, markerTransform, markerSize);
 		std::ostringstream windowName;
 		
 		int rotations = 0;
 		if (markerDecoder(canonicalMarkerImage, rotations) == 0){
-			std::rotate(marker.begin(), marker.begin() + 4 - rotations, marker.end());
+			std::vector<cv::Point2f> markerPoints = marker.getMarkerPoints();
+			std::rotate(markerPoints.begin(), markerPoints.begin() + 4 - rotations, markerPoints.end());
+			marker.setMarkerPoints(markerPoints);
 			goodMarkersPoints.push_back(marker);
 		}
 	}
 	markerPoints = goodMarkersPoints;
 }
 
-void RNCameraTask::poseEstimation(std::vector<std::vector<cv::Point2f> >& markerPoints){
+void RNCameraTask::poseEstimation(std::vector<RNMarker>& markerPoints){
 	for (size_t i = 0; i < markerPoints.size(); i++){
-		std::vector<cv::Point2f> marker = markerPoints.at(i);
+		RNMarker marker = markerPoints.at(i);
 		cv::Mat Rvec;
 		cv::Mat_<float> Tvec;
 		cv::Mat raux, taux;
 		
-		cv::solvePnP(markerCorners2d, marker, camMatrix, distCoeff, raux, taux);
+		cv::solvePnP(markerCorners3d, marker.getMarkerPoints(), camMatrix, distCoeff, raux, taux);
 		raux.convertTo(Rvec, CV_32F);
 		taux.convertTo(Tvec, CV_32F);
 		cv::Mat_<float> rotMat(3, 3);
 		cv::Rodrigues(Rvec, rotMat);
-
+		rotation = Matrix(3, 3);
+		traslation = Matrix(3, 1);
 		for (int col = 0; col < 3; col++){
 			for (int row = 0; row < 3; row++){
+				rotation(row, col) = rotMat(row, col);
 				//m.transformation.r().mat[row][col] = rotMat(row, col); // Copy rotation component
 			}
+			traslation(col, 0) = Tvec(col);
 			//m.transformation.t().data[col] = Tvec(col); // Copy translation component
 		}
+		/*RNUtils::printLn("Rotation Matrix marker %d", i);
+		rotation.print();
 
+		RNUtils::printLn("Traslation Matrix %d", i);
+		traslation.print();*/
 		// Since solvePnP finds camera location, w.r.t to marker pose, to get marker pose w.r.t to the camera we invert it.
 		//m.transformation = m.transformation.getInverted();
 	}
@@ -208,7 +226,6 @@ int RNCameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations)
 	int result = 0;
 	cv::Mat grey = inputGrayscale;
 	cv::threshold(grey, grey, 127, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-	//cv::imshow("tikiti", grey);
 	int cellHeigth = inputGrayscale.rows / CELL_MARKER_SIZE;
 	int cellWidth = inputGrayscale.cols / CELL_MARKER_SIZE;
 	for (int y = 0; y < CELL_MARKER_SIZE; y++){
@@ -221,7 +238,6 @@ int RNCameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations)
 			int cellX = x * cellWidth;
 			int cellY = y * cellHeigth;
 			cv::Mat cell = grey(cv::Rect(cellX, cellY, cellWidth, cellHeigth));
-			//cv::imshow("tikiti2", cell);
 			int nZ = cv::countNonZero(cell);
 			if (nZ >(cellWidth*cellHeigth) / 2){
 				result = -1;
@@ -230,14 +246,12 @@ int RNCameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations)
 	}
 
 	if (result == 0){
-		//RNUtils::printLn("pase por aqui.. todos zeros");
 		cv::Mat bitMatrix = cv::Mat::zeros(5, 5, CV_8UC1);
 		for (int y = 0; y < 5; y++){
 			for (int x = 0; x < 5; x++){
 				int cellX = (x + 1) * cellWidth;
 				int cellY = (y + 1) * cellHeigth;
 				cv::Mat cell = grey(cv::Rect(cellX, cellY, cellWidth, cellHeigth));
-				//cv::imshow("tikiti2", cell);
 				int nZ = cv::countNonZero(cell);
 				if (nZ >(cellWidth*cellHeigth) / 2){
 					bitMatrix.at<uchar>(y, x) = 1;
@@ -252,14 +266,12 @@ int RNCameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations)
 
 		std::pair<int, int> minDist(distances[0], 0);
 
-		for (int i = 1; i<4; i++)
-		{
+		for (int i = 1; i<4; i++){
 			//get the hamming distance to the nearest possible word
 			rotations[i] = rotate(rotations[i - 1]);
 			distances[i] = hammingDistance(rotations[i]);
 
-			if (distances[i] < minDist.first)
-			{
+			if (distances[i] < minDist.first){
 				minDist.first = distances[i];
 				minDist.second = i;
 			}
@@ -308,10 +320,8 @@ cv::Mat RNCameraTask::rotate(cv::Mat input)
 {
 	cv::Mat out;
 	input.copyTo(out);
-	for (int i = 0; i<input.rows; i++)
-	{
-		for (int j = 0; j<input.cols; j++)
-		{
+	for (int i = 0; i < input.rows; i++){
+		for (int j = 0; j < input.cols; j++){
 			out.at<uchar>(i, j) = input.at<uchar>(input.cols - j - 1, i);
 		}
 	}
@@ -335,14 +345,14 @@ void RNCameraTask::task(){
 	if(getFrameFromCamera(tiki) != RN_NONE){
 		if (tiki.data){
 			cv::Mat tikiGray, tikiThreshold;
-			std::vector<std::vector<cv::Point2f> > markerTikiPoints;
+			std::vector<RNMarker> tikiMarkers;
 			rgbToGrayscale(tiki, tikiGray);
 			thresholding(tikiGray, tikiThreshold);
 			findContours(tikiThreshold.clone(), contours, 100);
-			findCandidates(contours, markerTikiPoints);
-			recognizeMarkers(tikiGray, markerTikiPoints);
-			RNUtils::printLn("markers: %d", markerTikiPoints.size());
-			poseEstimation(markerTikiPoints);
+			findCandidates(contours, tikiMarkers);
+			recognizeMarkers(tikiGray, tikiMarkers);
+			RNUtils::printLn("markers: %d", tikiMarkers.size());
+			//poseEstimation(tikiMarkers);
 		}
 	} else {
 		RNUtils::printLn("chuta y ahora?");

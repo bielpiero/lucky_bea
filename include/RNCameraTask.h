@@ -8,6 +8,30 @@
 #define CURVE_SIZE 4
 #define CELL_MARKER_SIZE 7
 
+class RNMarker{
+private:
+	int markerId;
+	std::vector<cv::Point2f> markerPoints;
+	int contourIdx;
+	double area;
+	cv::RotatedRect rect;
+public:
+	RNMarker(){ markerId = -1; }
+
+	void setMarkerId(int id) { this->markerId = id; }
+	void addPoint(cv::Point2f point) { markerPoints.push_back(point); }
+	void setMarkerPoints(std::vector<cv::Point2f> markerPoints) { this->markerPoints = markerPoints; }
+	void setContourIdx(int contourIdx) { this->contourIdx = contourIdx; }
+	void setArea(double area) { this->area = area; }
+	void setRotatedRect(cv::RotatedRect rect) { this->rect = rect; }
+
+	double getArea() { return this->area; }
+	int getContourIdx() { return this->contourIdx; }
+	cv::RotatedRect getRotatedRect() { return this->rect;}
+	std::vector<cv::Point2f> getMarkerPoints() { return this->markerPoints; }
+	cv::Point2f getPoint(int index){ return this->markerPoints.at(index); }
+};
+
 class RNCameraTask : public RNRecurrentTask{
 public:
 	RNCameraTask(const char* name = "Camera Task", const char* description = "");
@@ -20,9 +44,9 @@ private:
 	void thresholding(const cv::Mat& inputGrayscale, cv::Mat& output);
 	void clearNoisyDots(const cv::Mat input, cv::Mat& output);
 	void findContours(const cv::Mat& input, std::vector<std::vector<cv::Point> > &contours, int minContourPointsAllowed);
-	void findCandidates(const std::vector<std::vector<cv::Point> > &contours, std::vector<std::vector<cv::Point2f> >& markerPoints);
-	void recognizeMarkers(const cv::Mat& inputGrayscale, std::vector<std::vector<cv::Point2f> >& markerPoints);
-	void poseEstimation(std::vector<std::vector<cv::Point2f> >& markerPoints);
+	void findCandidates(const std::vector<std::vector<cv::Point> > &contours, std::vector<RNMarker>& markerPoints);
+	void recognizeMarkers(const cv::Mat& inputGrayscale, std::vector<RNMarker>& markerPoints);
+	void poseEstimation(std::vector<RNMarker>& markerPoints);
 private:
 	void clearLandmarks();
 	float perimeter(const std::vector<cv::Point2f> &a);
@@ -34,13 +58,19 @@ private:
 	float minContourLengthAllowed;
 	float maxContourLengthAllowed;
 	std::vector<cv::Point2f> markerCorners2d;
+	std::vector<cv::Point3f> markerCorners3d;
 	std::vector<std::vector<cv::Point> > contours;
 	cv::Size markerSize;
 	cv::Mat canonicalMarkerImage;
 	cv::Mat camMatrix;
 	cv::Mat distCoeff;
+
+	Matrix rotation;
+	Matrix traslation;
+
 	static const double PI_DEGREES;
 	std::vector<RNLandmark*>* landmarks;
+	cv::VideoCapture capture;
 };
 
 #endif
