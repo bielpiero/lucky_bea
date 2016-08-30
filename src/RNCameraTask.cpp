@@ -107,22 +107,25 @@ void RNCameraTask::findCandidates(const std::vector<std::vector<cv::Point> > &co
 		cv::approxPolyDP(contours.at(i), approxCurve, eps, true);
 		if (approxCurve.size() == CURVE_SIZE && cv::isContourConvex(approxCurve)){
 			float minDist = std::numeric_limits<float>::max();
-			for (int i = 0; i < approxCurve.size(); i++){
-				cv::Point side = approxCurve.at(i) - approxCurve.at((i + 1) % 4);
+			for (int j = 0; j < approxCurve.size(); j++){
+				cv::Point side = approxCurve.at(j) - approxCurve.at((j + 1) % 4);
 				minDist = std::min(minDist, (float)side.dot(side));
 			}
 			
 			if (minDist > this->minContourLengthAllowed){
 				RNMarker marker;
-				for (int i = 0; i < approxCurve.size(); i++){
-					marker.addPoint(cv::Point2f(approxCurve.at(i).x, approxCurve.at(i).y));
+				for (int j = 0; j < approxCurve.size(); j++){
+					marker.addPoint(cv::Point2f(approxCurve.at(j).x, approxCurve.at(j).y));
 				}
 				
 				cv::Point2f v1 = marker.getPoint(1) - marker.getPoint(0);
 				cv::Point2f v2 = marker.getPoint(2) - marker.getPoint(0);
 				double o = (v1.x * v2.y) - (v1.y * v2.x);
 				if (o < 0.0){
-					std::swap(marker.getPoint(1), marker.getPoint(3));
+					cv::Point2f auxPoint = marker.getPoint(1);
+					marker.setPoint(marker.getPoint(3), 1);
+					marker.setPoint(auxPoint, 3);
+					//std::swap(marker.getPoint(1), marker.getPoint(3));
 				}
 				marker.setContourIdx(i);
 				marker.setRotatedRect(cv::minAreaRect(approxCurve));

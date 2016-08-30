@@ -20,8 +20,9 @@ public:
 
 	void setMarkerId(int id) { this->markerId = id; }
 	void addPoint(cv::Point2f point) { markerPoints.push_back(point); }
+	void setPoint(cv::Point2f point, int index) { this->markerPoints.at(index) = point; }
 	void setMarkerPoints(std::vector<cv::Point2f> markerPoints) { this->markerPoints = markerPoints; }
-	void setContourIdx(int contourIdx) { this->contourIdx = contourIdx; }
+	void setContourIdx(unsigned int contourIdx) { this->contourIdx = contourIdx; }
 	void setArea(double area) { this->area = area; }
 	void setRotatedRect(cv::RotatedRect rect) { this->rect = rect; }
 
