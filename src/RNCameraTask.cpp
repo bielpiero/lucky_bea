@@ -369,6 +369,7 @@ void RNCameraTask::task(){
 				visualLand->addPoint(0, tikiMarkers.at(i).getThRad());
 				landmarks->push_back(visualLand);
 			}
+			gn->setVisualLandmarks(landmarks);
 		}
 	} else {
 		RNUtils::printLn("chuta y ahora?");
