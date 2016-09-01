@@ -51,6 +51,7 @@ target_link_libraries(lucky_bea
   xml2
   ltkcpp
   ltkcppimpinj
+  curl
   dl ssl crypto
 )
 

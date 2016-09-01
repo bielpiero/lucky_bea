@@ -4,9 +4,12 @@
 #include "RNRecurrentTask.h"
 #include "RNLandmark.h"
 #include <opencv2/opencv.hpp>
+#include <curl/curl.h>
 
 #define CURVE_SIZE 4
 #define CELL_MARKER_SIZE 7
+#define IMAGE_OFFSET_X 15
+#define IMAGE_OFFSET_Y 5
 
 class RNMarker{
 private:
@@ -14,6 +17,7 @@ private:
 	std::vector<cv::Point2f> markerPoints;
 	int contourIdx;
 	double area;
+	double angleInRadians;
 	cv::RotatedRect rect;
 public:
 	RNMarker(){ markerId = -1; }
@@ -24,9 +28,11 @@ public:
 	void setMarkerPoints(std::vector<cv::Point2f> markerPoints) { this->markerPoints = markerPoints; }
 	void setContourIdx(unsigned int contourIdx) { this->contourIdx = contourIdx; }
 	void setArea(double area) { this->area = area; }
+	void setThRad(double angle) { this->angleInRadians = angle; }
 	void setRotatedRect(cv::RotatedRect rect) { this->rect = rect; }
 
 	double getArea() { return this->area; }
+	double getThRad() { return this->angleInRadians; }
 	int getContourIdx() { return this->contourIdx; }
 	cv::RotatedRect getRotatedRect() { return this->rect;}
 	std::vector<cv::Point2f> getMarkerPoints() { return this->markerPoints; }
@@ -47,13 +53,14 @@ private:
 	void findContours(const cv::Mat& input, std::vector<std::vector<cv::Point> > &contours, int minContourPointsAllowed);
 	void findCandidates(const std::vector<std::vector<cv::Point> > &contours, std::vector<RNMarker>& markerPoints);
 	void recognizeMarkers(const cv::Mat& inputGrayscale, std::vector<RNMarker>& markerPoints);
-	void poseEstimation(std::vector<RNMarker>& markerPoints);
+	void poseEstimation(const cv::Point& center, std::vector<RNMarker>& markerPoints);
 private:
 	void clearLandmarks();
 	float perimeter(const std::vector<cv::Point2f> &a);
 	int markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations);
 	int hammingDistance(cv::Mat bits);
 	cv::Mat rotate(cv::Mat input);
+	static size_t write_data(char *ptr, size_t size, size_t nmemb, void *userdata);
 private:
 	static const std::string cameraUrl;
 	float minContourLengthAllowed;

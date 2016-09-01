@@ -54,15 +54,35 @@ void RNCameraTask::clearLandmarks(){
 	landmarks->clear();
 }
 
+size_t RNCameraTask::write_data(char *ptr, size_t size, size_t nmemb, void *userdata) {
+	std::ostringstream *stream = (std::ostringstream*)userdata;
+	size_t count = size * nmemb;
+	stream->write(ptr, count);
+	return count;
+}
+
 int RNCameraTask::getFrameFromCamera(cv::Mat &frame){
 	int result = 0;
-	cv::VideoCapture capture(cameraUrl);
+	/*cv::VideoCapture capture(cameraUrl);
 	if (capture.isOpened()){
 		capture.read(frame);
 		capture.release();
 	} else {
 		result = RN_NONE;
-	}
+	}*/
+	CURL* curl;
+	CURLcode res;
+	std::ostringstream stream;
+	curl = curl_easy_init();
+	curl_easy_setopt(curl, CURLOPT_URL, cameraUrl.c_str());
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &RNCameraTask::write_data);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
+	res = curl_easy_perform(curl);
+	std::string output = stream.str();
+	curl_easy_cleanup(curl);
+	std::vector<char> data = std::vector<char>(output.begin(), output.end());
+	cv::Mat data_mat = cv::Mat(data);
+	frame = cv::imdecode(data_mat, 1);
 	return result;
 }
 
@@ -193,35 +213,20 @@ void RNCameraTask::recognizeMarkers(const cv::Mat& inputGrayscale, std::vector<R
 	markerPoints = goodMarkersPoints;
 }
 
-void RNCameraTask::poseEstimation(std::vector<RNMarker>& markerPoints){
+void RNCameraTask::poseEstimation(const cv::Point& center, std::vector<RNMarker>& markerPoints){
 	for (size_t i = 0; i < markerPoints.size(); i++){
 		RNMarker marker = markerPoints.at(i);
-		cv::Mat Rvec;
-		cv::Mat_<float> Tvec;
-		cv::Mat raux, taux;
-		
-		cv::solvePnP(markerCorners3d, marker.getMarkerPoints(), camMatrix, distCoeff, raux, taux);
-		raux.convertTo(Rvec, CV_32F);
-		taux.convertTo(Tvec, CV_32F);
-		cv::Mat_<float> rotMat(3, 3);
-		cv::Rodrigues(Rvec, rotMat);
-		rotation = Matrix(3, 3);
-		traslation = Matrix(3, 1);
-		for (int col = 0; col < 3; col++){
-			for (int row = 0; row < 3; row++){
-				rotation(row, col) = rotMat(row, col);
-				//m.transformation.r().mat[row][col] = rotMat(row, col); // Copy rotation component
-			}
-			traslation(col, 0) = Tvec(col);
-			//m.transformation.t().data[col] = Tvec(col); // Copy translation component
-		}
-		/*RNUtils::printLn("Rotation Matrix marker %d", i);
-		rotation.print();
 
-		RNUtils::printLn("Traslation Matrix %d", i);
-		traslation.print();*/
-		// Since solvePnP finds camera location, w.r.t to marker pose, to get marker pose w.r.t to the camera we invert it.
-		//m.transformation = m.transformation.getInverted();
+		cv::Point markerCenter = marker.getRotatedRect().center;
+		cv::Point tikiPoint = center - markerCenter;
+		double angleInRadians = std::atan2(tikiPoint.y, tikiPoint.x) - (90 * M_PI / 180);
+		if (angleInRadians > M_PI){
+			angleInRadians = angleInRadians - 2*M_PI;
+		} else if (angleInRadians < -M_PI) {
+			angleInRadians = angleInRadians + 2*M_PI;
+		}
+		marker.setThRad(angleInRadians);
+		//RNUtils::printLn("Marker (%d) angle: %lf", i, angleInRadians);
 	}
 }
 
@@ -347,15 +352,23 @@ void RNCameraTask::task(){
 	cv::Mat tiki;
 	if(getFrameFromCamera(tiki) != RN_NONE){
 		if (tiki.data){
+			cv::Point imageCenter(tiki.cols / 2 + IMAGE_OFFSET_X, tiki.rows / 2 + IMAGE_OFFSET_Y);
 			cv::Mat tikiGray, tikiThreshold;
 			std::vector<RNMarker> tikiMarkers;
 			rgbToGrayscale(tiki, tikiGray);
 			thresholding(tikiGray, tikiThreshold);
-			findContours(tikiThreshold.clone(), contours, 100);
+			findContours(tikiThreshold.clone(), contours, 35);
 			findCandidates(contours, tikiMarkers);
 			recognizeMarkers(tikiGray, tikiMarkers);
 			RNUtils::printLn("markers: %d", tikiMarkers.size());
-			//poseEstimation(tikiMarkers);
+			poseEstimation(imageCenter, tikiMarkers);
+
+			clearLandmarks();
+			for(size_t i = 0; i < tikiMarkers.size(); i++){
+				RNLandmark* visualLand = new RNLandmark();
+				visualLand->addPoint(0, tikiMarkers.at(i).getThRad());
+				landmarks->push_back(visualLand);
+			}
 		}
 	} else {
 		RNUtils::printLn("chuta y ahora?");
