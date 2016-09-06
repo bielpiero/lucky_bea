@@ -215,7 +215,7 @@ void RNCameraTask::recognizeMarkers(const cv::Mat& inputGrayscale, std::vector<R
 
 void RNCameraTask::poseEstimation(const cv::Point& center, std::vector<RNMarker>& markerPoints){
 	for (size_t i = 0; i < markerPoints.size(); i++){
-		RNMarker marker = markerPoints.at(i);
+		RNMarker &marker = markerPoints.at(i);
 
 		cv::Point markerCenter = marker.getRotatedRect().center;
 		cv::Point tikiPoint = center - markerCenter;
@@ -360,12 +360,13 @@ void RNCameraTask::task(){
 			findContours(tikiThreshold.clone(), contours, 35);
 			findCandidates(contours, tikiMarkers);
 			recognizeMarkers(tikiGray, tikiMarkers);
-			RNUtils::printLn("markers: %d", tikiMarkers.size());
+			//RNUtils::printLn("markers: %d", tikiMarkers.size());
 			poseEstimation(imageCenter, tikiMarkers);
 
 			clearLandmarks();
 			for(size_t i = 0; i < tikiMarkers.size(); i++){
 				RNLandmark* visualLand = new RNLandmark();
+				//RNUtils::printLn("Marker (%d) angle: %lf", i, tikiMarkers.at(i).getThRad());
 				visualLand->addPoint(0, tikiMarkers.at(i).getThRad());
 				landmarks->push_back(visualLand);
 			}

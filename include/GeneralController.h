@@ -99,28 +99,90 @@ struct s_trapezoid{
 	float x2;
 	float x3;
 	float x4;
+	s_trapezoid(){
+		x1 = 0;
+		x2 = 0;
+		x3 = 0;
+		x4 = 0;
+	}
 };
 
 struct s_position{
 	s_trapezoid* xZone;
 	s_trapezoid* yZone;
 	s_trapezoid* thZone;
+	s_position(){
+		xZone = new s_trapezoid();
+		yZone = new s_trapezoid();
+		thZone = new s_trapezoid();		
+	}
+	~s_position(){
+		delete xZone;
+		delete yZone;
+		delete thZone;
+	}
 };
 
 struct s_obs_dth{
 	s_trapezoid* dZone;
 	s_trapezoid* thZone;
+
+	s_obs_dth(){
+		dZone = new s_trapezoid();
+		thZone = new s_trapezoid();		
+	}
+	~s_obs_dth(){
+		delete dZone;
+		delete thZone;
+	}
+};
+
+struct s_sensor{
+	std::string type;
+	bool activated;
+	s_obs_dth* observationNoise;
+	s_sensor(){
+		activated = false;
+		type = "";
+		observationNoise = new s_obs_dth();
+	}
+
+	~s_sensor(){
+		delete observationNoise;
+	}
 };
 
 struct s_navigation_params{
 	float alpha;
 	s_position* initialPosition;
 	s_obs_dth* processNoise;
-	s_obs_dth* observationNoise;
+	std::vector<s_sensor*>* sensors;
+	s_navigation_params(){
+		initialPosition = new s_position();
+		processNoise = new s_obs_dth();
+		sensors = new std::vector<s_sensor*>();
+	}
+
+	~s_navigation_params(){
+		for(int i = 0; i < sensors->size(); i++){
+			delete sensors->at(i);
+		}
+		sensors->clear();
+		delete sensors;
+		delete initialPosition;
+		delete processNoise;
+	}
 };
 
 struct s_robot{
 	s_navigation_params* navParams;
+	s_robot(){
+		navParams = new s_navigation_params();
+	}
+
+	~s_robot(){
+		delete navParams;
+	}
 };
 
 class GeneralController : public CSocketNode, public RobotNode // la clase GeneralController hereda de la clase CSocketNode
@@ -220,7 +282,10 @@ public:
 	Matrix getQ();
 	Matrix getR();
 
-	
+	bool isLaserSensorActivated();
+	bool isCameraSensorActivated();
+	bool isRfidSensorActivated();
+
 	Matrix getRawEncoderPosition();
 	Matrix getRawDeltaPosition();
 
@@ -282,6 +347,12 @@ private:
 	PointXY nextSectorCoord;
 	MapSector* currentSector;
 	s_robot* robotConfig;
+
+	bool laserSensorActivated;
+	bool cameraSensorActivated;
+	bool rfidSensorActivated;
+
+	bool printed;
 
 	pthread_t trackThread;
 

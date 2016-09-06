@@ -28,6 +28,10 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	this->keepRobotTracking = NO;
 	this->spdUDPPort = 0;
 
+	this->laserSensorActivated = true;
+	this->cameraSensorActivated = false;
+	this->rfidSensorActivated = false;
+
     this->lastSiteVisitedIndex = RN_NONE;
 	laserLandmarks = new std::vector<RNLandmark*>();
 	kalmanFuzzy = new std::vector<fuzzy::trapezoid*>();
@@ -75,7 +79,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	
 	//Start all tasks;
 	tasks->startAllTasks();
-
+	printed = false;
 
 	spdWSServer = new RobotDataStreamer();
 	spdWSServer->init("", 0, SOCKET_SERVER);
@@ -118,7 +122,8 @@ GeneralController::~GeneralController(void){
 	RNUtils::printLn("Deleted spdWSServer...");
 	delete currentSector;
 	RNUtils::printLn("Deleted currentSector...");
-	
+	delete robotConfig;
+	RNUtils::printLn("Deleted robotConfig...");
 	for(int i = 0; i < laserLandmarks->size(); i++){
 		delete laserLandmarks->at(i);
 	}
@@ -1093,6 +1098,7 @@ void GeneralController::loadSector(int mapId, int sectorId){
 						s_landmark* tempLandmark = new s_landmark;
 
 						tempLandmark->id = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+						tempLandmark->type = std::string(landmark_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value());
 						tempLandmark->varMinX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100;
 						tempLandmark->varMaxX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100;
 						tempLandmark->varMinY = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100;
@@ -1195,17 +1201,9 @@ void GeneralController::loadRobotConfig(){
 	doc.parse<0>(&buffer[0]);
 
 	if(robotConfig != NULL){
-		delete robotConfig->navParams->observationNoise;
-		delete robotConfig->navParams->processNoise;
-		delete robotConfig->navParams->initialPosition;
-		delete robotConfig->navParams;
 		delete robotConfig;
 	}
 	robotConfig = new s_robot;
-	robotConfig->navParams = new s_navigation_params;
-	robotConfig->navParams->initialPosition = new s_position;
-	robotConfig->navParams->processNoise = new s_obs_dth;
-	robotConfig->navParams->observationNoise = new s_obs_dth;
 
 	xml_node<>* root_node = doc.first_node(XML_ELEMENT_ROBOT_STR);
 	xml_node<>* nav_root_node = root_node->first_node(XML_ELEMENT_NAV_PARAMS_STR);
@@ -1213,67 +1211,74 @@ void GeneralController::loadRobotConfig(){
 
 	xml_node<>* initial_pos_root_node = nav_root_node->first_node(XML_ELEMENT_INITIAL_POS_STR);
 	xml_node<>* pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_X_ZONE_STR);
-	s_trapezoid* x_zone = new s_trapezoid;
+	s_trapezoid* x_zone = robotConfig->navParams->initialPosition->xZone;
 	x_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
 	x_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
 	x_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
 	x_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
 
 	pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_Y_ZONE_STR);
-	s_trapezoid* y_zone = new s_trapezoid;
+	s_trapezoid* y_zone = robotConfig->navParams->initialPosition->yZone;
 	y_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
 	y_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
 	y_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
 	y_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
 
 	pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
-	s_trapezoid* th_zone = new s_trapezoid;
+	s_trapezoid* th_zone = robotConfig->navParams->initialPosition->thZone;
 	th_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
 	th_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
 	th_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
 	th_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
-
-	robotConfig->navParams->initialPosition->xZone = x_zone;
-	robotConfig->navParams->initialPosition->yZone = y_zone;
-	robotConfig->navParams->initialPosition->thZone = th_zone;
 	
-
 	xml_node<>* process_noise_root_node = nav_root_node->first_node(XML_ELEMENT_PROCESS_NOISE_STR);
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_D_ZONE_STR);
-	s_trapezoid* x1_zone = new s_trapezoid;
+	s_trapezoid* x1_zone =robotConfig->navParams->processNoise->dZone;
 	x1_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
 	x1_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
 	x1_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
 	x1_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
 
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
-	s_trapezoid* th1_zone = new s_trapezoid;
+	s_trapezoid* th1_zone = robotConfig->navParams->processNoise->thZone;
 	th1_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
 	th1_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
 	th1_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
 	th1_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
 
-	robotConfig->navParams->processNoise->dZone = x1_zone;
-	robotConfig->navParams->processNoise->thZone = th1_zone;
+	xml_node<>* sensors_root_node = nav_root_node->first_node(XML_ELEMENT_SENSORS_STR);
+	if(sensors_root_node != NULL){
+		for(xml_node<>* sensor_node = sensors_root_node->first_node(XML_ELEMENT_SENSOR_STR); sensor_node; sensor_node = sensor_node->next_sibling()){
+			s_sensor* sensor = new s_sensor;
+			sensor->type = std::string(sensor_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value());
+			sensor->activated = atoi(sensor_node->first_attribute(XML_ATTRIBUTE_ACTIVATED_STR)->value()) == YES;
 
+			if(sensor->type == XML_SENSOR_TYPE_LASER_STR){
+				this->laserSensorActivated = sensor->activated;
+			} else if(sensor->type == XML_SENSOR_TYPE_CAMERA_STR){
+				this->cameraSensorActivated = sensor->activated;
+			} else if(sensor->type == XML_SENSOR_TYPE_RFID_STR){
+				this->rfidSensorActivated = sensor->activated;
+			}
 
-	xml_node<>* observation_noise_root_node = nav_root_node->first_node(XML_ELEMENT_OBSERV_NOISE_STR);
-	pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_D_ZONE_STR);
-	s_trapezoid* d_zone = new s_trapezoid;
-	d_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
-	d_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
-	d_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
-	d_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
+			xml_node<>* observation_noise_root_node = sensor_node->first_node(XML_ELEMENT_OBSERV_NOISE_STR);
+			pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_D_ZONE_STR);
+			s_trapezoid* d_zone = sensor->observationNoise->dZone;
+			d_zone->x1 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
+			d_zone->x2 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
+			d_zone->x3 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
+			d_zone->x4 = (float)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
 
-	pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
-	s_trapezoid* th2_zone = new s_trapezoid;
-	th2_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
-	th2_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
-	th2_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
-	th2_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
+			pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
+			s_trapezoid* th2_zone = sensor->observationNoise->thZone;
+			th2_zone->x1 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
+			th2_zone->x2 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
+			th2_zone->x3 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
+			th2_zone->x4 = (float)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
 
-	robotConfig->navParams->observationNoise->dZone = d_zone;
-	robotConfig->navParams->observationNoise->thZone = th2_zone;
+			robotConfig->navParams->sensors->push_back(sensor);
+		}
+	}
 
 	the_file.close();
 }
@@ -2518,6 +2523,12 @@ int GeneralController::initializeKalmanVariables(){
 	if(currentSector != NULL){
 		float uX, uY, uTh;
 
+		int laserLandmarksCount = currentSector->landmarksSizeByType(XML_SENSOR_TYPE_LASER_STR);
+		int cameraLandmarksCount = currentSector->landmarksSizeByType(XML_SENSOR_TYPE_CAMERA_STR);
+		int rfidLandmarksCount = currentSector->landmarksSizeByType(XML_SENSOR_TYPE_RFID_STR);
+
+		int totalLandmarks = 0;
+
 		fuzzy::trapezoid* xxKK = new fuzzy::trapezoid("Xx(k|k)", robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
 		
 		fuzzy::trapezoid* xyKK = new fuzzy::trapezoid("Xy(k|k)", robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
@@ -2527,11 +2538,7 @@ int GeneralController::initializeKalmanVariables(){
 		fuzzy::trapezoid* vdK1 = new fuzzy::trapezoid("Vd(k + 1)", robotConfig->navParams->processNoise->dZone->x1, robotConfig->navParams->processNoise->dZone->x2, robotConfig->navParams->processNoise->dZone->x3, robotConfig->navParams->processNoise->dZone->x4);
 		
 		fuzzy::trapezoid* vThK1 = new fuzzy::trapezoid("VTh(k + 1)", robotConfig->navParams->processNoise->thZone->x1, robotConfig->navParams->processNoise->thZone->x2, robotConfig->navParams->processNoise->thZone->x3, robotConfig->navParams->processNoise->thZone->x4);	
-		
-		fuzzy::trapezoid* wdK1 = new fuzzy::trapezoid("Wd(k + 1)", robotConfig->navParams->observationNoise->dZone->x1, robotConfig->navParams->observationNoise->dZone->x2, robotConfig->navParams->observationNoise->dZone->x3, robotConfig->navParams->observationNoise->dZone->x4);
-		
-		fuzzy::trapezoid* wThK1 = new fuzzy::trapezoid("WTh(k + 1)", robotConfig->navParams->observationNoise->thZone->x1, robotConfig->navParams->observationNoise->thZone->x2, robotConfig->navParams->observationNoise->thZone->x3, robotConfig->navParams->observationNoise->thZone->x4);	
-		
+
 		//uX = fuzzy::fstats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
 		//uY = fuzzy::fstats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
 		//uTh = fuzzy::fstats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
@@ -2551,15 +2558,69 @@ int GeneralController::initializeKalmanVariables(){
 		Q(0, 0) = uX; 	Q(0, 1) = 0;
 		Q(1, 0) = 0; 	Q(1, 1) = uTh;
 
-		uX = fuzzy::fstats::uncertainty(wdK1->getVertexA(), wdK1->getVertexB(), wdK1->getVertexC(), wdK1->getVertexD());
-		uTh = fuzzy::fstats::uncertainty(wThK1->getVertexA(), wThK1->getVertexB(), wThK1->getVertexC(), wThK1->getVertexD());
+		float laserUX = 0, laserUTh = 0, cameraUX = 0, cameraUTh = 0, rfidUX = 0, rfidUTh = 0;
 
-		R =  Matrix(2 * currentSector->landmarksSize(), 2 * currentSector->landmarksSize());
-		for (int i = 0; i < R.cols_size(); i++){
-			if((i % 2) != 0){
-				R(i, i) = uTh;
-			} else {
-				R(i, i) = uX;
+		for(int i = 0; i < robotConfig->navParams->sensors->size(); i++){
+			s_trapezoid* dZone;
+			s_trapezoid* thZone;
+			dZone = robotConfig->navParams->sensors->at(i)->observationNoise->dZone;
+			thZone = robotConfig->navParams->sensors->at(i)->observationNoise->thZone;
+
+			if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_LASER_STR){
+				
+				laserUX = fuzzy::fstats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
+				laserUTh = fuzzy::fstats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+
+			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
+				
+				cameraUX = fuzzy::fstats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
+				cameraUTh = fuzzy::fstats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+
+			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_RFID_STR){
+				
+				rfidUX = fuzzy::fstats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
+				rfidUTh = fuzzy::fstats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+			}
+		}
+		
+		if(laserSensorActivated){
+			totalLandmarks += laserLandmarksCount;
+		}
+
+		if(cameraSensorActivated){
+			totalLandmarks += cameraLandmarksCount;
+		}
+
+		if(rfidSensorActivated){
+			totalLandmarks += rfidLandmarksCount;
+		}
+
+		R = Matrix(2 * totalLandmarks, 2 * totalLandmarks);
+		int laserIndex = 0, cameraIndex = laserLandmarksCount, rfidIndex = (laserLandmarksCount + cameraLandmarksCount);
+
+		for(int i = 0; i < currentSector->landmarksSize(); i++){
+			if(laserSensorActivated){
+				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
+					R(2 * laserIndex, 2 * laserIndex) = laserUX;
+					R(2 * laserIndex + 1, 2 * laserIndex + 1) = laserUTh;
+					laserIndex++;
+				}	
+			}
+
+			if(cameraSensorActivated){
+				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
+					R(2 * cameraIndex, 2 * cameraIndex) = cameraUX;
+					R(2 * cameraIndex + 1, 2 * cameraIndex + 1) = cameraUTh;
+					cameraIndex++;
+				}
+			}
+
+			if(rfidSensorActivated){
+				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_RFID_STR){
+					R(2 * rfidIndex, 2 * rfidIndex) = rfidUX;
+					R(2 * rfidIndex + 1, 2 * rfidIndex + 1) = rfidUTh;
+					rfidIndex++;
+				}
 			}
 		}
 
@@ -2570,13 +2631,22 @@ int GeneralController::initializeKalmanVariables(){
 		
 		kalmanFuzzy->push_back(vdK1);
 		kalmanFuzzy->push_back(vThK1);
-		
-		kalmanFuzzy->push_back(wdK1);
-		kalmanFuzzy->push_back(wThK1);
 
 		result = 0;
 	} 
 	return result;
+}
+
+bool GeneralController::isLaserSensorActivated(){
+	return laserSensorActivated;
+}
+
+bool GeneralController::isCameraSensorActivated(){
+	return cameraSensorActivated;
+}
+
+bool GeneralController::isRfidSensorActivated(){
+	return rfidSensorActivated;
 }
 
 Matrix GeneralController::getP(){

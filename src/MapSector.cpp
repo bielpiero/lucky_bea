@@ -185,6 +185,17 @@ size_t MapSector::landmarksSize() {
 	return landmarks->size(); 
 }
 
+size_t MapSector::landmarksSizeByType(std::string type){
+	size_t count = 0;
+	for(int i = 0; i < landmarks->size(); i++){
+		if(landmarks->at(i)->type == type){
+			count++;
+		}
+	}
+
+	return count;
+}
+
 void MapSector::deleteAllSites() {  
 	for (int i = 0; i < sites->size(); i++) {
         delete sites->at(i);

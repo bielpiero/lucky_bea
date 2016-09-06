@@ -5,6 +5,7 @@
 
 struct s_landmark{
 	int id;
+	std::string type;
 	float varMinX;
 	float varMaxX;
 	float varMinY;
@@ -102,6 +103,8 @@ public:
 	size_t featuresSize();
 	size_t landmarksSize();
 
+	size_t landmarksSizeByType(std::string type);
+	
 	void deleteAllSites();
     void deleteAllFeatures();
     void deleteAllLandmarks();

@@ -6,7 +6,7 @@
 #define XML_ATTRIBUTE_POSITION_STR "pos"
 #define XML_ATTRIBUTE_SPEED_STR "speed"
 #define XML_ATTRIBUTE_ACCELERATION_STR "acceleration"
-#define XML_ATTRIBUTE_TYPE_STR "tipo"
+#define XML_ATTRIBUTE_TYPE_STR "type"
 #define XML_ATTRIBUTE_NAME_STR "name"
 
 #define XML_ELEMENT_GESTURE_STR "Gesto"
@@ -37,9 +37,11 @@
 #define XML_ATTRIBUTE_TOKEN_REQUIRED_STR "token-required"
 
 #define XML_ELEMENT_ROBOT_STR "robot"
-#define XML_ELEMENT_NAV_PARAMS_STR "navigation-params"
+#define XML_ELEMENT_NAV_PARAMS_STR "navigation"
 #define XML_ELEMENT_INITIAL_POS_STR "initial-position"
 #define XML_ELEMENT_PROCESS_NOISE_STR "process-noise"
+#define XML_ELEMENT_SENSORS_STR "sensors"
+#define XML_ELEMENT_SENSOR_STR "sensor"
 #define XML_ELEMENT_OBSERV_NOISE_STR "observation-noise"
 #define XML_ELEMENT_POS_X_ZONE_STR "x-zone"
 #define XML_ELEMENT_POS_Y_ZONE_STR "y-zone"
@@ -47,6 +49,7 @@
 #define XML_ELEMENT_POS_D_ZONE_STR "d-zone"
 
 #define XML_ATTRIBUTE_CYCLIC_STR "cyclic"
+#define XML_ATTRIBUTE_ACTIVATED_STR "activated"
 #define XML_ATTRIBUTE_SEQUENCE_STR "sequence"
 #define XML_ATTRIBUTE_VARIANCE_STR "var"
 #define XML_ATTRIBUTE_VARIANCE_MIN_X_STR "var-min-x"
@@ -70,3 +73,7 @@
 #define XML_ATTRIBUTE_TRAP_X2_STR "x2"
 #define XML_ATTRIBUTE_TRAP_X3_STR "x3"
 #define XML_ATTRIBUTE_TRAP_X4_STR "x4"
+
+#define XML_SENSOR_TYPE_LASER_STR "laser"
+#define XML_SENSOR_TYPE_CAMERA_STR "camera"
+#define XML_SENSOR_TYPE_RFID_STR "rfid"

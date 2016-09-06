@@ -18,6 +18,11 @@ private:
 	void getObservations(Matrix& observations);
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
 private:
+	
+	int laserLandmarksCount;
+	int cameraLandmarksCount;
+	int rfidLandmarksCount;
+
 	float alpha;
 
 	bool enableLocalization;

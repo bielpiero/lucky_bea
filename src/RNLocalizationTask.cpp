@@ -13,8 +13,14 @@ void RNLocalizationTask::init(){
 		Ak = Matrix::eye(3);
 		Bk = Matrix(3, 2);
 		Pk = gn->getP();
+
+		laserLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_LASER_STR);
+		cameraLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_CAMERA_STR);
+		rfidLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_RFID_STR);
+
 		alpha = 0.2;
 		enableLocalization = true;
+
 	} else{
 		enableLocalization = false;
 	}
@@ -45,9 +51,40 @@ void RNLocalizationTask::task(){
 		}
 
 		Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
+		int totalLandmarks = 0;
+		if(gn->isLaserSensorActivated()){
+			totalLandmarks += laserLandmarksCount;
+		}
 
-		Hk = Matrix(2 * gn->getCurrentSector()->landmarksSize(), STATE_VARIABLES);
-		for(int i = 0, zIndex = 0; i < gn->getCurrentSector()->landmarksSize(); i++, zIndex += 2){
+		if(gn->isCameraSensorActivated()){
+			totalLandmarks += cameraLandmarksCount;
+		}
+
+		if(gn->isRfidSensorActivated()){
+			totalLandmarks += rfidLandmarksCount;
+		}
+
+		Hk = Matrix(2 * totalLandmarks, STATE_VARIABLES);
+		int laserIndex = 0, cameraIndex = laserLandmarksCount, rfidIndex = (laserLandmarksCount + cameraLandmarksCount);
+		for(int i = 0, zIndex = 0; i < gn->getCurrentSector()->landmarksSize(); i++){
+			if(gn->isLaserSensorActivated()){
+				if(gn->getCurrentSector()->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
+					zIndex = 2 * laserIndex;
+					laserIndex++;
+				}
+			}
+			if(gn->isCameraSensorActivated()){
+				if(gn->getCurrentSector()->landmarkAt(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
+					zIndex = 2 * cameraIndex;
+					cameraIndex++;
+				}
+			}
+			if(gn->isRfidSensorActivated()){
+				if(gn->getCurrentSector()->landmarkAt(i)->type == XML_SENSOR_TYPE_RFID_STR){
+					zIndex = 2 * rfidIndex;
+					rfidIndex++;
+				}
+			}
 			Hk(zIndex, 0) = -((gn->getCurrentSector()->landmarkAt(i)->xpos) - gn->getRawEncoderPosition()(0, 0))/std::sqrt(std::pow((gn->getCurrentSector()->landmarkAt(i)->xpos) - gn->getRawEncoderPosition()(0, 0), 2) + std::pow((gn->getCurrentSector()->landmarkAt(i)->ypos) - gn->getRawEncoderPosition()(1, 0), 2));
 			Hk(zIndex, 1) = -((gn->getCurrentSector()->landmarkAt(i)->ypos) - gn->getRawEncoderPosition()(1, 0))/std::sqrt(std::pow((gn->getCurrentSector()->landmarkAt(i)->xpos) - gn->getRawEncoderPosition()(0, 0), 2) + std::pow((gn->getCurrentSector()->landmarkAt(i)->ypos) - gn->getRawEncoderPosition()(1, 0), 2));
 			Hk(zIndex, 2) = 0.0;
@@ -61,35 +98,107 @@ void RNLocalizationTask::task(){
 
 		Matrix Sk = Hk * Pk * ~Hk + gn->getR();
 		Matrix Wk = Pk * ~Hk * !Sk;
-		gn->lockLaserLandmarks();
+		Matrix zl(2 * totalLandmarks, 1);
 
-		Matrix zl(2 * gn->getCurrentSector()->landmarksSize(), 1);
-		for (int i = 0; i < gn->getLaserLandmarks()->size(); i++){
-			RNLandmark* lndmrk = gn->getLaserLandmarks()->at(i);
+		laserIndex = 0;
+		cameraIndex = laserLandmarksCount;
+		rfidIndex = (laserLandmarksCount + cameraLandmarksCount);
 
-			//RNUtils::printLn("landmarks {d: %f, a: %f}\n", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
-			std::vector<float> euclideanDistances;
-			for (int j = 0; j < zkl.rows_size(); j++){
-				euclideanDistances.push_back(std::sqrt(std::pow(zkl(j, 0), 2) + std::pow(lndmrk->getPointsXMean(), 2) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1)))));
-				//RNUtils::printLn("Euclidean Distance[%d]: %f", j, euclideanDistances.at(j));	
-			}
+		if(gn->isLaserSensorActivated()){
+			gn->lockLaserLandmarks();	
+			for (int i = 0; i < gn->getLaserLandmarks()->size(); i++){
+				RNLandmark* lndmrk = gn->getLaserLandmarks()->at(i);
 
-			float minorDistance = std::numeric_limits<float>::infinity();
-			int indexFound = RN_NONE;
-			for (int j = 0; j < euclideanDistances.size(); j++){
-				if(euclideanDistances.at(j) < alpha){
-					minorDistance = euclideanDistances.at(j);
-					indexFound = j;
-				}	
+				//RNUtils::printLn("landmarks {d: %f, a: %f}\n", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
+				std::vector<std::pair<int, float> > euclideanDistances;
+				for (int j = laserIndex; j < cameraIndex; j++){
+					float ed = std::sqrt(std::pow(zkl(j, 0), 2) + std::pow(lndmrk->getPointsXMean(), 2) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
+					euclideanDistances.push_back(std::pair<int, float>(j, ed));
+					//RNUtils::printLn("Euclidean Distance[%d]: %f", j, euclideanDistances.at(j));	
+				}
+
+				float minorDistance = std::numeric_limits<float>::infinity();
+				int indexFound = RN_NONE;
+				for (int j = 0; j < euclideanDistances.size(); j++){
+					if(euclideanDistances.at(j).second < alpha){
+						minorDistance = euclideanDistances.at(j).second;
+						indexFound = euclideanDistances.at(j).first;
+					}	
+				}
+				
+				//RNUtils::printLn("Matched landmark: {idx : %d, MHD: %f}\n", indexFound, minorDistance);
+				if(indexFound > RN_NONE){
+					zl(2 * indexFound, 0) = lndmrk->getPointsXMean() - zkl(indexFound, 0);
+					zl(2 * indexFound + 1, 0) = lndmrk->getPointsYMean() - zkl(indexFound, 1);
+				}
 			}
-			
-			//RNUtils::printLn("Matched landmark: {idx : %d, MHD: %f}\n", indexFound, minorDistance);
-			if(indexFound > RN_NONE){
-				zl(2 * indexFound, 0) = lndmrk->getPointsXMean() - zkl(indexFound, 0);
-				zl(2 * indexFound + 1, 0) = lndmrk->getPointsYMean() - zkl(indexFound, 1);
-			}
+			gn->unlockLaserLandmarks();
 		}
-		gn->unlockLaserLandmarks();
+
+		if(gn->isCameraSensorActivated()){
+			gn->lockVisualLandmarks();
+			for (int i = 0; i < gn->getVisualLandmarks()->size(); i++){
+				RNLandmark* lndmrk = gn->getVisualLandmarks()->at(i);
+
+				//RNUtils::printLn("landmarks {d: %f, a: %f}", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
+				std::vector<std::pair<int, float> > euclideanDistances;
+				for (int j = cameraIndex; j < (cameraIndex + cameraLandmarksCount); j++){
+					//float ed = std::sqrt(std::pow(zkl(j, 0), 2) + std::pow(lndmrk->getPointsXMean(), 2) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
+					float ed = std::abs(lndmrk->getPointsYMean() - zkl(j, 1));
+					euclideanDistances.push_back(std::pair<int, float>(j, ed));
+					//RNUtils::printLn("Euclidean visual Distance[%d]: %f", j, ed);	
+				}
+
+				float minorDistance = std::numeric_limits<float>::infinity();
+				int indexFound = RN_NONE;
+				for (int j = 0; j < euclideanDistances.size(); j++){
+					if(euclideanDistances.at(j).second < alpha){
+						minorDistance = euclideanDistances.at(j).second;
+						indexFound = euclideanDistances.at(j).first;
+					}	
+				}
+				
+				if(indexFound > RN_NONE){
+					//zl(2 * indexFound, 0) = lndmrk->getPointsXMean() - zkl(indexFound, 0);
+					//RNUtils::printLn("Matched landmark: {idx : %d, MHD: %f}", indexFound, minorDistance);
+					zl(2 * indexFound, 0) = 0;
+					zl(2 * indexFound + 1, 0) = lndmrk->getPointsYMean() - zkl(indexFound, 1);
+				}
+			}
+			gn->unlockVisualLandmarks();
+		}
+
+		if(gn->isRfidSensorActivated()){
+			gn->lockRFIDLandmarks();
+			for (int i = 0; i < gn->getRFIDLandmarks()->size(); i++){
+				RNLandmark* lndmrk = gn->getRFIDLandmarks()->at(i);
+
+				//RNUtils::printLn("landmarks {d: %f, a: %f}\n", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
+				std::vector<std::pair<int, float> > euclideanDistances;
+				for (int j = rfidIndex; j < (rfidIndex + rfidLandmarksCount); j++){
+					float ed = std::sqrt(std::pow(zkl(j, 0), 2) + std::pow(lndmrk->getPointsXMean(), 2) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
+					euclideanDistances.push_back(std::pair<int, float>(j, ed));
+					//RNUtils::printLn("Euclidean Distance[%d]: %f", j, euclideanDistances.at(j));	
+				}
+
+				float minorDistance = std::numeric_limits<float>::infinity();
+				int indexFound = RN_NONE;
+				for (int j = 0; j < euclideanDistances.size(); j++){
+					if(euclideanDistances.at(j).second < alpha){
+						minorDistance = euclideanDistances.at(j).second;
+						indexFound = euclideanDistances.at(j).first;
+					}	
+				}
+				
+				//RNUtils::printLn("Matched landmark: {idx : %d, MHD: %f}\n", indexFound, minorDistance);
+				if(indexFound > RN_NONE){
+					zl(2 * indexFound, 0) = lndmrk->getPointsXMean() - zkl(indexFound, 0);
+					zl(2 * indexFound + 1, 0) = lndmrk->getPointsYMean() - zkl(indexFound, 1);
+				}
+			}
+			gn->unlockRFIDLandmarks();
+		}
+
 
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		Matrix newPosition = gn->getRawEncoderPosition() + Wk * zl;
@@ -111,25 +220,55 @@ void RNLocalizationTask::task(){
 	} else {
 		init();
 	}
-	//RNUtils::sleep(20);
+	RNUtils::sleep(10);
 }
 
 void RNLocalizationTask::getObservations(Matrix& observations){
-	Matrix result(gn->getCurrentSector()->landmarksSize(), 2);
+	int totalLandmarks = 0;
+	if(gn->isLaserSensorActivated()){
+		totalLandmarks += laserLandmarksCount;
+	}
 
-	for(int k = 0; k < gn->getCurrentSector()->landmarksSize(); k++){
+	if(gn->isCameraSensorActivated()){
+		totalLandmarks += cameraLandmarksCount;
+	}
+
+	if(gn->isRfidSensorActivated()){
+		totalLandmarks += rfidLandmarksCount;
+	}
+	int laserIndex = 0, cameraIndex = laserLandmarksCount, rfidIndex = (laserLandmarksCount + cameraLandmarksCount);
+	Matrix result(totalLandmarks, 2);
+	for(int k = 0, zIndex = 0; k < gn->getCurrentSector()->landmarksSize(); k++){
+
 		float distance = 0, angle = 0;
 		s_landmark* landmark = gn->getCurrentSector()->landmarkAt(k);
-
-
 		landmarkObservation(gn->getRawEncoderPosition(), landmark, distance, angle);
-		result(k, 0) = distance;
+		if(gn->isLaserSensorActivated()){
+			if(landmark->type == XML_SENSOR_TYPE_LASER_STR){
+				zIndex = laserIndex;
+				laserIndex++;
+			}
+		}
+		if(gn->isCameraSensorActivated()){
+			if(landmark->type == XML_SENSOR_TYPE_CAMERA_STR){
+				zIndex = cameraIndex;
+				cameraIndex++;
+			}
+		}
+		if(gn->isRfidSensorActivated()){
+			if(landmark->type == XML_SENSOR_TYPE_RFID_STR){
+				zIndex = rfidIndex;
+				rfidIndex++;
+			}
+		}
+		result(zIndex, 0) = distance;
 		if(angle > M_PI){
 			angle = angle - 2 * M_PI;
 		} else if(angle < -M_PI){
 			angle = angle + 2 * M_PI;
 		}
-		result(k, 1) = angle;
+
+		result(zIndex, 1) = angle;
 	}
 
 	observations = result;
