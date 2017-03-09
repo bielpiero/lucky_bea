@@ -80,6 +80,8 @@ public: // functions
     static void shutdown();
 	static std::string getApplicationPath();
 	static std::string getApplicationName();
+	static float milliwattsTodBm(const float& milliwatts);
+	static float dBmTomilliwatts(const float& dBm);
 private: //functions
     static void setStatus(bool status);
     static void setApplicationPathName(char* str);

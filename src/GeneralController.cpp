@@ -3,9 +3,12 @@
 #include "RNRecurrentTask.h"
 #include "RNRecurrentTaskMap.h"
 #include "RNLocalizationTask.h"
+#include "RNKalmanLocalizationTask.h"
+#include "RNPFLocalizationTask.h"
 #include "RNCameraTask.h"
+#include "RNOmnicameraTask.h"
 #include "RNRFIdentificationTask.h"
-
+#include "RNEmotionsTask.h"
 
 const float GeneralController::LASER_MAX_RANGE = 11.6;
 const float GeneralController::LANDMARK_RADIUS = 0.045;
@@ -68,14 +71,24 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
-	omnidirectionalTask = new RNCameraTask("Omnidirectional Task");
-	localization = new RNLocalizationTask();
-	//rfidTask = new RNRFIdentificationTask();
+	omnidirectionalTask = new RNOmnicameraTask("Omnidirectional Task");
+	emotions = new RNEmotionsTask();
+	eyesCameras = new RNCameraTask();
+
+	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
+		localization = new RNKalmanLocalizationTask();
+	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PF_STR){
+		localization = new RNPFLocalizationTask();
+	}
+
+	rfidTask = new RNRFIdentificationTask();
 
 	////Tasks added:
 	tasks->addTask(omnidirectionalTask);
+	//tasks->addTask(emotions);
 	tasks->addTask(localization);
-	//tasks->addTask(rfidTask);
+	tasks->addTask(eyesCameras);
+	tasks->addTask(rfidTask);
 	
 	//Start all tasks;
 	tasks->startAllTasks();
@@ -90,12 +103,13 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	RNUtils::getTimestamp(mappingLandmarksTimestamp);
 	RNUtils::getTimestamp(mappingFeaturesTimestamp);
 	RNUtils::getTimestamp(mappingSitesTimestamp);
+	file = std::fopen("data-laser.txt", "w+");
 }
 
 GeneralController::~GeneralController(void){
 
 	//rfidConnection->closeConnection();
-	
+
 	closeConnection();
 	
 	//pthread_mutex_destroy(&laserLandmarksLocker);
@@ -130,10 +144,13 @@ GeneralController::~GeneralController(void){
 	laserLandmarks->clear();
 	delete laserLandmarks;
 	RNUtils::printLn("Deleted laserLandmarks...");
+
+	if(!file){
+		std::fclose(file);
+	}
 }
 
-void GeneralController::onConnection(int socketIndex) //callback for client and server
-{
+void GeneralController::onConnection(int socketIndex){ //callback for client and server
 	if(isConnected(socketIndex)) {
 		clientsConnected++;
 		RNUtils::printLn("Client %s is Connected to Doris, using port %d", this->getClientIPAddress(socketIndex), this->getClientPort(socketIndex));
@@ -271,6 +288,8 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				RNUtils::printLn("Command 0x0B. Text to speech message denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x0B, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
+			break;
+		case 0x0C:
 			break;
 		case 0x10:
 			if(granted){
@@ -1079,12 +1098,14 @@ void GeneralController::loadSector(int mapId, int sectorId){
     	delete currentSector;
     	currentSector = NULL;
     }
+
     root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
     currentSector = new MapSector;
     if(root_node != NULL){
     	bool found = false;
     	for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){	
     		int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+    		//std::cout << "hasta aqui bien" << std::endl;
     		if(xmlSectorId == sectorId){
     			found = true;
     			currentSector->setId(xmlSectorId);
@@ -1206,6 +1227,11 @@ void GeneralController::loadRobotConfig(){
 	robotConfig = new s_robot;
 
 	xml_node<>* root_node = doc.first_node(XML_ELEMENT_ROBOT_STR);
+	if(root_node->first_attribute(XML_ATTRIBUTE_LOCALIZATION_STR)){
+		robotConfig->localization = std::string(root_node->first_attribute(XML_ATTRIBUTE_LOCALIZATION_STR)->value());
+	} else {
+		robotConfig->localization = std::string(XML_LOCALIZATION_ALGORITHM_KALMAN_STR);
+	}
 	xml_node<>* nav_root_node = root_node->first_node(XML_ELEMENT_NAV_PARAMS_STR);
 	robotConfig->navParams->alpha = (float)atoi(nav_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value()) / 100;
 
@@ -1507,7 +1533,7 @@ void GeneralController::getSectorInformationFeatures(int mapId, int sectorId, st
 				int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 				if(sectorId == xmlSectorId){
 					found = true;
-					buffer_str << sectorId << "|";
+					//buffer_str << sectorId << "|"; agregado para lluis, pero luego lo quito porque no le encuentro sentido
 					xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
 					if(features_root_node->first_node() !=  NULL){
 						for(xml_node<>* feature_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); feature_node; feature_node = feature_node->next_sibling()){
@@ -1567,7 +1593,7 @@ void GeneralController::getSectorInformationSites(int mapId, int sectorId, std::
 				int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 				if(sectorId == xmlSectorId){
 					found = true;
-					buffer_str << sectorId << "|";
+					//buffer_str << sectorId << "|"; idem
 					xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
 					if(sites_root_node->first_node() !=  NULL){
 						for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
@@ -2378,7 +2404,9 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 			}
 		}
 	}
+	std::ostringstream buffFile;
 	for(int i = 0; i < laserLandmarks->size(); i++){
+		
 		//RNUtils::printLn("Questa Merda prima alla correzione [%d] è {d: %f, a: %f}", i, laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, laserLandmarks->at(i)->getPointsYMean());
 		Matrix Pkl = Matrix::eye(2);
 		Matrix Rkl = std::pow(0.003, 2) * Matrix::eye(laserLandmarks->at(i)->size());
@@ -2388,12 +2416,13 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 		Matrix Pc(2, 1);
 		Pc(0, 0) = laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS;
 		Pc(1, 0) = laserLandmarks->at(i)->getPointsYMean();
+
+		fprintf(file, "$MEAN_LASER_RAW\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
 		for(int j = 0; j < laserLandmarks->at(i)->size(); j++){
-			
-
 			Zk(j, 0) = laserLandmarks->at(i)->getPointAt(j)->getX();
-
 			Zke(j, 0) = Pc(0, 0) * cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) - LANDMARK_RADIUS * cos(asin((Pc(0, 0) / LANDMARK_RADIUS) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY())));
+
+			fprintf(file, "$LASER_POINT\t%d\t%d\t%f\t%f\t%f\n", (i + 1), (j + 1), Zk(j, 0), Zke(j, 0), laserLandmarks->at(i)->getPointAt(j)->getY());
 
 			float calc = (1 / LANDMARK_RADIUS) * (1 / std::sqrt(1 - ((std::pow(Pc(0, 0), 2) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2))/(std::pow(LANDMARK_RADIUS, 2)))));
 			Hkl(j, 0) = cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + Pc(0, 0) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2) * calc;
@@ -2403,7 +2432,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 		Matrix Skl = Hkl * Pkl * ~Hkl + Rkl;
 		Matrix Wkl = Pkl * ~Hkl * !Skl;
 		Pc = Pc + (Wkl * (Zk - Zke));
-
+		fprintf(file, "$MEAN_LASER_FIXED\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
 		laserLandmarks->at(i)->setPointsXMean(Pc(0, 0));
 		laserLandmarks->at(i)->setPointsYMean(Pc(1, 0));
 
@@ -2788,23 +2817,21 @@ int GeneralController::unlockVisualLandmarks(){
 }
 
 void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice, int port){
-	pthread_t t1;
+
 	stopVideoStreaming();
-	s_video_streamer_data* data = new s_video_streamer_data;
-	
-	data->socketIndex = socketIndex;
-	data->port = port;
-	data->object = this;
+
 	videoDevice = 0;
+	cv::VideoCapture tiki(videoDevice);
+
 	//vc = cv::VideoCapture(videoDevice);
 	
-	/*if(vc.isOpened()){
+	if(tiki.isOpened()){
 		RNUtils::printLn("Streaming from camera device: %d", videoDevice);
-		pthread_create(&t1, NULL, streamingThread, (void *)(data));
+		//pthread_create(&t1, NULL, streamingThread, (void *)(data));
 	} else {
-		vc.release();
+		tiki.release();
 		RNUtils::printLn("Could not open device: %d", videoDevice);
-	}	*/
+	}	
 	 
 
 }

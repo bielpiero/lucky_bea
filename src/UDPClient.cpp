@@ -1,10 +1,6 @@
 #include "UDPClient.h"
 #include <iostream>
 
-UDPClient::UDPClient(int port){
-	init("", port);
-}
-
 UDPClient::UDPClient(const char* address, int port){
 	init(address, port);
 }
@@ -12,34 +8,26 @@ UDPClient::UDPClient(const char* address, int port){
 void UDPClient::init(const char* address, int port){
 	thread_status=0;
 	socket_conn = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (socket_conn == INVALID_SOCKET)
-	{
+	if (socket_conn == INVALID_SOCKET){
 		error("Server: Error Socket");
 		return;
 	}
-	if(strlen(address) == 0){
-		socket_local_address.sin_family = AF_INET;
-		socket_local_address.sin_addr.s_addr = INADDR_ANY;
-		socket_local_address.sin_port = htons(port);
-		int err = bind(socket_conn, (struct sockaddr*)&socket_local_address, sizeof(socket_local_address));
-		if(err < 0){
-			error("Binding ERROR");
-			return;
-		}
-	}
-	if(strlen(address) != 0){
-		socket_dest_address.sin_family = AF_INET;
-		socket_dest_address.sin_addr.s_addr = inet_addr(address);
-		socket_dest_address.sin_port = htons(port);
-		
-	}
+
+	socket_dest_address.sin_family = AF_INET;
+    socket_dest_address.sin_addr.s_addr = inet_addr(address);
+    socket_dest_address.sin_port = htons(port);
+    bufferOut = new unsigned char[5];
+    memcpy(bufferOut, "HELLO", 5);
+    
+    sendData(bufferOut, 5);
 }
 
-UDPClient::~UDPClient()
-{
+UDPClient::~UDPClient(){
+    memcpy(bufferOut, "BYBYE", 5);
+    sendData(bufferOut, 5);
 }
 
-int UDPClient::sendData(const unsigned char* buffer,int length){
+int UDPClient::sendData(const unsigned char* buffer, int length){
 	long err = sendto(socket_conn, buffer, length, 0, (struct sockaddr*)&socket_dest_address, sizeof(socket_dest_address));
 	if(err < 0){
 		perror("send");
@@ -79,7 +67,7 @@ void* UDPClient::launchThread(void* p)
 		{
 			node->OnMessageReceivedWithData(msg,l);
 		}
-		Sleep(10);
+        RNUtils::sleep(10);
 		delete [] msg;
 	}
 	node->thread_status=0;
@@ -94,7 +82,7 @@ void UDPClient::closeConnection(){
 	if(thread_status == 1){
 		thread_status = 2;
 		while (thread_status != 0){
-			Sleep(100);
+            RNUtils::sleep(100);
 		}
 	}	
 	closesocket(socket_conn);

@@ -9,29 +9,20 @@
 
 class RNLocalizationTask : public RNRecurrentTask{
 public:
-	RNLocalizationTask(const char* name = "Localization Task", const char* description = "");
-	~RNLocalizationTask();
-	virtual void task();
-	virtual void onKilled();
-private:
-	void init();
-	void getObservations(Matrix& observations);
-	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
-private:
+	RNLocalizationTask(const char* name = "Localization Task", const char* description = "") : RNRecurrentTask(name, description){
+
+	}
+	~RNLocalizationTask(){
+
+	}
+protected:
+	virtual void task(){
+
+	}
 	
-	int laserLandmarksCount;
-	int cameraLandmarksCount;
-	int rfidLandmarksCount;
+	virtual void onKilled(){
 
-	float alpha;
-
-	bool enableLocalization;
-
-	Matrix Ak;
-	Matrix Bk;
-	Matrix pk1;
-	Matrix Hk;
-	Matrix Pk;
+	}
 };
 
 #endif

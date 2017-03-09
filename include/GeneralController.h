@@ -58,9 +58,13 @@ using namespace rapidxml;
 class GeneralController;
 
 class RNLocalizationTask;
+class RNKalmanLocalizationTask;
+class RNPFLocalizationTask;
+class RNOmnicameraTask;
 class RNCameraTask;
 class RNRecurrentTaskMap;
 class RNRFIdentificationTask;
+class RNEmotionsTask;
 
 struct s_motor{
 	std::string idMotor;
@@ -175,8 +179,10 @@ struct s_navigation_params{
 };
 
 struct s_robot{
+	std::string localization;
 	s_navigation_params* navParams;
 	s_robot(){
+		localization = "kalman";
 		navParams = new s_navigation_params();
 	}
 
@@ -205,7 +211,7 @@ private:
 	std::ostringstream mappingLandmarksTimestamp;
 	std::ostringstream mappingFeaturesTimestamp;
 	std::ostringstream mappingSitesTimestamp;
-		
+	std::FILE* file;
 public:
 	
 	GeneralController(const char* port);
@@ -239,8 +245,7 @@ private:
 	void setServoAcceleration(unsigned char card_id, unsigned char servo_id, int speed);
 	
 	static void* dynamicFaceThread(void*);
-	
-	/// ROS Functions
+
 public:
 
 	void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear);
@@ -303,13 +308,15 @@ private:
 	UDPClient* spdUDPClient;
 	RobotDataStreamer* spdWSServer;
 	// Tasks Objects
+	RNEmotionsTask* emotions;
 	RNRecurrentTaskMap* tasks;
 	RNLocalizationTask* localization;
-	RNCameraTask* omnidirectionalTask;
+	RNOmnicameraTask* omnidirectionalTask;
 	RNRFIdentificationTask* rfidTask;
+	RNCameraTask* eyesCameras;
 
 	//OpenCV
-	//cv::VideoCapture vc;
+	//std::vector<cv::VideoCapture> vc;
 	//cv::VideoCapture vcSecond;
 	//possibilistic navigation
 	Matrix robotVelocity;

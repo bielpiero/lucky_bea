@@ -185,3 +185,11 @@ std::string RNUtils::toUppercase(std::string str){
 	}
 	return newString.str();
 }
+
+float RNUtils::milliwattsTodBm(const float& milliwatts){
+	return (10 * std::log10(milliwatts));
+}
+
+float RNUtils::dBmTomilliwatts(const float& dBm){
+	return (std::pow(10, dBm / 10));
+}

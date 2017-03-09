@@ -1,10 +1,9 @@
 #include "RNRFIdentificationTask.h"
 
-const float RFData::OFFSET = -59;
 const unsigned int RNRFIdentificationTask::RF_BUFFER_SIZE = 32768;
 const unsigned int RNRFIdentificationTask::RO_SPEC_ID = 1111;
 const char* RNRFIdentificationTask::DEVICE_NAME = "speedwayr-11-94-a3.local";
-const unsigned int RNRFIdentificationTask::ANTENNAS_NUMBER = 1;
+const unsigned int RNRFIdentificationTask::ANTENNAS_NUMBER = 2;
 
 RNRFIdentificationTask::RNRFIdentificationTask(const char* name, const char* description) : RNRecurrentTask(name, description){
 	conn = NULL;
@@ -15,7 +14,7 @@ RNRFIdentificationTask::RNRFIdentificationTask(const char* name, const char* des
 	rfids = new std::vector<RFData*>();
 
 	antennasList = new AntennaDataList();
-	//file = std::fopen("data-rfid-1.65m.txt", "w+");
+	//file = std::fopen("data-rfid-1.00m.txt", "w+");
 	
 }
 
@@ -43,8 +42,20 @@ void RNRFIdentificationTask::task(){
 		std::string data = "";
 		//if(startROSpec() == 0){
 			if(getDataFromDevice(data) == 0){
-				RNUtils::printLn("Success data: %s", data.c_str());
+				RFData* detected = new RFData(data);
+				RFData* found = NULL;
+				if((found = findByKeyAntenna(detected->getTagKey(), detected->getAntenna())) == NULL){
+					rfids->push_back(detected);
+				} else {
+					found->setPhaseAngleRSSI(detected->getPhaseAngle(), detected->getRSSI());
+					found->setTimestamp(detected->getTimestamp());
+					delete detected;
+				}
 			}
+			
+			//for (int i = 0; i < rfids->size(); ++i){
+			//	RNUtils::printLn("[%d]: TID: %s, Ant: %d, RSSI: %f, Angle: %f, d: %f", i, rfids->at(i)->getTagKey().c_str(), rfids->at(i)->getAntenna(), rfids->at(i)->getRSSI(), rfids->at(i)->getPhaseAngle(), rfids->at(i)->getDistance());
+			//}
 		//}	
 	} else {
 		init();
@@ -62,12 +73,14 @@ int RNRFIdentificationTask::init(void){
 			RNUtils::printLn("Success: Connection OK...", DEVICE_NAME);
 			if(enableImpinjExtensions() == 0){
 				RNUtils::printLn("Success: Enable Impinj Extensions on %s OK...", DEVICE_NAME);
+				//if(0 == 0){
 				if(resetToDefaultConfiguration() == 0){
 					RNUtils::printLn("Success: Reset default Configuration on %s OK...", DEVICE_NAME);
-					if(getReaderConfiguration() == 0){
-						RNUtils::printLn("Success: Read Configuration on %s OK...", DEVICE_NAME);
-						if(addROSpec() == 0){
-							RNUtils::printLn("Success: Added readers operation specifications on %s OK...", DEVICE_NAME);
+					//setReaderConfiguration();
+					if(addROSpec() == 0){ 
+						RNUtils::printLn("Added readers operation specifications on %s OK...", DEVICE_NAME);
+						if(getReaderConfiguration() == 0){
+							RNUtils::printLn("Success: Read Configuration on %s OK...", DEVICE_NAME);
 							if(enableROSpec() == 0){
 								
 								this->deviceInitialized = true;
@@ -229,7 +242,7 @@ int RNRFIdentificationTask::getReaderConfiguration(){
 						antData->setAntennaGain((*antPropIt)->getAntennaGain());
 					}
 				}
-				//std::cout << antData->toString();
+				//std::cout << antData->toString() << std::endl;
 				antennasList->add(antData);
 			}
 		} else {
@@ -244,11 +257,51 @@ int RNRFIdentificationTask::getReaderConfiguration(){
 
 int RNRFIdentificationTask::setReaderConfiguration(){
 	int result = 0;
-	LLRP::CSET_READER_CONFIG* cmd;
-	LLRP::CMessage* message = NULL;
-	LLRP::CSET_READER_CONFIG_RESPONSE* response;
+	LLRP::CGET_READER_CONFIG* cmdRead;
+	LLRP::CGET_READER_CONFIG_RESPONSE* responseRead;
 
-	cmd = new LLRP::CSET_READER_CONFIG();
+	LLRP::CSET_READER_CONFIG* cmdSet;
+	LLRP::CMessage* message = NULL;
+	LLRP::CMessage* messageSet = NULL;
+	LLRP::CSET_READER_CONFIG_RESPONSE* response;
+	std::list<LLRP::CAntennaConfiguration*>::iterator antCnfgIt;
+
+	cmdRead = new LLRP::CGET_READER_CONFIG();
+	cmdRead->setMessageID(messageId++);
+	cmdRead->setRequestedData(LLRP::GetReaderConfigRequestedData_All);
+
+	message = transact(cmdRead);
+	delete cmdRead;
+
+	if(message != NULL){
+		responseRead = (LLRP::CGET_READER_CONFIG_RESPONSE*)message;
+
+		cmdSet = new LLRP::CSET_READER_CONFIG();
+		cmdSet->setMessageID(messageId++);
+		for(antCnfgIt = responseRead->beginAntennaConfiguration(); antCnfgIt != responseRead->endAntennaConfiguration(); antCnfgIt++){
+			LLRP::CRFTransmitter* ttx = (*antCnfgIt)->getRFTransmitter();
+			//ttx->setHopTableID(0);
+			ttx->setChannelIndex(3);
+			//ttx->setTransmitPower(81);
+			cmdSet->addAntennaConfiguration(new LLRP::CAntennaConfiguration(*(*antCnfgIt)));
+		}
+		messageSet = transact(cmdSet);
+		if(messageSet != NULL){
+			response = (LLRP::CSET_READER_CONFIG_RESPONSE*)messageSet;
+			if(checkLLRPStatus(response->getLLRPStatus(), "setReaderConfiguration") != 0){
+				result = RN_NONE;
+				printf("Todo mal... mu mal\n");
+			} else {
+				printf("Todo bien, todo correcto, y yo que me alegro\n");
+			}
+
+		} else {
+			printf("El transact ha fallao\n");
+		}
+	}
+
+
+	delete response;
 	return result;
 }
 
@@ -294,21 +347,9 @@ int RNRFIdentificationTask::addROSpec(void){
     roBoundarySpec->setROSpecStartTrigger(rospecStartTrigger);
     roBoundarySpec->setROSpecStopTrigger(rospecStopTrigger);
 
-    LLRP::CAISpecStopTrigger* aiSpecStopTrigger = new LLRP::CAISpecStopTrigger();
-    aiSpecStopTrigger->setAISpecStopTriggerType(LLRP::AISpecStopTriggerType_Null);
-    aiSpecStopTrigger->setDurationTrigger(0);
-
-    LLRP::CInventoryParameterSpec* inventoryParameterSpec = new LLRP::CInventoryParameterSpec();
-    inventoryParameterSpec->setInventoryParameterSpecID(1);
-    inventoryParameterSpec->setProtocolID(LLRP::AirProtocols_EPCGlobalClass1Gen2);
-
-    LLRP::llrp_u16v_t antennaIDs = LLRP::llrp_u16v_t(1); /* Modificar para cuando se agregue la segunda antena */
-    antennaIDs.m_pValue[0] = 0;     
-
-    LLRP::CAISpec* aiSpec = new LLRP::CAISpec();
-    aiSpec->setAntennaIDs(antennaIDs);
-    aiSpec->setAISpecStopTrigger(aiSpecStopTrigger);
-    aiSpec->addInventoryParameterSpec(inventoryParameterSpec);
+    LLRP::CROReportSpec* roReportSpec = new LLRP::CROReportSpec();
+    roReportSpec->setROReportTrigger(LLRP::ROReportTriggerType_Upon_N_Tags_Or_End_Of_ROSpec);
+    roReportSpec->setN(1);         /* Unlimited */
 
     LLRP::CTagReportContentSelector* tagReportContentSelector = new LLRP::CTagReportContentSelector();
     tagReportContentSelector->setEnableROSpecID(FALSE);
@@ -327,10 +368,74 @@ int RNRFIdentificationTask::addROSpec(void){
     c1g2Memory->setEnablePCBits(false);
     tagReportContentSelector->addAirProtocolEPCMemorySelector(c1g2Memory);
 
-    LLRP::CROReportSpec* roReportSpec = new LLRP::CROReportSpec();
-    roReportSpec->setROReportTrigger(LLRP::ROReportTriggerType_Upon_N_Tags_Or_End_Of_ROSpec);
-    roReportSpec->setN(1);         /* Unlimited */
     roReportSpec->setTagReportContentSelector(tagReportContentSelector);
+
+    LLRP::CAISpecStopTrigger* aiSpecStopTrigger = new LLRP::CAISpecStopTrigger();
+    aiSpecStopTrigger->setAISpecStopTriggerType(LLRP::AISpecStopTriggerType_Null);
+    aiSpecStopTrigger->setDurationTrigger(0);
+
+    LLRP::CInventoryParameterSpec* inventoryParameterSpec = new LLRP::CInventoryParameterSpec();
+    inventoryParameterSpec->setInventoryParameterSpecID(1);
+    inventoryParameterSpec->setProtocolID(LLRP::AirProtocols_EPCGlobalClass1Gen2);
+
+    for(int i = 1; i <= ANTENNAS_NUMBER; i++){
+    	LLRP::CC1G2RFControl* pC1G2RFControl = new LLRP::CC1G2RFControl();
+        pC1G2RFControl->setModeIndex(2);
+
+        // Session
+        LLRP::CC1G2SingulationControl* pC1G2SingulationControl = new LLRP::CC1G2SingulationControl();
+        pC1G2SingulationControl->setSession(2);
+        pC1G2SingulationControl->setTagPopulation(32);
+
+        // Inventory search mode
+        LLRP::CImpinjInventorySearchMode *pImpIsm = new LLRP::CImpinjInventorySearchMode();
+        pImpIsm->setInventorySearchMode(LLRP::ImpinjInventorySearchType_Dual_Target);
+
+        // C1G2InventoryCommand
+        LLRP::CC1G2InventoryCommand* pC1G2InventoryCommand = new LLRP::CC1G2InventoryCommand();
+        pC1G2InventoryCommand->setC1G2RFControl(pC1G2RFControl);
+        pC1G2InventoryCommand->setC1G2SingulationControl(pC1G2SingulationControl);
+        pC1G2InventoryCommand->addCustom(pImpIsm);
+        
+        // Transmitter
+        LLRP::CRFTransmitter* pRFTransmitter = new LLRP::CRFTransmitter();
+        pRFTransmitter->setHopTableID(1);
+        pRFTransmitter->setChannelIndex(1);
+        
+        // Receiver
+        LLRP::CRFReceiver* pRFReceiver = new LLRP::CRFReceiver();
+
+        // Set transmit power and receive sensitivity
+        // for each antenna
+        switch (i)
+        {
+            case 1:
+                pRFTransmitter->setTransmitPower(TRANSMISSION_POWER_INDEX_1); // (value * .25) + 10.0 = 30,25 dBm // max power when using PoE
+                pRFReceiver->setReceiverSensitivity(1); // 1 --> -80 dBm;
+                break;
+            case 2:
+                pRFTransmitter->setTransmitPower(TRANSMISSION_POWER_INDEX_2); // (value * .25) + 10.0 = 27.75 dBm
+                pRFReceiver->setReceiverSensitivity(5); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
+                break;
+        }
+
+        // Antenna config
+        LLRP::CAntennaConfiguration* pAntennaConfig = new LLRP::CAntennaConfiguration();
+        pAntennaConfig->setAntennaID(i);
+        pAntennaConfig->setRFTransmitter(pRFTransmitter);
+        pAntennaConfig->setRFReceiver(pRFReceiver);
+        pAntennaConfig->addAirProtocolInventoryCommandSettings(pC1G2InventoryCommand);
+        inventoryParameterSpec->addAntennaConfiguration(pAntennaConfig);
+    }
+
+    LLRP::llrp_u16v_t antennaIDs = LLRP::llrp_u16v_t(1);
+    antennaIDs.m_pValue[0] = 0;     
+
+    LLRP::CAISpec* aiSpec = new LLRP::CAISpec();
+    aiSpec->setAntennaIDs(antennaIDs);
+    aiSpec->setAISpecStopTrigger(aiSpecStopTrigger);
+    aiSpec->addInventoryParameterSpec(inventoryParameterSpec);
+   
    
     LLRP::CImpinjTagReportContentSelector* impinjTagCnt = new LLRP::CImpinjTagReportContentSelector();
     
@@ -616,7 +721,9 @@ void RNRFIdentificationTask::getOneTagData(LLRP::CTagReportData* tag, std::strin
         		//RNUtils::printLn("rssi: %d", rssiValue);
         	}
         }
-        //std::fprintf(file, "{rssi: %f, ph.a: %f, dplrFreq: %d}\n", (((float)rssiValue) / 100.0), (((float)phaseAngleValue) / 100.0), dopplerFrequencyValue);
+
+        //std::fprintf(file, "%d,%f,%f,%d\n", tag->getAntennaID()->getAntennaID(), (((float)rssiValue) / 100.0), (((float)phaseAngleValue) * 2 * M_PI / 4096.0), dopplerFrequencyValue);
+
         if(tag->getAntennaID() != NULL){
         	bufferOut << tag->getAntennaID()->getAntennaID();
         	//RNUtils::printLn("antenna: %d", tag->getAntennaID()->getAntennaID());
@@ -637,27 +744,27 @@ void RNRFIdentificationTask::getOneTagData(LLRP::CTagReportData* tag, std::strin
         }
         bufferOut << ",";
 
-        if(dopplerFrequencyValue != 0){
+        /*if(dopplerFrequencyValue != 0){
         	bufferOut << dopplerFrequencyValue;
         }
-        bufferOut << ",";
+        bufferOut << ",";*/
 
-        if(tag->getChannelIndex() != NULL){
+        /*if(tag->getChannelIndex() != NULL){
         	bufferOut << tag->getChannelIndex()->getChannelIndex();
         	//RNUtils::printLn("ChannelIndex: %d", tag->getChannelIndex()->getChannelIndex());
         }
-        bufferOut << ",";
+        bufferOut << ",";*/
 
         if(tag->getFirstSeenTimestampUTC() != NULL){
         	bufferOut << tag->getFirstSeenTimestampUTC()->getMicroseconds();
         	//RNUtils::printLn("FSeen-T TS Uptime: %llu", tag->getFirstSeenTimestampUTC()->getMicroseconds());
         }
-        bufferOut << ",";
+        //bufferOut << ",";
 
-        if(tag->getLastSeenTimestampUTC() != NULL){
+        /*if(tag->getLastSeenTimestampUTC() != NULL){
         	bufferOut << tag->getLastSeenTimestampUTC()->getMicroseconds();
         	//RNUtils::printLn("LSeen-T TS Uptime: %llu", tag->getLastSeenTimestampUTC()->getMicroseconds());
-        }
+        }*/
 	}
 	
 	data = bufferOut.str();
@@ -811,24 +918,11 @@ LLRP::CMessage* RNRFIdentificationTask::recvMessage(int msecMax){
 	return message;
 }
 
-float RNRFIdentificationTask::convertToMeters(float rssi){
-	float result = 0;
-	if(rssi != 0){
-		float ratio = rssi / RFData::OFFSET;
-		if(ratio < 1.0){
-			result = std::pow(ratio, 10);
-		} else {
-			result = .89976 * std::pow(ratio, 7.7095) + .111;
-		}
-	}
-	return result;
-}
-
-RFData* RNRFIdentificationTask::findRFIDByKey(std::string key){
+RFData* RNRFIdentificationTask::findByKeyAntenna(std::string key, int antenna){
 	RFData* rfid = NULL;
 	bool found = false;
 	for (int i = 0; i < rfids->size() and not found; i++){
-		if (rfids->at(i)->getTagKey() == key){
+		if (rfids->at(i)->getTagKey() == key and rfids->at(i)->getAntenna() == antenna){
 			found = true;
 			rfid = rfids->at(i);
 		}

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <cmath>
 
 class AntennaData{
 public:
@@ -45,7 +46,10 @@ public:
 
 		return buffer.str().c_str();
 	}
-
+public:
+	static const float ANTENNA_GAIN = 8.5;
+	static const float FREQUENCY = 866.9e6;
+	static const float C = 3e8;
 private:
 	unsigned short antennaId;
 	unsigned short txHopTableId;

@@ -1,14 +1,14 @@
-#include "RNLocalizationTask.h"
+#include "RNKalmanLocalizationTask.h"
 
-RNLocalizationTask::RNLocalizationTask(const char* name, const char* description) : RNRecurrentTask(name, description){
+RNKalmanLocalizationTask::RNKalmanLocalizationTask(const char* name, const char* description) : RNLocalizationTask(name, description){
 	enableLocalization = false;
 }
 
-RNLocalizationTask::~RNLocalizationTask(){
+RNKalmanLocalizationTask::~RNKalmanLocalizationTask(){
 
 }
 
-void RNLocalizationTask::init(){
+void RNKalmanLocalizationTask::init(){
 	if(gn != NULL and gn->initializeKalmanVariables() == 0){
 		Ak = Matrix::eye(3);
 		Bk = Matrix(3, 2);
@@ -26,11 +26,11 @@ void RNLocalizationTask::init(){
 	}
 }
 
-void RNLocalizationTask::onKilled(){
+void RNKalmanLocalizationTask::onKilled(){
 	enableLocalization = false;
 }
 
-void RNLocalizationTask::task(){
+void RNKalmanLocalizationTask::task(){
 	if(enableLocalization){
 		pk1 = Pk;
 		Ak(0, 2) = -gn->getRawDeltaPosition()(0, 0) * std::sin(gn->getRawEncoderPosition()(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
@@ -223,7 +223,7 @@ void RNLocalizationTask::task(){
 	RNUtils::sleep(10);
 }
 
-void RNLocalizationTask::getObservations(Matrix& observations){
+void RNKalmanLocalizationTask::getObservations(Matrix& observations){
 	int totalLandmarks = 0;
 	if(gn->isLaserSensorActivated()){
 		totalLandmarks += laserLandmarksCount;
@@ -274,7 +274,7 @@ void RNLocalizationTask::getObservations(Matrix& observations){
 	observations = result;
 }
 
-void RNLocalizationTask::landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle){
+void RNKalmanLocalizationTask::landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle){
 	distance = std::sqrt(std::pow(landmark->xpos - Xk(0, 0), 2) + std::pow(landmark->ypos - Xk(1, 0), 2));
 	angle = std::atan2(landmark->ypos - Xk(1, 0), landmark->xpos - Xk(0, 0)) - Xk(2, 0);
 }

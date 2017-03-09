@@ -48,6 +48,7 @@
 #define XML_ELEMENT_POS_TH_ZONE_STR "th-zone"
 #define XML_ELEMENT_POS_D_ZONE_STR "d-zone"
 
+#define XML_ATTRIBUTE_LOCALIZATION_STR "localization"
 #define XML_ATTRIBUTE_CYCLIC_STR "cyclic"
 #define XML_ATTRIBUTE_ACTIVATED_STR "activated"
 #define XML_ATTRIBUTE_SEQUENCE_STR "sequence"
@@ -77,3 +78,5 @@
 #define XML_SENSOR_TYPE_LASER_STR "laser"
 #define XML_SENSOR_TYPE_CAMERA_STR "camera"
 #define XML_SENSOR_TYPE_RFID_STR "rfid"
+#define XML_LOCALIZATION_ALGORITHM_KALMAN_STR "kalman"
+#define XML_LOCALIZATION_ALGORITHM_PF_STR "particle-filter"

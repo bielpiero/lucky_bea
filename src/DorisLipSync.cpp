@@ -79,7 +79,7 @@ char* DorisLipSync::syllableToViseme(char *syllable){
 		iterViseme=viseme_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value();
 		viseme = cutData(iterViseme, 1,2);
 		actualSyllable = cutData(iterViseme, 3,(strlen(iterViseme)+1));
-    //std::cout <<viseme<<endl;
+    	//std::cout <<viseme<<endl;
 		compVisemeSillable = strcmp(actualSyllable, syllable);
 
 		if (compVisemeSillable==0){
@@ -274,7 +274,8 @@ int DorisLipSync::configureEmicTwo(const char *emotion, const char *language){
 	if (selectLanguage == 0) {
 		lx="L0";
 	}
-	    selectLanguage= strcmp(language,"Español");     /*L1 para español castellano*/
+	
+	selectLanguage= strcmp(language,"Español");     /*L1 para español castellano*/
 	if (selectLanguage == 0) {
 		lx="L2";
 	}
@@ -300,8 +301,8 @@ void DorisLipSync::setViseme(string viseme_id){
 	xml_node<>* root_node;
 	
 	std::string buffer_str = "";
-
 	std::ifstream the_file (xmlLipSyncFullPath.c_str());
+
 	vector<char> buffer((istreambuf_iterator<char>(the_file)), istreambuf_iterator<char>());
 	buffer.push_back('\0');
 	
