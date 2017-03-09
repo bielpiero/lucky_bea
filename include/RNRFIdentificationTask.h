@@ -15,29 +15,20 @@
 #define TRANSMISSION_POWER_INDEX_2 71
 #define FRONT_2_BACK_RATIO 18
 
-class RFAttenuationRange{
-private:
-	float attenuation;
-	float rssi;
-public:
-	RFAttenuationRange(float attenuation = 0, float rssi = -1){ this->attenuation = attenuation; this->rssi = rssi; }
-	
-	float getAttenuation(void){ return attenuation; }
-	float getRSSI(void){ return rssi; }
-};
+
 
 class RFData{	
 public: 
 	RFData(std::string data = ""){
-		ATTENUATIONS.push_back(RFAttenuationRange(34.61, -26));		// @0.35m
-		ATTENUATIONS.push_back(RFAttenuationRange(37.98, -38.5));	// @1.00m
-		ATTENUATIONS.push_back(RFAttenuationRange(39.01, -45.5));	// @2.00m
-		ATTENUATIONS.push_back(RFAttenuationRange(42.5, -52.5));	// @3.00m
-		ATTENUATIONS.push_back(RFAttenuationRange(44.5, -57));		// @4.00m
-		ATTENUATIONS.push_back(RFAttenuationRange(50.5, -64));		// @5.00m
-		ATTENUATIONS.push_back(RFAttenuationRange(54, -71));		// @6.00m
-		ATTENUATIONS.push_back(RFAttenuationRange(58.57, -78));		// @7.00m
-		//ATTENUATIONS.push_back(RFAttenuationRange(54.57, -67));		// @8.00m
+		ATTENUATIONS.push_back(PointXY(34.61, -26));	// @0.35m
+		ATTENUATIONS.push_back(PointXY(37.98, -38.5));	// @1.00m
+		ATTENUATIONS.push_back(PointXY(39.01, -45.5));	// @2.00m
+		ATTENUATIONS.push_back(PointXY(42.5, -52.5));	// @3.00m
+		ATTENUATIONS.push_back(PointXY(44.5, -57));		// @4.00m
+		ATTENUATIONS.push_back(PointXY(50.5, -64));		// @5.00m
+		ATTENUATIONS.push_back(PointXY(54, -71));		// @6.00m
+		ATTENUATIONS.push_back(PointXY(58.57, -78));	// @7.00m
+		//ATTENUATIONS.push_back(PointXY(54.57, -67));	// @8.00m
 		initializeFromString(data); 
 	}
 	~RFData() {}
@@ -74,7 +65,7 @@ public:
 				rssi = std::atof(info.at(2).c_str());
 				antenna = std::atoi(info.at(1).c_str());
 				float patt = 0.0, fspl = 0.0;
-				float d = 2.468518043094769;
+				float d = 1.683716128092856;
 				getFSPLPatt(d, &patt, &fspl);
 				RNUtils::printLn("TAG: %s, RSSI: %f, FSPL: %f, Patt: %f", tagKey.c_str(), rssi, fspl, patt);
 				//convertToDistance();
@@ -107,9 +98,9 @@ private:
 			rssiChecked = rssi;
 		}
 		for (int i = 0; i < ATTENUATIONS.size() - 1; ++i){
-			if((ATTENUATIONS.at(i).getRSSI() > rssiChecked) and (ATTENUATIONS.at(i + 1).getRSSI() < rssiChecked)){
-				patt = ((rssiChecked - ATTENUATIONS.at(i).getRSSI())/(ATTENUATIONS.at(i + 1).getRSSI() - ATTENUATIONS.at(i).getRSSI())) * (ATTENUATIONS.at(i + 1).getAttenuation() - ATTENUATIONS.at(i).getAttenuation()) + ATTENUATIONS.at(i).getAttenuation();
-			}
+			//if((ATTENUATIONS.at(i).getRSSI() > rssiChecked) and (ATTENUATIONS.at(i + 1).getRSSI() < rssiChecked)){
+			//	patt = ((rssiChecked - ATTENUATIONS.at(i).getRSSI())/(ATTENUATIONS.at(i + 1).getRSSI() - ATTENUATIONS.at(i).getRSSI())) * (ATTENUATIONS.at(i + 1).getAttenuation() - ATTENUATIONS.at(i).getAttenuation()) + ATTENUATIONS.at(i).getAttenuation();
+			//}
 		}
 		float fspldBm = -rssiChecked + ptx - patt + .5;
 		float fsplmW = RNUtils::dBmTomilliwatts(fspldBm);
@@ -117,7 +108,7 @@ private:
 		this->distance = std::sqrt(fsplmW) * 0.027567227692947; // (c/(4*pi*f))
 	}
 private:
-	std::vector<RFAttenuationRange> ATTENUATIONS;
+	std::vector<PointXY> ATTENUATIONS;
 	std::string tagKey;
 	std::string timestamp;
 	float rssi;

@@ -193,3 +193,15 @@ float RNUtils::milliwattsTodBm(const float& milliwatts){
 float RNUtils::dBmTomilliwatts(const float& dBm){
 	return (std::pow(10, dBm / 10));
 }
+
+float RNUtils::linearInterpolator(const float& x, const PointXY& p1, const PointXY& p2){
+	return (((x - p1.getX())/(p2.getX() - p1.getX()) * (p2.getY() - p1.getY())) + p1.getX());
+}
+
+float RNUtils::quadraticInterpolator(const float& x, const PointXY& p1, const PointXY& p2, const PointXY& p3){
+	float term1 = (((x - p2.getX()) * (x - p3.getX()))/((p1.getX() - p2.getX()) * (p1.getX() - p3.getX()))) * p1.getY();
+	float term2 = (((x - p1.getX()) * (x - p3.getX()))/((p2.getX() - p1.getX()) * (p2.getX() - p3.getX()))) * p2.getY();
+	float term3 = (((x - p1.getX()) * (x - p2.getX()))/((p3.getX() - p1.getX()) * (p3.getX() - p2.getX()))) * p3.getY();
+	return (term3 + term2 + term1);
+}
+

@@ -49,13 +49,30 @@ public:
 		this->x = x;
 		this->y = y;
 	}
-	~PointXY(){}
+	virtual ~PointXY(){}
 
-	double getX(){ return this->x; }
-	double getY(){ return this->y; }
+	double getX() const { return this->x; }
+	double getY() const { return this->y; }
 	
 	void setX(double x){ this->x = x; }
 	void setY(double y){ this->y = y; }
+};
+
+class PointXYZ : public PointXY{
+private:
+	double z;
+public:
+	PointXYZ() : PointXY() {
+		this->z = 0.0;
+	}
+	PointXYZ(double x, double y, double z) : PointXY(x, y) {
+		this->z = z;
+	}
+	virtual ~PointXYZ(){}
+
+	double getZ() const { return this->z; }
+	
+	void setZ(double x){ this->z = z; }
 };
 
 
@@ -80,6 +97,8 @@ public: // functions
     static void shutdown();
 	static std::string getApplicationPath();
 	static std::string getApplicationName();
+	static float linearInterpolator(const float& x, const PointXY& p1, const PointXY& p2);
+	static float quadraticInterpolator(const float& x, const PointXY& p1, const PointXY& p2, const PointXY& x3);
 	static float milliwattsTodBm(const float& milliwatts);
 	static float dBmTomilliwatts(const float& dBm);
 private: //functions
