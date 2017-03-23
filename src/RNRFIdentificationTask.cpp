@@ -2,7 +2,8 @@
 
 const unsigned int RNRFIdentificationTask::RF_BUFFER_SIZE = 32768;
 const unsigned int RNRFIdentificationTask::RO_SPEC_ID = 1111;
-const char* RNRFIdentificationTask::DEVICE_NAME = "speedwayr-11-94-a3.local";
+const char* RNRFIdentificationTask::DEVICE_NAME = "192.168.0.20";
+//const char* RNRFIdentificationTask::DEVICE_NAME = "speedwayr-11-94-a3.local";
 const unsigned int RNRFIdentificationTask::ANTENNAS_NUMBER = 2;
 
 RNRFIdentificationTask::RNRFIdentificationTask(const char* name, const char* description) : RNRecurrentTask(name, description){
@@ -42,10 +43,13 @@ void RNRFIdentificationTask::task(){
 		std::string data = "";
 		//if(startROSpec() == 0){
 			if(getDataFromDevice(data) == 0){
+				
 				RFData* detected = new RFData(data);
 				RFData* found = NULL;
 				if((found = findByKeyAntenna(detected->getTagKey(), detected->getAntenna())) == NULL){
-					rfids->push_back(detected);
+					if(detected->getTagKey() != ""){
+						rfids->push_back(detected);	
+					}
 				} else {
 					found->setPhaseAngleRSSI(detected->getPhaseAngle(), detected->getRSSI());
 					found->setTimestamp(detected->getTimestamp());
@@ -53,9 +57,9 @@ void RNRFIdentificationTask::task(){
 				}
 			}
 			
-			//for (int i = 0; i < rfids->size(); ++i){
-			//	RNUtils::printLn("[%d]: TID: %s, Ant: %d, RSSI: %f, Angle: %f, d: %f", i, rfids->at(i)->getTagKey().c_str(), rfids->at(i)->getAntenna(), rfids->at(i)->getRSSI(), rfids->at(i)->getPhaseAngle(), rfids->at(i)->getDistance());
-			//}
+			for (int i = 0; i < rfids->size(); ++i){
+				RNUtils::printLn("[%d]: TID: %s, Ant: %d, RSSI: %f, Angle: %f, d: %f", i, rfids->at(i)->getTagKey().c_str(), rfids->at(i)->getAntenna(), rfids->at(i)->getRSSI(), rfids->at(i)->getPhaseAngle(), rfids->at(i)->getDistance());
+			}
 		//}	
 	} else {
 		init();
@@ -410,12 +414,12 @@ int RNRFIdentificationTask::addROSpec(void){
         switch (i)
         {
             case 1:
-                pRFTransmitter->setTransmitPower(TRANSMISSION_POWER_INDEX_1); // (value * .25) + 10.0 = 30,25 dBm // max power when using PoE
+                pRFTransmitter->setTransmitPower(TRANSMISSION_POWER_INDEX_1); // (value * .25) + 10.0 = 30.25 dBm // max power when using PoE
                 pRFReceiver->setReceiverSensitivity(1); // 1 --> -80 dBm;
                 break;
             case 2:
                 pRFTransmitter->setTransmitPower(TRANSMISSION_POWER_INDEX_2); // (value * .25) + 10.0 = 27.75 dBm
-                pRFReceiver->setReceiverSensitivity(5); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
+                pRFReceiver->setReceiverSensitivity(2); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
                 break;
         }
 

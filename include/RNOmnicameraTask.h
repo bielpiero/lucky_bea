@@ -10,6 +10,8 @@
 #define CELL_MARKER_SIZE 7
 #define IMAGE_OFFSET_X 15
 #define IMAGE_OFFSET_Y 5
+#define RECTIFIED_IMAGE_WIDTH 1810
+#define RECTIFIED_IMAGE_HEIGHT 679
 
 class RNMarker{
 private:
@@ -20,7 +22,7 @@ private:
 	double angleInRadians;
 	cv::RotatedRect rect;
 public:
-	RNMarker(){ markerId = -1; }
+	RNMarker(){ markerId = RN_NONE; }
 
 	void setMarkerId(int id) { this->markerId = id; }
 	void addPoint(cv::Point2f point) { markerPoints.push_back(point); }
@@ -53,10 +55,17 @@ private:
 	void findContours(const cv::Mat& input, std::vector<std::vector<cv::Point> > &contours, int minContourPointsAllowed);
 	void findCandidates(const std::vector<std::vector<cv::Point> > &contours, std::vector<RNMarker>& markerPoints);
 	void recognizeMarkers(const cv::Mat& inputGrayscale, std::vector<RNMarker>& markerPoints);
-	void poseEstimation(const cv::Point& center, std::vector<RNMarker>& markerPoints);
+	void poseEstimation(std::vector<RNMarker>& markerPoints);
 	void markerIdNumber(const cv::Mat &bits, int &mapId, int &sectorId, int &markerId);
+	int getBrightnessAverageFromHistogram(const cv::Mat& input);
+
+	void initUndistortRectifyMap(cv::InputArray K, cv::InputArray D, cv::InputArray xi, cv::InputArray R, cv::InputArray P, const cv::Size& size,
+        int m1type, cv::OutputArray map1, cv::OutputArray map2, int flags);
+	void undistortImage(cv::InputArray distorted, cv::OutputArray undistorted, cv::InputArray K, cv::InputArray D, cv::InputArray xi, int flags,
+        cv::InputArray knew = cv::noArray(), const cv::Size& newSize = cv::Size(), cv::InputArray R = cv::Mat::eye(3, 3, CV_64F));
 private:
 	void clearLandmarks();
+	void drawRectangle(cv::Mat &img, RNMarker marker);
 	float perimeter(const std::vector<cv::Point2f> &a);
 	int markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations);
 	int hammingDistance(cv::Mat bits);
@@ -73,6 +82,7 @@ private:
 	cv::Mat canonicalMarkerImage;
 	cv::Mat camMatrix;
 	cv::Mat distCoeff;
+	cv::Mat xi;
 
 	Matrix rotation;
 	Matrix traslation;
@@ -80,6 +90,13 @@ private:
 	static const double PI_DEGREES;
 	std::vector<RNLandmark*>* landmarks;
 	cv::VideoCapture capture;
+
+	enum{
+        RECTIFY_PERSPECTIVE = 1,
+        RECTIFY_CYLINDRICAL,
+        RECTIFY_LONGLATI,
+        RECTIFY_STEREOGRAPHIC
+    };
 };
 
 #endif

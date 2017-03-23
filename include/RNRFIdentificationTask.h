@@ -64,11 +64,7 @@ public:
 				angle = std::atof(info.at(3).c_str());
 				rssi = std::atof(info.at(2).c_str());
 				antenna = std::atoi(info.at(1).c_str());
-				float patt = 0.0, fspl = 0.0;
-				float d = 1.683716128092856;
-				getFSPLPatt(d, &patt, &fspl);
-				RNUtils::printLn("TAG: %s, RSSI: %f, FSPL: %f, Patt: %f", tagKey.c_str(), rssi, fspl, patt);
-				//convertToDistance();
+				convertToDistance();
 			}
 		} else {
 			distance = 0.0;
@@ -80,32 +76,31 @@ public:
 		}
 	}
 private:
-
-	void getFSPLPatt(float d, float* patt, float* fspl){
-		float ptx = ((float)TRANSMISSION_POWER_INDEX_1) * 0.25 + 10.0;
-		float fsplmW = std::pow((4 * M_PI * d / 0.346060675971), 2);
-		*fspl = RNUtils::milliwattsTodBm(fsplmW);
-		*patt = ptx + AntennaData::ANTENNA_GAIN - *fspl - rssi;
-	}
-
 	void convertToDistance(){
-		float ptx = ((float)TRANSMISSION_POWER_INDEX_1) * 0.25 + 10.0;
+		float txPwIndex = (float)TRANSMISSION_POWER_INDEX_1;
+		if(antenna == 2){
+			txPwIndex = (float)TRANSMISSION_POWER_INDEX_2;
+		}
+		float ptx = -txPwIndex * AntennaData::TX_POWER_INDEX_MULTIPLIER + AntennaData::TX_POWER_OFFSET_DBM;
+		
 		float patt = 0;
-		float rssiChecked;
-		if(angle > M_PI and angle < (3 * M_PI)){
-			rssiChecked = rssi + ((float)FRONT_2_BACK_RATIO);
+		
+		float txPowermW = RNUtils::dBmTomilliwatts(ptx);
+		float rssimW = RNUtils::dBmTomilliwatts(rssi);
+		float txGainmW = RNUtils::dBmTomilliwatts((float)AntennaData::TX_GAIN);
+		float rxLossmW = 1.0;
+		if(rssi < AntennaData::RSSI_MARGIN_LOSS){
+			rxLossmW = RNUtils::dBmTomilliwatts((float)AntennaData::RX_LOSS);
+		}
+		//RNUtils::printLn("----> %s, %f", tagKey.c_str(), rxLossmW);
+		float rxGainmW;
+		if(rssi > AntennaData::RSSI_MARGIN){
+			rxGainmW = RNUtils::dBmTomilliwatts((float)AntennaData::RX_GAIN_1);
 		} else {
-			rssiChecked = rssi;
+			rxGainmW = RNUtils::dBmTomilliwatts((float)AntennaData::RX_GAIN_2);
 		}
-		for (int i = 0; i < ATTENUATIONS.size() - 1; ++i){
-			//if((ATTENUATIONS.at(i).getRSSI() > rssiChecked) and (ATTENUATIONS.at(i + 1).getRSSI() < rssiChecked)){
-			//	patt = ((rssiChecked - ATTENUATIONS.at(i).getRSSI())/(ATTENUATIONS.at(i + 1).getRSSI() - ATTENUATIONS.at(i).getRSSI())) * (ATTENUATIONS.at(i + 1).getAttenuation() - ATTENUATIONS.at(i).getAttenuation()) + ATTENUATIONS.at(i).getAttenuation();
-			//}
-		}
-		float fspldBm = -rssiChecked + ptx - patt + .5;
-		float fsplmW = RNUtils::dBmTomilliwatts(fspldBm);
 
-		this->distance = std::sqrt(fsplmW) * 0.027567227692947; // (c/(4*pi*f))
+		this->distance = (AntennaData::C / (4 * M_PI * AntennaData::FREQUENCY)) * (1 / std::sqrt((rssimW * rxLossmW) / (txPowermW * txGainmW * rxGainmW))); // (c/(4*pi*f))
 	}
 private:
 	std::vector<PointXY> ATTENUATIONS;
