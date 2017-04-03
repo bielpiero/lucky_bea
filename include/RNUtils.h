@@ -33,8 +33,8 @@
 
 #define RN_NONE -1
 
-#define YES 1
-#define NO 0
+#define RN_YES 1
+#define RN_NO 0
 #define MAYBE 2
 
 class PointXY{

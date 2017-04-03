@@ -29,8 +29,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	this->rearBumpersOk = true;
 	this->setChargerPosition = false;
 	this->hasAchievedGoal = false;
-	this->streamingActive = NO;
-	this->keepRobotTracking = NO;
+	this->streamingActive = RN_NO;
+	this->keepRobotTracking = RN_NO;
 	this->spdUDPPort = 0;
 
 	this->laserSensorActivated = true;
@@ -556,7 +556,7 @@ bool GeneralController::isPermissionNeeded(char function){
 		if(func == function){
 			found = true;
 			int tokenRequired = atoi(permision_node->first_attribute(XML_ATTRIBUTE_TOKEN_REQUIRED_STR)->value());
-			result = tokenRequired == YES ? true : false;
+			result = tokenRequired == RN_YES ? true : false;
 		}
 		
 	}
@@ -581,13 +581,13 @@ void GeneralController::acceptTransferRobotControl(int socketIndex, char* accept
 	int acceptValue = atoi(acceptance);
 	std::string jsonString;
 	if(tokenRequester != RN_NONE){
-		if(acceptValue == YES){
+		if(acceptValue == RN_YES){
 			setTokenOwner(tokenRequester);
 			releaseRobotControl(socketIndex);
 			tokenRequester = RN_NONE;
 			jsonString = "{\"control\":{\"granted\":\"1\",\"error\":\"0\"}}";
 			sendMsg(getTokenOwner(), 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
-		} else if(acceptValue == NO){
+		} else if(acceptValue == RN_NO){
 			jsonString = "{\"control\":{\"granted\":\"0\",\"error\":\"0\"}}";
 			sendMsg(tokenRequester, 0x7D, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
 			tokenRequester = RN_NONE;
@@ -1263,7 +1263,7 @@ void GeneralController::loadRobotConfig(){
 		for(xml_node<>* sensor_node = sensors_root_node->first_node(XML_ELEMENT_SENSOR_STR); sensor_node; sensor_node = sensor_node->next_sibling()){
 			s_sensor* sensor = new s_sensor;
 			sensor->type = std::string(sensor_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value());
-			sensor->activated = atoi(sensor_node->first_attribute(XML_ATTRIBUTE_ACTIVATED_STR)->value()) == YES;
+			sensor->activated = atoi(sensor_node->first_attribute(XML_ATTRIBUTE_ACTIVATED_STR)->value()) == RN_YES;
 
 			if(sensor->type == XML_SENSOR_TYPE_LASER_STR){
 				this->laserSensorActivated = sensor->activated;
@@ -2453,12 +2453,12 @@ void GeneralController::startSitesTour(){
 
 void* GeneralController::sitesTourThread(void* object){
 	GeneralController* self = (GeneralController*)object;
-	self->keepTourAlive = YES;
+	self->keepTourAlive = RN_YES;
 
     std::vector<std::string> spltdSequence = RNUtils::split((char*)self->currentSector->getSequence().c_str(), ",");
     bool movedToCenter = false;
 	
-	while(self->keepTourAlive == YES){
+	while(self->keepTourAlive == RN_YES){
         int goalIndex = self->lastSiteVisitedIndex + 1;
         RNUtils::printLn("Goal Index: %d, lastSiteVisitedIndex: %d, splitted: %d, sequence: %s", goalIndex, self->lastSiteVisitedIndex, spltdSequence.size(), (char*)self->currentSector->getSequence().c_str());
         int goalId = atoi(spltdSequence.at(goalIndex).c_str());
@@ -2481,7 +2481,7 @@ void* GeneralController::sitesTourThread(void* object){
     			}
     			RNUtils::printLn("Door site detected. Creating a virtual point at {x: %f, y: %f}", phantomPoint.getX(), phantomPoint.getY());
     			self->moveRobotToPosition(phantomPoint.getX(), phantomPoint.getY(), 0.0);
-    			while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) RNUtils::sleep(100);
+    			while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == RN_YES)) RNUtils::sleep(100);
     		}
     		if(self->hallwayDetected and not movedToCenter){
     			if(self->currentSector->getWidth() < self->currentSector->getHeight()){
@@ -2496,12 +2496,12 @@ void* GeneralController::sitesTourThread(void* object){
 				movedToCenter = true;
 				RNUtils::printLn("Site in hallway zone. Creating a virtual point at {x: %f, y: %f}", phantomPoint.getX(), phantomPoint.getY());
 				self->moveRobotToPosition(phantomPoint.getX(), phantomPoint.getY(), 0.0);
-				while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) RNUtils::sleep(100);
+				while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == RN_YES)) RNUtils::sleep(100);
     			
     		}
 
         	self->moveRobotToPosition(destinationSite->xpos, destinationSite->ypos, 0.0);
-        	while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == YES)) RNUtils::sleep(100);
+        	while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == RN_YES)) RNUtils::sleep(100);
         	if (self->isGoalAchieved()) {
 	            self->lastSiteVisitedIndex++;
 	            if (self->currentSector->isSitesCyclic()){
@@ -2513,22 +2513,22 @@ void* GeneralController::sitesTourThread(void* object){
 	            }
 	        }
 	        if (self->isGoalCanceled()) {
-	            self->keepTourAlive = NO;
+	            self->keepTourAlive = RN_NO;
 	        }
         } else {
         	RNUtils::printLn("Non existing site %d. Check sequence...", goalId);
-        	self->keepTourAlive = NO;
+        	self->keepTourAlive = RN_NO;
         }
 	}
-	self->keepTourAlive = NO;
+	self->keepTourAlive = RN_NO;
 	return NULL;
 }
 
 void GeneralController::stopCurrentTour(){
-	if(keepTourAlive == YES){
+	if(keepTourAlive == RN_YES){
 		keepTourAlive = MAYBE;
 		RNUtils::printLn("Stopping all tours...");
-		while(keepTourAlive != NO) RNUtils::sleep(100);
+		while(keepTourAlive != RN_NO) RNUtils::sleep(100);
 		RNUtils::printLn("All tours stopped...");
 	}
 }
@@ -2748,7 +2748,7 @@ PointXY GeneralController::getNextSectorCoord(){
 void* GeneralController::trackRobotThread(void* object){
 	GeneralController* self = (GeneralController*)object;
 		
-	self->keepRobotTracking = YES;
+	self->keepRobotTracking = RN_YES;
 	float alpha = self->robotConfig->navParams->alpha;
 	Matrix Ak = Matrix::eye(3);
 	Matrix Bk(3, 2);
@@ -2756,10 +2756,10 @@ void* GeneralController::trackRobotThread(void* object){
 	Matrix Hk;
 	Matrix Pk = self->P;
 	
-	while(RNUtils::ok() and self->keepRobotTracking == YES){
+	while(RNUtils::ok() and self->keepRobotTracking == RN_YES){
 		
 	}
-	self->keepRobotTracking = NO;
+	self->keepRobotTracking = RN_NO;
 	return NULL;
 }
 

@@ -2,10 +2,10 @@
 #define FUZZY_NORM_H
 
 #include <vector>
-#include <algorithm>
 #include <iostream>
-#include <cmath>
 #include <string>
+
+#include "stats.h"
 
 namespace fuzzy{
 	class Norm{

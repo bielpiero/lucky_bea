@@ -64,8 +64,8 @@ RobotNode::RobotNode(const char* port){
 	} else {
 		printf("Connected to SICK LMS200 laser.\n");
 	}*/
-    this->keepActiveSecurityDistanceTimerThread = NO;
-    this->keepActiveSensorDataThread = NO;
+    this->keepActiveSecurityDistanceTimerThread = RN_NO;
+    this->keepActiveSensorDataThread = RN_NO;
 
     pthread_mutex_init(&mutexRawPositionLocker, NULL);
     pthread_mutex_init(&mutexLaserReadingsLocker, NULL);
@@ -113,18 +113,18 @@ void RobotNode::disconnect(){
 
 void RobotNode::finishThreads(){
     
-    if (keepActiveSecurityDistanceTimerThread == YES) {
+    if (keepActiveSecurityDistanceTimerThread == RN_YES) {
         keepActiveSecurityDistanceTimerThread = MAYBE;
-        while (keepActiveSecurityDistanceTimerThread != NO) {
+        while (keepActiveSecurityDistanceTimerThread != RN_NO) {
             ArUtil::sleep(10);
         }
         pthread_cancel(distanceTimerThread);
     }
     
     RNUtils::printLn("Stopped Security Distance Timer Thread");
-    if (keepActiveSensorDataThread == YES) {
+    if (keepActiveSensorDataThread == RN_YES) {
         keepActiveSensorDataThread = MAYBE;
-        while (keepActiveSensorDataThread != NO) {
+        while (keepActiveSensorDataThread != RN_NO) {
             ArUtil::sleep(10);
         }
         pthread_cancel(sensorDataThread);
@@ -506,9 +506,9 @@ void RobotNode::getBatterChargeStatus(void){
 
 void* RobotNode::dataPublishingThread(void* object){
     RobotNode* self = (RobotNode*)object;
-    self->keepActiveSensorDataThread = YES;
+    self->keepActiveSensorDataThread = RN_YES;
     ArUtil::sleep(2000);
-    while(RNUtils::ok() and self->keepActiveSensorDataThread == YES){
+    while(RNUtils::ok() and self->keepActiveSensorDataThread == RN_YES){
         self->getRawRobotPosition();
         //self->getLaserScan();
         self->getBatterChargeStatus();
@@ -518,7 +518,7 @@ void* RobotNode::dataPublishingThread(void* object){
         self->onSensorsScanCompleted();
         ArUtil::sleep(10);
     }
-    self->keepActiveSensorDataThread = NO;
+    self->keepActiveSensorDataThread = RN_NO;
     return NULL;
 }
 
@@ -555,8 +555,8 @@ void RobotNode::securityDistanceChecker(){
 
 void* RobotNode::securityDistanceTimerThread(void* object){
     RobotNode* self = (RobotNode*)object;
-    self->keepActiveSecurityDistanceTimerThread = YES;
-    while(RNUtils::ok() and self->keepActiveSecurityDistanceTimerThread == YES){
+    self->keepActiveSecurityDistanceTimerThread = RN_YES;
+    while(RNUtils::ok() and self->keepActiveSecurityDistanceTimerThread == RN_YES){
         if(self->wasDeactivated){
             ArUtil::sleep(987);
             self->timerSecs++;
@@ -577,6 +577,6 @@ void* RobotNode::securityDistanceTimerThread(void* object){
         }
         ArUtil::sleep(13);
     }
-    self->keepActiveSecurityDistanceTimerThread = NO;
+    self->keepActiveSecurityDistanceTimerThread = RN_NO;
     return NULL;
 }

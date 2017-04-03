@@ -32,11 +32,11 @@ namespace fuzzy{
         virtual void setWeight(float value);
         virtual float getWeight() const;
         
-        virtual void setAntecedents(std::vector<Antecedent*> antecedents);
-        virtual std::vector<Antecedent*> getAntecedents() const;
+        virtual void setAntecedent(Antecedent* antecedent);
+        virtual Antecedent* getAntecedent() const;
 
-        virtual void setConsequents(std::vector<Consequent*> consequents);
-        virtual std::vector<Consequent*> getConsequents() const;
+        virtual void setConsequent(Consequent* consequent);
+        virtual Consequent* getConsequent() const;
     };
 }
 

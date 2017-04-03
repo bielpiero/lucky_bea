@@ -26,6 +26,20 @@
 #include "mf/triangle.h"
 #include "mf/zShape.h"
 
+#include "norm/norm.h"
+#include "norm/tnorm.h"
+#include "norm/snorm.h"
+#include "norm/t/TNHamacher.h"
+#include "norm/t/TNLukasiewicz.h"
+#include "norm/t/TNProbabilistic.h"
+#include "norm/t/TNWeber.h"
+#include "norm/t/TNZadeh.h"
+#include "norm/s/SNHamacher.h"
+#include "norm/s/SNLukasiewicz.h"
+#include "norm/s/SNProbabilistic.h"
+#include "norm/s/SNWeber.h"
+#include "norm/s/SNZadeh.h"
+
 #include "rule/rule.h"
 
 #include "variable/variable.h"
