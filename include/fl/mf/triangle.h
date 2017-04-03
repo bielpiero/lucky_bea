@@ -5,14 +5,14 @@
 
 namespace fuzzy{
 
-	class triangle : public mf{
+	class Triangle : public MF{
 	public:
-		triangle(std::string name="", 
+		Triangle(std::string name="", 
 				float vertexA = fuzzy::inf, 
 				float vertexB = fuzzy::inf, 
 				float vertexC = fuzzy::inf, 
 				float height = 1.0);
-		virtual ~triangle();
+		virtual ~Triangle();
 		
 		virtual float getVertexA() const;
 		virtual void setVertexA(float value);
@@ -23,14 +23,14 @@ namespace fuzzy{
 		virtual float getVertexC() const;
 		virtual void setVertexC(float value);
 		
-		virtual triangle* operator+(const triangle& rhs) const;
-		virtual triangle* operator-(const triangle& rhs) const;
+		virtual Triangle* operator+(const Triangle& rhs) const;
+		virtual Triangle* operator-(const Triangle& rhs) const;
 		
-		virtual triangle* operator*(const float& rhs) const;
+		virtual Triangle* operator*(const float& rhs) const;
 		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
-		virtual triangle* clone() const;
+		virtual Triangle* clone() const;
 	private:
 		float vertexA;
 		float vertexB;

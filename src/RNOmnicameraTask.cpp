@@ -639,7 +639,7 @@ void RNOmnicameraTask::task(){
 		if (flipped.data){
 			cv::Mat tikiGray, tikiThreshold;
 			std::vector<RNMarker> tikiMarkers;
-			//cv::imwrite("real.jpg", tiki);
+			cv::imwrite("real-1.4m.jpg", flipped);
 			rgbToGrayscale(flipped, tikiGray);
 			//cv::imwrite("real-gray.jpg", tikiGray);
 			thresholding(tikiGray, tikiThreshold);
@@ -655,7 +655,7 @@ void RNOmnicameraTask::task(){
 				drawRectangle(rectImage, tikiMarkers[i]);
 				//cv::imwrite("que ves.jpg", rectImage);
 				//RNLandmark* visualLand = new RNLandmark();
-				//RNUtils::printLn("Marker (%d) angle: %lf", i, tikiMarkers.at(i).getThRad());
+				RNUtils::printLn("Marker (%d) angle: %lf", i, tikiMarkers.at(i).getThRad());
 				//visualLand->addPoint(0, tikiMarkers.at(i).getThRad());
 				//landmarks->push_back(visualLand);
 			}

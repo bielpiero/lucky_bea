@@ -1,7 +1,7 @@
 #include "gaussProduct.h"
 
 namespace fuzzy{
-	gaussProduct::gaussProduct(std::string name, float meanA, float standardDeviationA, float meanB, float standardDeviationB, float height){
+	GaussProduct::GaussProduct(std::string name, float meanA, float standardDeviationA, float meanB, float standardDeviationB, float height){
 		this->name = name;
 		this->height = height;
 		
@@ -12,15 +12,15 @@ namespace fuzzy{
 		this->standardDeviationB = standardDeviationB;
 	}
 	
-	gaussProduct::~gaussProduct(){
+	GaussProduct::~GaussProduct(){
 	
 	}
 	
-	std::string gaussProduct::className() const{
-		return "gaussProduct";
+	std::string GaussProduct::className() const{
+		return "GaussProduct";
 	}
 	
-	float gaussProduct::evaluate(float value) const{
+	float GaussProduct::evaluate(float value) const{
 		float result = fuzzy::nan;
 		
 		if(value != fuzzy::nan){
@@ -33,52 +33,52 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
-	gaussProduct* gaussProduct::operator+(const gaussProduct& rhs) const{
-		return new gaussProduct("", this->meanA + rhs.meanA, this->standardDeviationA + rhs.standardDeviationA, this->meanB + rhs.meanB, this->standardDeviationB + rhs.standardDeviationB);
+	GaussProduct* GaussProduct::operator+(const GaussProduct& rhs) const{
+		return new GaussProduct("", this->meanA + rhs.meanA, this->standardDeviationA + rhs.standardDeviationA, this->meanB + rhs.meanB, this->standardDeviationB + rhs.standardDeviationB);
 		
 	}
 	
-	gaussProduct* gaussProduct::operator-(const gaussProduct& rhs) const{
-		return new gaussProduct("", this->meanA - rhs.meanA, this->standardDeviationA - rhs.standardDeviationA, this->meanB - rhs.meanB, this->standardDeviationB - rhs.standardDeviationB);
+	GaussProduct* GaussProduct::operator-(const GaussProduct& rhs) const{
+		return new GaussProduct("", this->meanA - rhs.meanA, this->standardDeviationA - rhs.standardDeviationA, this->meanB - rhs.meanB, this->standardDeviationB - rhs.standardDeviationB);
 	}
 	
-	gaussProduct* gaussProduct::operator*(const float& rhs) const{
-		return new gaussProduct("", this->meanA * rhs, this->standardDeviationA * rhs, this->meanB * rhs, this->standardDeviationB * rhs);
+	GaussProduct* GaussProduct::operator*(const float& rhs) const{
+		return new GaussProduct("", this->meanA * rhs, this->standardDeviationA * rhs, this->meanB * rhs, this->standardDeviationB * rhs);
 	}
 	
-	gaussProduct* gaussProduct::clone() const{
-		return new gaussProduct(*this);
+	GaussProduct* GaussProduct::clone() const{
+		return new GaussProduct(*this);
 	}
 	
-	float gaussProduct::getMeanA() const{
+	float GaussProduct::getMeanA() const{
 		return meanA;
 	}
 	
-	void gaussProduct::setMeanA(float value){
+	void GaussProduct::setMeanA(float value){
 		this->meanA = value;
 	}
 	
-	float gaussProduct::getStandardDeviationA() const{
+	float GaussProduct::getStandardDeviationA() const{
 		return standardDeviationA;
 	}
 	
-	void gaussProduct::setStandardDeviationA(float value){
+	void GaussProduct::setStandardDeviationA(float value){
 		this->standardDeviationA = value;
 	}
 	
-	float gaussProduct::getMeanB() const{
+	float GaussProduct::getMeanB() const{
 		return meanB;
 	}
 	
-	void gaussProduct::setMeanB(float value){
+	void GaussProduct::setMeanB(float value){
 		this->meanB = value;
 	}
 	
-	float gaussProduct::getStandardDeviationB() const{
+	float GaussProduct::getStandardDeviationB() const{
 		return standardDeviationB;
 	}
 	
-	void gaussProduct::setStandardDeviationB(float value){
+	void GaussProduct::setStandardDeviationB(float value){
 		this->standardDeviationB = value;
 	}
 }

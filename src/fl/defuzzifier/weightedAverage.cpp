@@ -1,22 +1,18 @@
 #include "weightedAverage.h"
 
 namespace fuzzy{
-    weightedAverage::weightedAverage(float resolution, fuzzy::systemType type):defuzzifier(resolution){
+    WeightedAverage::WeightedAverage(float resolution, fuzzy::SystemType type) : Defuzzifier(resolution){
 		this->type = type;
     }
-    weightedAverage::~weightedAverage(){
+    WeightedAverage::~WeightedAverage(){
 
     }
 
-    std::string weightedAverage::className() const{
-        return "weightedAverage";
+    std::string WeightedAverage::className() const{
+        return "WeightedAverage";
     }
     
-    weightedAverage* weightedAverage::clone() const{
-        return new weightedAverage(*this);
-    }
-    
-    float weightedAverage::defuzzify(const mf* membership, float minimum, float maximum) const{
+    float WeightedAverage::defuzzify(const MF* membership, float minimum, float maximum) const{
         float result = fuzzy::nan;
         
         return result;

@@ -14,12 +14,12 @@
 #include <stdexcept>
 
 namespace fuzzy{
-    class rule;
-    class consequent {
+    class Rule;
+    class Consequent {
     public:
-        consequent();
-        virtual ~consequent();
-        virtual void parse(std::string expresion, rule* r);
+        Consequent();
+        virtual ~Consequent();
+        virtual void parse(std::string expresion, Rule* r);
     private:
 
     };

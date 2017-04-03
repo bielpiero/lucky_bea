@@ -4,12 +4,12 @@
 #include "variable.h"
 namespace fuzzy{
 
-    class inputVariable : public variable{
+    class InputVariable : public Variable{
     private:
         float input;
     public:
-        inputVariable(const std::string name = "", float minRange = 0.0, float maxRange = 1.0);
-        virtual ~inputVariable();
+        InputVariable(const std::string name = "", float minRange = 0.0, float maxRange = 1.0);
+        virtual ~InputVariable();
 
         virtual void setInput(float value);
         virtual float getInput() const;

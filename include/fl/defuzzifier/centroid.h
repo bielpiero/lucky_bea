@@ -4,14 +4,14 @@
 #include "defuzzifier.h"
 
 namespace fuzzy{
-    class centroid : public defuzzifier{
+    class Centroid : public Defuzzifier{
     public:
-        centroid(float resolution = 0.1);
-        virtual ~centroid();
+        Centroid(float resolution = 0.1);
+        virtual ~Centroid();
         
         virtual std::string className() const;
-        virtual centroid* clone() const;
-        virtual float defuzzify(const mf* membership, float minimum, float maximum) const;
+        virtual Centroid* clone() const { return new Centroid(*this); }
+        virtual float defuzzify(const MF* membership, float minimum, float maximum) const;
     };
 }
 

@@ -12,19 +12,19 @@
 
 
 namespace fuzzy{
-    class antecedent;
-    class consequent;
+    class Antecedent;
+    class Consequent;
     
-    class rule{
+    class Rule{
     private:
         std::string text;
         float weight;
-        std::vector<antecedent*> antecedents;
-        std::vector<consequent*> consequents;
+        std::vector<Antecedent*> antecedents;
+        std::vector<Consequent*> consequents;
         
     public:
-        rule(const std::string text = "", float weight = 1.0);
-        virtual ~rule();
+        Rule(const std::string text = "", float weight = 1.0);
+        virtual ~Rule();
 
         virtual void setText(std::string text);
         virtual std::string getText() const;
@@ -32,11 +32,11 @@ namespace fuzzy{
         virtual void setWeight(float value);
         virtual float getWeight() const;
         
-        virtual void setAntecedents(std::vector<antecedent*> antecedents);
-        virtual std::vector<antecedent*> getAntecedents() const;
+        virtual void setAntecedents(std::vector<Antecedent*> antecedents);
+        virtual std::vector<Antecedent*> getAntecedents() const;
 
-        virtual void setConsequents(std::vector<consequent*> consequents);
-        virtual std::vector<consequent*> getConsequents() const;
+        virtual void setConsequents(std::vector<Consequent*> consequents);
+        virtual std::vector<Consequent*> getConsequents() const;
     };
 }
 

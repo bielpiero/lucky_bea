@@ -5,13 +5,13 @@
 
 namespace fuzzy{
 
-	class sigmoid : public mf{
+	class Sigmoid : public MF{
 	public:
-		sigmoid(std::string name="", 
+		Sigmoid(std::string name = "", 
 				float inflection = fuzzy::inf, 
 				float slope = fuzzy::inf, 
 				float height = 1.0);
-		virtual ~sigmoid();
+		virtual ~Sigmoid();
 		
 		virtual void setInflection(float value);
         virtual float getInflection() const;
@@ -19,14 +19,14 @@ namespace fuzzy{
         virtual void setSlope(float value);
         virtual float getSlope() const;
 		
-		virtual sigmoid* operator+(const sigmoid& rhs) const;
-		virtual sigmoid* operator-(const sigmoid& rhs) const;
+		virtual Sigmoid* operator+(const Sigmoid& rhs) const;
+		virtual Sigmoid* operator-(const Sigmoid& rhs) const;
 		
-		virtual sigmoid* operator*(const float& rhs) const;
+		virtual Sigmoid* operator*(const float& rhs) const;
 		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
-		virtual sigmoid* clone() const;
+		virtual Sigmoid* clone() const;
 	private:
 		float inflection;
 		float slope;

@@ -1,7 +1,7 @@
 #include "sigmoid.h"
 
 namespace fuzzy{
-	sigmoid::sigmoid(std::string name, float inflection, float slope, float height){
+	Sigmoid::Sigmoid(std::string name, float inflection, float slope, float height){
 		this->name = name;
 		this->height = height;
 		
@@ -9,15 +9,15 @@ namespace fuzzy{
 		this->slope = slope;
 	}
 	
-	sigmoid::~sigmoid(){
+	Sigmoid::~Sigmoid(){
 	
 	}
 	
-	std::string sigmoid::className() const{
-		return "sigmoid";
+	std::string Sigmoid::className() const{
+		return "Sigmoid";
 	}
 	
-	float sigmoid::evaluate(float value) const{
+	float Sigmoid::evaluate(float value) const{
 		float result = fuzzy::nan;
 		
 		if(value != fuzzy::nan){
@@ -26,36 +26,36 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
-	sigmoid* sigmoid::clone() const{
-		return new sigmoid(*this);
+	Sigmoid* Sigmoid::clone() const{
+		return new Sigmoid(*this);
 	}
 	
-	sigmoid* sigmoid::operator+(const sigmoid& rhs) const{
-		return new sigmoid("", this->inflection+ rhs.inflection, this->slope + rhs.slope);
+	Sigmoid* Sigmoid::operator+(const Sigmoid& rhs) const{
+		return new Sigmoid("", this->inflection+ rhs.inflection, this->slope + rhs.slope);
 		
 	}
 	
-	sigmoid* sigmoid::operator-(const sigmoid& rhs) const{
-		return new sigmoid("", this->inflection - rhs.inflection, this->slope - rhs.slope);
+	Sigmoid* Sigmoid::operator-(const Sigmoid& rhs) const{
+		return new Sigmoid("", this->inflection - rhs.inflection, this->slope - rhs.slope);
 	}
 	
-	sigmoid* sigmoid::operator*(const float& rhs) const{
-		return new sigmoid("", this->inflection * rhs, this->slope * rhs);
+	Sigmoid* Sigmoid::operator*(const float& rhs) const{
+		return new Sigmoid("", this->inflection * rhs, this->slope * rhs);
 	}
 	
-	void sigmoid::setInflection(float value) {
+	void Sigmoid::setInflection(float value) {
         this->inflection = value;
     }
 
-    float sigmoid::getInflection() const {
+    float Sigmoid::getInflection() const {
         return this->inflection;
     }
 
-    void sigmoid::setSlope(float value) {
+    void Sigmoid::setSlope(float value) {
         this->slope = value;
     }
 
-    float sigmoid::getSlope() const {
+    float Sigmoid::getSlope() const {
 		return this->slope;
     }
 

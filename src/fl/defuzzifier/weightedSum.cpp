@@ -1,22 +1,19 @@
 #include "weightedSum.h"
 
 namespace fuzzy{
-    weightedSum::weightedSum(float resolution, fuzzy::systemType type):defuzzifier(resolution){
+    WeightedSum::WeightedSum(float resolution, fuzzy::SystemType type) : Defuzzifier(resolution){
 		this->type = type;
     }
-    weightedSum::~weightedSum(){
+
+    WeightedSum::~WeightedSum(){
 
     }
 
-    std::string weightedSum::className() const{
-        return "weightedSum";
+    std::string WeightedSum::className() const{
+        return "WeightedSum";
     }
     
-    weightedSum* weightedSum::clone() const{
-        return new weightedSum(*this);
-    }
-    
-    float weightedSum::defuzzify(const mf* membership, float minimum, float maximum) const{
+    float WeightedSum::defuzzify(const MF* membership, float minimum, float maximum) const{
         float result = fuzzy::nan;
         
         return result;

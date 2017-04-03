@@ -4,14 +4,14 @@
 #include "defuzzifier.h"
 
 namespace fuzzy{
-    class meanOfMaximum : public defuzzifier{
+    class MeanOfMaximum : public Defuzzifier{
     public:
-        meanOfMaximum(float resolution = 0.1);
-        virtual ~meanOfMaximum();
+        MeanOfMaximum(float resolution = 0.1);
+        virtual ~MeanOfMaximum();
         
         virtual std::string className() const;
-        virtual meanOfMaximum* clone() const;
-        virtual float defuzzify(const mf* membership, float minimum, float maximum) const;
+        virtual MeanOfMaximum* clone() const { return new MeanOfMaximum(*this); }
+        virtual float defuzzify(const MF* membership, float minimum, float maximum) const;
     };
 }
 #endif

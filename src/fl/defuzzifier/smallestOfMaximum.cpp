@@ -1,23 +1,19 @@
 #include "smallestOfMaximum.h"
 
 namespace fuzzy{
-    smallestOfMaximum::smallestOfMaximum(float resolution):defuzzifier(resolution){
+    SmallestOfMaximum::SmallestOfMaximum(float resolution) : Defuzzifier(resolution){
         
     }
     
-    smallestOfMaximum::~smallestOfMaximum(){
+    SmallestOfMaximum::~SmallestOfMaximum(){
         
     }
 
-    std::string smallestOfMaximum::className() const{
-        return "smallestOfMaximum";
+    std::string SmallestOfMaximum::className() const{
+        return "SmallestOfMaximum";
     }
     
-    smallestOfMaximum* smallestOfMaximum::clone() const{
-        return new smallestOfMaximum(*this);
-    }
-    
-    float smallestOfMaximum::defuzzify(const mf* membership, float minimum, float maximum) const{
+    float SmallestOfMaximum::defuzzify(const MF* membership, float minimum, float maximum) const{
         float result = fuzzy::nan;
         if(!stats::isInf(minimum) && !stats::isInf(maximum)){
             float iterations = std::abs((maximum - minimum) / this->resolution);

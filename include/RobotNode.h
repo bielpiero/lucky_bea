@@ -44,19 +44,24 @@ public:
 		color = new std::vector<LsColor*>();
 	}
     ~LaserScan(){
-        ranges->clear();
+        clear();
+    }
+
+	std::vector<float>* getRanges() { return ranges; }
+	std::vector<float>* getIntensities() { return intensities; }
+	std::vector<LsColor*>* getColors() { return color; }
+
+	void clear(){
+		ranges->clear();
         intensities->clear();
         delete ranges;
         delete intensities;
-        for (int i = 0; i < color->size(); i++) {
+        for (int i = 0; i < color->size(); i++){
             delete color->at(i);
         }
         color->clear();
         delete color;
-    }
-	std::vector<float>* getRanges() { return ranges; }
-	std::vector<float>* getIntensities() { return intensities; }
-	std::vector<LsColor*>* getColors() { return color; }
+	}
 
 	void addLaserScanData(float range, float intensity = 0) { 
 		ranges->push_back(range); 
@@ -118,6 +123,7 @@ private:
     static const float SECURITY_DISTANCE;
 
     pthread_mutex_t mutexRawPositionLocker;
+    pthread_mutex_t mutexLaserReadingsLocker;
     pthread_t sensorDataThread;
     pthread_t distanceThread;
     pthread_t distanceTimerThread;
@@ -139,6 +145,7 @@ public:
     void getBatterChargeStatus(void);
     void getBumpersStatus(void);
 	void getLaserScan(void);
+	LaserScan* getRawLaserReadings(void);
     bool getMotorsStatus(void);
     bool getSonarsStatus(void);
     void getSonarsScan(void);
@@ -178,6 +185,9 @@ private:
     void securityDistanceChecker();
     
 protected:
+	int lockLaserReadings();
+	int unlockLaserReadings();
+
 	virtual void onLaserScanCompleted(LaserScan* data) = 0;
 	virtual void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear) = 0;
 	virtual void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed) = 0;

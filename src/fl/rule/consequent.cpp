@@ -2,13 +2,13 @@
 #include "rule.h"
 
 namespace fuzzy{
-    consequent::consequent() {
+    Consequent::Consequent() {
     }
 
-    consequent::~consequent() {
+    Consequent::~Consequent() {
     }
     
-    void consequent::parse(std::string expresion, rule* r){
+    void Consequent::parse(std::string expresion, Rule* r){
         
     }
 }

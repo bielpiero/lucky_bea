@@ -4,16 +4,16 @@
 #include "defuzzifier.h"
 
 namespace fuzzy{
-    class weightedAverage : defuzzifier {
+    class WeightedAverage : Defuzzifier {
 	private:
-		fuzzy::systemType type;
+		fuzzy::SystemType type;
     public:
-        weightedAverage(float resolution = 0.1, fuzzy::systemType type = TakagiSugeno);
-        virtual ~weightedAverage();
+        WeightedAverage(float resolution = 0.1, fuzzy::SystemType type = TakagiSugeno);
+        virtual ~WeightedAverage();
         
         virtual std::string className() const;
-        virtual weightedAverage* clone() const;
-        virtual float defuzzify(const mf* membership, float minimum, float maximum) const;
+        virtual WeightedAverage* clone() const { return new WeightedAverage(*this); }
+        virtual float defuzzify(const MF* membership, float minimum, float maximum) const;
     };
 }
 

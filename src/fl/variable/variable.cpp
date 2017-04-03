@@ -2,16 +2,16 @@
 
 namespace fuzzy{
 
-	variable::variable(const std::string name, float minRange, float maxRange){
+	Variable::Variable(const std::string name, float minRange, float maxRange){
 		this->name = name;
 		this->minRange = minRange;
 		this->maxRange = maxRange;
 	}		
 	
-	variable::~variable(){
+	Variable::~Variable(){
 	}
 	
-	std::vector<float> variable::fuzzify(float value) const{
+	std::vector<float> Variable::fuzzify(float value) const{
 		std::vector<float> result;
 		
 		if((value != fuzzy::nan) && (std::abs(value) != fuzzy::inf)){
@@ -26,63 +26,63 @@ namespace fuzzy{
 		return result;
 	}
 
-	void variable::setName(const std::string name){
+	void Variable::setName(const std::string name){
 		this->name = name;
 	}
 	
-	std::string variable::getName() const{
+	std::string Variable::getName() const{
 		return this->name;
 	}
 
-	void variable::setRange(float minimum, float maximum){
+	void Variable::setRange(float minimum, float maximum){
 		setMinimum(minimum);
 		setMaximum(maximum);
 	}
 	
-	float variable::range() const{
+	float Variable::range() const{
 		return std::abs(std::abs(maxRange) - std::abs(minRange));
 	}
 
-	void variable::setMinimum(float minimum){
+	void Variable::setMinimum(float minimum){
 		this->minRange = minimum;
 	}
 	
-	float variable::getMinimum() const{
+	float Variable::getMinimum() const{
 		return this->minRange;
 	}
 
-	void variable::setMaximum(float maximum){
+	void Variable::setMaximum(float maximum){
 		this->maxRange = maxRange;
 	}
 	
-	float variable::getMaximum() const{
+	float Variable::getMaximum() const{
 		return this->maxRange;
 	}
 
-	void variable::addMF(mf* item){
+	void Variable::addMF(MF* item){
             if (item->getName() == ""){
 				std::ostringstream ss;
-				ss << "mf" << this->items.size();
+				ss << "MF" << this->items.size();
                 item->setName(ss.str());
             }
             this->items.push_back(item);
 	}
 	
-	void variable::addMFAt(mf* item, int index){
+	void Variable::addMFAt(MF* item, int index){
 		this->items.insert(this->items.begin() + index, item);
 	}
 	
-	void variable::setMFAt(mf* item, int index){
+	void Variable::setMFAt(MF* item, int index){
 		this->items[index] = item;
 	}
 	
-	mf* variable::getMFByIndex(int index){
+	MF* Variable::getMFByIndex(int index){
 		return this->items[index];
 	}
 	
-	mf* variable::getMFByName(const std::string name){
+	MF* Variable::getMFByName(const std::string name){
 		bool found = false;
-		mf* item = NULL;
+		MF* item = NULL;
 		
 		for(int i = 0; i < this->items.size() && !found; i++){
 			if(items[i]->getName() == name){
@@ -93,15 +93,15 @@ namespace fuzzy{
 		return item;
 	}
 
-	void variable::removeMF(int index){
+	void Variable::removeMF(int index){
 		this->items.erase(this->items.begin() + index);
 	}
 	
-	void variable::removeAllMF(){
+	void Variable::removeAllMF(){
 		this->items.clear();
 	}
 	
-	int variable::numberOfMFs() const{
+	int Variable::numberOfMFs() const{
 		return items.size();
 	}
 

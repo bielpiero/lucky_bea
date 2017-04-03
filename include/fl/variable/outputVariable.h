@@ -11,14 +11,14 @@
 
 namespace fuzzy{
 
-    class outputVariable : public variable{
+    class OutputVariable : public Variable{
     private:
         float defaultValue;
         float outputValue;
-        defuzzifier* defuzz;
+        Defuzzifier* defuzz;
         
     public:
-        outputVariable(const std::string name = "", 
+        OutputVariable(const std::string name = "", 
                 float minRange = 0.0, 
                 float maxRange = 1.0);
         
@@ -28,12 +28,12 @@ namespace fuzzy{
         virtual float getDefaultValue() const;
         virtual void setDefaultValue(float value);
         
-        virtual defuzzifier* getDefuzzifier() const;
-        virtual void setDefuzzifier(defuzzifier* defuzz);
+        virtual Defuzzifier* getDefuzzifier() const;
+        virtual void setDefuzzifier(Defuzzifier* defuzz);
         
         virtual void defuzzify();
                         
-        virtual ~outputVariable();
+        virtual ~OutputVariable();
     };
 }
 

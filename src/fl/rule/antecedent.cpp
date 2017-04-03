@@ -3,18 +3,18 @@
 
 namespace fuzzy{
     
-    antecedent::antecedent() {
+    Antecedent::Antecedent() {
     }
 
-    antecedent::~antecedent() {
+    Antecedent::~Antecedent() {
         
     }
     
-    void antecedent::parse(std::string expresion, rule* r){
+    void Antecedent::parse(std::string expresion, Rule* r){
         
     }
 	
-	float antecedent::getActivationDegree(){
+	float Antecedent::getActivationDegree(){
 		float result = fuzzy::nan;
 		
 		return result;

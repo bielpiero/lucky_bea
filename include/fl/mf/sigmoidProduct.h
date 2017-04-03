@@ -5,15 +5,15 @@
 
 namespace fuzzy{
 
-	class sigmoidProduct : public mf{
+	class SigmoidProduct : public MF{
 	public:
-		sigmoidProduct(std::string name="", 
+		SigmoidProduct(std::string name = "", 
 				float left = fuzzy::inf, 
 				float rising = fuzzy::inf, 
 				float falling = fuzzy::inf, 
 				float right = fuzzy::inf,
 				float height = 1.0);
-		virtual ~sigmoidProduct();
+		virtual ~SigmoidProduct();
 		
 		virtual void setLeft(float value);
         virtual float getLeft() const;
@@ -27,14 +27,14 @@ namespace fuzzy{
         virtual void setRight(float value);
         virtual float getRight() const;
 		
-		virtual sigmoidProduct* operator+(const sigmoidProduct& rhs) const;
-		virtual sigmoidProduct* operator-(const sigmoidProduct& rhs) const;
+		virtual SigmoidProduct* operator+(const SigmoidProduct& rhs) const;
+		virtual SigmoidProduct* operator-(const SigmoidProduct& rhs) const;
 		
-		virtual sigmoidProduct* operator*(const float& rhs) const;
+		virtual SigmoidProduct* operator*(const float& rhs) const;
 				
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
-		virtual sigmoidProduct* clone() const;
+		virtual SigmoidProduct* clone() const;
 	private:
 		float left;
 		float rising;

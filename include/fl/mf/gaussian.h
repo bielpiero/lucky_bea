@@ -5,13 +5,13 @@
 
 namespace fuzzy{
 
-    class gaussian : public mf{
+    class Gaussian : public MF{
     public:
-        gaussian(std::string name="", 
+        Gaussian(std::string name="", 
                         float mean = fuzzy::inf, 
                         float standardDeviation = fuzzy::inf, 
                         float height = 1.0);
-        virtual ~gaussian();
+        virtual ~Gaussian();
         
         virtual float getMean() const;
         virtual void setMean(float value);
@@ -19,14 +19,14 @@ namespace fuzzy{
         virtual float getStandardDeviation() const;
         virtual void setStandardDeviation(float value);
 		
-	virtual gaussian* operator+(const gaussian& rhs) const;
-	virtual gaussian* operator-(const gaussian& rhs) const;
+	virtual Gaussian* operator+(const Gaussian& rhs) const;
+	virtual Gaussian* operator-(const Gaussian& rhs) const;
 		
-	virtual gaussian* operator*(const float& rhs) const;
+	virtual Gaussian* operator*(const float& rhs) const;
 
         virtual std::string className() const;
         virtual float evaluate(float value) const;
-        virtual gaussian* clone() const;
+        virtual Gaussian* clone() const;
     private:
         float mean;
         float standardDeviation;

@@ -1,36 +1,36 @@
 #include "mf.h"
 
 namespace fuzzy{
-	mf::mf(const std::string name, float height){
+	MF::MF(const std::string name, float height){
 		this->name = name;
 		this->height = height;
 	}
 	
-	mf::~mf(){
+	MF::~MF(){
 	}
 	
-	std::string mf::getName() const{
+	std::string MF::getName() const{
 		return this->name;
 	}
 	
-	void mf::setName(std::string name){
+	void MF::setName(std::string name){
 		this->name = name;
 	}
 		
-	float mf::getHeight() const{
+	float MF::getHeight() const{
 		return this->height;
 	}
 
-	mf* mf::operator+(const mf &rhs) const{
+	MF* MF::operator+(const MF &rhs) const{
 	}
 
-	mf* mf::operator-(const mf &rhs) const{
+	MF* MF::operator-(const MF &rhs) const{
 	}
 	
-	mf* mf::operator*(const float& rhs) const{
+	MF* MF::operator*(const float& rhs) const{
 	}
 	
-	void mf::setHeight(float height){
+	void MF::setHeight(float height){
 		this->height = height;
 	}
 }

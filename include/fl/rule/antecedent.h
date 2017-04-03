@@ -14,12 +14,13 @@
 #include <stdexcept>
 
 namespace fuzzy{
-    class rule;
-    class antecedent {
+    class Rule;
+
+    class Antecedent {
     public:
-        antecedent();
-        virtual ~antecedent();
-        virtual void parse(std::string expresion, rule* r);
+        Antecedent();
+        virtual ~Antecedent();
+        virtual void parse(std::string expresion, Rule* r);
         virtual float getActivationDegree();
     private:
 

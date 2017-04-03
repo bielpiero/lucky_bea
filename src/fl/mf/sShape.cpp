@@ -1,22 +1,22 @@
 #include "sShape.h"
 
 namespace fuzzy{
-	sShape::sShape(std::string name, float start, float end, float height){
+	SShape::SShape(std::string name, float start, float end, float height){
 		this->name = name;
 		this->height = height;
 		this->start = start;
 		this->end = end;
 	}
 	
-	sShape::~sShape(){
+	SShape::~SShape(){
 	
 	}
 	
-	std::string sShape::className() const{
-		return "sShape";
+	std::string SShape::className() const{
+		return "SShape";
 	}
 	
-	float sShape::evaluate(float value) const{
+	float SShape::evaluate(float value) const{
 		float result = fuzzy::nan;
 		
 		if(value != fuzzy::nan){
@@ -35,36 +35,36 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
-	sShape* sShape::operator+(const sShape& rhs) const{
-		return new sShape("", this->start + rhs.start, this->end + rhs.end);
+	SShape* SShape::operator+(const SShape& rhs) const{
+		return new SShape("", this->start + rhs.start, this->end + rhs.end);
 		
 	}
 	
-	sShape* sShape::operator-(const sShape& rhs) const{
-		return new sShape("", this->start - rhs.start, this->end - rhs.end);
+	SShape* SShape::operator-(const SShape& rhs) const{
+		return new SShape("", this->start - rhs.start, this->end - rhs.end);
 	}
 	
-	sShape* sShape::operator*(const float& rhs) const{
-		return new sShape("", this->start * rhs, this->end * rhs);
+	SShape* SShape::operator*(const float& rhs) const{
+		return new SShape("", this->start * rhs, this->end * rhs);
 	}
 	
-	sShape* sShape::clone() const{
-		return new sShape(*this);
+	SShape* SShape::clone() const{
+		return new SShape(*this);
 	}
 	
-	void sShape::setStart(float start) {
+	void SShape::setStart(float start) {
         this->start = start;
     }
 	
-	float sShape::getStart() const {
+	float SShape::getStart() const {
         return this->start;
     }
 
-    void sShape::setEnd(float end) {
+    void SShape::setEnd(float end) {
         this->end = end;
     }
 
-    float sShape::getEnd() const {
+    float SShape::getEnd() const {
         return this->end;
     }
 }

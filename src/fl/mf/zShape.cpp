@@ -1,22 +1,22 @@
 #include "zShape.h"
 
 namespace fuzzy{
-	zShape::zShape(std::string name, float start, float end, float height){
+	ZShape::ZShape(std::string name, float start, float end, float height){
 		this->name = name;
 		this->height = height;
 		this->start = start;
 		this->end = end;
 	}
 	
-	zShape::~zShape(){
+	ZShape::~ZShape(){
 	
 	}
 	
-	std::string zShape::className() const{
-		return "zShape";
+	std::string ZShape::className() const{
+		return "ZShape";
 	}
 	
-	float zShape::evaluate(float value) const{
+	float ZShape::evaluate(float value) const{
 		float result = fuzzy::nan;
 		
 		if(value != fuzzy::nan){
@@ -35,36 +35,36 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
-	zShape* zShape::operator+(const zShape& rhs) const{
-		return new zShape("", this->start + rhs.start, this->end + rhs.end);
+	ZShape* ZShape::operator+(const ZShape& rhs) const{
+		return new ZShape("", this->start + rhs.start, this->end + rhs.end);
 		
 	}
 	
-	zShape* zShape::operator-(const zShape& rhs) const{
-		return new zShape("", this->start - rhs.start, this->end - rhs.end);
+	ZShape* ZShape::operator-(const ZShape& rhs) const{
+		return new ZShape("", this->start - rhs.start, this->end - rhs.end);
 	}
 	
-	zShape* zShape::operator*(const float& rhs) const{
-		return new zShape("", this->start * rhs, this->end * rhs);
+	ZShape* ZShape::operator*(const float& rhs) const{
+		return new ZShape("", this->start * rhs, this->end * rhs);
 	}
 	
-	zShape* zShape::clone() const{
-		return new zShape(*this);
+	ZShape* ZShape::clone() const{
+		return new ZShape(*this);
 	}
 	
-	void zShape::setStart(float start) {
+	void ZShape::setStart(float start) {
         this->start = start;
     }
 	
-	float zShape::getStart() const {
+	float ZShape::getStart() const {
         return this->start;
     }
 
-    void zShape::setEnd(float end) {
+    void ZShape::setEnd(float end) {
         this->end = end;
     }
 
-    float zShape::getEnd() const {
+    float ZShape::getEnd() const {
         return this->end;
     }
 }

@@ -5,14 +5,14 @@
 
 namespace fuzzy{
 
-    class gaussBell : public mf{
+    class GaussBell : public MF{
     public:
-        gaussBell(std::string name="", 
+        GaussBell(std::string name="", 
                         float center = fuzzy::inf, 
                         float width = fuzzy::inf, 
                         float slope = fuzzy::inf, 
                         float height = 1.0);
-        virtual ~gaussBell();
+        virtual ~GaussBell();
 		
 
 
@@ -25,14 +25,14 @@ namespace fuzzy{
         virtual float getSlope() const;
         virtual void setSlope(float value);
 		
-		virtual gaussBell* operator+(const gaussBell& rhs) const;
-		virtual gaussBell* operator-(const gaussBell& rhs) const;
+		virtual GaussBell* operator+(const GaussBell& rhs) const;
+		virtual GaussBell* operator-(const GaussBell& rhs) const;
 		
-		virtual gaussBell* operator*(const float& rhs) const;
+		virtual GaussBell* operator*(const float& rhs) const;
 
         virtual std::string className() const;
         virtual float evaluate(float value) const;
-        virtual gaussBell* clone() const;
+        virtual GaussBell* clone() const;
     private:
         float center;
         float width;

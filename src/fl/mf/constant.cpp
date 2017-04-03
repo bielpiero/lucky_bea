@@ -7,38 +7,38 @@
 
 #include "constant.h"
 namespace fuzzy{
-    constant::constant(const std::string name, float value) {
+    Constant::Constant(const std::string name, float value) {
         this->name = name;
         this->value = value;
     }
 
-    constant::~constant() {
+    Constant::~Constant() {
         
     }
     
-    std::string constant::className() const{
-        return "constant";
+    std::string Constant::className() const{
+        return "Constant";
     }
 	
-	constant* constant::operator+(const constant& rhs) const{
+	Constant* Constant::operator+(const Constant& rhs) const{
 		(void) rhs;
 		
 	}
 	
-	constant* constant::operator-(const constant& rhs) const{
+	Constant* Constant::operator-(const Constant& rhs) const{
 		(void) rhs;
 	}
 	
-	constant* constant::operator*(const float& rhs) const{
+	Constant* Constant::operator*(const float& rhs) const{
 		(void) rhs;
 	}
     
-    float constant::evaluate(float value) const{
+    float Constant::evaluate(float value) const{
         (void) value;
         return this->value;
     }
-    constant* constant::clone() const{
-        return new constant(*this);
+    Constant* Constant::clone() const{
+        return new Constant(*this);
     }
 }
 

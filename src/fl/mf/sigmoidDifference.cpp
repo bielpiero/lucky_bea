@@ -1,7 +1,7 @@
 #include "sigmoidDifference.h"
 
 namespace fuzzy{
-	sigmoidDifference::sigmoidDifference(std::string name, float left, float rising, float falling, float right, float height){
+	SigmoidDifference::SigmoidDifference(std::string name, float left, float rising, float falling, float right, float height){
 		this->name = name;
 		this->height = height;
 		
@@ -11,15 +11,15 @@ namespace fuzzy{
 		this->right = right;
 	}
 	
-	sigmoidDifference::~sigmoidDifference(){
+	SigmoidDifference::~SigmoidDifference(){
 	
 	}
 	
-	std::string sigmoidDifference::className() const{
-		return "sigmoidDifference";
+	std::string SigmoidDifference::className() const{
+		return "SigmoidDifference";
 	}
 	
-	float sigmoidDifference::evaluate(float value) const{
+	float SigmoidDifference::evaluate(float value) const{
 		float result = fuzzy::nan;
 		
 		if(value != fuzzy::nan){
@@ -30,52 +30,52 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
-	sigmoidDifference* sigmoidDifference::clone() const{
-		return new sigmoidDifference(*this);
+	SigmoidDifference* SigmoidDifference::clone() const{
+		return new SigmoidDifference(*this);
 	}
 	
-	sigmoidDifference* sigmoidDifference::operator+(const sigmoidDifference& rhs) const{
-		return new sigmoidDifference("", this->left + rhs.left, this->rising + rhs.rising, this->falling + rhs.falling, this->right + rhs.right);
+	SigmoidDifference* SigmoidDifference::operator+(const SigmoidDifference& rhs) const{
+		return new SigmoidDifference("", this->left + rhs.left, this->rising + rhs.rising, this->falling + rhs.falling, this->right + rhs.right);
 		
 	}
 	
-	sigmoidDifference* sigmoidDifference::operator-(const sigmoidDifference& rhs) const{
-		return new sigmoidDifference("", this->left - rhs.left, this->rising - rhs.rising, this->falling - rhs.falling, this->right - rhs.right);
+	SigmoidDifference* SigmoidDifference::operator-(const SigmoidDifference& rhs) const{
+		return new SigmoidDifference("", this->left - rhs.left, this->rising - rhs.rising, this->falling - rhs.falling, this->right - rhs.right);
 	}
 	
-	sigmoidDifference* sigmoidDifference::operator*(const float& rhs) const{
-		return new sigmoidDifference("", this->left * rhs, this->rising * rhs, this->falling * rhs, this->right * rhs);
+	SigmoidDifference* SigmoidDifference::operator*(const float& rhs) const{
+		return new SigmoidDifference("", this->left * rhs, this->rising * rhs, this->falling * rhs, this->right * rhs);
 	}
 	
-	void sigmoidDifference::setLeft(float value) {
+	void SigmoidDifference::setLeft(float value) {
         this->left = value;
     }
 
-    float sigmoidDifference::getLeft() const {
+    float SigmoidDifference::getLeft() const {
         return this->left;
     }
 
-    void sigmoidDifference::setRising(float value) {
+    void SigmoidDifference::setRising(float value) {
         this->rising = value;
     }
 
-    float sigmoidDifference::getRising() const {
+    float SigmoidDifference::getRising() const {
 		return this->rising;
     }
 
-    void sigmoidDifference::setFalling(float value) {
+    void SigmoidDifference::setFalling(float value) {
         this->falling = value;
     }
 
-    float sigmoidDifference::getFalling() const {
+    float SigmoidDifference::getFalling() const {
         return this->falling;
     }
 
-    void sigmoidDifference::setRight(float value) {
+    void SigmoidDifference::setRight(float value) {
         this->right = value;
     }
 
-    float sigmoidDifference::getRight() const {
+    float SigmoidDifference::getRight() const {
         return this->right;
     }	
 	

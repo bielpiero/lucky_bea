@@ -1,7 +1,7 @@
 #include "system.h"
 
 namespace fuzzy{
-    system::system(const std::string name, fuzzy::systemType sysType, fuzzy::defuzzificationType defuzzType){
+    System::System(const std::string name, fuzzy::SystemType sysType, fuzzy::DefuzzificationType defuzzType){
             this->name = name;
             this->sysType = sysType;
             if(sysType == Mamdani){
@@ -17,45 +17,45 @@ namespace fuzzy{
             this->defuzzType = defuzzType;
     }
 
-    system::~system(){
+    System::~System(){
 
     }
-    void system::setName(const std::string name){
+    void System::setName(const std::string name){
             this->name = name;
     }
 
-    std::string system::getName()const{
+    std::string System::getName()const{
         return this->name;
     }
 
-    void system::setSystemType(const fuzzy::systemType value){
+    void System::setSystemType(const fuzzy::SystemType value){
         this->sysType = value;
     }
     
-    fuzzy::systemType system::getSystemType() const{
+    fuzzy::SystemType System::getSystemType() const{
         return this->sysType;
     }
 
-    void system::setDefuzzificationType(const fuzzy::defuzzificationType value){
+    void System::setDefuzzificationType(const fuzzy::DefuzzificationType value){
         this->defuzzType = value;
     }
     
-    fuzzy::defuzzificationType system::getDefuzzificationType() const{
+    fuzzy::DefuzzificationType System::getDefuzzificationType() const{
         return this->defuzzType;
     }
     
-    void system::start(){
+    void System::start(){
         
     }
     
-    std::vector<std::vector<float> > system::identifyFromData(std::string filename, 
+    std::vector<std::vector<float> > System::identifyFromData(std::string filename, 
                                                                   std::vector<float> na, 
                                                                   std::vector<std::vector<float> > nb,
                                                                   std::vector<std::vector<float> > nk){
         
     }
 
-    void system::addInput(inputVariable* item){
+    void System::addInput(InputVariable* item){
         if(item->getName() == ""){
 			std::ostringstream ss;
 			ss << "input" << this->inputs.size();
@@ -64,25 +64,25 @@ namespace fuzzy{
         this->inputs.push_back(item);
     }
 
-    void system::addInputAt(inputVariable* item, int index){
+    void System::addInputAt(InputVariable* item, int index){
         this->inputs.insert(this->inputs.begin() + index, item);
     }
 
-    void system::removeInputAt(int index){
+    void System::removeInputAt(int index){
         this->inputs.erase(this->inputs.begin() + index);
     }
 
-    void system::removeAllInputs(){
+    void System::removeAllInputs(){
         this->inputs.clear();
     }
 
-    int system::numberOfInputs(){
+    int System::numberOfInputs(){
         return this->inputs.size();
     }
 
-    inputVariable* system::getInputByName(const std::string name){
+    InputVariable* System::getInputByName(const std::string name){
         bool found = false;
-        inputVariable* item = NULL;
+        InputVariable* item = NULL;
 
         for(int i = 0; i < this->inputs.size() && !found; i++){
             if(inputs[i]->getName() == name){
@@ -93,12 +93,12 @@ namespace fuzzy{
         return item;
     }
 
-    inputVariable* system::getInputByIndex(int index){
+    InputVariable* System::getInputByIndex(int index){
         return this->inputs[index];
     }
 
 
-    void system::addOutput(outputVariable* item){
+    void System::addOutput(OutputVariable* item){
         if(item->getName() == ""){
 			std::ostringstream ss;
 			ss << "output" << this->outputs.size();
@@ -107,25 +107,25 @@ namespace fuzzy{
         this->outputs.push_back(item);
     }
 
-    void system::addOutputAt(outputVariable* item, int index){
+    void System::addOutputAt(OutputVariable* item, int index){
         this->outputs.insert(this->outputs.begin() + index, item);
     }
 
-    void system::removeOutputAt(int index){
+    void System::removeOutputAt(int index){
         this->outputs.erase(this->outputs.begin() + index);
     }
 
-    void system::removeAllOutputs(){
+    void System::removeAllOutputs(){
         this->outputs.clear();
     }
 
-    int system::numberOfOutputs(){
+    int System::numberOfOutputs(){
         return this->outputs.size();
     }
 
-    outputVariable* system::getOutputByName(const std::string name){
+    OutputVariable* System::getOutputByName(const std::string name){
         bool found = false;
-        outputVariable* item = NULL;
+        OutputVariable* item = NULL;
 
         for(int i = 0; i < this->outputs.size() && !found; i++){
             if(outputs[i]->getName() == name){
@@ -136,32 +136,32 @@ namespace fuzzy{
         return item;
     }
 
-    outputVariable* system::getOutputByIndex(int index){
+    OutputVariable* System::getOutputByIndex(int index){
         return this->outputs[index];
     }
 
 
-    void system::addRule(rule* item){
+    void System::addRule(Rule* item){
         this->rules.push_back(item);
     }
 
-    void system::addRuleAt(rule* item, int index){
+    void System::addRuleAt(Rule* item, int index){
         this->rules.insert(this->rules.begin() + index, item);
     }
 
-    void system::removeRuleAt(int index){
+    void System::removeRuleAt(int index){
         this->rules.erase(this->rules.begin() + index);
     }
 
-    void system::removeAllRules(){
+    void System::removeAllRules(){
         this->rules.clear();
     }
 
-    int system::numberOfRules(){
+    int System::numberOfRules(){
         return this->rules.size();
     }
 
-    rule* system::getRuleByIndex(int index){
+    Rule* System::getRuleByIndex(int index){
         return this->rules[index];
     }
 	

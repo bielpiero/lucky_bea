@@ -1,22 +1,22 @@
 #include "inputVariable.h"
 
 namespace fuzzy{
-    inputVariable::inputVariable(const std::string name, float minRange, float maxRange) : variable(name, minRange, maxRange){
+    InputVariable::InputVariable(const std::string name, float minRange, float maxRange) : Variable(name, minRange, maxRange){
         this->input = fuzzy::nan;
     }
 
-    inputVariable::~inputVariable(){
+    InputVariable::~InputVariable(){
     }
 
-    void inputVariable::setInput(float value){
+    void InputVariable::setInput(float value){
         this->input = value;
     }
 
-    float inputVariable::getInput() const{
+    float InputVariable::getInput() const{
         return this->input;
     }
 
-    std::vector<float> inputVariable::fuzzyInput() const{
+    std::vector<float> InputVariable::fuzzyInput() const{
         return this->fuzzify(this->input);
     }
 

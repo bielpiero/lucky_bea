@@ -7,15 +7,15 @@
 
 namespace fuzzy{
 
-	class piShape : public mf{
+	class PiShape : public MF{
 	public:
-		piShape(std::string name="", 
+		PiShape(std::string name="", 
 				float bottomLeft = fuzzy::inf, 
 				float topLeft = fuzzy::inf, 
 				float bottomRight = fuzzy::inf, 
 				float topRight = fuzzy::inf, 
 				float height = 1.0);
-		virtual ~piShape();
+		virtual ~PiShape();
 		
 		virtual float getBottomLeft() const;
 		virtual void setBottomLeft(float value);
@@ -29,14 +29,14 @@ namespace fuzzy{
 		virtual float getTopRight() const;
 		virtual void setTopRight(float value);
 		
-		virtual piShape* operator+(const piShape& rhs) const;
-		virtual piShape* operator-(const piShape& rhs) const;
+		virtual PiShape* operator+(const PiShape& rhs) const;
+		virtual PiShape* operator-(const PiShape& rhs) const;
 		
-		virtual piShape* operator*(const float& rhs) const;
+		virtual PiShape* operator*(const float& rhs) const;
 		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
-		virtual piShape* clone() const;
+		virtual PiShape* clone() const;
 	private:
 		float bottomLeft;
 		float topLeft;

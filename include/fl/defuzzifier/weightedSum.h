@@ -4,16 +4,16 @@
 #include "defuzzifier.h"
 
 namespace fuzzy{
-    class weightedSum : defuzzifier {
+    class WeightedSum : Defuzzifier {
 	private:
-		fuzzy::systemType type;
+		fuzzy::SystemType type;
     public:
-        weightedSum(float resolution = 0.1, fuzzy::systemType type = TakagiSugeno);
-        virtual ~weightedSum();
+        WeightedSum(float resolution = 0.1, fuzzy::SystemType type = TakagiSugeno);
+        virtual ~WeightedSum();
         
         virtual std::string className() const;
-        virtual weightedSum* clone() const;
-        virtual float defuzzify(const mf* membership, float minimum, float maximum) const;
+        virtual WeightedSum* clone() const { return new WeightedSum(*this); }
+        virtual float defuzzify(const MF* membership, float minimum, float maximum) const;
     };
 }
 

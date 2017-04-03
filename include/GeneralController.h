@@ -64,6 +64,8 @@ class RNOmnicameraTask;
 class RNCameraTask;
 class RNRecurrentTaskMap;
 class RNRFIdentificationTask;
+class RNGesturesTask;
+class RNDialogsTask;
 class RNEmotionsTask;
 
 struct s_motor{
@@ -92,11 +94,6 @@ struct dynamic_face_info{
 	GeneralController* object;
 };
 
-struct s_video_streamer_data{
-	int socketIndex;
-	int port;
-	GeneralController* object;	
-};
 
 struct s_trapezoid{
 	float x1;
@@ -261,7 +258,6 @@ public:
 	int initializeKalmanVariables();
 	void loadSector(int mapId, int sectorId);
 	
-	void stopVideoStreaming();
 	void stopCurrentTour();
 
 	int getCurrenMapId();
@@ -309,6 +305,8 @@ private:
 	RobotDataStreamer* spdWSServer;
 	// Tasks Objects
 	RNEmotionsTask* emotions;
+	RNGesturesTask* gestures;
+	RNDialogsTask* dialogs;
 	RNRecurrentTaskMap* tasks;
 	RNLocalizationTask* localization;
 	RNOmnicameraTask* omnidirectionalTask;
@@ -325,7 +323,7 @@ private:
 	Matrix robotRawDeltaPosition;
 	Matrix robotRawEncoderPosition;
 
-	std::vector<fuzzy::trapezoid*>* kalmanFuzzy;
+	std::vector<fuzzy::Trapezoid*>* kalmanFuzzy;
 	Matrix robotState;
 	Matrix P;
 	Matrix Q;
@@ -360,8 +358,6 @@ private:
 	bool rfidSensorActivated;
 
 	bool printed;
-
-	pthread_t trackThread;
 
 	pthread_mutex_t laserLandmarksLocker;
 	pthread_mutex_t rfidLandmarksLocker;
@@ -408,11 +404,7 @@ private:
 	bool isSecondQuadrant(float angle);
 	bool isThirdQuadrant(float angle);
 	bool isFouthQuadrant(float angle);
-
-	void getCameraDevicePort(char* cad, int& device, int& port);
-	void beginVideoStreaming(int socketIndex, int videoDevice, int port);
 	
-	static void* streamingThread(void*);
 	static void* trackRobotThread(void*);
 	static void* sitesTourThread(void*);
 };

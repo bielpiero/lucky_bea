@@ -68,6 +68,7 @@ RobotNode::RobotNode(const char* port){
     this->keepActiveSensorDataThread = NO;
 
     pthread_mutex_init(&mutexRawPositionLocker, NULL);
+    pthread_mutex_init(&mutexLaserReadingsLocker, NULL);
 
     pthread_create(&sensorDataThread, NULL, dataPublishingThread, (void *)(this)  );
     printf("Connection Timeout: %d\n", robot->getConnectionTimeoutTime());
@@ -132,26 +133,38 @@ void RobotNode::finishThreads(){
 }
 
 void RobotNode::getLaserScan(void){
-	//this->lockRobot();
-
 	if(laser != NULL){
 		laser->lockDevice();
         
 		const std::list<ArSensorReading*> *currentReadings = new std::list<ArSensorReading*>(*laser->getRawReadings());
-		laserDataScan = new LaserScan();
+        lockLaserReadings();
+        if(laserDataScan == NULL){
+            laserDataScan = new LaserScan();
+        }
+		laserDataScan->clear();
 		for(std::list<ArSensorReading*>::const_iterator it = currentReadings->begin(); it != currentReadings->end(); ++it){
 			laserDataScan->addLaserScanData((float)(*it)->getRange() / 1000, (float)(*it)->getExtraInt());
 		}
+        unlockLaserReadings();
         laser->unlockDevice();
 
         securityDistanceChecker();
         onLaserScanCompleted(laserDataScan);
 
         delete currentReadings;
-        delete laserDataScan;
-        laserDataScan = NULL;
 	}
-	//this->unlockRobot();
+}
+
+int RobotNode::lockLaserReadings(){
+    return pthread_mutex_lock(&mutexLaserReadingsLocker);
+}
+
+int RobotNode::unlockLaserReadings(){
+    return pthread_mutex_unlock(&mutexLaserReadingsLocker);
+}
+
+LaserScan* RobotNode::getRawLaserReadings(void){
+    return laserDataScan;
 }
 
 void RobotNode::getRobotPosition(){

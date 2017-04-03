@@ -1,21 +1,17 @@
 #include "centroid.h"
 namespace fuzzy{
-    centroid::centroid(float resolution):defuzzifier(resolution){
+    Centroid::Centroid(float resolution) : Defuzzifier(resolution){
     
     }
-    centroid::~centroid(){
+    Centroid::~Centroid(){
 
     }
 
-    std::string centroid::className() const{
-        return "centroid";
+    std::string Centroid::className() const{
+        return "Centroid";
     }
-    
-    centroid* centroid::clone() const{
-        return new centroid(*this);
-    }
-    
-    float centroid::defuzzify(const mf* membership, float minimum, float maximum) const{
+        
+    float Centroid::defuzzify(const MF* membership, float minimum, float maximum) const{
         float result = fuzzy::nan;
         if(!stats::isInf(minimum) && !stats::isInf(maximum)){
             float iterations = std::abs((maximum - minimum) / this->resolution);

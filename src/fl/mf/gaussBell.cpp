@@ -1,7 +1,7 @@
 #include "gaussBell.h"
 
 namespace fuzzy{
-	gaussBell::gaussBell(std::string name, float center, float width, float slope, float height){
+	GaussBell::GaussBell(std::string name, float center, float width, float slope, float height){
 		this->name = name;
 		this->height = height;
 		
@@ -10,15 +10,15 @@ namespace fuzzy{
 		this->slope = slope;
 	}
 	
-	gaussBell::~gaussBell(){
+	GaussBell::~GaussBell(){
 	
 	}
 	
-	std::string gaussBell::className() const{
-		return "gaussBell";
+	std::string GaussBell::className() const{
+		return "GaussBell";
 	}
 	
-	float gaussBell::evaluate(float value) const{
+	float GaussBell::evaluate(float value) const{
 		float result = fuzzy::nan;
 		
 		if(value != fuzzy::nan){
@@ -28,44 +28,44 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
-	gaussBell* gaussBell::operator+(const gaussBell& rhs) const{
-		return new gaussBell("", this->center + rhs.center, this->width + rhs.width, this->slope + rhs.slope);
+	GaussBell* GaussBell::operator+(const GaussBell& rhs) const{
+		return new GaussBell("", this->center + rhs.center, this->width + rhs.width, this->slope + rhs.slope);
 		
 	}
 	
-	gaussBell* gaussBell::operator-(const gaussBell& rhs) const{
-		return new gaussBell("", this->center - rhs.center, this->width - rhs.width, this->slope - rhs.slope);
+	GaussBell* GaussBell::operator-(const GaussBell& rhs) const{
+		return new GaussBell("", this->center - rhs.center, this->width - rhs.width, this->slope - rhs.slope);
 	}
 	
-	gaussBell* gaussBell::operator*(const float& rhs) const{
-		return new gaussBell("", this->center * rhs, this->width * rhs, this->slope * rhs);
+	GaussBell* GaussBell::operator*(const float& rhs) const{
+		return new GaussBell("", this->center * rhs, this->width * rhs, this->slope * rhs);
 	}
 	
-	gaussBell* gaussBell::clone() const{
-		return new gaussBell(*this);
+	GaussBell* GaussBell::clone() const{
+		return new GaussBell(*this);
 	}
 	
-	float gaussBell::getCenter() const{
+	float GaussBell::getCenter() const{
 		return center;
 	}
 	
-	void gaussBell::setCenter(float value){
+	void GaussBell::setCenter(float value){
 		this->center = value;
 	}
 	
-	float gaussBell::getWidth() const{
+	float GaussBell::getWidth() const{
 		return width;
 	}
 	
-	void gaussBell::setWidth(float value){
+	void GaussBell::setWidth(float value){
 		this->width = value;
 	}
 	
-	float gaussBell::getSlope() const{
+	float GaussBell::getSlope() const{
 		return slope;
 	}
 	
-	void gaussBell::setSlope(float value){
+	void GaussBell::setSlope(float value){
 		this->slope = value;
 	}
 }

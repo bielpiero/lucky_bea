@@ -11,21 +11,21 @@
 #include "mf.h"
 
 namespace fuzzy {
-    class constant : public mf {
+    class Constant : public MF {
     private:
         float value;
     public:
-        constant(const std::string name = "", float value = fuzzy::nan);
-        virtual ~constant();
+        Constant(const std::string name = "", float value = fuzzy::nan);
+        virtual ~Constant();
 		
-		virtual constant* operator+(const constant& rhs) const;
-		virtual constant* operator-(const constant& rhs) const;
+		virtual Constant* operator+(const Constant& rhs) const;
+		virtual Constant* operator-(const Constant& rhs) const;
 		
-		virtual constant* operator*(const float& rhs) const;
+		virtual Constant* operator*(const float& rhs) const;
         
         virtual std::string className() const;
         virtual float evaluate(float value) const;
-        virtual constant* clone() const;
+        virtual Constant* clone() const;
     };
 }
 #endif	/* CONSTANT_H */

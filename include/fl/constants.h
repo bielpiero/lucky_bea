@@ -19,12 +19,12 @@ namespace fuzzy{
     const std::string AND_KEY = "and";
     const std::string OR_KEY = "or";
     
-    enum systemType{
+    enum SystemType{
             Mamdani,
             TakagiSugeno
     };
 
-    enum defuzzificationType{
+    enum DefuzzificationType{
             Bisector,
             Centroid,
             LargestOfMaximum,

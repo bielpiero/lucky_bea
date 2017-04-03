@@ -1,21 +1,17 @@
 #include "bisector.h"
 namespace fuzzy{
-    bisector::bisector(float resolution):defuzzifier(resolution){
+    Bisector::Bisector(float resolution) : Defuzzifier(resolution){
     
     }
-    bisector::~bisector(){
+    Bisector::~Bisector(){
 
     }
 
-    std::string bisector::className() const{
-        return "bisector";
+    std::string Bisector::className() const{
+        return "Bisector";
     }
     
-    bisector* bisector::clone() const{
-        return new bisector(*this);
-    }
-    
-    float bisector::defuzzify(const mf* membership, float minimum, float maximum) const{
+    float Bisector::defuzzify(const MF* membership, float minimum, float maximum) const{
         float result = fuzzy::nan;
         if(!stats::isInf(minimum) && !stats::isInf(maximum)){
             float iterations = std::abs((maximum - minimum) / this->resolution);

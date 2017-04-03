@@ -5,20 +5,20 @@
 
 namespace fuzzy{
 
-	class trapezoid : public mf{
+	class Trapezoid : public MF{
 	public:
-		trapezoid(std::string name="", 
+		Trapezoid(std::string name="", 
 				float vertexA = fuzzy::inf, 
 				float vertexB = fuzzy::inf, 
 				float vertexC = fuzzy::inf, 
 				float vertexD = fuzzy::inf, 
 				float height = 1.0);
-		virtual ~trapezoid();
+		virtual ~Trapezoid();
 		
-		virtual trapezoid* operator+(const trapezoid &rhs) const;
-		virtual trapezoid* operator-(const trapezoid &rhs) const;
+		virtual Trapezoid* operator+(const Trapezoid &rhs) const;
+		virtual Trapezoid* operator-(const Trapezoid &rhs) const;
 		
-		virtual trapezoid* operator*(const float& rhs) const;
+		virtual Trapezoid* operator*(const float& rhs) const;
 		
 		virtual float getVertexA() const;
 		virtual void setVertexA(float value);
@@ -34,7 +34,7 @@ namespace fuzzy{
 		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
-		virtual trapezoid* clone() const;
+		virtual Trapezoid* clone() const;
 	private:
 		float vertexA;
 		float vertexB;

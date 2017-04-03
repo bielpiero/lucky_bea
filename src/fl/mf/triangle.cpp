@@ -1,7 +1,7 @@
 #include "triangle.h"
 
 namespace fuzzy{
-	triangle::triangle(std::string name, float vertexA, float vertexB, float vertexC, float height){
+	Triangle::Triangle(std::string name, float vertexA, float vertexB, float vertexC, float height){
 		this->name = name;
 		this->height = height;
 		
@@ -10,15 +10,15 @@ namespace fuzzy{
 		this->vertexC = vertexC;
 	}
 	
-	triangle::~triangle(){
+	Triangle::~Triangle(){
 	
 	}
 	
-	std::string triangle::className() const{
-		return "triangle";
+	std::string Triangle::className() const{
+		return "Triangle";
 	}
 	
-	float triangle::evaluate(float value) const{
+	float Triangle::evaluate(float value) const{
 		float result = fuzzy::nan;
 		
 		if(value != fuzzy::nan){
@@ -43,44 +43,44 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
-	triangle* triangle::clone() const{
-		return new triangle(*this);
+	Triangle* Triangle::clone() const{
+		return new Triangle(*this);
 	}
 	
-	triangle* triangle::operator+(const triangle& rhs) const{
-		return new triangle("", this->vertexA + rhs.vertexA, this->vertexB + rhs.vertexB, this->vertexC + rhs.vertexC);
+	Triangle* Triangle::operator+(const Triangle& rhs) const{
+		return new Triangle("", this->vertexA + rhs.vertexA, this->vertexB + rhs.vertexB, this->vertexC + rhs.vertexC);
 		
 	}
 	
-	triangle* triangle::operator-(const triangle& rhs) const{
-		return new triangle("", this->vertexA - rhs.vertexA, this->vertexB - rhs.vertexB, this->vertexC - rhs.vertexC);
+	Triangle* Triangle::operator-(const Triangle& rhs) const{
+		return new Triangle("", this->vertexA - rhs.vertexA, this->vertexB - rhs.vertexB, this->vertexC - rhs.vertexC);
 	}
 	
-	triangle* triangle::operator*(const float& rhs) const{
-		return new triangle("", this->vertexA * rhs, this->vertexB * rhs, this->vertexC * rhs);
+	Triangle* Triangle::operator*(const float& rhs) const{
+		return new Triangle("", this->vertexA * rhs, this->vertexB * rhs, this->vertexC * rhs);
 	}
 	
-	float triangle::getVertexA() const{
+	float Triangle::getVertexA() const{
 		return vertexA;
 	}
 	
-	void triangle::setVertexA(float value){
+	void Triangle::setVertexA(float value){
 		this->vertexA = value;
 	}
 	
-	float triangle::getVertexB() const{
+	float Triangle::getVertexB() const{
 		return vertexB;
 	}
 	
-	void triangle::setVertexB(float value){
+	void Triangle::setVertexB(float value){
 		this->vertexB = value;
 	}
 	
-	float triangle::getVertexC() const{
+	float Triangle::getVertexC() const{
 		return vertexC;
 	}
 	
-	void triangle::setVertexC(float value){
+	void Triangle::setVertexC(float value){
 		this->vertexC = value;
 	}
 }

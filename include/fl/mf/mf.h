@@ -10,10 +10,10 @@
 
 
 namespace fuzzy{
-    class mf{
+    class MF{
     public:
-        mf(const std::string name = "", float height = 1.0);		
-        virtual ~mf();
+        MF(const std::string name = "", float height = 1.0);		
+        virtual ~MF();
         
         virtual std::string getName() const;
         virtual void setName(std::string name);
@@ -21,14 +21,14 @@ namespace fuzzy{
         virtual float getHeight() const;
         virtual void setHeight(float height);
 		
-	virtual mf* operator+(const mf &rhs) const;
-	virtual mf* operator-(const mf &rhs) const;
+	virtual MF* operator+(const MF &rhs) const;
+	virtual MF* operator-(const MF &rhs) const;
 	
-	virtual mf* operator*(const float& rhs) const;
+	virtual MF* operator*(const float& rhs) const;
 
         virtual std::string className() const = 0;
         virtual float evaluate(float value) const = 0;
-        virtual mf* clone() const = 0;
+        virtual MF* clone() const = 0;
     protected:
         std::string name;
         float height;

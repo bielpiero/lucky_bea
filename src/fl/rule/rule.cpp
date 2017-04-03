@@ -3,44 +3,44 @@
 #include "consequent.h"
 
 namespace fuzzy{
-    rule::rule(const std::string text, float weight){
+    Rule::Rule(const std::string text, float weight){
         this->text = text;
         this->weight = weight;
     }
     
-    rule::~rule(){
+    Rule::~Rule(){
         
     }
 
-    void rule::setText(std::string text){
+    void Rule::setText(std::string text){
         this->text = text;
     }
 
-    std::string rule::getText() const{
+    std::string Rule::getText() const{
         return this->text;
     }
 
-    void rule::setWeight(float value){
+    void Rule::setWeight(float value){
         this->weight = value;        
     }
     
-    float rule::getWeight() const{
+    float Rule::getWeight() const{
         return this->weight;
     }
     
-    void rule::setAntecedents(std::vector<antecedent*> antecedents){
+    void Rule::setAntecedents(std::vector<Antecedent*> antecedents){
         this->antecedents = antecedents;
     }
 
-    std::vector<antecedent*> rule::getAntecedents() const{
+    std::vector<Antecedent*> Rule::getAntecedents() const{
         return this->antecedents;
     }
 
-    void rule::setConsequents(std::vector<consequent*> consequents){
+    void Rule::setConsequents(std::vector<Consequent*> consequents){
         this->consequents = consequents;        
     }
     
-    std::vector<consequent*> rule::getConsequents() const{
+    std::vector<Consequent*> Rule::getConsequents() const{
         return this->consequents;
     }
 }

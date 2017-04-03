@@ -4,15 +4,15 @@
 #include "defuzzifier.h"
 
 namespace fuzzy{
-    class bisector : public defuzzifier{
+    class Bisector : public Defuzzifier{
         
     public:
-        bisector(float resolution = 0.1);
-        virtual ~bisector();
+        Bisector(float resolution = 0.1);
+        virtual ~Bisector();
         
         virtual std::string className() const;
-        virtual bisector* clone() const;
-        virtual float defuzzify(const mf* membership, float minimum, float maximum) const;
+        virtual Bisector* clone() const { return new Bisector(*this); }
+        virtual float defuzzify(const MF* membership, float minimum, float maximum) const;
     };
 }
 

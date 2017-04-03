@@ -1,23 +1,19 @@
 #include "meanOfMaximum.h"
 
 namespace fuzzy{
-    meanOfMaximum::meanOfMaximum(float resolution):defuzzifier(resolution){
+    MeanOfMaximum::MeanOfMaximum(float resolution) : Defuzzifier(resolution){
         
     }
     
-    meanOfMaximum::~meanOfMaximum(){
+    MeanOfMaximum::~MeanOfMaximum(){
         
     }
 
-    std::string meanOfMaximum::className() const{
-        return "smallestOfMaximum";
+    std::string MeanOfMaximum::className() const{
+        return "MeanOfMaximum";
     }
     
-    meanOfMaximum* meanOfMaximum::clone() const{
-        return new meanOfMaximum(*this);
-    }
-    
-    float meanOfMaximum::defuzzify(const mf* membership, float minimum, float maximum) const{
+    float MeanOfMaximum::defuzzify(const MF* membership, float minimum, float maximum) const{
         float result = fuzzy::nan;
         if(!stats::isInf(minimum) && !stats::isInf(maximum)){
             float iterations = std::abs((maximum - minimum) / this->resolution);

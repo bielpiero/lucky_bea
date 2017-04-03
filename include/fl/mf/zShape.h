@@ -5,13 +5,13 @@
 
 namespace fuzzy{
 
-	class zShape : public mf{
+	class ZShape : public MF{
 	public:
-		zShape(std::string name="", 
+		ZShape(std::string name="", 
 				float start = fuzzy::inf, 
 				float end = fuzzy::inf, 
 				float height = 1.0);
-		virtual ~zShape();
+		virtual ~ZShape();
 		
 		virtual void setStart(float start);
         virtual float getStart() const;
@@ -19,14 +19,14 @@ namespace fuzzy{
         virtual void setEnd(float end);
         virtual float getEnd() const;
 		
-		virtual zShape* operator+(const zShape& rhs) const;
-		virtual zShape* operator-(const zShape& rhs) const;
+		virtual ZShape* operator+(const ZShape& rhs) const;
+		virtual ZShape* operator-(const ZShape& rhs) const;
 		
-		virtual zShape* operator*(const float& rhs) const;
+		virtual ZShape* operator*(const float& rhs) const;
 		
 		virtual std::string className() const;
 		virtual float evaluate(float value) const;
-		virtual zShape* clone() const;
+		virtual ZShape* clone() const;
 	private:
 		float start;
 		float end;

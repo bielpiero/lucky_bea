@@ -5,15 +5,15 @@
 
 namespace fuzzy{
 
-    class gaussProduct : public mf{
+    class GaussProduct : public MF{
     public:
-        gaussProduct(std::string name="", 
+        GaussProduct(std::string name="", 
                         float meanA = fuzzy::inf, 
                         float standardDeviationA = fuzzy::inf, 
                         float meanB = fuzzy::inf, 
                         float standardDeviationB = fuzzy::inf, 
                         float height = 1.0);
-        virtual ~gaussProduct();
+        virtual ~GaussProduct();
 
         virtual float getMeanA() const;
         virtual void setMeanA(float value);
@@ -27,14 +27,14 @@ namespace fuzzy{
         virtual float getStandardDeviationB() const;
         virtual void setStandardDeviationB(float value);
 		
-		virtual gaussProduct* operator+(const gaussProduct& rhs) const;
-		virtual gaussProduct* operator-(const gaussProduct& rhs) const;
+		virtual GaussProduct* operator+(const GaussProduct& rhs) const;
+		virtual GaussProduct* operator-(const GaussProduct& rhs) const;
 		
-		virtual gaussProduct* operator*(const float& rhs) const;
+		virtual GaussProduct* operator*(const float& rhs) const;
 
         virtual std::string className() const;
         virtual float evaluate(float value) const;
-        virtual gaussProduct* clone() const;
+        virtual GaussProduct* clone() const;
     private:
         float meanA;
         float standardDeviationA;

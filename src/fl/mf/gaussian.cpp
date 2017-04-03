@@ -1,7 +1,7 @@
 #include "gaussian.h"
 
 namespace fuzzy{
-	gaussian::gaussian(std::string name, float mean, float standardDeviation, float height){
+	Gaussian::Gaussian(std::string name, float mean, float standardDeviation, float height){
 		this->name = name;
 		this->height = height;
 		
@@ -10,15 +10,15 @@ namespace fuzzy{
 		
 	}
 	
-	gaussian::~gaussian(){
+	Gaussian::~Gaussian(){
 	
 	}
 	
-	std::string gaussian::className() const{
-		return "gaussian";
+	std::string Gaussian::className() const{
+		return "Gaussian";
 	}
 	
-	float gaussian::evaluate(float value) const{
+	float Gaussian::evaluate(float value) const{
 		float result = fuzzy::nan;
 		
 		if(value != fuzzy::nan){
@@ -28,36 +28,36 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
-	gaussian* gaussian::clone() const{
-		return new gaussian(*this);
+	Gaussian* Gaussian::clone() const{
+		return new Gaussian(*this);
 	}
 	
-	gaussian* gaussian::operator+(const gaussian& rhs) const{
-		return new gaussian("", this->mean + rhs.mean, this->standardDeviation + rhs.standardDeviation);
+	Gaussian* Gaussian::operator+(const Gaussian& rhs) const{
+		return new Gaussian("", this->mean + rhs.mean, this->standardDeviation + rhs.standardDeviation);
 		
 	}
 	
-	gaussian* gaussian::operator-(const gaussian& rhs) const{
-		return new gaussian("", this->mean - rhs.mean, this->standardDeviation - rhs.standardDeviation);
+	Gaussian* Gaussian::operator-(const Gaussian& rhs) const{
+		return new Gaussian("", this->mean - rhs.mean, this->standardDeviation - rhs.standardDeviation);
 	}
 	
-	gaussian* gaussian::operator*(const float& rhs) const{
-		return new gaussian("", this->mean * rhs, this->standardDeviation * rhs);
+	Gaussian* Gaussian::operator*(const float& rhs) const{
+		return new Gaussian("", this->mean * rhs, this->standardDeviation * rhs);
 	}
 	
-	float gaussian::getMean() const{
+	float Gaussian::getMean() const{
 		return mean;
 	}
 	
-	void gaussian::setMean(float value){
+	void Gaussian::setMean(float value){
 		this->mean = value;
 	}
 	
-	float gaussian::getStandardDeviation() const{
+	float Gaussian::getStandardDeviation() const{
 		return standardDeviation;
 	}
 	
-	void gaussian::setStandardDeviation(float value){
+	void Gaussian::setStandardDeviation(float value){
 		this->standardDeviation = value;
 	}
 }

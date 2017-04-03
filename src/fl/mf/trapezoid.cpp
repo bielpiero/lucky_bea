@@ -1,7 +1,7 @@
 #include "trapezoid.h"
 
 namespace fuzzy{
-	trapezoid::trapezoid(std::string name, float vertexA, float vertexB, float vertexC, float vertexD, float height){
+	Trapezoid::Trapezoid(std::string name, float vertexA, float vertexB, float vertexC, float vertexD, float height){
 		this->name = name;
 		this->vertexA = vertexA;
 		this->vertexB = vertexB;
@@ -10,15 +10,15 @@ namespace fuzzy{
 		this->height = height;
 	}
 	
-	trapezoid::~trapezoid(){
+	Trapezoid::~Trapezoid(){
 	
 	}
 	
-	std::string trapezoid::className() const{
-		return "trapezoid";
+	std::string Trapezoid::className() const{
+		return "Trapezoid";
 	}
 	
-	float trapezoid::evaluate(float value) const{
+	float Trapezoid::evaluate(float value) const{
 		float result = fuzzy::nan;
 		
 		if(value != fuzzy::nan){
@@ -44,52 +44,52 @@ namespace fuzzy{
 		return (result * height);
 	}
 	
-	trapezoid* trapezoid::clone() const{
-		return new trapezoid(*this);
+	Trapezoid* Trapezoid::clone() const{
+		return new Trapezoid(*this);
 	}
 	
-	trapezoid* trapezoid::operator+(const trapezoid &rhs) const{
-		return new trapezoid("", this->vertexA + rhs.vertexA, this->vertexB + rhs.vertexB, this->vertexC + rhs.vertexC, this->vertexD + rhs.vertexD);
+	Trapezoid* Trapezoid::operator+(const Trapezoid &rhs) const{
+		return new Trapezoid("", this->vertexA + rhs.vertexA, this->vertexB + rhs.vertexB, this->vertexC + rhs.vertexC, this->vertexD + rhs.vertexD);
 		
 	}
 	
-	trapezoid* trapezoid::operator-(const trapezoid &rhs) const{
-		return new trapezoid("", this->vertexA - rhs.vertexA, this->vertexB - rhs.vertexB, this->vertexC - rhs.vertexC, this->vertexD - rhs.vertexD);
+	Trapezoid* Trapezoid::operator-(const Trapezoid &rhs) const{
+		return new Trapezoid("", this->vertexA - rhs.vertexA, this->vertexB - rhs.vertexB, this->vertexC - rhs.vertexC, this->vertexD - rhs.vertexD);
 	}
 	
-	trapezoid* trapezoid::operator*(const float& rhs) const{
-		return new trapezoid("", this->vertexA * rhs, this->vertexB * rhs, this->vertexC * rhs, this->vertexD * rhs);
+	Trapezoid* Trapezoid::operator*(const float& rhs) const{
+		return new Trapezoid("", this->vertexA * rhs, this->vertexB * rhs, this->vertexC * rhs, this->vertexD * rhs);
 	}
 	
-	float trapezoid::getVertexA() const{
+	float Trapezoid::getVertexA() const{
 		return vertexA;
 	}
 	
-	void trapezoid::setVertexA(float value){
+	void Trapezoid::setVertexA(float value){
 		this->vertexA = value;
 	}
 	
-	float trapezoid::getVertexB() const{
+	float Trapezoid::getVertexB() const{
 		return vertexB;
 	}
 	
-	void trapezoid::setVertexB(float value){
+	void Trapezoid::setVertexB(float value){
 		this->vertexB = value;
 	}
 	
-	float trapezoid::getVertexC() const{
+	float Trapezoid::getVertexC() const{
 		return vertexC;
 	}
 	
-	void trapezoid::setVertexC(float value){
+	void Trapezoid::setVertexC(float value){
 		this->vertexC = value;
 	}
 	
-	float trapezoid::getVertexD() const{
+	float Trapezoid::getVertexD() const{
 		return vertexD;
 	}
 	
-	void trapezoid::setVertexD(float value){
+	void Trapezoid::setVertexD(float value){
 		this->vertexD = value;
 	}
 	

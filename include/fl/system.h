@@ -14,28 +14,28 @@
 #include "rule/rule.h"
 
 namespace fuzzy{
-    class system{
+    class System{
     private:
         std::string name;
-        fuzzy::systemType sysType;
-        fuzzy::defuzzificationType defuzzType;
+        fuzzy::SystemType sysType;
+        fuzzy::DefuzzificationType defuzzType;
 
-        std::vector<inputVariable*> inputs;
-        std::vector<outputVariable*> outputs;
-        std::vector<rule*> rules;
+        std::vector<InputVariable*> inputs;
+        std::vector<OutputVariable*> outputs;
+        std::vector<Rule*> rules;
 
     public:
-        system(const std::string name = "", fuzzy::systemType sysType = Mamdani, fuzzy::defuzzificationType defuzzType = Centroid);
-        ~system();
+        System(const std::string name = "", fuzzy::SystemType sysType = Mamdani, fuzzy::DefuzzificationType defuzzType = Centroid);
+        ~System();
 
         virtual void setName(std::string name);
         virtual std::string getName() const;
 
-        virtual void setSystemType(fuzzy::systemType value);
-        virtual fuzzy::systemType getSystemType() const;
+        virtual void setSystemType(fuzzy::SystemType value);
+        virtual fuzzy::SystemType getSystemType() const;
 
-        virtual void setDefuzzificationType(fuzzy::defuzzificationType value);
-        virtual fuzzy::defuzzificationType getDefuzzificationType() const;
+        virtual void setDefuzzificationType(fuzzy::DefuzzificationType value);
+        virtual fuzzy::DefuzzificationType getDefuzzificationType() const;
         
         virtual std::vector<std::vector<float> > identifyFromData(std::string filename, 
                                                                   std::vector<float> na = std::vector<float>(1,1), 
@@ -43,28 +43,28 @@ namespace fuzzy{
                                                                   std::vector<std::vector<float> > nk = std::vector<std::vector<float> >(1, std::vector<float>(1, 0)));
         virtual void start();
 
-        virtual void addInput(inputVariable* item);
-        virtual void addInputAt(inputVariable* item, int index);
+        virtual void addInput(InputVariable* item);
+        virtual void addInputAt(InputVariable* item, int index);
         virtual void removeInputAt(int index);
         virtual void removeAllInputs();
         virtual int numberOfInputs();
-        virtual inputVariable* getInputByName(const std::string name);
-        virtual inputVariable* getInputByIndex(int index);
+        virtual InputVariable* getInputByName(const std::string name);
+        virtual InputVariable* getInputByIndex(int index);
 
-        virtual void addOutput(outputVariable* item);
-        virtual void addOutputAt(outputVariable* item, int index);
+        virtual void addOutput(OutputVariable* item);
+        virtual void addOutputAt(OutputVariable* item, int index);
         virtual void removeOutputAt(int index);
         virtual void removeAllOutputs();
         virtual int numberOfOutputs();
-        virtual outputVariable* getOutputByName(const std::string name);
-        virtual outputVariable* getOutputByIndex(int index);
+        virtual OutputVariable* getOutputByName(const std::string name);
+        virtual OutputVariable* getOutputByIndex(int index);
 
-        virtual void addRule(rule* item);
-        virtual void addRuleAt(rule* item, int index);
+        virtual void addRule(Rule* item);
+        virtual void addRuleAt(Rule* item, int index);
         virtual void removeRuleAt(int index);
         virtual void removeAllRules();
         virtual int numberOfRules();
-        virtual rule* getRuleByIndex(int index);
+        virtual Rule* getRuleByIndex(int index);
     };
 }
 #endif

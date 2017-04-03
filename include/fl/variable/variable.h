@@ -10,14 +10,14 @@
 #include "fl/constants.h"
 
 namespace fuzzy{
-    class variable{
+    class Variable{
     protected:
         std::string name;
         float minRange, maxRange;
-        std::vector<mf*> items;
+        std::vector<MF*> items;
     public:
-        variable(const std::string name = "", float minRange = 0.0, float maxRange = 1.0);
-        virtual ~variable();
+        Variable(const std::string name = "", float minRange = 0.0, float maxRange = 1.0);
+        virtual ~Variable();
 
         virtual std::vector<float> fuzzify(float value) const;
 
@@ -33,11 +33,11 @@ namespace fuzzy{
         virtual void setMaximum(float maximum);
         virtual float getMaximum() const;
 
-        virtual void addMF(mf* item);
-        virtual void addMFAt(mf* item, int index);
-		virtual void setMFAt(mf* item, int index);
-        virtual mf* getMFByIndex(int index);
-        virtual mf* getMFByName(const std::string name);
+        virtual void addMF(MF* item);
+        virtual void addMFAt(MF* item, int index);
+		virtual void setMFAt(MF* item, int index);
+        virtual MF* getMFByIndex(int index);
+        virtual MF* getMFByName(const std::string name);
 
         virtual void removeMF(int index);
         virtual void removeAllMF();

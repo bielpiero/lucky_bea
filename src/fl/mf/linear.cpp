@@ -1,45 +1,45 @@
 #include "linear.h"
 
 namespace fuzzy{
-    linear::linear(std::string name , std::vector<float> coeffs){
+    Linear::Linear(std::string name , std::vector<float> coeffs){
         this->coeffs = coeffs;
         this->name = name;
     }
     
-    linear::~linear(){
+    Linear::~Linear(){
         
     }
     
-    void linear::setCoeffs(std::vector<float> coeffs){
+    void Linear::setCoeffs(std::vector<float> coeffs){
         this->coeffs = coeffs;
     }
     
-    std::vector<float> linear::getCoeffs() const{
+    std::vector<float> Linear::getCoeffs() const{
         return coeffs;
     }
         
-    std::string linear::className() const{
-        return "linear";
+    std::string Linear::className() const{
+        return "Linear";
     }
     
-    float linear::evaluate(float value) const{
+    float Linear::evaluate(float value) const{
         (void) value;
     }
 	
-	linear* linear::operator+(const linear& rhs) const{
+	Linear* Linear::operator+(const Linear& rhs) const{
 		(void) rhs;
 	
 	}
 
-	linear* linear::operator-(const linear& rhs) const{
+	Linear* Linear::operator-(const Linear& rhs) const{
 		(void) rhs;
 	}
 
-	linear* linear::operator*(const float& rhs) const{
+	Linear* Linear::operator*(const float& rhs) const{
 		(void) rhs;
 	}
     
-    linear* linear::clone() const{
-        return new linear(*this);
+    Linear* Linear::clone() const{
+        return new Linear(*this);
     }
 }

@@ -11,25 +11,25 @@
 #include "mf.h"
 
 namespace fuzzy{
-    class linear : public mf{
+    class Linear : public MF{
     private:
         std::string name;
         std::vector<float> coeffs;
     public:
-        linear(std::string name = "", std::vector<float> coeffs = std::vector<float>());
-        virtual ~linear();
+        Linear(std::string name = "", std::vector<float> coeffs = std::vector<float>());
+        virtual ~Linear();
         
         virtual void setCoeffs(std::vector<float> coeffs);
         virtual std::vector<float> getCoeffs() const;
 		
-		virtual linear* operator+(const linear& rhs) const;
-		virtual linear* operator-(const linear& rhs) const;
+		virtual Linear* operator+(const Linear& rhs) const;
+		virtual Linear* operator-(const Linear& rhs) const;
 		
-		virtual linear* operator*(const float& rhs) const;
+		virtual Linear* operator*(const float& rhs) const;
         
         virtual std::string className() const;
         virtual float evaluate(float value) const;
-        virtual linear* clone() const;
+        virtual Linear* clone() const;
         
     };
 }

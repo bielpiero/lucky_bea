@@ -9,6 +9,8 @@
 #include "RNOmnicameraTask.h"
 #include "RNRFIdentificationTask.h"
 #include "RNEmotionsTask.h"
+#include "RNDialogsTask.h"
+#include "RNGesturesTask.h"
 
 const float GeneralController::LASER_MAX_RANGE = 11.6;
 const float GeneralController::LANDMARK_RADIUS = 0.045;
@@ -37,7 +39,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
     this->lastSiteVisitedIndex = RN_NONE;
 	laserLandmarks = new std::vector<RNLandmark*>();
-	kalmanFuzzy = new std::vector<fuzzy::trapezoid*>();
+	kalmanFuzzy = new std::vector<fuzzy::Trapezoid*>();
 	
 	robotState = Matrix(3, 1);
 	robotEncoderPosition = Matrix(3, 1);
@@ -84,7 +86,9 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	rfidTask = new RNRFIdentificationTask();
 
 	////Tasks added:
-	tasks->addTask(omnidirectionalTask);
+	//tasks->addTask(omnidirectionalTask);
+	//tasks->addTask(dialogs);
+	//tasks->addTask(gestures);
 	//tasks->addTask(emotions);
 	tasks->addTask(localization);
 	tasks->addTask(eyesCameras);
@@ -103,7 +107,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	RNUtils::getTimestamp(mappingLandmarksTimestamp);
 	RNUtils::getTimestamp(mappingFeaturesTimestamp);
 	RNUtils::getTimestamp(mappingSitesTimestamp);
-	file = std::fopen("data-laser.txt", "w+");
+	//file = std::fopen("data-laser.txt", "w+");
 }
 
 GeneralController::~GeneralController(void){
@@ -116,7 +120,6 @@ GeneralController::~GeneralController(void){
 	//pthread_mutex_destroy(&rfidLandmarksLocker);
 	//pthread_mutex_destroy(&visualLandmarksLocker);
 	stopDynamicGesture();
-	stopVideoStreaming();
 	stopCurrentTour();
 	disconnect();
 
@@ -167,7 +170,6 @@ void GeneralController::onConnection(int socketIndex){ //callback for client and
 				spdUDPClient = NULL;
 			}
 			stopDynamicGesture();
-			stopVideoStreaming();
 			stopCurrentTour();
 		}
 	}
@@ -495,11 +497,10 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			sendMsg(socketIndex, 0x23, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
 			break;	
 		case 0x30:
-			getCameraDevicePort(cad, videoDevice, videoTxPort);
-			beginVideoStreaming(socketIndex, videoDevice, videoTxPort);
+			
 			break;
 		case 0x31:
-			stopVideoStreaming();
+			
 			break;
 		case 0x7C:
 			requestRobotControl(socketIndex);
@@ -650,21 +651,6 @@ void GeneralController::getPositions(char* cad, float& x, float& y, float& theta
 	x = values[0];
 	y = values[1];
 	theta = values[2];
-	delete current_number;
-}
-
-void GeneralController::getCameraDevicePort(char* cad, int& device, int& port){
-	char* current_number;
-	int values[2] = { -1, -1 };
-	int index = 0;
-	current_number = std::strtok(cad, ":");
-	//
-	while(current_number != NULL){
-		values[index++] = std::atoi(current_number);
-		current_number = std::strtok(NULL, ":");
-	}
-	device = values[0];
-	port = values[1];
 	delete current_number;
 }
 
@@ -2361,7 +2347,7 @@ void GeneralController::onBatteryChargeStateChanged(char battery){
 }
 
 void GeneralController::onLaserScanCompleted(LaserScan* laser){
-
+	lockLaserReadings();
 	float angle_min = laser->getAngleMin();
 	float angle_max = laser->getAngleMax();
 	float angle_increment = laser->getIncrement();
@@ -2404,6 +2390,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 			}
 		}
 	}
+	unlockLaserReadings();
 	std::ostringstream buffFile;
 	for(int i = 0; i < laserLandmarks->size(); i++){
 		
@@ -2417,12 +2404,12 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 		Pc(0, 0) = laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS;
 		Pc(1, 0) = laserLandmarks->at(i)->getPointsYMean();
 
-		fprintf(file, "$MEAN_LASER_RAW\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
+		//fprintf(file, "$MEAN_LASER_RAW\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
 		for(int j = 0; j < laserLandmarks->at(i)->size(); j++){
 			Zk(j, 0) = laserLandmarks->at(i)->getPointAt(j)->getX();
 			Zke(j, 0) = Pc(0, 0) * cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) - LANDMARK_RADIUS * cos(asin((Pc(0, 0) / LANDMARK_RADIUS) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY())));
 
-			fprintf(file, "$LASER_POINT\t%d\t%d\t%f\t%f\t%f\n", (i + 1), (j + 1), Zk(j, 0), Zke(j, 0), laserLandmarks->at(i)->getPointAt(j)->getY());
+			//fprintf(file, "$LASER_POINT\t%d\t%d\t%f\t%f\t%f\n", (i + 1), (j + 1), Zk(j, 0), Zke(j, 0), laserLandmarks->at(i)->getPointAt(j)->getY());
 
 			float calc = (1 / LANDMARK_RADIUS) * (1 / std::sqrt(1 - ((std::pow(Pc(0, 0), 2) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2))/(std::pow(LANDMARK_RADIUS, 2)))));
 			Hkl(j, 0) = cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + Pc(0, 0) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2) * calc;
@@ -2432,7 +2419,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 		Matrix Skl = Hkl * Pkl * ~Hkl + Rkl;
 		Matrix Wkl = Pkl * ~Hkl * !Skl;
 		Pc = Pc + (Wkl * (Zk - Zke));
-		fprintf(file, "$MEAN_LASER_FIXED\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
+		//fprintf(file, "$MEAN_LASER_FIXED\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
 		laserLandmarks->at(i)->setPointsXMean(Pc(0, 0));
 		laserLandmarks->at(i)->setPointsYMean(Pc(1, 0));
 
@@ -2558,19 +2545,19 @@ int GeneralController::initializeKalmanVariables(){
 
 		int totalLandmarks = 0;
 
-		fuzzy::trapezoid* xxKK = new fuzzy::trapezoid("Xx(k|k)", robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
+		fuzzy::Trapezoid* xxKK = new fuzzy::Trapezoid("Xx(k|k)", robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
 		
-		fuzzy::trapezoid* xyKK = new fuzzy::trapezoid("Xy(k|k)", robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
+		fuzzy::Trapezoid* xyKK = new fuzzy::Trapezoid("Xy(k|k)", robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
 		
-		fuzzy::trapezoid* xThKK = new fuzzy::trapezoid("XTh(k|k)", robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x1, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x2, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x3, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x4);	
+		fuzzy::Trapezoid* xThKK = new fuzzy::Trapezoid("XTh(k|k)", robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x1, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x2, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x3, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x4);	
 		
-		fuzzy::trapezoid* vdK1 = new fuzzy::trapezoid("Vd(k + 1)", robotConfig->navParams->processNoise->dZone->x1, robotConfig->navParams->processNoise->dZone->x2, robotConfig->navParams->processNoise->dZone->x3, robotConfig->navParams->processNoise->dZone->x4);
+		fuzzy::Trapezoid* vdK1 = new fuzzy::Trapezoid("Vd(k + 1)", robotConfig->navParams->processNoise->dZone->x1, robotConfig->navParams->processNoise->dZone->x2, robotConfig->navParams->processNoise->dZone->x3, robotConfig->navParams->processNoise->dZone->x4);
 		
-		fuzzy::trapezoid* vThK1 = new fuzzy::trapezoid("VTh(k + 1)", robotConfig->navParams->processNoise->thZone->x1, robotConfig->navParams->processNoise->thZone->x2, robotConfig->navParams->processNoise->thZone->x3, robotConfig->navParams->processNoise->thZone->x4);	
+		fuzzy::Trapezoid* vThK1 = new fuzzy::Trapezoid("VTh(k + 1)", robotConfig->navParams->processNoise->thZone->x1, robotConfig->navParams->processNoise->thZone->x2, robotConfig->navParams->processNoise->thZone->x3, robotConfig->navParams->processNoise->thZone->x4);	
 
-		//uX = fuzzy::fstats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
-		//uY = fuzzy::fstats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
-		//uTh = fuzzy::fstats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
+		//uX = fuzzy::FStats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
+		//uY = fuzzy::FStats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
+		//uTh = fuzzy::FStats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
 		uX = .36;
 		uY = .36;
 		uTh = .05;
@@ -2581,8 +2568,8 @@ int GeneralController::initializeKalmanVariables(){
 		
 		// Variances and Covariances Matrix of Process noise Q
 
-		uX = fuzzy::fstats::uncertainty(vdK1->getVertexA(), vdK1->getVertexB(), vdK1->getVertexC(), vdK1->getVertexD());
-		uTh = fuzzy::fstats::uncertainty(vThK1->getVertexA(), vThK1->getVertexB(), vThK1->getVertexC(), vThK1->getVertexD());
+		uX = fuzzy::FStats::uncertainty(vdK1->getVertexA(), vdK1->getVertexB(), vdK1->getVertexC(), vdK1->getVertexD());
+		uTh = fuzzy::FStats::uncertainty(vThK1->getVertexA(), vThK1->getVertexB(), vThK1->getVertexC(), vThK1->getVertexD());
 		
 		Q(0, 0) = uX; 	Q(0, 1) = 0;
 		Q(1, 0) = 0; 	Q(1, 1) = uTh;
@@ -2597,18 +2584,18 @@ int GeneralController::initializeKalmanVariables(){
 
 			if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_LASER_STR){
 				
-				laserUX = fuzzy::fstats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
-				laserUTh = fuzzy::fstats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+				laserUX = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
+				laserUTh = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
 
 			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
 				
-				cameraUX = fuzzy::fstats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
-				cameraUTh = fuzzy::fstats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+				cameraUX = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
+				cameraUTh = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
 
 			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_RFID_STR){
 				
-				rfidUX = fuzzy::fstats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
-				rfidUTh = fuzzy::fstats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+				rfidUX = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
+				rfidUTh = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
 			}
 		}
 		
@@ -2814,69 +2801,6 @@ int GeneralController::lockVisualLandmarks(){
 
 int GeneralController::unlockVisualLandmarks(){
 	return pthread_mutex_unlock(&visualLandmarksLocker);
-}
-
-void GeneralController::beginVideoStreaming(int socketIndex, int videoDevice, int port){
-
-	stopVideoStreaming();
-
-	videoDevice = 0;
-	cv::VideoCapture tiki(videoDevice);
-
-	//vc = cv::VideoCapture(videoDevice);
-	
-	if(tiki.isOpened()){
-		RNUtils::printLn("Streaming from camera device: %d", videoDevice);
-		//pthread_create(&t1, NULL, streamingThread, (void *)(data));
-	} else {
-		tiki.release();
-		RNUtils::printLn("Could not open device: %d", videoDevice);
-	}	
-	 
-
-}
-
-void GeneralController::stopVideoStreaming(){
-	if(streamingActive == YES){
-		streamingActive = MAYBE;
-		RNUtils::printLn("Stopping video streaming");
-		while(streamingActive != NO) RNUtils::sleep(100);
-	}
-}
-
-void* GeneralController::streamingThread(void* object){
-	/*s_video_streamer_data* data = (s_video_streamer_data*)object;
-	
-	int socketIndex = data->socketIndex;
-	int port = data->port;
-	GeneralController* self = (GeneralController*)data->object;
-
-	self->streamingActive = YES;
-
-	//cv::Stitcher stitcher = cv::Stitcher::createDefault(true);
-	//cv::Stitcher::Status status;
-
-	cv::Mat frame;
-	std::vector<uchar> buff;
-	std::vector<int> params = vector<int>(2);
-	params[0] = CV_IMWRITE_JPEG_QUALITY;
-	params[1] = 75;
-	
-	UDPClient* udp_client = new UDPClient(self->getClientIPAddress(socketIndex), port);
-	while(RNUtils::ok() && self->streamingActive == YES){
-		self->vc >> frame;
-		cv::imencode(".jpg", frame, buff, params);
-		udp_client->sendData(&buff[0], buff.size());
-		RNUtils::sleep(30);
-	}
-	udp_client->closeConnection();
-	self->vc.release();
-	if(self->vcSecond.isOpened()){
-		self->vcSecond.release();
-	}
-	self->streamingActive = NO;
-	delete udp_client;*/
-	return NULL;
 }
 
 void GeneralController::onSensorsScanCompleted(){

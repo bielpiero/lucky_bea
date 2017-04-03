@@ -5,13 +5,13 @@
 
 namespace fuzzy{
 
-	class fstats{
+	class FStats{
 	private:
 		static float area(float x1, float x2, float x3, float x4);
 	public:
 		
-		static float evaluateMF(mf* member, float value);
-		static std::vector<float> evaluateMF(mf* member, std::vector<float> values);
+		static float evaluateMF(MF* member, float value);
+		static std::vector<float> evaluateMF(MF* member, std::vector<float> values);
 		
 		static float expectation(float x1, float x2, float x3, float x4);
 		static float expectation(std::vector<float> evaluatedMembership, std::vector<float> values);

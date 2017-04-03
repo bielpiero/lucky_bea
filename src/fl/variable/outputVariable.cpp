@@ -1,42 +1,42 @@
 #include "outputVariable.h"
 
 namespace fuzzy{
-    outputVariable::outputVariable(const std::string name, float minRange, float maxRange) 
-                                    : variable(name, minRange, maxRange),
+    OutputVariable::OutputVariable(const std::string name, float minRange, float maxRange) 
+                                    : Variable(name, minRange, maxRange),
                                     outputValue(fuzzy::nan),
                                     defaultValue(fuzzy::nan){
         defuzz = NULL;
 
     }
-    outputVariable::~outputVariable(){
+    OutputVariable::~OutputVariable(){
 
     }
     
-    defuzzifier* outputVariable::getDefuzzifier() const{
+    Defuzzifier* OutputVariable::getDefuzzifier() const{
         return this->defuzz;
     }
     
-    void outputVariable::setDefuzzifier(defuzzifier* defuzz){
+    void OutputVariable::setDefuzzifier(Defuzzifier* defuzz){
         this->defuzz = defuzz->clone();
     }
     
-    float outputVariable::getOutputValue() const{
+    float OutputVariable::getOutputValue() const{
         return outputValue;
     }
     
-    void outputVariable::setOutputValue(float value){
+    void OutputVariable::setOutputValue(float value){
         this->outputValue = value;
     }
 
-    float outputVariable::getDefaultValue() const{
+    float OutputVariable::getDefaultValue() const{
         return defaultValue;
     }
     
-    void outputVariable::setDefaultValue(float value){
+    void OutputVariable::setDefaultValue(float value){
         this->defaultValue = value;
     }
     
-    void outputVariable::defuzzify(){
+    void OutputVariable::defuzzify(){
         float result = fuzzy::nan;
         if(defuzz != NULL){
             //this->defuzz->defuzzify(, minRange, maxRange);
