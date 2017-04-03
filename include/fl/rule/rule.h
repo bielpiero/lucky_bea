@@ -19,8 +19,8 @@ namespace fuzzy{
     private:
         std::string text;
         float weight;
-        std::vector<Antecedent*> antecedents;
-        std::vector<Consequent*> consequents;
+        Antecedent* antecedent;
+        Consequent* consequent;
         
     public:
         Rule(const std::string text = "", float weight = 1.0);

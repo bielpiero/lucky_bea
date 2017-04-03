@@ -1,5 +1,5 @@
-#ifndef FUZZY_EXPRESSION_H
-#define FUZZY_EXPRESSION_H
+#ifndef FUZZY_NORM_H
+#define FUZZY_NORM_H
 
 #include <vector>
 #include <algorithm>
@@ -8,10 +8,10 @@
 #include <string>
 
 namespace fuzzy{
-	class Expression{
+	class Norm{
 		public:
-			Expression(){}
-		protected:
+			Norm(){}
+			~Norm(){}
 			virtual std::string className() const = 0;
 			virtual float evaluate(float a, float b) const = 0;
 			virtual Norm* clone() const = 0;
