@@ -1,15 +1,10 @@
 #ifndef FUZZY_RULE_H
 #define FUZZY_RULE_H
 
-#include <vector>
-#include <algorithm>
-#include <iostream>
-#include <cmath>
-#include <string>
+#include "FLUtils.h"
 
 #include "stats.h"
 #include "fl/constants.h"
-
 
 namespace fuzzy{
     class Antecedent;

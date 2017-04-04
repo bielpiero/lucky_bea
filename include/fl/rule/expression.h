@@ -36,7 +36,7 @@ namespace fuzzy{
 			virtual std::string toString() const;
 		private:
 			Expression* left;
-			Expression* rigth;
+			Expression* right;
 			std::string name;
 	};
 

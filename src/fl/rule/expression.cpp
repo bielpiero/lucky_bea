@@ -10,12 +10,12 @@ namespace fuzzy{
 		if(mf) delete mf;
 	}
 
-	Expression::Type Proposition::type(){
+	Expression::Type Proposition::type() const{
 		return Expression::Proposition;
 	}
 
 	std::string Proposition::className() const{
-		return "Proposition":
+		return "Proposition";
 	}
 
 	Proposition* Proposition::clone() const{
@@ -30,7 +30,7 @@ namespace fuzzy{
 		if (isNot){
 			out << "not ";
 		}
-		if(term){
+		if(mf){
 			out << mf->getName();
 		}
 		return out.str();
@@ -53,7 +53,7 @@ namespace fuzzy{
 		return new BooleanOperator(*this);
 	}
 
-	Expression::Type BooleanOperator::type(){
+	Expression::Type BooleanOperator::type() const{
 		return Expression::BooleanOperator;
 	}
 

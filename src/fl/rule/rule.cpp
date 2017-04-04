@@ -13,7 +13,17 @@ namespace fuzzy{
         
     }
 
-    Rule* parseFromString(const std::string& rule){
+    Rule* Rule::parseFromString(const std::string& rule){
+        Rule* result = NULL;
+        std::string ruleTrimmed = FLUtils::trim(rule);
+        if(ruleTrimmed != ""){
+            int ifIndex = -1, thenIndex = -1;
+            if((ifIndex = ruleTrimmed.find(IF_STR)) != std::string::npos and (thenIndex = ruleTrimmed.find(THEN_STR)) != std::string::npos){
+                
+            }
+        }
+
+        return result;
 
     }
 
