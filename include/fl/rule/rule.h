@@ -14,6 +14,7 @@
 namespace fuzzy{
     class Antecedent;
     class Consequent;
+    class System;
     
     class Rule{
     private:
@@ -23,8 +24,10 @@ namespace fuzzy{
         Consequent* consequent;
         
     public:
-        Rule(const std::string text = "", float weight = 1.0);
+        Rule(const std::string& text = "", float weight = 1.0);
         virtual ~Rule();
+
+        static Rule* parseFromString(const std::string& rule);
 
         virtual void setText(std::string text);
         virtual std::string getText() const;

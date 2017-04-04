@@ -40,6 +40,7 @@
 #include "norm/s/SNWeber.h"
 #include "norm/s/SNZadeh.h"
 
+#include "rule/expression.h"
 #include "rule/rule.h"
 
 #include "variable/variable.h"
