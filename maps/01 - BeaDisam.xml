@@ -2,17 +2,9 @@
 	<sector id="0" name="Mobile Robots" width="900" height="427" reference="2" polygon="m 0 0 l 0 427 l 900 0 l 0 -427 z">
 		<landmarks>
 			<landmark id="2" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="280" ypos="65"/>
-			<landmark id="4" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="400" ypos="135"/>
-			<landmark id="5" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="520" ypos="320"/>
-			<landmark id="8" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="65" ypos="200"/>
-			<landmark id="9" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="360" ypos="320"/>
-			<landmark id="10" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="600" ypos="140"/>
-			<landmark id="11" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="720" ypos="280"/>
-			<landmark id="0" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="60" ypos="215"/>
-			<landmark id="1" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="420" ypos="427"/>
-			<landmark id="3" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="620" ypos="10"/>
-			<landmark id="6" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="695" ypos="427"/>
-			<landmark id="7" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="897" ypos="220"/>
+			<landmark id="0" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="680" ypos="32"/>
+			<landmark id="1" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="720" ypos="432"/>
+			<landmark id="3" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="920" ypos="240"/>
 		</landmarks>
 		<features>
 			<feature id="2" name="charger" width="50" height="25" xpos="658" ypos="397"/>

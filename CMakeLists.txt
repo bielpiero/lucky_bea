@@ -49,6 +49,7 @@ target_link_libraries(lucky_bea
   Aria pthread rt
   ftd2xx
   xml2
+  dxl_x86_cpp
   ltkcpp
   ltkcppimpinj
   curl

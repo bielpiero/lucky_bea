@@ -109,7 +109,7 @@ void RNKalmanLocalizationTask::task(){
 			for (int i = 0; i < gn->getLaserLandmarks()->size(); i++){
 				RNLandmark* lndmrk = gn->getLaserLandmarks()->at(i);
 
-				//RNUtils::printLn("landmarks {d: %f, a: %f}\n", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
+				RNUtils::printLn("Laser landmarks {d: %f, a: %f}\n", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
 				std::vector<std::pair<int, float> > euclideanDistances;
 				for (int j = laserIndex; j < cameraIndex; j++){
 					float ed = std::sqrt(std::pow(zkl(j, 0), 2) + std::pow(lndmrk->getPointsXMean(), 2) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
@@ -140,13 +140,13 @@ void RNKalmanLocalizationTask::task(){
 			for (int i = 0; i < gn->getVisualLandmarks()->size(); i++){
 				RNLandmark* lndmrk = gn->getVisualLandmarks()->at(i);
 
-				//RNUtils::printLn("landmarks {d: %f, a: %f}", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
+				RNUtils::printLn("Camera landmark [%d] {d: %f, a: %f}", i, lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
 				std::vector<std::pair<int, float> > euclideanDistances;
 				for (int j = cameraIndex; j < (cameraIndex + cameraLandmarksCount); j++){
 					//float ed = std::sqrt(std::pow(zkl(j, 0), 2) + std::pow(lndmrk->getPointsXMean(), 2) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
 					float ed = std::abs(lndmrk->getPointsYMean() - zkl(j, 1));
 					euclideanDistances.push_back(std::pair<int, float>(j, ed));
-					//RNUtils::printLn("Euclidean visual Distance[%d]: %f", j, ed);	
+					RNUtils::printLn("Euclidean visual Distance[%d]: %f for %f rad", j, ed, zkl(j, 1));	
 				}
 
 				float minorDistance = std::numeric_limits<float>::infinity();
@@ -202,7 +202,7 @@ void RNKalmanLocalizationTask::task(){
 
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		Matrix newPosition = gn->getRawEncoderPosition() + Wk * zl;
-		//newPosition.print();
+		newPosition.print();
 
 		gn->setPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
 		float angle = 0;

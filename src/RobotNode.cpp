@@ -53,7 +53,7 @@ RobotNode::RobotNode(const char* port){
     gotoPoseAction = new RNActionGoto;
  	robot->addAction(gotoPoseAction, 89);
 
- 	/*laserConnector = new ArLaserConnector(argparser, robot, connector);
+ 	laserConnector = new ArLaserConnector(argparser, robot, connector);
 	if(!laserConnector->connectLasers(false, false, true)){
 		printf("Could not connect to configured lasers.\n");
 	}
@@ -63,7 +63,7 @@ RobotNode::RobotNode(const char* port){
 		printf("Error. Not Connected to any laser.\n");
 	} else {
 		printf("Connected to SICK LMS200 laser.\n");
-	}*/
+	}
     this->keepActiveSecurityDistanceTimerThread = RN_NO;
     this->keepActiveSensorDataThread = RN_NO;
 
@@ -140,8 +140,9 @@ void RobotNode::getLaserScan(void){
         lockLaserReadings();
         if(laserDataScan == NULL){
             laserDataScan = new LaserScan();
+        } else {
+		  laserDataScan->clear();
         }
-		laserDataScan->clear();
 		for(std::list<ArSensorReading*>::const_iterator it = currentReadings->begin(); it != currentReadings->end(); ++it){
 			laserDataScan->addLaserScanData((float)(*it)->getRange() / 1000, (float)(*it)->getExtraInt());
 		}
@@ -510,7 +511,7 @@ void* RobotNode::dataPublishingThread(void* object){
     ArUtil::sleep(2000);
     while(RNUtils::ok() and self->keepActiveSensorDataThread == RN_YES){
         self->getRawRobotPosition();
-        //self->getLaserScan();
+        self->getLaserScan();
         self->getBatterChargeStatus();
         self->getBumpersStatus();
         self->getRobotPosition();

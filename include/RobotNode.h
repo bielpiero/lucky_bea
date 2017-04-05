@@ -45,6 +45,9 @@ public:
 	}
     ~LaserScan(){
         clear();
+        delete ranges;
+        delete intensities;
+        delete color;
     }
 
 	std::vector<float>* getRanges() { return ranges; }
@@ -54,13 +57,11 @@ public:
 	void clear(){
 		ranges->clear();
         intensities->clear();
-        delete ranges;
-        delete intensities;
+        
         for (int i = 0; i < color->size(); i++){
             delete color->at(i);
         }
         color->clear();
-        delete color;
 	}
 
 	void addLaserScanData(float range, float intensity = 0) { 

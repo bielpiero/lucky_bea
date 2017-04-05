@@ -5,6 +5,9 @@
 
 class RNLandmark{
 private:
+	int mapId;
+	int sectorId;
+	int markerId;
 	std::vector<PointXY*>* data;
 	float meanX;
 	float meanY;
@@ -59,6 +62,30 @@ public:
 	        meanY = (sum / (float)data->size());
 	    }
 	    return meanY;
+	}
+
+	void setMapId(int id){
+		this->mapId = id;
+	}
+
+	void setSectorId(int id){
+		this->sectorId = id;
+	}
+
+	void setMarkerId(int id){
+		this->markerId = id;
+	}
+
+	int getMapId(){
+		return mapId;
+	}
+
+	int getMarkerId(){
+		return markerId;
+	}
+
+	int getSectorId(){
+		return sectorId;
 	}
 
 	void setPointsXMean(float mean){

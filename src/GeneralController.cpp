@@ -86,13 +86,13 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	rfidTask = new RNRFIdentificationTask();
 
 	////Tasks added:
-	//tasks->addTask(omnidirectionalTask);
+	tasks->addTask(omnidirectionalTask);
 	//tasks->addTask(dialogs);
 	//tasks->addTask(gestures);
 	//tasks->addTask(emotions);
 	tasks->addTask(localization);
 	tasks->addTask(eyesCameras);
-	tasks->addTask(rfidTask);
+	//tasks->addTask(rfidTask);
 	
 	//Start all tasks;
 	tasks->startAllTasks();
@@ -295,8 +295,9 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			break;
 		case 0x10:
 			if(granted){
-				getVelocities(cad, lin_vel, ang_vel);
-				moveRobot(lin_vel, ang_vel);
+				//getVelocities(cad, lin_vel, ang_vel);
+				//moveRobot(lin_vel, ang_vel);
+				loadSector(1, 0);
 			} else {
 				RNUtils::printLn("Command 0x10. Robot teleoperation denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x10, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
