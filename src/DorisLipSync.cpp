@@ -5,7 +5,7 @@ DorisLipSync::DorisLipSync (SerialPort* mc, std::string packagePath) {
 	lastWord = "";
 	xmlLipSyncFullPath = packagePath + XML_FILE_LIP_SYNC_PATH;
 	xmlVisemesCodesFullPath = packagePath + XML_FILE_VISEMES_CODES_PATH;
-	this->mc = mc;
+	this->mc = new SerialPort(*mc);
 
 	tts = new TextToSpeech;
 	tts->setDefaultConfiguration();
@@ -101,16 +101,15 @@ void DorisLipSync::textToViseme(const char *str){
 	char* text = textNorm(str, '_');
 
 	std::vector<int> pointerPositions;
-	int i,j,k;
 	int storeSillableWeight;
-	string actualSyllable="";
+	std::string actualSyllable="";
 	int numSil;
 	char  endText[]  = " a";
 	strcat(text, endText);
 
 
 	pointerPositions = syllablePositions(text);
-	numSil = (numberOfSyllables(text)-1);
+	numSil = numberOfSyllables(text) - 1;
 
 	//std::cout<<"<---Number of syllables--->\n"<<numSil<<std::endl;
 
@@ -119,12 +118,12 @@ void DorisLipSync::textToViseme(const char *str){
 	tts->setString(str);
 //__________________
 
-	for(i=0; i <= (numSil - 1); i++){
+	for(int i = 0; i < numSil; i++){
 		storeSillableWeight = (pointerPositions.at(i + 1) - pointerPositions.at(i));
-		k=0;
+		int k = 0;
 
 
-		for(j=pointerPositions[i];j<=((storeSillableWeight-1)+pointerPositions.at(i));){
+		for(int j = pointerPositions[i]; j < (storeSillableWeight + pointerPositions.at(i)); ){
 			actualSyllable+=text[j];
 			k++;
 
@@ -983,7 +982,7 @@ void DorisLipSync::selectMotion(char *visemeCod, float timetoSync){
 void DorisLipSync::process (std::string word) {
 	if(word != lastWord){
 		lastWord = word;
-		syllablePositions ();
+		syllablePositions (word);
 	}
 }
 
@@ -991,8 +990,8 @@ void DorisLipSync::process (std::string word) {
 /* Returns an array with the start positions of the syllables */
 /**************************************************************/
 
-void DorisLipSync::syllablePositions () {
-	wordLength      = lastWord.length();
+void DorisLipSync::syllablePositions (std::string word) {
+	wordLength      = word.length();
 	stressedFound   = false;
 	stressed        = 0;
 	numSyl          = 0;
@@ -1007,9 +1006,9 @@ void DorisLipSync::syllablePositions () {
 
 		// Syllables consist of three parts: onSet, nucleus and coda
 
-		onSet   (lastWord, i);
-		nucleus (lastWord, i);
-		coda    (lastWord, i);
+		onSet   (word, i);
+		nucleus (word, i);
+		coda    (word, i);
 
 		if ((stressedFound) && (stressed == 0)) stressed = numSyl; // It marks the stressed syllable
 	}
@@ -1020,8 +1019,8 @@ void DorisLipSync::syllablePositions () {
 	if (!stressedFound) {
 		if (numSyl < 2) stressed = numSyl;  // Monosyllables
 		else {                              // Polysyllables
-			char endLetter      = tolower(lastWord.at(wordLength - 1));
-			char previousLetter = tolower(lastWord.at(wordLength - 2));
+			char endLetter      = tolower(word.at(wordLength - 1));
+			char previousLetter = tolower(word.at(wordLength - 2));
 
 			if ((!isConsonant (endLetter) || (endLetter == 'y')) ||
 				(((endLetter == 'n') || (endLetter == 's') || !isConsonant (previousLetter))))

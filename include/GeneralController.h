@@ -283,6 +283,8 @@ public:
 	Matrix getQ();
 	Matrix getR();
 
+	float getCameraAngleVariance();
+
 	bool isLaserSensorActivated();
 	bool isCameraSensorActivated();
 	bool isRfidSensorActivated();
@@ -328,6 +330,8 @@ private:
 	Matrix P;
 	Matrix Q;
 	Matrix R;
+
+	float cameraAngleVariance;
 
 	int tokenRequester;
     int lastSiteVisitedIndex;

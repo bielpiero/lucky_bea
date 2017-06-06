@@ -1,10 +1,13 @@
 <sectors sequence="0,1,0">
-	<sector id="0" name="Mobile Robots" width="900" height="427" reference="2" polygon="m 0 0 l 0 427 l 900 0 l 0 -427 z">
+	<sector id="23" name="Mobile Robots" width="900" height="427" reference="2" polygon="m 0 0 l 0 432 l 920 0 l 0 -432 z">
 		<landmarks>
 			<landmark id="2" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="280" ypos="65"/>
-			<landmark id="0" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="680" ypos="32"/>
-			<landmark id="1" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="720" ypos="432"/>
-			<landmark id="3" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="920" ypos="240"/>
+			<landmark id="19" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="5" ypos="210"/>
+			<landmark id="20" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="300" ypos="12"/>
+			<landmark id="18" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="310" ypos="432"/>
+			<landmark id="21" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="680" ypos="12"/>
+			<landmark id="17" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="720" ypos="432"/>
+			<landmark id="22" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="920" ypos="240"/>
 		</landmarks>
 		<features>
 			<feature id="2" name="charger" width="50" height="25" xpos="658" ypos="397"/>
@@ -20,21 +23,7 @@
 			<feature id="10" name="Right table 4" width="80" height="180" xpos="745" ypos="320"/>
 		</features>
 		<sites cyclic="no" sequence="12,0,1,2,8">
-			<site id="2" name="site c" radius="10" tsec="0" xpos="240" ypos="240"/>
-			<site id="3" name="site d" radius="10" tsec="0" xpos="164" ypos="94"/>
-			<site id="4" name="doorway" radius="10" tsec="0" xpos="80" ypos="0" linked-feature-id="0"/>
-			<site id="5" name="doorway" radius="10" tsec="0" xpos="0" ypos="65" linked-feature-id="1"/>
-			<site id="1" name="site b" radius="10" tsec="0" xpos="440" ypos="240"/>
-			<site id="6" name="site e" radius="10" tsec="0" xpos="277" ypos="370"/>
-			<site id="7" name="site g" radius="10" tsec="0" xpos="806" ypos="171"/>
-			<site id="0" name="site a" radius="10" tsec="0" xpos="640" ypos="240"/>
-			<site id="8" name="site o" radius="10" tsec="0" xpos="50" ypos="300"/>
-			<site id="9" name="site t" radius="10" tsec="0" xpos="284" ypos="73"/>
-			<site id="11" name="site t" radius="10" tsec="0" xpos="857" ypos="76"/>
-			<site id="12" name="site y" radius="10" tsec="0" xpos="623" ypos="365"/>
-			<site id="13" name="site z" radius="10" tsec="0" xpos="661" ypos="81"/>
-			<site id="14" name="site x" radius="10" tsec="0" xpos="493" ypos="152"/>
-			<site id="10" name="site w" radius="10" tsec="0" xpos="833" ypos="323"/>
+			
 		</sites>
 	</sector>
 	<sector id="1" name="MR-FM Hallway" width="160" height="400" reference="2" polygon="m 0 0 l 0 400 l 160 0 l 0 -400 z">
@@ -51,9 +40,7 @@
 			<feature id="3" name="door" width="10" height="80" xpos="160" ypos="60" linked-sector-id="0" xcoord="-160" ycoord="0"/>
 		</features>
 		<sites cyclic="no" sequence="0,2,0">
-			<site id="0" name="doorway" radius="10" tsec="0" xpos="160" ypos="60" linked-feature-id="3"/>
-			<site id="1" name="doorway" radius="10" tsec="0" xpos="0" ypos="60" linked-feature-id="0"/>
-			<site id="2" name="hallway" radius="10" tsec="0" xpos="100" ypos="300"/>
+
 		</sites>
 	</sector>
 	<sector id="2" name="FM Office" width="310" height="420" reference="2" polygon="m 0 0 l 0 420 l 310 0 l 0 -420 z">
@@ -64,10 +51,7 @@
 			<feature id="2" name="Table 2" width="180" height="92" xpos="90" ypos="373"/>
 		</features>
 		<sites>
-			<site id="0" name="doorway" radius="10" tsec="0" xpos="310" ypos="78" linked-feature-id="0"/>
-			<site id="1" name="nuevoFMOffice" radius="10" tsec="0" xpos="98" ypos="68"/>
-			<site id="2" name="nuevoFMOffice" radius="10" tsec="0" xpos="243" ypos="368"/>
-			<site id="3" name="nuevoFMOffice" radius="10" tsec="0" xpos="242" ypos="207"/>
+
 		</sites>
 	</sector>
 	<sector id="3" name="Computer Vision" width="1340" height="1174" reference="2" polygon="m 0 0 l 0 1174 l 1340 0 l 0 -1174 z">
@@ -84,10 +68,7 @@
 			<feature id="5" name="mesa b" width="80" height="360" xpos="395" ypos="989"/>
 		</features>
 		<sites sequence="0,1,3">
-			<site id="0" name="doorway" radius="10" tsec="0" xpos="80" ypos="1174" linked-feature-id="0"/>
-			<site id="1" name="site b" radius="10" tsec="0" xpos="71" ypos="774"/>
-			<site id="2" name="site c" radius="10" tsec="0" xpos="81" ypos="374"/>
-			<site id="3" name="site d" radius="10" tsec="0" xpos="80" ypos="0"/>
+
 		</sites>
 	</sector>
 	<sector id="4" name="Workshop Receiver" width="400" height="350" reference="2" polygon="m 0 0 l 0 350 l 400 0 l 0 -350 z">
@@ -122,11 +103,6 @@
 			<feature id="3" name="door" width="80" height="10" xpos="80" ypos="900"/>
 		</features>
 		<sites>
-			<site id="0" name="doorway" radius="0" tsec="0" xpos="80" ypos="900"/>
-			<site id="1" name="doorway" radius="0" tsec="0" xpos="80" ypos="0"/>
-			<site id="2" name="doorway" radius="0" tsec="0" xpos="300" ypos="700" linked-feature-id="1"/>
-			<site id="3" name="doorway" radius="0" tsec="0" xpos="300" ypos="200" linked-feature-id="2"/>
-			<site id="4" name="site a" radius="0" tsec="0" xpos="110" ypos="454"/>
 		</sites>
 	</sector>
 	<sector id="8" name="Computer Room" width="1340" height="500" reference="2" polygon="m 0 0 l 0 500 l 1340 0 l 0 -500 z">

@@ -53,7 +53,7 @@ RobotNode::RobotNode(const char* port){
     gotoPoseAction = new RNActionGoto;
  	robot->addAction(gotoPoseAction, 89);
 
- 	laserConnector = new ArLaserConnector(argparser, robot, connector);
+ 	/*laserConnector = new ArLaserConnector(argparser, robot, connector);
 	if(!laserConnector->connectLasers(false, false, true)){
 		printf("Could not connect to configured lasers.\n");
 	}
@@ -63,7 +63,7 @@ RobotNode::RobotNode(const char* port){
 		printf("Error. Not Connected to any laser.\n");
 	} else {
 		printf("Connected to SICK LMS200 laser.\n");
-	}
+	}*/
     this->keepActiveSecurityDistanceTimerThread = RN_NO;
     this->keepActiveSensorDataThread = RN_NO;
 
@@ -247,9 +247,9 @@ void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed
 void RobotNode::setPosition(double x, double y, double theta){
     
     this->lockRobot();
-    pthread_mutex_lock(&mutexRawPositionLocker);
+    //pthread_mutex_lock(&mutexRawPositionLocker);
     myRawPose->setPose(x * 1000, y * 1000, theta * 180 / M_PI);
-    pthread_mutex_unlock(&mutexRawPositionLocker);
+    //pthread_mutex_unlock(&mutexRawPositionLocker);
     robot->moveTo(ArPose(x * 1000, y * 1000, theta * 180 / M_PI));
     this->unlockRobot();
 }
@@ -260,7 +260,6 @@ void RobotNode::setMotorsStatus(bool enabled){
         if(!robot->isEStopPressed()){
             robot->enableMotors();
         }
-        
     } else {
         robot->disableMotors();
     }
@@ -511,7 +510,7 @@ void* RobotNode::dataPublishingThread(void* object){
     ArUtil::sleep(2000);
     while(RNUtils::ok() and self->keepActiveSensorDataThread == RN_YES){
         self->getRawRobotPosition();
-        self->getLaserScan();
+        //self->getLaserScan();
         self->getBatterChargeStatus();
         self->getBumpersStatus();
         self->getRobotPosition();

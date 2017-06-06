@@ -7,7 +7,7 @@
 #include "rfid/ltkcpp.h"
 #include "rfid/impinj_ltkcpp.h"
 
-#define RFID_READER_VARIABLE_LENGTH 5
+#define RFID_READER_VARIABLE_LENGTH 6
 #define TID_OP_SPEC_ID          123
 #define USER_MEMORY_OP_SPEC_ID  321
 
@@ -15,20 +15,9 @@
 #define TRANSMISSION_POWER_INDEX_2 71
 #define FRONT_2_BACK_RATIO 18
 
-
-
 class RFData{	
 public: 
 	RFData(std::string data = ""){
-		ATTENUATIONS.push_back(PointXY(34.61, -26));	// @0.35m
-		ATTENUATIONS.push_back(PointXY(37.98, -38.5));	// @1.00m
-		ATTENUATIONS.push_back(PointXY(39.01, -45.5));	// @2.00m
-		ATTENUATIONS.push_back(PointXY(42.5, -52.5));	// @3.00m
-		ATTENUATIONS.push_back(PointXY(44.5, -57));		// @4.00m
-		ATTENUATIONS.push_back(PointXY(50.5, -64));		// @5.00m
-		ATTENUATIONS.push_back(PointXY(54, -71));		// @6.00m
-		ATTENUATIONS.push_back(PointXY(58.57, -78));	// @7.00m
-		//ATTENUATIONS.push_back(PointXY(54.57, -67));	// @8.00m
 		initializeFromString(data); 
 	}
 	~RFData() {}
@@ -44,15 +33,17 @@ public:
 		this->antenna = antenna;
 	}
 
-	void setPhaseAngleRSSI(float phaseAngle, float rssi){
+	void update(double rssi, float phaseAngle, float dopplerFrequency){
 		this->rssi = rssi;
 		this->angle = phaseAngle;
+		this->dopplerFrequency = dopplerFrequency;
 		convertToDistance();
 	}
 
 	float getRSSI(void){ return rssi; }
 	float getPhaseAngle(void){ return angle; }
 	float getDistance(void){ return distance; }
+	float getDopplerFrequency(void){ return dopplerFrequency; }
 	int getAntenna(void){ return antenna; }
 
 	void initializeFromString(std::string data){
@@ -60,9 +51,10 @@ public:
 			std::vector<std::string> info = RNUtils::split((char*)data.c_str(), ",");
 			if(info.size() == RFID_READER_VARIABLE_LENGTH){
 				tagKey = info.at(0);
-				timestamp = info.at(4);
+				timestamp = info.at(5);
+				dopplerFrequency = std::atof(info.at(4).c_str());
 				angle = std::atof(info.at(3).c_str());
-				rssi = std::atof(info.at(2).c_str());
+				rssi = (double)std::atof(info.at(2).c_str());
 				antenna = std::atoi(info.at(1).c_str());
 				convertToDistance();
 			}
@@ -72,43 +64,47 @@ public:
 			timestamp = "";
 			rssi = -1.0;
 			angle = 0.0;
+			dopplerFrequency = 0.0;
 			antenna = RN_NONE;
 		}
+	}
+
+	const char* toString() const{
+		std::ostringstream buffer;
+		buffer.clear();
+		buffer << "Key: " << tagKey << ", ";
+		buffer << "Antenna: " << antenna << ", ";
+		buffer << "RSSI: " << rssi << ", ";
+		buffer << "Angle: " << angle << ", ";
+		buffer << "DF: " << dopplerFrequency << ", ";
+		buffer << "Distance: " << distance;
+		return buffer.str().c_str();
 	}
 private:
 	void convertToDistance(){
 		float txPwIndex = (float)TRANSMISSION_POWER_INDEX_1;
-		if(antenna == 2){
+		/*if(antenna == 2){
 			txPwIndex = (float)TRANSMISSION_POWER_INDEX_2;
-		}
+		}*/
 		float ptx = -txPwIndex * AntennaData::TX_POWER_INDEX_MULTIPLIER + AntennaData::TX_POWER_OFFSET_DBM;
 		
-		float patt = 0;
+		double wavelength = AntennaData::C / AntennaData::FREQUENCY;
 		
-		float txPowermW = RNUtils::dBmTomilliwatts(ptx);
-		float rssimW = RNUtils::dBmTomilliwatts(rssi);
-		float txGainmW = RNUtils::dBmTomilliwatts((float)AntennaData::TX_GAIN);
-		float rxLossmW = 1.0;
-		if(rssi < AntennaData::RSSI_MARGIN_LOSS){
-			rxLossmW = RNUtils::dBmTomilliwatts((float)AntennaData::RX_LOSS);
-		}
-		//RNUtils::printLn("----> %s, %f", tagKey.c_str(), rxLossmW);
-		float rxGainmW;
-		if(rssi > AntennaData::RSSI_MARGIN){
-			rxGainmW = RNUtils::dBmTomilliwatts((float)AntennaData::RX_GAIN_1);
-		} else {
-			rxGainmW = RNUtils::dBmTomilliwatts((float)AntennaData::RX_GAIN_2);
-		}
+		double txPowermW = RNUtils::dBmTomilliwatts(ptx);
 
-		this->distance = (AntennaData::C / (4 * M_PI * AntennaData::FREQUENCY)) * (1 / std::sqrt((rssimW * rxLossmW) / (txPowermW * txGainmW * rxGainmW))); // (c/(4*pi*f))
+		double rssimW = RNUtils::dBmTomilliwatts(rssi);
+		double txGainmW = RNUtils::dBmTomilliwatts(AntennaData::TX_GAIN);
+
+		this->distance = (wavelength / (4 * M_PI)) * std::sqrt((txPowermW * txGainmW)/rssimW);
+		//printf("key: %s, antenna: %d, rssi_mw: %g, rssi: %g, antenna_gain: %lf, distance: %g\n", tagKey.c_str(), antenna, rssimW, rssi, txGainmW, distance);
 	}
 private:
-	std::vector<PointXY> ATTENUATIONS;
 	std::string tagKey;
 	std::string timestamp;
-	float rssi;
-	float distance;
+	double rssi;
+	double distance;
 	float angle;
+	float dopplerFrequency;
 	int antenna;
 
 };
@@ -163,6 +159,9 @@ private:
 	unsigned int messageId;
 	bool deviceInitialized;
 	int readerDescriptor;
+
+	int powerIndexAntenna1;
+	int powerIndexAntenna2;
 
 	unsigned short powerLevelIndex;
 	unsigned int deviceModelNumber;

@@ -45,7 +45,7 @@ private:
 	bool openVowel (char);
 	bool isConsonant (char);
 
-	void syllablePositions ();
+	void syllablePositions (std::string word);
 
 public:
 	DorisLipSync(SerialPort* mc, std::string packagePath);

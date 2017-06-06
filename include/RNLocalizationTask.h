@@ -16,13 +16,10 @@ public:
 
 	}
 protected:
-	virtual void task(){
-
-	}
-	
-	virtual void onKilled(){
-
-	}
+	virtual void task() = 0;
+	virtual void onKilled() = 0;
+public:
+	virtual void init() = 0;
 };
 
 #endif

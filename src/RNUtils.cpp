@@ -186,12 +186,12 @@ std::string RNUtils::toUppercase(std::string str){
 	return newString.str();
 }
 
-float RNUtils::milliwattsTodBm(const float& milliwatts){
+double RNUtils::milliwattsTodBm(const double& milliwatts){
 	return (10 * std::log10(milliwatts));
 }
 
-float RNUtils::dBmTomilliwatts(const float& dBm){
-	return (std::pow(10, dBm / 10));
+double RNUtils::dBmTomilliwatts(const double& dBm){
+	return (std::pow(10, ((double)dBm) / 10));
 }
 
 float RNUtils::linearInterpolator(const float& x, const PointXY& p1, const PointXY& p2){

@@ -99,8 +99,8 @@ public: // functions
 	static std::string getApplicationName();
 	static float linearInterpolator(const float& x, const PointXY& p1, const PointXY& p2);
 	static float quadraticInterpolator(const float& x, const PointXY& p1, const PointXY& p2, const PointXY& x3);
-	static float milliwattsTodBm(const float& milliwatts);
-	static float dBmTomilliwatts(const float& dBm);
+	static double milliwattsTodBm(const double& milliwatts);
+	static double dBmTomilliwatts(const double& dBm);
 private: //functions
     static void setStatus(bool status);
     static void setApplicationPathName(char* str);

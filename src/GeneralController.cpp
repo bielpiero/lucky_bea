@@ -15,6 +15,12 @@
 const float GeneralController::LASER_MAX_RANGE = 11.6;
 const float GeneralController::LANDMARK_RADIUS = 0.045;
 
+const double AntennaData::TX_GAIN = 5.7;
+const double AntennaData::FREQUENCY = 866.9e6;
+const double AntennaData::C = 3e8;
+const float AntennaData::TX_POWER_OFFSET_DBM = -10.0;
+const float AntennaData::TX_POWER_INDEX_MULTIPLIER = 0.25;
+
 GeneralController::GeneralController(const char* port):RobotNode(port){
 	
 	this->maestroControllers = new SerialPort();
@@ -74,6 +80,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	tasks = new RNRecurrentTaskMap(this);
 
 	omnidirectionalTask = new RNOmnicameraTask("Omnidirectional Task");
+	dialogs = new RNDialogsTask(ttsLipSync);
+	gestures = new RNGesturesTask();
 	emotions = new RNEmotionsTask();
 	eyesCameras = new RNCameraTask();
 
@@ -82,17 +90,16 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PF_STR){
 		localization = new RNPFLocalizationTask();
 	}
-
 	rfidTask = new RNRFIdentificationTask();
 
 	////Tasks added:
 	tasks->addTask(omnidirectionalTask);
-	//tasks->addTask(dialogs);
+	tasks->addTask(dialogs);
 	//tasks->addTask(gestures);
 	//tasks->addTask(emotions);
 	tasks->addTask(localization);
-	tasks->addTask(eyesCameras);
-	//tasks->addTask(rfidTask);
+	//tasks->addTask(eyesCameras);
+	tasks->addTask(rfidTask);
 	
 	//Start all tasks;
 	tasks->startAllTasks();
@@ -284,7 +291,8 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x0B:
 			RNUtils::printLn("Command 0x0B. Text to speech message");
 			if(granted){
-				ttsLipSync->textToViseme(cad);
+				dialogs->setInputMessage(cad);
+				//ttsLipSync->textToViseme(cad);
 				sendMsg(socketIndex, 0x08, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				RNUtils::printLn("Command 0x0B. Text to speech message denied to %s", getClientIPAddress(socketIndex));
@@ -295,9 +303,8 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			break;
 		case 0x10:
 			if(granted){
-				//getVelocities(cad, lin_vel, ang_vel);
-				//moveRobot(lin_vel, ang_vel);
-				loadSector(1, 0);
+				getVelocities(cad, lin_vel, ang_vel);
+				moveRobot(lin_vel, ang_vel);
 			} else {
 				RNUtils::printLn("Command 0x10. Robot teleoperation denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x10, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
@@ -368,7 +375,9 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(granted){
 				getMapSectorId(cad, mapId, sectorId);
 				this->currentMapId = mapId;
+				localization->kill();
 				loadSector(mapId, sectorId);
+				localization->reset();
 				sendMsg(socketIndex, 0x16, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				RNUtils::printLn("Command 0x16. Setting Map into Robot denied to %s", getClientIPAddress(socketIndex));
@@ -2593,6 +2602,8 @@ int GeneralController::initializeKalmanVariables(){
 				cameraUX = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
 				cameraUTh = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
 
+				cameraAngleVariance = cameraUTh;
+
 			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_RFID_STR){
 				
 				rfidUX = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
@@ -2676,6 +2687,10 @@ Matrix GeneralController::getQ(){
 
 Matrix GeneralController::getR(){
 	return R;
+}
+
+float GeneralController::getCameraAngleVariance(){
+	return cameraAngleVariance;
 }
 
 MapSector* GeneralController::getCurrentSector(){

@@ -9,8 +9,9 @@ public:
 	~RNPFLocalizationTask();
 	virtual void task();
 	virtual void onKilled();
+	virtual void init();
 private:
-	void init();
+	
 private:
 	
 	int laserLandmarksCount;

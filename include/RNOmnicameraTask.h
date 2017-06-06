@@ -12,19 +12,26 @@
 #define IMAGE_OFFSET_Y 5
 #define RECTIFIED_IMAGE_WIDTH 1812
 #define RECTIFIED_IMAGE_HEIGHT 679
+#define BLOCK_SIZE_FOR_ADAPTIVE_THRESHOLD 75
 
 class RNMarker{
 private:
+	int mapId;
+	int sectorId;
 	int markerId;
+
 	std::vector<cv::Point2f> markerPoints;
 	int contourIdx;
 	double area;
 	double angleInRadians;
 	cv::RotatedRect rect;
 public:
-	RNMarker(){ markerId = RN_NONE; }
+	RNMarker(){ 
+		mapId = RN_NONE;
+		sectorId = RN_NONE;
+		markerId = RN_NONE;
+	}
 
-	void setMarkerId(int id) { this->markerId = id; }
 	void addPoint(cv::Point2f point) { markerPoints.push_back(point); }
 	void setPoint(cv::Point2f point, int index) { this->markerPoints.at(index) = point; }
 	void setMarkerPoints(std::vector<cv::Point2f> markerPoints) { this->markerPoints = markerPoints; }
@@ -39,6 +46,25 @@ public:
 	cv::RotatedRect getRotatedRect() { return this->rect;}
 	std::vector<cv::Point2f> getMarkerPoints() { return this->markerPoints; }
 	cv::Point2f getPoint(int index){ return this->markerPoints.at(index); }
+
+	void setMapId(int id){
+		this->mapId = id;
+	}
+	void setSectorId(int id){
+		this->sectorId = id;
+	}
+	void setMarkerId(int id){
+		this->markerId = id;
+	}
+	int getMapId(){
+		return mapId;
+	}
+	int getMarkerId(){
+		return markerId;
+	}
+	int getSectorId(){
+		return sectorId;
+	}
 };
 
 class RNOmnicameraTask : public RNRecurrentTask{
@@ -67,7 +93,7 @@ private:
 	void clearLandmarks();
 	void drawRectangle(cv::Mat &img, RNMarker marker);
 	float perimeter(const std::vector<cv::Point2f> &a);
-	int markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations);
+	int markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations, RNMarker &marker);
 	int hammingDistance(cv::Mat bits);
 	cv::Mat rotate(cv::Mat input);
 	static size_t write_data(char *ptr, size_t size, size_t nmemb, void *userdata);
@@ -83,9 +109,6 @@ private:
 	cv::Mat camMatrix;
 	cv::Mat distCoeff;
 	cv::Mat xi;
-
-	Matrix rotation;
-	Matrix traslation;
 
 	static const double PI_DEGREES;
 	std::vector<RNLandmark*>* landmarks;

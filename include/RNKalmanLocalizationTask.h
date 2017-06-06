@@ -11,8 +11,9 @@ public:
 	~RNKalmanLocalizationTask();
 	virtual void task();
 	virtual void onKilled();
+	virtual void init();
 private:
-	void init();
+	
 	void getObservations(Matrix& observations);
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
 private:
@@ -21,7 +22,9 @@ private:
 	int cameraLandmarksCount;
 	int rfidLandmarksCount;
 
-	float alpha;
+	float laserThresholdMatching;
+	float cameraThresholdMatching;
+	float rfidThresholdMatching;
 
 	bool enableLocalization;
 

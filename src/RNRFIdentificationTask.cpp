@@ -13,7 +13,7 @@ RNRFIdentificationTask::RNRFIdentificationTask(const char* name, const char* des
 	this->deviceInitialized = false;
 	landmarks = new std::vector<RNLandmark*>();
 	rfids = new std::vector<RFData*>();
-
+	powerIndexAntenna1 = 1;
 	antennasList = new AntennaDataList();
 	//file = std::fopen("data-rfid-1.00m.txt", "w+");
 	
@@ -51,15 +51,15 @@ void RNRFIdentificationTask::task(){
 						rfids->push_back(detected);	
 					}
 				} else {
-					found->setPhaseAngleRSSI(detected->getPhaseAngle(), detected->getRSSI());
+					found->update(detected->getRSSI(), detected->getPhaseAngle(), detected->getDopplerFrequency());
 					found->setTimestamp(detected->getTimestamp());
 					delete detected;
 				}
 			}
 			
-			for (int i = 0; i < rfids->size(); ++i){
-				RNUtils::printLn("[%d]: TID: %s, Ant: %d, RSSI: %f, Angle: %f, d: %f", i, rfids->at(i)->getTagKey().c_str(), rfids->at(i)->getAntenna(), rfids->at(i)->getRSSI(), rfids->at(i)->getPhaseAngle(), rfids->at(i)->getDistance());
-			}
+			//for (int i = 0; i < rfids->size(); ++i){
+				//RNUtils::printLn("[%d]: %s", i, rfids->at(i)->toString());
+			//}
 		//}	
 	} else {
 		init();
@@ -414,12 +414,14 @@ int RNRFIdentificationTask::addROSpec(void){
         switch (i)
         {
             case 1:
-                pRFTransmitter->setTransmitPower(TRANSMISSION_POWER_INDEX_1); // (value * .25) + 10.0 = 30.25 dBm // max power when using PoE
-                pRFReceiver->setReceiverSensitivity(1); // 1 --> -80 dBm;
+            	powerIndexAntenna1 = 40;
+                pRFTransmitter->setTransmitPower(powerIndexAntenna1); // (value * .25) + 10.0 = -30.25 dBm // max power when using PoE
+                pRFReceiver->setReceiverSensitivity(42); // 1 --> -80 dBm;
                 break;
             case 2:
-                pRFTransmitter->setTransmitPower(TRANSMISSION_POWER_INDEX_2); // (value * .25) + 10.0 = 27.75 dBm
-                pRFReceiver->setReceiverSensitivity(2); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
+            	powerIndexAntenna2 = 60;
+                pRFTransmitter->setTransmitPower(powerIndexAntenna2); // (value * .25) + 10.0 = -27.75 dBm
+                pRFReceiver->setReceiverSensitivity(42); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
                 break;
         }
 
@@ -454,6 +456,7 @@ int RNRFIdentificationTask::addROSpec(void){
 
     LLRP::CImpinjEnableSerializedTID* impinjSerializedTID = new LLRP::CImpinjEnableSerializedTID();
     impinjSerializedTID->setSerializedTIDMode(LLRP::ImpinjSerializedTIDMode_Disabled);
+
 
     impinjTagCnt->setImpinjEnableRFPhaseAngle(impinjPhaseAngle);
     impinjTagCnt->setImpinjEnablePeakRSSI(impinjPeakRssi);
@@ -723,7 +726,7 @@ void RNRFIdentificationTask::getOneTagData(LLRP::CTagReportData* tag, std::strin
         		LLRP::CImpinjRFDopplerFrequency* dopplerFrequency = (LLRP::CImpinjRFDopplerFrequency*)(*customIt);
         		dopplerFrequencyValue = dopplerFrequency->getDopplerFrequency();
         		//RNUtils::printLn("rssi: %d", rssiValue);
-        	}
+        	} 
         }
 
         //std::fprintf(file, "%d,%f,%f,%d\n", tag->getAntennaID()->getAntennaID(), (((float)rssiValue) / 100.0), (((float)phaseAngleValue) * 2 * M_PI / 4096.0), dopplerFrequencyValue);
@@ -748,10 +751,10 @@ void RNRFIdentificationTask::getOneTagData(LLRP::CTagReportData* tag, std::strin
         }
         bufferOut << ",";
 
-        /*if(dopplerFrequencyValue != 0){
+        if(dopplerFrequencyValue != 0){
         	bufferOut << dopplerFrequencyValue;
         }
-        bufferOut << ",";*/
+        bufferOut << ",";
 
         /*if(tag->getChannelIndex() != NULL){
         	bufferOut << tag->getChannelIndex()->getChannelIndex();

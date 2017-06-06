@@ -47,16 +47,11 @@ public:
 		return buffer.str().c_str();
 	}
 public:
-	static const float TX_GAIN = 8.5;
-	static const float FREQUENCY = 866.9e6;
-	static const float C = 3e8;
-	static const float TX_POWER_OFFSET_DBM = -10.0;
-	static const float RX_GAIN_1 = 15.0;
-	static const float RX_GAIN_2 = 2.0;
-	static const float RSSI_MARGIN = -40.0;
-	static const float RSSI_MARGIN_LOSS = -55.0;
-	static const float TX_POWER_INDEX_MULTIPLIER = 0.25;
-	static const float RX_LOSS = 4.0;
+	static const double TX_GAIN;
+	static const double FREQUENCY;
+	static const double C;
+	static const float TX_POWER_OFFSET_DBM;
+	static const float TX_POWER_INDEX_MULTIPLIER;
 private:
 	unsigned short antennaId;
 	unsigned short txHopTableId;

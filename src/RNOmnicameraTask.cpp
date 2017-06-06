@@ -91,7 +91,7 @@ void RNOmnicameraTask::thresholding(const cv::Mat& inputGrayscale, cv::Mat& outp
   	//RNUtils::printLn("[Brightness avg: %d, Index: %f]", avgBrightness, index);
 	//int thresholdValue = 100;
 	//cv::threshold(inputGrayscale, output, thresholdValue, 255, cv::THRESH_BINARY_INV);
-	cv::adaptiveThreshold(inputGrayscale, output, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV, 75, (int)index);
+	cv::adaptiveThreshold(inputGrayscale, output, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV, BLOCK_SIZE_FOR_ADAPTIVE_THRESHOLD, (int)index);
 	//cv::imwrite("threshold.jpg", output);
 }
 
@@ -203,7 +203,7 @@ void RNOmnicameraTask::recognizeMarkers(const cv::Mat& inputGrayscale, std::vect
 		std::ostringstream windowName;
 		
 		int rotations = 0;
-		if (markerDecoder(canonicalMarkerImage, rotations) == 0){
+		if (markerDecoder(canonicalMarkerImage, rotations, marker) == 0){
 			std::vector<cv::Point2f> markerPoints = marker.getMarkerPoints();
 			std::rotate(markerPoints.begin(), markerPoints.begin() + 4 - rotations, markerPoints.end());
 			marker.setMarkerPoints(markerPoints);
@@ -229,7 +229,7 @@ void RNOmnicameraTask::poseEstimation(std::vector<RNMarker>& markerPoints){
 	}
 }
 
-int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations){
+int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations, RNMarker &marker){
 	int result = 0;
 	cv::Mat grey = inputGrayscale;
 	cv::threshold(grey, grey, 127, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
@@ -266,14 +266,14 @@ int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotati
 			}
 		}
 
-		cv::Mat rotations[4];
-		int distances[4];
+		cv::Mat rotations[CURVE_SIZE];
+		int distances[CURVE_SIZE];
 		rotations[0] = bitMatrix;
 		distances[0] = hammingDistance(bitMatrix);
 
 		std::pair<int, int> minDist(distances[0], 0);
 
-		for (int i = 1; i<4; i++){
+		for (int i = 1; i < CURVE_SIZE; i++){
 			//get the hamming distance to the nearest possible word
 			rotations[i] = rotate(rotations[i - 1]);
 			distances[i] = hammingDistance(rotations[i]);
@@ -286,8 +286,11 @@ int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotati
 
 		nRrotations = minDist.second;
 		if (minDist.first == 0){
-            //int a = 0, b = 0, c = 0;
-            //markerIdNumber(rotations[nRrotations], a, b, c);
+            int mapId = 0, sectorId = 0, markerId = 0;
+            markerIdNumber(rotations[nRrotations], mapId, sectorId, markerId);
+            marker.setMapId(mapId);
+            marker.setSectorId(sectorId);
+            marker.setMarkerId(markerId);
         } else {
             result = -1;
         }
@@ -298,16 +301,14 @@ int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotati
 int RNOmnicameraTask::hammingDistance(cv::Mat bits){
 	int ids[4][5] = {
 		{ 1, 0, 0, 0, 1 },
-		{ 1, 0, 1, 1, 1 },
-		{ 1, 1, 0, 0, 1 },
-		{ 0, 1, 0, 1, 0 }
+		{ 1, 0, 1, 1, 1 }
 	};
 
 	int dist = 0;
 
-	for (int y = 0; y < 5; y++){
+	for (int y = 0; y < 5; ){
 		int minSum = 1e5; //hamming distance to each possible word
-		for (int p = 0; p < 4; p++){
+		for (int p = 0; p < 2; p++){
 			int sum = 0;
 			//now, count
 			for (int x = 0; x < 5; x++){
@@ -318,7 +319,7 @@ int RNOmnicameraTask::hammingDistance(cv::Mat bits){
 				minSum = sum;
 			}
 		}
-
+		y += 4;
 		//do the and
 		dist += minSum;
 	}
@@ -339,34 +340,21 @@ cv::Mat RNOmnicameraTask::rotate(cv::Mat input)
 }
 
 void RNOmnicameraTask::markerIdNumber(const cv::Mat &bits, int &mapId, int &sectorId, int &markerId){
-    int count = 9;
-    mapId = RN_NONE;
-    sectorId = RN_NONE;
-    markerId = RN_NONE;
-    for(int j = 0; j < 2; j++){
-        for(int i = 0; i < 5; i++){
-            if(bits.at<uchar>(j, i)){
-                mapId |= (1 << count);
-            }
-            count--;
-        }
-    }
     
-    count = 9;
-    for(int j = 2; j < 4; j++){
-        for(int i = 0; i < 5; i++){
-            if(bits.at<uchar>(j, i)){
-                sectorId |= (1 << count);
-            }
-            count--;
-        }
+    for (int j = 0; j < 5; j++){
+    	if(bits.at<uchar>(1, j)){
+    		mapId += (16 / std::pow(2, j)) * bits.at<uchar>(1, j);
+    	}
     }
-    count = 4;
-    for(int i = 0; i < 5; i++){
-        if(bits.at<uchar>(4, i)){
-            markerId |= (1 << count);
-        }
-        count--;
+    for (int j = 0; j < 5; j++){
+    	if(bits.at<uchar>(2, j)){
+    		sectorId += (16 / std::pow(2, j)) * bits.at<uchar>(2, j);
+    	}
+    }
+    for (int j = 0; j < 5; j++){
+    	if(bits.at<uchar>(3, j)){
+    		markerId += (16 / std::pow(2,j)) * bits.at<uchar>(3, j);
+    	}
     }
 }
 
@@ -627,7 +615,7 @@ void RNOmnicameraTask::task(){
 		cv::Size newSize = cv::Size (RECTIFIED_IMAGE_WIDTH, RECTIFIED_IMAGE_HEIGHT);
 		cv::Matx33f Knew = cv::Matx33f(newSize.width / (2 * M_PI), 0, 0, 0, newSize.height / M_PI, 0, 0, 0, 1);
 		undistortImage(tiki, rectified, camMatrix, distCoeff, xi, RECTIFY_CYLINDRICAL, Knew, newSize);
-
+		tiki.release();
 		flipped.create(rectified.size(), rectified.type());
 		mapX.create(flipped.size(), CV_32FC1);
 		mapY.create(flipped.size(), CV_32FC1);
@@ -646,6 +634,9 @@ void RNOmnicameraTask::task(){
 
 		//Corrects flipped image      
 		cv::remap(rectified, flipped, mapX, mapY, cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+		rectified.release();
+		mapX.release();
+		mapY.release();
 		if (flipped.data){
 			cv::Mat tikiGray, tikiThreshold;
 			std::vector<RNMarker> tikiMarkers;
@@ -665,10 +656,16 @@ void RNOmnicameraTask::task(){
 				drawRectangle(rectImage, tikiMarkers[i]);
 				//cv::imwrite("que ves.jpg", rectImage);
 				RNLandmark* visualLand = new RNLandmark();
-				//RNUtils::printLn("Marker (%d) angle: %lf", i, tikiMarkers.at(i).getThRad());
+				//RNUtils::printLn("Map Id: (%d), Sector Id (%d), Marker Id (%d) - angle: %lf", tikiMarkers.at(i).getMapId(), tikiMarkers.at(i).getSectorId(), tikiMarkers.at(i).getMarkerId(), tikiMarkers.at(i).getThRad());
 				visualLand->addPoint(0, tikiMarkers.at(i).getThRad());
+				visualLand->setMapId(tikiMarkers.at(i).getMapId());
+				visualLand->setSectorId(tikiMarkers.at(i).getSectorId());
+				visualLand->setMarkerId(tikiMarkers.at(i).getMarkerId());
 				landmarks->push_back(visualLand);
 			}
+			tikiGray.release();
+			tikiThreshold.release();
+			flipped.release();
 			gn->setVisualLandmarks(landmarks);
 		}
 	} else {
