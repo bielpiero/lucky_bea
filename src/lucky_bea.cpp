@@ -27,24 +27,24 @@ int main(int argc, char** argv){
     sigaction(SIGINT, &sigIntHandler, NULL);
     sigaction(SIGTERM, &sigIntHandler, NULL);
     RNUtils::init(argc, argv);
-	if(argc == 1 || argc == 3){
-		RNUtils::printLn("Lucky Bea for Doris. To control the IC Group Robot named Doris");
-		RNUtils::printLn("Press Ctrl+C to exit");
-		std::string port = "/dev/ttyS0";
-		if(argc == 3){
-			if(strcmp(argv[1], "-p") == 0){
-				port = std::string(argv[2]);
-			}
-		}
-	    robot = new GeneralController(port.c_str());
-	    if(robot->init("", 14004, SOCKET_SERVER) == 0){
-	    	robot->startThread();
-		    RNUtils::printLn("No clients connected...");
+	
+	RNUtils::printLn("Lucky Bea for Doris. To control the IC Group Robot named Doris");
+	RNUtils::printLn("Press Ctrl+C to exit");
+	
+	std::string port = std::string(RN_DEFAULT_PORT);
+	if(RNUtils::isVirtualScenarioActivated()){
+		port = RNUtils::getVirtualScenarioPort();
+	}
 
-			RNUtils::spin();
-	    }
+    robot = new GeneralController(port.c_str());
+    if(robot->init("", 14004, SOCKET_SERVER) == 0){
+    	robot->startThread();
+	    RNUtils::printLn("No clients connected...");
 
-	}	
+		RNUtils::spin();
+    }
+
+		
     
     return 0;
 }

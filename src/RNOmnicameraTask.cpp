@@ -6,6 +6,11 @@ const std::string RNOmnicameraTask::cameraUrl = "http://192.168.0.19/record/curr
 //const std::string RNOmnicameraTask::cameraUrl = "http://admin:C0n7r01_au70@192.168.1.33/control/faststream.jpg?stream=full&fps=24&noaudio&data=v.mjpg";
 
 RNOmnicameraTask::RNOmnicameraTask(const char* name, const char* description) : RNRecurrentTask(name, description){
+	curl = curl_easy_init();
+	curl_easy_setopt(curl, CURLOPT_URL, cameraUrl.c_str());
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &RNOmnicameraTask::write_data);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cameraStream);
+
 	minContourLengthAllowed = 100.0;
 	maxContourLengthAllowed = 4000.0;
 	markerSize = cv::Size(215, 345);
@@ -37,7 +42,10 @@ RNOmnicameraTask::RNOmnicameraTask(const char* name, const char* description) : 
   	distCoeff.at<float>(2, 0) = -1.3775384616268102e-02;
   	distCoeff.at<float>(3, 0) = -1.9560559208606078e-03;
 
-	landmarks = new std::vector<RNLandmark*>();
+ 	newSize = cv::Size (RECTIFIED_IMAGE_WIDTH, RECTIFIED_IMAGE_HEIGHT);
+	Knew = cv::Matx33f(newSize.width / (2 * M_PI), 0, 0, 0, newSize.height / M_PI, 0, 0, 0, 1);
+
+	landmarks = NULL;
 
 	xi = cv::Mat(1, 1, CV_32FC1);
 	xi.at<float>(0, 0) = 1.5861076761699640e+00;
@@ -45,15 +53,18 @@ RNOmnicameraTask::RNOmnicameraTask(const char* name, const char* description) : 
 }
 
 RNOmnicameraTask::~RNOmnicameraTask(){
+	curl_easy_cleanup(curl);
 	clearLandmarks();
 	delete landmarks;
 }
 
 void RNOmnicameraTask::clearLandmarks(){
-	for (int i = 0; i < landmarks->size(); i++){
-		delete landmarks->at(i);
+	if(landmarks != NULL){
+		for (int i = 0; i < landmarks->size(); i++){
+			delete landmarks->at(i);
+		}
+		landmarks->clear();
 	}
-	landmarks->clear();
 }
 
 size_t RNOmnicameraTask::write_data(char *ptr, size_t size, size_t nmemb, void *userdata) {
@@ -65,19 +76,24 @@ size_t RNOmnicameraTask::write_data(char *ptr, size_t size, size_t nmemb, void *
 
 int RNOmnicameraTask::getFrameFromCamera(cv::Mat &frame){
 	int result = 0;
-	CURL* curl;
-	CURLcode res;
-	std::ostringstream stream;
-	curl = curl_easy_init();
-	curl_easy_setopt(curl, CURLOPT_URL, cameraUrl.c_str());
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &RNOmnicameraTask::write_data);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
+	std::vector<char> *data = NULL;
+	cameraStream.str("");
+	cameraStream.clear();
 	res = curl_easy_perform(curl);
-	std::string output = stream.str();
-	curl_easy_cleanup(curl);
-	std::vector<char> data = std::vector<char>(output.begin(), output.end());
-	cv::Mat data_mat = cv::Mat(data);
-	frame = cv::imdecode(data_mat, 1);
+	try{
+		data = new std::vector<char>(cameraStream.str().begin(), cameraStream.str().end());	
+	} catch(const std::bad_alloc& e){
+		RNUtils::printLn("Bad Image Allocation: %s", e.what());
+		data = NULL;
+		result = RN_NONE;
+	}
+	if(data != NULL){
+		cv::Mat data_mat = cv::Mat(*data);
+		frame = cv::Mat(cv::imdecode(data_mat, 1));
+		data_mat.release();
+		data->clear();
+		delete data;
+	}
 	return result;
 }
 
@@ -103,25 +119,29 @@ void RNOmnicameraTask::clearNoisyDots(const cv::Mat input, cv::Mat& output){
 	dilate(erosion, output, element);
 }
 
-void RNOmnicameraTask::findContours(const cv::Mat& input, std::vector<std::vector<cv::Point> > &contours, int minContourPointsAllowed){
-	std::vector<std::vector<cv::Point> > allContours;
-	std::vector<cv::Vec4i> hierarchy;
-	cv::Mat edges;
-	cv::Canny(input, edges, 100, 180, 5);
-	cv::findContours(edges, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-	//cv::findContours(edges, allContours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+void RNOmnicameraTask::findContours(int minContourPointsAllowed){
+	allContours.clear();
 	contours.clear();
+	cv::Canny(tikiThreshold, edges, 100, 180, 5);
+	try{
+		cv::findContours(edges, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);	
+	} catch (const std::bad_alloc& e){
+		RNUtils::printLn("Allocation failed: %s", e.what());
+	}
+	
+	edges.release();
+	//cv::findContours(edges, allContours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+	
 	for (unsigned int i = 0; i < allContours.size(); i++){
 		if (allContours.at(i).size() > minContourPointsAllowed){
 			contours.push_back(allContours.at(i));
 		}
 	}
-	//contours = allContours;
 }
 
-void RNOmnicameraTask::findCandidates(const std::vector<std::vector<cv::Point> > &contours, std::vector<RNMarker>& markerPoints){
+void RNOmnicameraTask::findCandidates(){
 	std::vector<cv::Point>  approxCurve;
-	std::vector<RNMarker> possibleMarkersPoints;
+	possibleMarkersPoints.clear();
 	for (unsigned int i = 0; i < contours.size(); i++){
 		double eps = contours.at(i).size() * .1;
 		cv::approxPolyDP(contours.at(i), approxCurve, eps, true);
@@ -186,36 +206,36 @@ void RNOmnicameraTask::findCandidates(const std::vector<std::vector<cv::Point> >
 		}
 		removalMask.at(index) = true;
 	}
-	markerPoints.clear();
+	tikiMarkers.clear();
 	for (int i = 0; i < possibleMarkersPoints.size(); i++){
 		if (!removalMask[i])
-			markerPoints.push_back(possibleMarkersPoints[i]);
+			tikiMarkers.push_back(possibleMarkersPoints[i]);
 	}
 }
 
-void RNOmnicameraTask::recognizeMarkers(const cv::Mat& inputGrayscale, std::vector<RNMarker>& markerPoints){
+void RNOmnicameraTask::recognizeMarkers(){
 	std::vector<RNMarker> goodMarkersPoints;
-	for (int i = 0; i < markerPoints.size(); i++){
-		RNMarker marker = markerPoints.at(i);
+	for (int i = 0; i < tikiMarkers.size(); i++){
+		RNMarker marker = tikiMarkers.at(i);
 		cv::Mat markerTransform = cv::getPerspectiveTransform(marker.getMarkerPoints(), markerCorners2d);
 
-		cv::warpPerspective(inputGrayscale, canonicalMarkerImage, markerTransform, markerSize);
+		cv::warpPerspective(tikiGray, canonicalMarkerImage, markerTransform, markerSize);
 		std::ostringstream windowName;
 		
 		int rotations = 0;
 		if (markerDecoder(canonicalMarkerImage, rotations, marker) == 0){
-			std::vector<cv::Point2f> markerPoints = marker.getMarkerPoints();
-			std::rotate(markerPoints.begin(), markerPoints.begin() + 4 - rotations, markerPoints.end());
-			marker.setMarkerPoints(markerPoints);
+			std::vector<cv::Point2f> markerDots = marker.getMarkerPoints();
+			std::rotate(markerDots.begin(), markerDots.begin() + 4 - rotations, markerDots.end());
+			marker.setMarkerPoints(markerDots);
 			goodMarkersPoints.push_back(marker);
 		}
 	}
-	markerPoints = goodMarkersPoints;
+	tikiMarkers = goodMarkersPoints;
 }
 
-void RNOmnicameraTask::poseEstimation(std::vector<RNMarker>& markerPoints){
-	for (size_t i = 0; i < markerPoints.size(); i++){
-		RNMarker &marker = markerPoints.at(i);
+void RNOmnicameraTask::poseEstimation(){
+	for (size_t i = 0; i < tikiMarkers.size(); i++){
+		RNMarker &marker = tikiMarkers.at(i);
 		cv::Point markerCenter = marker.getRotatedRect().center;
 		double angleInRadians = RNUtils::linearInterpolator((float)markerCenter.x, PointXY(0, 2 * M_PI), PointXY((float)RECTIFIED_IMAGE_WIDTH, 0));
 		
@@ -610,10 +630,8 @@ void RNOmnicameraTask::undistortImage(cv::InputArray distorted, cv::OutputArray 
 }
 
 void RNOmnicameraTask::task(){
-	cv::Mat tiki, rectified, mapX, mapY, flipped;
+	//gn->lockSensorsReadings();
 	if(getFrameFromCamera(tiki) != RN_NONE){
-		cv::Size newSize = cv::Size (RECTIFIED_IMAGE_WIDTH, RECTIFIED_IMAGE_HEIGHT);
-		cv::Matx33f Knew = cv::Matx33f(newSize.width / (2 * M_PI), 0, 0, 0, newSize.height / M_PI, 0, 0, 0, 1);
 		undistortImage(tiki, rectified, camMatrix, distCoeff, xi, RECTIFY_CYLINDRICAL, Knew, newSize);
 		tiki.release();
 		flipped.create(rectified.size(), rectified.type());
@@ -634,26 +652,26 @@ void RNOmnicameraTask::task(){
 
 		//Corrects flipped image      
 		cv::remap(rectified, flipped, mapX, mapY, cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
-		rectified.release();
-		mapX.release();
-		mapY.release();
+		//rectified.release();
+		//mapX.release();
+		//mapY.release();
 		if (flipped.data){
-			cv::Mat tikiGray, tikiThreshold;
-			std::vector<RNMarker> tikiMarkers;
 			//cv::imwrite("real-1.4m.jpg", flipped);
 			rgbToGrayscale(flipped, tikiGray);
 			//cv::imwrite("real-gray.jpg", tikiGray);
 			thresholding(tikiGray, tikiThreshold);
-			findContours(tikiThreshold.clone(), contours, 35);
-			findCandidates(contours, tikiMarkers);
-			recognizeMarkers(tikiGray, tikiMarkers);
+			//contours.clear();
+			findContours(35);
+			tikiMarkers.clear();
+			findCandidates();
+			recognizeMarkers();
 			//RNUtils::printLn("markers: %d", tikiMarkers.size());
-			poseEstimation(tikiMarkers);
-
+			poseEstimation();
+			landmarks = gn->getVisualLandmarks();
 			clearLandmarks();
-			cv::Mat rectImage = flipped.clone();
+			//cv::Mat rectImage = flipped.clone();
 			for(size_t i = 0; i < tikiMarkers.size(); i++){
-				drawRectangle(rectImage, tikiMarkers[i]);
+				//drawRectangle(rectImage, tikiMarkers[i]);
 				//cv::imwrite("que ves.jpg", rectImage);
 				RNLandmark* visualLand = new RNLandmark();
 				//RNUtils::printLn("Map Id: (%d), Sector Id (%d), Marker Id (%d) - angle: %lf", tikiMarkers.at(i).getMapId(), tikiMarkers.at(i).getSectorId(), tikiMarkers.at(i).getMarkerId(), tikiMarkers.at(i).getThRad());
@@ -663,14 +681,15 @@ void RNOmnicameraTask::task(){
 				visualLand->setMarkerId(tikiMarkers.at(i).getMarkerId());
 				landmarks->push_back(visualLand);
 			}
-			tikiGray.release();
-			tikiThreshold.release();
-			flipped.release();
+			//tikiGray.release();
+			//tikiThreshold.release();
 			gn->setVisualLandmarks(landmarks);
 		}
+		flipped.release();
 	} else {
 		RNUtils::printLn("chuta y ahora?");
 	}
+	//gn->unlockSensorsReadings();
 }
 
 void RNOmnicameraTask::drawRectangle(cv::Mat &img, RNMarker marker){

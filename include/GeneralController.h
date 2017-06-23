@@ -10,9 +10,10 @@
 #include "RNSocketClient.h"
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
-#include "xmldefs.h"
+
 #include "semdefs.h"
 
+#include "RNVirtualFace.h"
 #include "RobotDataStreamer.h"
 #include "DorisLipSync.h"
 #include "MapSector.h"
@@ -314,6 +315,8 @@ private:
 	RNOmnicameraTask* omnidirectionalTask;
 	RNRFIdentificationTask* rfidTask;
 	RNCameraTask* eyesCameras;
+
+	RNVirtualFace* virtualFace;
 
 	//OpenCV
 	//std::vector<cv::VideoCapture> vc;

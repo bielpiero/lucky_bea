@@ -78,10 +78,10 @@ private:
 	int getFrameFromCamera(cv::Mat &frame);
 	void thresholding(const cv::Mat& inputGrayscale, cv::Mat& output);
 	void clearNoisyDots(const cv::Mat input, cv::Mat& output);
-	void findContours(const cv::Mat& input, std::vector<std::vector<cv::Point> > &contours, int minContourPointsAllowed);
-	void findCandidates(const std::vector<std::vector<cv::Point> > &contours, std::vector<RNMarker>& markerPoints);
-	void recognizeMarkers(const cv::Mat& inputGrayscale, std::vector<RNMarker>& markerPoints);
-	void poseEstimation(std::vector<RNMarker>& markerPoints);
+	void findContours(int minContourPointsAllowed);
+	void findCandidates();
+	void recognizeMarkers();
+	void poseEstimation();
 	void markerIdNumber(const cv::Mat &bits, int &mapId, int &sectorId, int &markerId);
 	int getBrightnessAverageFromHistogram(const cv::Mat& input);
 
@@ -98,17 +98,29 @@ private:
 	cv::Mat rotate(cv::Mat input);
 	static size_t write_data(char *ptr, size_t size, size_t nmemb, void *userdata);
 private:
+	CURL* curl;
+	CURLcode res;
+	std::ostringstream cameraStream;
 	static const std::string cameraUrl;
 	float minContourLengthAllowed;
 	float maxContourLengthAllowed;
 	std::vector<cv::Point2f> markerCorners2d;
 	std::vector<cv::Point3f> markerCorners3d;
 	std::vector<std::vector<cv::Point> > contours;
+	std::vector<std::vector<cv::Point> > allContours;
+	std::vector<RNMarker> possibleMarkersPoints;
 	cv::Size markerSize;
 	cv::Mat canonicalMarkerImage;
 	cv::Mat camMatrix;
 	cv::Mat distCoeff;
 	cv::Mat xi;
+	cv::Matx33f Knew;
+	cv::Size newSize;
+	cv::Mat tiki, rectified, mapX, mapY, flipped;
+	cv::Mat edges;
+	cv::Mat tikiGray, tikiThreshold;
+
+	std::vector<RNMarker> tikiMarkers;
 
 	static const double PI_DEGREES;
 	std::vector<RNLandmark*>* landmarks;

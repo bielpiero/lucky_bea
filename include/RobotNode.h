@@ -119,13 +119,15 @@ private:
     unsigned int securityDistanceStopTime;
     
     char keepActiveSensorDataThread;
+    char keepActiveLaserDataThread;
     char keepActiveSecurityDistanceTimerThread;
     
     static const float SECURITY_DISTANCE;
 
     pthread_mutex_t mutexRawPositionLocker;
-    pthread_mutex_t mutexLaserReadingsLocker;
+    pthread_mutex_t mutexSensorsReadingsLocker;
     pthread_t sensorDataThread;
+    pthread_t laserDataThread;
     pthread_t distanceThread;
     pthread_t distanceTimerThread;
 
@@ -171,8 +173,12 @@ public:
 	double getDistConvFactor();
 	double getAngleConvFactor();
 
+	int lockSensorsReadings();
+	int unlockSensorsReadings();
+
 private:
     static void* securityDistanceTimerThread(void* object);
+    static void* laserPublishingThread(void* object);
 	static void* dataPublishingThread(void* object);
     
     void finishThreads();
@@ -186,9 +192,7 @@ private:
     void securityDistanceChecker();
     
 protected:
-	int lockLaserReadings();
-	int unlockLaserReadings();
-
+	
 	virtual void onLaserScanCompleted(LaserScan* data) = 0;
 	virtual void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear) = 0;
 	virtual void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed) = 0;

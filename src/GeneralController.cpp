@@ -45,6 +45,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
     this->lastSiteVisitedIndex = RN_NONE;
 	laserLandmarks = new std::vector<RNLandmark*>();
+	visualLandmarks = new std::vector<RNLandmark*>();
 	kalmanFuzzy = new std::vector<fuzzy::Trapezoid*>();
 	
 	robotState = Matrix(3, 1);
@@ -81,9 +82,9 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	omnidirectionalTask = new RNOmnicameraTask("Omnidirectional Task");
 	dialogs = new RNDialogsTask(ttsLipSync);
-	gestures = new RNGesturesTask();
-	emotions = new RNEmotionsTask();
-	eyesCameras = new RNCameraTask();
+	gestures = new RNGesturesTask(this->maestroControllers);
+	//emotions = new RNEmotionsTask();
+	//eyesCameras = new RNCameraTask();
 
 	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
 		localization = new RNKalmanLocalizationTask();
@@ -95,16 +96,29 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	////Tasks added:
 	tasks->addTask(omnidirectionalTask);
 	tasks->addTask(dialogs);
-	//tasks->addTask(gestures);
+	tasks->addTask(gestures);
 	//tasks->addTask(emotions);
 	tasks->addTask(localization);
 	//tasks->addTask(eyesCameras);
-	tasks->addTask(rfidTask);
+	//tasks->addTask(rfidTask);
 	
 	//Start all tasks;
 	tasks->startAllTasks();
 	printed = false;
-
+	virtualFace = NULL;
+	if(RNUtils::isVirtualFaceActivated()){
+		std::string ip = "";
+		int port = RN_NONE;
+		RNUtils::getVirtualFaceIpPort(ip, port);
+		if(port != RN_NONE){
+			virtualFace = new RNVirtualFace();
+			virtualFace->init(ip.c_str(), port);
+			virtualFace->startThread();
+			RNUtils::printLn("Connected to Virtual-Face: %s over %d", ip.c_str(), port);
+		}
+		
+	}
+	
 	spdWSServer = new RobotDataStreamer();
 	spdWSServer->init("", 0, SOCKET_SERVER);
 	spdWSServer->startThread();
@@ -944,16 +958,23 @@ void GeneralController::setGesture(std::string face_id, std::string& servo_posit
 					} else {
 						if(currentCardId != card_id){
 							currentCardId = card_id;
-							bufferOut_str << "{\"cardId\":\"" << (int)card_id << "\",\"Motors\":[";
+							bufferOut_str << "{\"CardId\":\"" << (int)card_id << "\",\"Motors\":[";
 						}
 					}
 					bufferOut_str << "{\"MotorId\":\"" << (int)servo_id << "\",\"Position\":\"" << position << "\"}";
+					if(motor_node->next_sibling() != NULL){
+						unsigned char card_id_next = (unsigned char)atoi(motor_node->next_sibling()->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value());
+						if(card_id_next == card_id){
+							bufferOut_str << ",";	
+						}
+						
+					}
 
-					setServoPosition(card_id, servo_id, position);
+					//setServoPosition(card_id, servo_id, position);
 					//setServoSpeed(card_id, servo_id, speed);
 					//setServoAcceleration(card_id, servo_id, acceleration);
 				}	
-				bufferOut_str << "]}";
+				
 
 				if(tipo == "1"){
 					RNUtils::printLn("This is a dynamic face");
@@ -971,6 +992,9 @@ void GeneralController::setGesture(std::string face_id, std::string& servo_posit
 	}
 	the_file.close();
 	servo_positions = bufferOut_str.str();
+	if(virtualFace != NULL){
+		virtualFace->sendBytes((unsigned char*)servo_positions.c_str(), servo_positions.length());	
+	}
 	
 }
 
@@ -2357,7 +2381,7 @@ void GeneralController::onBatteryChargeStateChanged(char battery){
 }
 
 void GeneralController::onLaserScanCompleted(LaserScan* laser){
-	lockLaserReadings();
+	
 	float angle_min = laser->getAngleMin();
 	float angle_max = laser->getAngleMax();
 	float angle_increment = laser->getIncrement();
@@ -2400,7 +2424,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 			}
 		}
 	}
-	unlockLaserReadings();
+	
 	std::ostringstream buffFile;
 	for(int i = 0; i < laserLandmarks->size(); i++){
 		
@@ -2565,12 +2589,12 @@ int GeneralController::initializeKalmanVariables(){
 		
 		fuzzy::Trapezoid* vThK1 = new fuzzy::Trapezoid("VTh(k + 1)", robotConfig->navParams->processNoise->thZone->x1, robotConfig->navParams->processNoise->thZone->x2, robotConfig->navParams->processNoise->thZone->x3, robotConfig->navParams->processNoise->thZone->x4);	
 
-		//uX = fuzzy::FStats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
-		//uY = fuzzy::FStats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
-		//uTh = fuzzy::FStats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
-		uX = .36;
-		uY = .36;
-		uTh = .05;
+		uX = fuzzy::FStats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
+		uY = fuzzy::FStats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
+		uTh = fuzzy::FStats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
+		//uX = .36;
+		//uY = .36;
+		//uTh = .05;
 
 		P(0, 0) = uX; 	P(0, 1) = 0; 	P(0, 2) = 0;
 		P(1, 0) = 0; 	P(1, 1) = uY;	P(1, 2) = 0;
@@ -2827,7 +2851,7 @@ void GeneralController::onSensorsScanCompleted(){
 		sectorId = currentSector->getId();
 	}
 	buffer_str.clear();
-	buffer_str << "$DORIS|" << mapId << "," << sectorId << "," << emotionsTimestamp.str() << "," << mappingEnvironmentTimestamp.str() << "," << mappingLandmarksTimestamp.str() << "," << mappingFeaturesTimestamp.str() << "," + mappingSitesTimestamp.str() << "," << laserLandmarks->size();
+	buffer_str << "$DORIS|" << mapId << "," << sectorId << "," << emotionsTimestamp.str() << "," << mappingEnvironmentTimestamp.str() << "," << mappingLandmarksTimestamp.str() << "," << mappingFeaturesTimestamp.str() << "," + mappingSitesTimestamp.str() << "," << laserLandmarks->size() << "," << visualLandmarks->size();
 
 	if(spdUDPClient != NULL){
 		spdUDPClient->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());

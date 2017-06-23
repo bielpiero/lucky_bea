@@ -4,11 +4,48 @@ bool RNUtils::status = false;
 std::string RNUtils::applicationPath = "";
 std::string RNUtils::applicationName = "";
 
+bool RNUtils::virtualScenario = false;
+std::string RNUtils::virtualScenarioPort = "";
+
+bool RNUtils::virtualFace = false;
+std::string RNUtils::virtualFaceIpPort = "";
+
 const unsigned long RNUtils::PRINT_BUFFER_SIZE = std::pow(2, 16);
 
 void RNUtils::init(int argc, char** argv){
     setStatus(true);
     setApplicationPathName(argv[0]);
+    for(int i = 1; i < argc; i++){
+    	if(strcmp(argv[i], "-vp") == 0){
+    		virtualScenario = true;
+    		virtualScenarioPort = std::string(argv[i + 1]);
+    	} else if(strcmp(argv[i], "-vf") == 0){
+    		virtualFace = true;
+    		virtualFaceIpPort = std::string(argv[i + 1]);
+    	}	
+    }
+}
+
+bool RNUtils::isVirtualScenarioActivated(){
+	return virtualScenario;
+}
+
+bool RNUtils::isVirtualFaceActivated(){
+	return virtualFace;
+}
+
+std::string RNUtils::getVirtualScenarioPort(){
+	return virtualScenarioPort;
+}
+
+void RNUtils::getVirtualFaceIpPort(std::string& ip, int& port){
+	std::vector<std::string> ipPort = split((char*)virtualFaceIpPort.c_str(), ":");
+	ip = "";
+	port = RN_NONE;
+	if(ipPort.size() > 1){
+		ip = ipPort.at(0);
+		port = atoi(ipPort.at(1).c_str());
+	}
 }
 
 void RNUtils::printLn(const char* _format, ...){

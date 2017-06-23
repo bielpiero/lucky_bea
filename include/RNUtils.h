@@ -29,7 +29,7 @@
 
 #include "Aria.h"
 
-
+#define RN_DEFAULT_PORT "/dev/ttyS0"
 
 #define RN_NONE -1
 
@@ -82,6 +82,11 @@ private:
 	static std::string applicationPath;
 	static std::string applicationName;
     static const unsigned long PRINT_BUFFER_SIZE;
+    static bool virtualScenario;
+    static bool virtualFace;
+
+    static std::string virtualScenarioPort;
+    static std::string virtualFaceIpPort; 
 public: // functions
     static void init(int argc, char** argv);
 	static void sleep(int milliseconds);
@@ -97,10 +102,17 @@ public: // functions
     static void shutdown();
 	static std::string getApplicationPath();
 	static std::string getApplicationName();
+
+	static bool isVirtualScenarioActivated();
+	static bool isVirtualFaceActivated();
+	static std::string getVirtualScenarioPort();
+	static void getVirtualFaceIpPort(std::string& ip, int& port);
+
 	static float linearInterpolator(const float& x, const PointXY& p1, const PointXY& p2);
 	static float quadraticInterpolator(const float& x, const PointXY& p1, const PointXY& p2, const PointXY& x3);
 	static double milliwattsTodBm(const double& milliwatts);
 	static double dBmTomilliwatts(const double& dBm);
+
 private: //functions
     static void setStatus(bool status);
     static void setApplicationPathName(char* str);

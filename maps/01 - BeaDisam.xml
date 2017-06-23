@@ -1,7 +1,11 @@
 <sectors sequence="0,1,0">
 	<sector id="23" name="Mobile Robots" width="900" height="427" reference="2" polygon="m 0 0 l 0 432 l 920 0 l 0 -432 z">
 		<landmarks>
-			<landmark id="2" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="280" ypos="65"/>
+			<landmark id="0" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="35" ypos="0"/>
+			<landmark id="1" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="0"/>
+			<landmark id="2" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="300"/>
+			<landmark id="3" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="440" ypos="140"/>
+			<landmark id="4" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="520" ypos="320"/>
 			<landmark id="19" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="5" ypos="210"/>
 			<landmark id="20" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="300" ypos="12"/>
 			<landmark id="18" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="310" ypos="432"/>
