@@ -8,10 +8,10 @@ RNPIDController::RNPIDController(const char* name, double setPoint, double sampl
 	this->kp = kp;
 	this->ti = ti;
 	this->td = td;
-
+	firstIteration = true;
 	this->setPoint = setPoint;
 
-	this->lastInput = 0;
+	this->lastInput = std::numeric_limits<float>::infinity();
 	this->lastError = 0;
 	this->pastLastError = 0;
 	this->currentError = 0;
@@ -24,6 +24,10 @@ RNPIDController::~RNPIDController(){
 double RNPIDController::getSystemInput(int measure){
 	double uk = 0;
 	double q0 = 0, q1 = 0, q2 = 0;
+	if(firstIteration){
+		this->lastInput = 0;
+		firstIteration = false;
+	}
 	this->pastLastError = this->lastError;
 	this->lastError = this->currentError;
 	this->currentError = this->setPoint - measure;
@@ -49,7 +53,14 @@ double RNPIDController::getSystemInput(int measure){
 	}	
 	this->lastInput = uk;
 	return uk;
+}
 
+void RNPIDController::reset(void){
+	firstIteration = true;
+	this->lastInput = std::numeric_limits<float>::infinity();
+	this->lastError = 0;
+	this->pastLastError = 0;
+	this->currentError = 0;
 }
 
 double RNPIDController::getProportionalGain(void){
@@ -90,4 +101,8 @@ double RNPIDController::getTarget(void){
 
 void RNPIDController::setTarget(double target){
 	this->setPoint = target;
+}
+
+double RNPIDController::getLastInput(void){
+	return this->lastInput;
 }

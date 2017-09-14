@@ -17,6 +17,9 @@ include_directories( /usr/local/Aria/include)
 link_directories(/usr/local/Aria/lib)
 link_directories(lib/)
 
+add_definitions(-DFL_CPP98)
+#add_definitions(-std=c++98)
+
 ## Declare a cpp library
 # add_library(lucky_bea_socketnode src/SocketNode2.cpp)
 
@@ -50,6 +53,7 @@ target_link_libraries(lucky_bea
   ftd2xx
   xml2
   dxl_x86_cpp
+  fuzzylite
   ltkcpp
   ltkcppimpinj
   curl

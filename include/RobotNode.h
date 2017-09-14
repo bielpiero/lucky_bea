@@ -2,6 +2,14 @@
 #include "RNActionGoto.h"
 
 #define FULL_ENCODER_TICKS 32768
+#define WHEEL_DIAMETER_MM 194
+#define DRIFT_FACTOR_TICKS 8192
+
+#define NO_MOVEMENT 0
+#define LOWER_LIMIT_TRANSITION 1
+#define UPPER_LIMIT_TRANSITION 2
+#define RN_MOVEMENT 3
+
 #define MIN_INDEX_LASER_SECURITY_DISTANCE 90
 #define MAX_INDEX_LASER_SECURITY_DISTANCE 120
 
@@ -109,6 +117,11 @@ private:
     long int prevLeftEncoderData;
     long int prevRightEncoderData;
 
+    int driftFactorIncrement;
+
+    int deltaLeftMM;
+    int deltaRightMM;
+    
     double deltaDistance;
     double deltaDegrees;
 
@@ -162,15 +175,21 @@ public:
     int getDriftFactor();
 	int getRevCount();
 	int getTicksMM();
-
+	double getEncoderScaleFactor();
+	
 	double getDeltaDegrees();
 	double getDeltaDistance();
+
+	double getEncoderX();
+	double getEncoderY();
+	double getEncoderTh();
 
 	long int getLeftEncoder();
 	long int getRightEncoder();
 
 	double getDiffConvFactor();
 	double getDistConvFactor();
+	double getVelConvFactor();
 	double getAngleConvFactor();
 
 	int lockSensorsReadings();
@@ -186,9 +205,8 @@ private:
     void unlockRobot();
 	void computePositionFromEncoders();
 	void getRawPoseFromOdometry();
-    bool checkForwardLimitTransition(double enc_k, double enc_k_1);
-    bool checkBackwardLimitTransition(double enc_k, double enc_k_1);
-
+    short checkForwardLimitTransition(double enc_k, double enc_k_1);
+    short checkBackwardLimitTransition(double enc_k, double enc_k_1);
     void securityDistanceChecker();
     
 protected:

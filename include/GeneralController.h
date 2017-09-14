@@ -20,7 +20,8 @@
 
 #include "Matrix.h"
 #include "stats.h"
-#include "fl/fuzzy.h"
+#include "fl/Headers.h"
+#include "fl/fuzzyStats.h"
 
 // Task headers
 
@@ -313,7 +314,7 @@ private:
 	RNRecurrentTaskMap* tasks;
 	RNLocalizationTask* localization;
 	RNOmnicameraTask* omnidirectionalTask;
-	RNRFIdentificationTask* rfidTask;
+	RNRFIdentificationTask* rfidTask; //future
 	RNCameraTask* eyesCameras;
 
 	RNVirtualFace* virtualFace;
@@ -328,7 +329,7 @@ private:
 	Matrix robotRawDeltaPosition;
 	Matrix robotRawEncoderPosition;
 
-	std::vector<fuzzy::Trapezoid*>* kalmanFuzzy;
+	std::vector<fl::Trapezoid*>* kalmanFuzzy;
 	Matrix robotState;
 	Matrix P;
 	Matrix Q;
@@ -412,7 +413,6 @@ private:
 	bool isThirdQuadrant(float angle);
 	bool isFouthQuadrant(float angle);
 	
-	static void* trackRobotThread(void*);
 	static void* sitesTourThread(void*);
 };
 

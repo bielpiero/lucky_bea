@@ -33,8 +33,8 @@ ArAction(name, "BP Implementation for turning and moving to a point"){
 	angularController->setDerivativeTime(this->minimumAngle / this->actionDegrees);
 
 	linearController->setSamplingTime(100);
-	linearController->setProportionalGain(this->minimumDistance / this->actionDistance);
-	//linearController->setDerivativeTime(0.2);
+	linearController->setProportionalGain(.16);
+	linearController->setDerivativeTime(this->minimumDistance / this->actionDistance);
 }
 
 RNActionGoto::~RNActionGoto(){
@@ -69,7 +69,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     		//printf("{angVel after correction: %f}\n", angVel);
     		myDesired->setRotVel(angVel);
     		
-    	} else if(distanceLocal > minimumDistance){
+    	} else if(distanceLocal > minimumDistance and ArMath::fabs(linearController->getLastInput()) >= 0.5){
     		myDesired->setRotVel(0);
     		double linVel = linearController->getSystemInput(distanceLocal);
     	
@@ -85,6 +85,8 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     	} else {
     		myDesired->setVel(0);
     		myDesired->setRotVel(0);
+    		angularController->reset();
+    		linearController->reset();
     		currentState = STATE_ACHIEVED_GOAL;
     	}
     } else {

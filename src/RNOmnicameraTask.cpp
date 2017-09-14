@@ -76,23 +76,19 @@ size_t RNOmnicameraTask::write_data(char *ptr, size_t size, size_t nmemb, void *
 
 int RNOmnicameraTask::getFrameFromCamera(cv::Mat &frame){
 	int result = 0;
-	std::vector<char> *data = NULL;
+	data.clear();
 	cameraStream.str("");
 	cameraStream.clear();
+
 	res = curl_easy_perform(curl);
-	try{
-		data = new std::vector<char>(cameraStream.str().begin(), cameraStream.str().end());	
-	} catch(const std::bad_alloc& e){
-		RNUtils::printLn("Bad Image Allocation: %s", e.what());
-		data = NULL;
-		result = RN_NONE;
-	}
-	if(data != NULL){
-		cv::Mat data_mat = cv::Mat(*data);
+	std::string strCameraStream = cameraStream.str();
+
+	std::copy(strCameraStream.begin(), strCameraStream.end(), std::back_inserter(data));
+
+	if(data.size() > 0){
+		cv::Mat data_mat = cv::Mat(data);
 		frame = cv::Mat(cv::imdecode(data_mat, 1));
 		data_mat.release();
-		data->clear();
-		delete data;
 	}
 	return result;
 }
@@ -236,9 +232,18 @@ void RNOmnicameraTask::recognizeMarkers(){
 void RNOmnicameraTask::poseEstimation(){
 	for (size_t i = 0; i < tikiMarkers.size(); i++){
 		RNMarker &marker = tikiMarkers.at(i);
+		cv::Point imageCenter(tiki.cols / 2 + IMAGE_OFFSET_X, tiki.rows / 2 + IMAGE_OFFSET_Y);
 		cv::Point markerCenter = marker.getRotatedRect().center;
-		double angleInRadians = RNUtils::linearInterpolator((float)markerCenter.x, PointXY(0, 2 * M_PI), PointXY((float)RECTIFIED_IMAGE_WIDTH, 0));
-		
+		cv::Point tikiPoint = imageCenter - markerCenter;
+		double angleInRadians = std::atan2(tikiPoint.y, tikiPoint.x) - (M_PI / 2);
+		/*double angleInRadians = RNUtils::linearInterpolator((float)markerCenter.x, PointXY(0, 2 * M_PI), PointXY((float)RECTIFIED_IMAGE_WIDTH, 0));
+		double weight;
+		if(markerCenter.x < (RECTIFIED_IMAGE_WIDTH / 2)){
+			weight = RNUtils::linearInterpolator((float)markerCenter.x, PointXY(0, 1), PointXY(((float)RECTIFIED_IMAGE_WIDTH / 2), 0));
+		} else {
+			weight = RNUtils::linearInterpolator((float)markerCenter.x, PointXY(((float)RECTIFIED_IMAGE_WIDTH / 2), 0), PointXY(RECTIFIED_IMAGE_WIDTH, 1));
+		}
+		marker.setWeight(weight);*/
 		if(angleInRadians > M_PI){
 			angleInRadians = angleInRadians - 2 * M_PI;
 		} else if(angleInRadians < -M_PI){
@@ -247,6 +252,7 @@ void RNOmnicameraTask::poseEstimation(){
 		marker.setThRad(angleInRadians);
 		//RNUtils::printLn("Marker (%d) angle: %lf", i, angleInRadians);
 	}
+
 }
 
 int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations, RNMarker &marker){
@@ -319,30 +325,31 @@ int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotati
 }
 
 int RNOmnicameraTask::hammingDistance(cv::Mat bits){
-	int ids[4][5] = {
+	int ids[2][5] = {
 		{ 1, 0, 0, 0, 1 },
 		{ 1, 0, 1, 1, 1 }
 	};
-
+	
 	int dist = 0;
+	int sum = 0;
 
-	for (int y = 0; y < 5; ){
-		int minSum = 1e5; //hamming distance to each possible word
-		for (int p = 0; p < 2; p++){
-			int sum = 0;
-			//now, count
-			for (int x = 0; x < 5; x++){
-				sum += bits.at<uchar>(y, x) == ids[p][x] ? 0 : 1;
-			}
+	//Compares the first and last row of the bit matrix with the template matrix ids
 
-			if (minSum > sum){
-				minSum = sum;
-			}
-		}
-		y += 4;
-		//do the and
-		dist += minSum;
+	for (int x = 0; x < 5; x++){
+		sum += bits.at<uchar>(0, x) == ids[0][x] ? 0 : 1;
 	}
+
+	if (1e5 > sum){
+		dist = sum;
+	}
+
+	sum = 0;
+
+	for (int x = 0; x < 5; x++){
+		sum += bits.at<uchar>(4, x) == ids[1][x] ? 0 : 1;
+	}
+
+	dist += sum;
 
 	return dist;
 }
@@ -632,7 +639,7 @@ void RNOmnicameraTask::undistortImage(cv::InputArray distorted, cv::OutputArray 
 void RNOmnicameraTask::task(){
 	//gn->lockSensorsReadings();
 	if(getFrameFromCamera(tiki) != RN_NONE){
-		undistortImage(tiki, rectified, camMatrix, distCoeff, xi, RECTIFY_CYLINDRICAL, Knew, newSize);
+		/*undistortImage(tiki, rectified, camMatrix, distCoeff, xi, RECTIFY_CYLINDRICAL, Knew, newSize);
 		tiki.release();
 		flipped.create(rectified.size(), rectified.type());
 		mapX.create(flipped.size(), CV_32FC1);
@@ -648,16 +655,16 @@ void RNOmnicameraTask::task(){
 				mapX.at<float>(j,i) = (newSize.width*1.75 - i)-1;
 				mapY.at<float>(j,i) = newSize.height - j ;
 			}
-		}
+		}*/
 
 		//Corrects flipped image      
-		cv::remap(rectified, flipped, mapX, mapY, cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+		//cv::remap(rectified, flipped, mapX, mapY, cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 		//rectified.release();
 		//mapX.release();
 		//mapY.release();
-		if (flipped.data){
+		if (tiki.data){
 			//cv::imwrite("real-1.4m.jpg", flipped);
-			rgbToGrayscale(flipped, tikiGray);
+			rgbToGrayscale(tiki, tikiGray);
 			//cv::imwrite("real-gray.jpg", tikiGray);
 			thresholding(tikiGray, tikiThreshold);
 			//contours.clear();
@@ -670,9 +677,14 @@ void RNOmnicameraTask::task(){
 			landmarks = gn->getVisualLandmarks();
 			clearLandmarks();
 			//cv::Mat rectImage = flipped.clone();
+			std::ostringstream print_str;
+			print_str.str("");
+			print_str.clear();
+			print_str << "\"Markers\": {\"Marker\": [";
 			for(size_t i = 0; i < tikiMarkers.size(); i++){
 				//drawRectangle(rectImage, tikiMarkers[i]);
 				//cv::imwrite("que ves.jpg", rectImage);
+				print_str << "{" << "\"id\": \"" << tikiMarkers.at(i).getMarkerId() << "\",\"angle\": \"" << tikiMarkers.at(i).getThRad() << "\"}";
 				RNLandmark* visualLand = new RNLandmark();
 				//RNUtils::printLn("Map Id: (%d), Sector Id (%d), Marker Id (%d) - angle: %lf", tikiMarkers.at(i).getMapId(), tikiMarkers.at(i).getSectorId(), tikiMarkers.at(i).getMarkerId(), tikiMarkers.at(i).getThRad());
 				visualLand->addPoint(0, tikiMarkers.at(i).getThRad());
@@ -680,7 +692,12 @@ void RNOmnicameraTask::task(){
 				visualLand->setSectorId(tikiMarkers.at(i).getSectorId());
 				visualLand->setMarkerId(tikiMarkers.at(i).getMarkerId());
 				landmarks->push_back(visualLand);
+				if(i < tikiMarkers.size() - 1){
+					print_str << ",";
+				}
 			}
+			print_str << "]}";
+			RNUtils::printLn("%s", print_str.str().c_str());
 			//tikiGray.release();
 			//tikiThreshold.release();
 			gn->setVisualLandmarks(landmarks);

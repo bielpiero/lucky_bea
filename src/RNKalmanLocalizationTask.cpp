@@ -1,11 +1,16 @@
 #include "RNKalmanLocalizationTask.h"
 
+const float RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.21;
+
 RNKalmanLocalizationTask::RNKalmanLocalizationTask(const char* name, const char* description) : RNLocalizationTask(name, description){
 	enableLocalization = false;
+	test = std::fopen("localization-data.txt","w+");
 }
 
 RNKalmanLocalizationTask::~RNKalmanLocalizationTask(){
-
+	if(test!= NULL){
+		std::fclose(test);
+	}
 }
 
 void RNKalmanLocalizationTask::init(){
@@ -19,9 +24,12 @@ void RNKalmanLocalizationTask::init(){
 		rfidLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_RFID_STR);
 
 		laserThresholdMatching = 0.2;
-		cameraThresholdMatching = 7.651107;
+		cameraThresholdMatching = MAX_CAMERA_ANGLE_ERROR / std::sqrt(gn->getCameraAngleVariance());
 		rfidThresholdMatching = 0.2;
 		enableLocalization = true;
+
+		gn->unlockLaserLandmarks();
+		gn->unlockVisualLandmarks();
 
 	} else{
 		enableLocalization = false;
@@ -67,7 +75,14 @@ void RNKalmanLocalizationTask::task(){
 		}
 
 		Hk = Matrix(2 * totalLandmarks, STATE_VARIABLES);
-		int laserIndex = 0, cameraIndex = laserLandmarksCount, rfidIndex = (laserLandmarksCount + cameraLandmarksCount);
+		int laserIndex = 0, cameraIndex = 0, rfidIndex = 0;
+		if(gn->isLaserSensorActivated()){
+			cameraIndex += laserLandmarksCount;
+			rfidIndex += laserLandmarksCount;
+		}
+		if(gn->isCameraSensorActivated()){
+			rfidIndex += cameraLandmarksCount;
+		}
 		for(int i = 0, zIndex = 0; i < gn->getCurrentSector()->landmarksSize(); i++){
 			if(gn->isLaserSensorActivated()){
 				if(gn->getCurrentSector()->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
@@ -103,8 +118,16 @@ void RNKalmanLocalizationTask::task(){
 		Matrix zl(2 * totalLandmarks, 1);
 
 		laserIndex = 0;
-		cameraIndex = laserLandmarksCount;
-		rfidIndex = (laserLandmarksCount + cameraLandmarksCount);
+		cameraIndex = 0; 
+		rfidIndex = 0;
+
+		if(gn->isLaserSensorActivated()){
+			cameraIndex += laserLandmarksCount;
+			rfidIndex += laserLandmarksCount;
+		}
+		if(gn->isCameraSensorActivated()){
+			rfidIndex += cameraLandmarksCount;
+		}
 		
 		if(gn->isLaserSensorActivated()){
 			gn->lockLaserLandmarks();	
@@ -170,12 +193,13 @@ void RNKalmanLocalizationTask::task(){
 						if(markerId == ((int)zkl(j, 2))){
 							zl(2 * j, 0) = 0;
 							zl(2 * j + 1, 0) = std::abs(lndmrk->getPointsYMean()) - std::abs(zkl(j, 1));
+							RNUtils::printLn("markerId: %d, Ángulo estimado: %f, BD: %f, error de posición angular: %f", markerId, lndmrk->getPointsYMean(), zkl(j, 1), zl(2 * j + 1, 0));
 						}
 					}
 				} else { 
 					std::vector<std::pair<int, float> > cameraAngleDifferences;
 					for (int j = cameraIndex; j < (cameraIndex + cameraLandmarksCount); j++){
-						float cd = std::abs((lndmrk->getPointsYMean() - zkl(j, 1))); /*/ std::sqrt(gn->getCameraAngleVariance()))*/
+						float cd = std::abs((lndmrk->getPointsYMean() - zkl(j, 1))); 
 						cameraAngleDifferences.push_back(std::pair<int, float>(j, cd));
 						//RNUtils::printLn("Mahalanobis visual Distance[%d]: %f for %f rad", j, cd, zkl(j, 1));
 					}
@@ -200,7 +224,7 @@ void RNKalmanLocalizationTask::task(){
 			//Calculates Mahalanobis distance to determine whether a measurement is acceptable.				
 			for (int i = cameraIndex; i < (cameraIndex + cameraLandmarksCount); i++){
 				float mahalanobisDistance = std::abs(zl(2 * i + 1, 0) / std::sqrt(gn->getCameraAngleVariance()));
-				//printf("Mh: (%d): %g. nu: %g\n", i, mahalanobisDistance, zl(2 * i + 1, 0));
+				printf("Mh: (%d): %g. nu: %g\n", i, mahalanobisDistance, zl(2 * i + 1, 0));
 				if (mahalanobisDistance > cameraThresholdMatching){
 					//distanceThreshold = (máxima zl que permite un buen matching)/sigma
 					zl(2 * i, 0) = 0;
@@ -269,18 +293,22 @@ void RNKalmanLocalizationTask::task(){
 
 void RNKalmanLocalizationTask::getObservations(Matrix& observations){
 	int totalLandmarks = 0;
+	int laserIndex = 0, cameraIndex = 0, rfidIndex = 0;
 	if(gn->isLaserSensorActivated()){
 		totalLandmarks += laserLandmarksCount;
+		cameraIndex += laserLandmarksCount;
+		rfidIndex += laserLandmarksCount;
 	}
 
 	if(gn->isCameraSensorActivated()){
 		totalLandmarks += cameraLandmarksCount;
+		rfidIndex += cameraLandmarksCount;
 	}
 
 	if(gn->isRfidSensorActivated()){
 		totalLandmarks += rfidLandmarksCount;
 	}
-	int laserIndex = 0, cameraIndex = laserLandmarksCount, rfidIndex = (laserLandmarksCount + cameraLandmarksCount);
+
 	Matrix result(totalLandmarks, 3);
 
 	for(int k = 0, zIndex = 0; k < gn->getCurrentSector()->landmarksSize(); k++){

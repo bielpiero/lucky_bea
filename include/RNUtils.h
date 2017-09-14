@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 #include <iostream>
+#include <iterator>
 #include <cerrno>
 #include <vector>
 #include <list>
@@ -24,8 +25,10 @@
 #include <cstdlib>
 #include <cstdarg>
 #include <cassert>
+#include <cstddef>
 #include <locale>
 #include <algorithm>
+
 
 #include "Aria.h"
 
@@ -72,7 +75,7 @@ public:
 
 	double getZ() const { return this->z; }
 	
-	void setZ(double x){ this->z = z; }
+	void setZ(double z){ this->z = z; }
 };
 
 
@@ -98,6 +101,7 @@ public: // functions
 	static std::string toLowercase(std::string str);
 	static std::string toUppercase(std::string str);
 	static void spin();
+	static void spinOnce();
 	static bool ok();
     static void shutdown();
 	static std::string getApplicationPath();
@@ -110,6 +114,10 @@ public: // functions
 
 	static float linearInterpolator(const float& x, const PointXY& p1, const PointXY& p2);
 	static float quadraticInterpolator(const float& x, const PointXY& p1, const PointXY& p2, const PointXY& x3);
+
+	static double deg2Rad(double degrees);
+	static double rad2Deg(double rad);
+
 	static double milliwattsTodBm(const double& milliwatts);
 	static double dBmTomilliwatts(const double& dBm);
 

@@ -23,8 +23,10 @@ private:
 	std::vector<cv::Point2f> markerPoints;
 	int contourIdx;
 	double area;
+	double weight;
 	double angleInRadians;
 	cv::RotatedRect rect;
+
 public:
 	RNMarker(){ 
 		mapId = RN_NONE;
@@ -37,10 +39,12 @@ public:
 	void setMarkerPoints(std::vector<cv::Point2f> markerPoints) { this->markerPoints = markerPoints; }
 	void setContourIdx(unsigned int contourIdx) { this->contourIdx = contourIdx; }
 	void setArea(double area) { this->area = area; }
+	void setWeight(double weight) { this->weight = weight; }
 	void setThRad(double angle) { this->angleInRadians = angle; }
 	void setRotatedRect(cv::RotatedRect rect) { this->rect = rect; }
 
 	double getArea() { return this->area; }
+	double getWeight() { return this->weight; }
 	double getThRad() { return this->angleInRadians; }
 	int getContourIdx() { return this->contourIdx; }
 	cv::RotatedRect getRotatedRect() { return this->rect;}
@@ -100,8 +104,11 @@ private:
 private:
 	CURL* curl;
 	CURLcode res;
+	std::vector<char> data;
 	std::ostringstream cameraStream;
+
 	static const std::string cameraUrl;
+
 	float minContourLengthAllowed;
 	float maxContourLengthAllowed;
 	std::vector<cv::Point2f> markerCorners2d;

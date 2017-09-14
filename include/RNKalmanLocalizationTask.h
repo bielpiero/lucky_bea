@@ -17,7 +17,7 @@ private:
 	void getObservations(Matrix& observations);
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
 private:
-	
+	static const float MAX_CAMERA_ANGLE_ERROR;
 	int laserLandmarksCount;
 	int cameraLandmarksCount;
 	int rfidLandmarksCount;
@@ -27,6 +27,8 @@ private:
 	float rfidThresholdMatching;
 
 	bool enableLocalization;
+
+	std::FILE* test;
 
 	Matrix Ak;
 	Matrix Bk;

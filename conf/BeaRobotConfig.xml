@@ -16,7 +16,7 @@
 					<th-zone x1="-0.04" x2="-0.02" x3="0.0351" x4="0.04"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
-			<sensor type="camera" activated="1">
+			<sensor type="camera" activated="0">
 				<observation-noise>
 					<d-zone x1="-4" x2="-2" x3="3" x4="4"/>  <!-- centimeters -->
 					<th-zone x1="-0.05" x2="-0.04" x3="0.04" x4="0.05"/> <!-- radians -->

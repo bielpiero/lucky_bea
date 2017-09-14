@@ -40,6 +40,7 @@ RobotNode::RobotNode(const char* port){
     wasDeactivated = false;
     doNotMove = false;
 
+    this->driftFactorIncrement = 0;
     this->prevLeftEncoderData = 0;
     this->prevRightEncoderData = 0;
     this->isFirstFakeEstimation = true;
@@ -50,11 +51,11 @@ RobotNode::RobotNode(const char* port){
 
     robot->requestEncoderPackets();
     myRawPose = new ArPose(0.0, 0.0, 0.0);
-    
+
     gotoPoseAction = new RNActionGoto;
  	robot->addAction(gotoPoseAction, 89);
 
- 	laserConnector = new ArLaserConnector(argparser, robot, connector);
+ 	/*laserConnector = new ArLaserConnector(argparser, robot, connector);
 	if(!laserConnector->connectLasers(false, false, true)){
 		printf("Could not connect to configured lasers.\n");
 	}
@@ -64,19 +65,18 @@ RobotNode::RobotNode(const char* port){
 		printf("Error. Not Connected to any laser.\n");
 	} else {
 		printf("Connected to SICK LMS200 laser.\n");
-	}
+	}*/
     this->keepActiveSecurityDistanceTimerThread = RN_NO;
     this->keepActiveSensorDataThread = RN_NO;
     this->keepActiveLaserDataThread = RN_NO;
 
     pthread_mutex_init(&mutexRawPositionLocker, NULL);
     pthread_mutex_init(&mutexSensorsReadingsLocker, NULL);
-
     pthread_create(&sensorDataThread, NULL, dataPublishingThread, (void *)(this)  );
     pthread_create(&laserDataThread, NULL, laserPublishingThread, (void *)(this)  );
     printf("Connection Timeout: %d\n", robot->getConnectionTimeoutTime());
     printf("TicksMM: %d, DriftFactor: %d, RevCount: %d\n", getTicksMM(), getDriftFactor(), getRevCount());
-    printf("DiffConvFactor: %f, DistConvFactor: %f, AngleConvFactor: %f\n", getDiffConvFactor(), getDistConvFactor(), getAngleConvFactor());
+    printf("DiffConvFactor: %f, DistConvFactor: %f, VelocityConvFactor: %f, AngleConvFactor: %f\n", getDiffConvFactor(), getDistConvFactor(), getVelConvFactor(), getAngleConvFactor());
     
     pthread_create(&distanceTimerThread, NULL, securityDistanceTimerThread, (void *)(this)  );
 
@@ -340,109 +340,125 @@ void RobotNode::computePositionFromEncoders(){
     long int rightEncoderData = getRightEncoder();
     long int leftEncoderData = getLeftEncoder();
 
+    //RNUtils::printLn("encoders: {R: %ld, L: %ld}", rightEncoderData, leftEncoderData);
+    
     if(isFirstFakeEstimation){
         prevRightEncoderData = rightEncoderData;
         prevLeftEncoderData = leftEncoderData;
         isFirstFakeEstimation = false;
     }
+    
+    deltaLeftMM = deltaRightMM = 0;
 
-    double newLeftEncoderData = (double)leftEncoderData;
-    double newRightEncoderData = (double)rightEncoderData;
-    double newPrevLeftEncoderData = (double)prevLeftEncoderData;
-    double newPrevRightEncoderData = (double)prevRightEncoderData;
-
-    bool resultCheck[4];
+    short resultCheck[4];
     resultCheck[0] = checkForwardLimitTransition(prevLeftEncoderData, leftEncoderData);
     resultCheck[1] = checkBackwardLimitTransition(prevLeftEncoderData, leftEncoderData);
     resultCheck[2] = checkForwardLimitTransition(prevRightEncoderData, rightEncoderData);
     resultCheck[3] = checkBackwardLimitTransition(prevRightEncoderData, rightEncoderData);
 
+    if(resultCheck[0] == LOWER_LIMIT_TRANSITION){
+        deltaLeftMM = std::abs(prevLeftEncoderData) + std::abs(leftEncoderData);
+    } else if(resultCheck[0] == UPPER_LIMIT_TRANSITION){
+        deltaLeftMM = std::abs(FULL_ENCODER_TICKS - prevLeftEncoderData) + std::abs(-FULL_ENCODER_TICKS - leftEncoderData);
+    } else {
+        deltaLeftMM = leftEncoderData - prevLeftEncoderData;
+    }   
 
-    if(resultCheck[0] == false and resultCheck[1] == false and resultCheck[2] == false and resultCheck[3] == true){
-        newPrevRightEncoderData = (double)prevRightEncoderData + (2 * FULL_ENCODER_TICKS);
-
-    } 
-    if(resultCheck[0] == false and resultCheck[1] == false and resultCheck[2] == true and resultCheck[3] == false){
-        newPrevRightEncoderData = (double)prevRightEncoderData - (2 * FULL_ENCODER_TICKS);
-
-    } 
-    if(resultCheck[0] == false and resultCheck[1] == true and resultCheck[2] == false and resultCheck[3] == false){
-        newPrevLeftEncoderData = (double)prevLeftEncoderData + (2 * FULL_ENCODER_TICKS);
-
-    } 
-    if(resultCheck[0] == false and resultCheck[1] == true and resultCheck[2] == false and resultCheck[3] == true){
-        newPrevRightEncoderData = (double)prevRightEncoderData + (2 * FULL_ENCODER_TICKS);
-        newPrevLeftEncoderData = (double)prevLeftEncoderData + (2 * FULL_ENCODER_TICKS);
-
-    } 
-    if(resultCheck[0] == false and resultCheck[1] == true and resultCheck[2] == true and resultCheck[3] == false){
-        newPrevRightEncoderData = (double)prevRightEncoderData - (2 * FULL_ENCODER_TICKS);
-        newPrevLeftEncoderData = (double)prevLeftEncoderData + (2 * FULL_ENCODER_TICKS);
-
-    } 
-    if(resultCheck[0] == true and resultCheck[1] == false and resultCheck[2] == false and resultCheck[3] == false){
-        newPrevLeftEncoderData = (double)prevLeftEncoderData - (2 * FULL_ENCODER_TICKS);
-
-    } 
-    if(resultCheck[0] == true and resultCheck[1] == false and resultCheck[2] == false and resultCheck[3] == true){
-        newPrevRightEncoderData = (double)prevRightEncoderData - (2 * FULL_ENCODER_TICKS);
-        newPrevLeftEncoderData = (double)prevLeftEncoderData + (2 * FULL_ENCODER_TICKS);
-
-    } 
-    if(resultCheck[0] == true and resultCheck[1] == false and resultCheck[2] == true and resultCheck[3] == false){
-        newPrevRightEncoderData = (double)prevRightEncoderData - (2 * FULL_ENCODER_TICKS);
-        newPrevLeftEncoderData = (double)prevLeftEncoderData - (2 * FULL_ENCODER_TICKS);
-
+    if(resultCheck[1] == LOWER_LIMIT_TRANSITION or resultCheck[1] == RN_MOVEMENT){
+        deltaLeftMM = leftEncoderData - prevLeftEncoderData;
+    } else if(resultCheck[1] == UPPER_LIMIT_TRANSITION){
+        deltaLeftMM = -(std::abs(-FULL_ENCODER_TICKS - prevLeftEncoderData) + std::abs(FULL_ENCODER_TICKS - leftEncoderData));
     }
 
-    double deltaLeftMM = (newLeftEncoderData - newPrevLeftEncoderData)/((double)getTicksMM());
-    double deltaRightMM = (newRightEncoderData - newPrevRightEncoderData)/((double)getTicksMM());
 
-    double deltaLeftRad = ((newLeftEncoderData - newPrevLeftEncoderData) * getAngleConvFactor());
-    double deltaRightRad = ((newRightEncoderData - newPrevRightEncoderData) * getAngleConvFactor());
+    if(resultCheck[2] == LOWER_LIMIT_TRANSITION){
+        deltaRightMM = std::abs(prevRightEncoderData) + std::abs(rightEncoderData);
+    } else if(resultCheck[2] == UPPER_LIMIT_TRANSITION){
+        deltaRightMM = std::abs(FULL_ENCODER_TICKS - prevRightEncoderData) + std::abs(-FULL_ENCODER_TICKS - rightEncoderData);
+    } else{
+        deltaRightMM = rightEncoderData - prevRightEncoderData;
+    }
+
+    if(resultCheck[3] == LOWER_LIMIT_TRANSITION or resultCheck[3] == RN_MOVEMENT){
+        deltaRightMM = rightEncoderData - prevRightEncoderData;
+    } else if(resultCheck[3] == UPPER_LIMIT_TRANSITION){
+        deltaRightMM = -(std::abs(-FULL_ENCODER_TICKS - prevRightEncoderData) + std::abs(FULL_ENCODER_TICKS - rightEncoderData));
+    }
+
+    //RNUtils::printLn("delta: {R: %d, L: %d}, DFI: %d", deltaRightMM, deltaLeftMM, (deltaLeftMM * getDriftFactor()) / DRIFT_FACTOR_TICKS);
+    deltaLeftMM += (deltaLeftMM * getDriftFactor()) / DRIFT_FACTOR_TICKS;
+    /*if(driftFactorIncrement >= DRIFT_FACTOR_TICKS){
+        int dfi = (driftFactorIncrement * getDriftFactor()) / DRIFT_FACTOR_TICKS;
+        RNUtils::printLn("DFI: %d", dfi);
+        deltaLeftMM += dfi;
+        driftFactorIncrement = 0;
+    }
+
+    driftFactorIncrement += std::abs(deltaLeftMM);*/
+
+    //RNUtils::printLn("encoders: {FL: %d, FR: %d, BL: %d, BR: %d}", resultCheck[0], resultCheck[2], resultCheck[1], resultCheck[3]);
     
+    //RNUtils::printLn("delta: {R: %d, L: %d}, DFI: %d", deltaRightMM, deltaLeftMM, driftFactorIncrement);
+    RNUtils::printLn("delta: {R: %d, L: %d}", deltaRightMM, deltaLeftMM);
 
-    deltaDistance = (deltaLeftMM + deltaRightMM) / 2.0;
-    deltaDegrees = robot->getPose().getThRad() - myRawPose->getThRad();
-    //deltaDegrees = (deltaRightRad - deltaLeftRad) * robotLength;
-
+    deltaDistance = ((deltaLeftMM + deltaRightMM) / 2) / getTicksMM();
+    //deltaDegrees = robot->getPose().getThRad() - myRawPose->getThRad();
+    deltaDegrees = round(((float)(-deltaLeftMM + deltaRightMM)) * getEncoderScaleFactor()) / robot->getRobotWidth();
+    /*if(std::abs(deltaDegrees) < getAngleConvFactor()){
+        deltaDegrees = 0.0;
+    }*/
+    
     getRawPoseFromOdometry();
-
+    RNUtils::printLn("pose-Robot: {%f, %f, %f}, pose-Raw: {%f, %f, %f}, delta: {%f, %f}", robot->getPose().getX(), robot->getPose().getY(), robot->getPose().getThRad(), myRawPose->getX(), myRawPose->getY(), myRawPose->getThRad(), deltaDistance, deltaDegrees);
     prevRightEncoderData = rightEncoderData;
     prevLeftEncoderData = leftEncoderData;
 }
 
 
-bool RobotNode::checkForwardLimitTransition(double enc_k, double enc_k_1){
-    bool result = false;
-    if(enc_k > enc_k_1){
-        if((enc_k > (FULL_ENCODER_TICKS/2) and enc_k <= (FULL_ENCODER_TICKS - 1)) and (enc_k_1 >= -FULL_ENCODER_TICKS and enc_k_1 < -(FULL_ENCODER_TICKS/2))){
-            result = true;
-        }
+short RobotNode::checkForwardLimitTransition(double enc_k, double enc_k_1){
+    short result = NO_MOVEMENT;
+    
+    if((enc_k > (FULL_ENCODER_TICKS/2) and enc_k <= (FULL_ENCODER_TICKS - 1)) and (enc_k_1 >= -FULL_ENCODER_TICKS and enc_k_1 < -(FULL_ENCODER_TICKS/2))){
+        result = UPPER_LIMIT_TRANSITION;
+    } else if((enc_k > -(FULL_ENCODER_TICKS/2) and enc_k <= 0) and (enc_k_1 >= 0 and enc_k_1 < (FULL_ENCODER_TICKS/2))){
+        result = LOWER_LIMIT_TRANSITION;
+    } else if(enc_k_1 > enc_k and ((enc_k > 0 and enc_k_1 > 0) or (enc_k < 0 and enc_k_1 < 0))){
+        result = RN_MOVEMENT;
     }
+    
     return result;
 }
 
-bool RobotNode::checkBackwardLimitTransition(double enc_k, double enc_k_1){
-    bool result = false;
-    if(enc_k_1 > enc_k){
-        if((enc_k >= -FULL_ENCODER_TICKS and enc_k < -(FULL_ENCODER_TICKS/2)) and (enc_k_1 > (FULL_ENCODER_TICKS/2) and enc_k_1 <= (FULL_ENCODER_TICKS-1))){
-            result = true;
-        }
+short RobotNode::checkBackwardLimitTransition(double enc_k, double enc_k_1){
+    short result = NO_MOVEMENT;
+    
+    if((enc_k >= -FULL_ENCODER_TICKS and enc_k < -(FULL_ENCODER_TICKS/2)) and (enc_k_1 > (FULL_ENCODER_TICKS/2) and enc_k_1 <= (FULL_ENCODER_TICKS-1))){
+        result = UPPER_LIMIT_TRANSITION;
+    } else if((enc_k >= 0 and enc_k < (FULL_ENCODER_TICKS/2)) and (enc_k_1 > -(FULL_ENCODER_TICKS/2) and enc_k_1 <= 0)){
+        result = LOWER_LIMIT_TRANSITION;
+    } else if(enc_k > enc_k_1 and ((enc_k > 0 and enc_k_1 > 0) or (enc_k < 0 and enc_k_1 < 0))){
+        result = RN_MOVEMENT;
     }
+    
     return result;
 }
 
 void RobotNode::getRawPoseFromOdometry(){
     double x = 0, y = 0, th = 0;
     pthread_mutex_lock(&mutexRawPositionLocker);
-    x = myRawPose->getX() + (deltaDistance * cos(myRawPose->getThRad() + deltaDegrees/2.0));
-    y = myRawPose->getY() + (deltaDistance * sin(myRawPose->getThRad() + deltaDegrees/2.0));
+    //th = myRawPose->getThRad() + deltaDegrees;
+    double dx = (deltaDistance * std::cos(deltaDegrees));
+    double dy = (deltaDistance * std::sin(deltaDegrees));
+    printf("{dx: %lf, dy:%lf}\n", dx, dy);
+    x = myRawPose->getX() + (dx * std::cos(myRawPose->getThRad())) + (dy * std::sin(myRawPose->getThRad()));
+    y = myRawPose->getY() + (dx * std::sin(myRawPose->getThRad())) + (dy * std::cos(myRawPose->getThRad()));
     th = myRawPose->getThRad() + deltaDegrees;
+    
+    
     pthread_mutex_unlock(&mutexRawPositionLocker);
-    this->setPosition(x / 1000.0, y / 1000.0, th);
+    //this->setPosition(x / 1000.0, y / 1000.0, th);
 
-    //myRawPose->setPose(x, y, th * 180 / M_PI);
+    myRawPose->setPose(x, y, RNUtils::rad2Deg(th));
     //pthread_mutex_unlock(&mutexRawPositionLocker);
 
 }
@@ -466,7 +482,7 @@ int RobotNode::getDriftFactor(){
 }
 
 int RobotNode::getRevCount(){
-    return robot->getOrigRobotConfig()->getRevCount();
+    return (2 * robot->getOrigRobotConfig()->getRevCount());
 }
 
 int RobotNode::getTicksMM(){
@@ -481,6 +497,10 @@ double RobotNode::getDistConvFactor(){
     return robot->getRobotParams()->getDistConvFactor();
 }
 
+double RobotNode::getVelConvFactor(){
+    return robot->getRobotParams()->getVelConvFactor();
+}
+
 double RobotNode::getAngleConvFactor(){
     return robot->getRobotParams()->getAngleConvFactor();
 }
@@ -491,6 +511,22 @@ long int RobotNode::getRightEncoder(){
 
 long int RobotNode::getLeftEncoder(){
     return robot->getLeftEncoder();
+}
+
+double RobotNode::getEncoderX(){
+    return robot->getEncoderX();
+}
+
+double RobotNode::getEncoderY(){
+    return robot->getEncoderY();
+}
+
+double RobotNode::getEncoderTh(){
+    return robot->getEncoderTh();
+}
+
+double RobotNode::getEncoderScaleFactor(){
+    return (((double)WHEEL_DIAMETER_MM) * M_PI / (double)getRevCount());
 }
 
 double RobotNode::getDeltaDegrees(){
@@ -512,7 +548,7 @@ void RobotNode::getBatterChargeStatus(void){
 void* RobotNode::dataPublishingThread(void* object){
     RobotNode* self = (RobotNode*)object;
     self->keepActiveSensorDataThread = RN_YES;
-    ArUtil::sleep(2000);
+    ArUtil::sleep(500);
     while(RNUtils::ok() and self->keepActiveSensorDataThread == RN_YES){
         self->getRawRobotPosition();
         self->getBatterChargeStatus();

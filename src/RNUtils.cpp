@@ -91,6 +91,10 @@ void RNUtils::spin(){
 	}
 }
 
+void RNUtils::spinOnce(){
+	sleep(2000);
+}
+
 bool RNUtils::ok(){
 	return RNUtils::status;
 }
@@ -231,8 +235,16 @@ double RNUtils::dBmTomilliwatts(const double& dBm){
 	return (std::pow(10, ((double)dBm) / 10));
 }
 
+double RNUtils::deg2Rad(double degrees){
+	return (degrees * M_PI / 180.0);
+}
+
+double RNUtils::rad2Deg(double rad){
+	return (rad * 180.0 / M_PI);
+}
+
 float RNUtils::linearInterpolator(const float& x, const PointXY& p1, const PointXY& p2){
-	return (((x - p1.getX())/(p2.getX() - p1.getX()) * (p2.getY() - p1.getY())) + p1.getX());
+	return (((x - p1.getX())/(p2.getX() - p1.getX()) * (p2.getY() - p1.getY())) + p1.getY());
 }
 
 float RNUtils::quadraticInterpolator(const float& x, const PointXY& p1, const PointXY& p2, const PointXY& p3){

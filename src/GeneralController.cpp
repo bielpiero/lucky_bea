@@ -23,7 +23,7 @@ const float AntennaData::TX_POWER_INDEX_MULTIPLIER = 0.25;
 
 GeneralController::GeneralController(const char* port):RobotNode(port){
 	
-	this->maestroControllers = new SerialPort();
+	//this->maestroControllers = new SerialPort();
 
 	tokenRequester = RN_NONE;
 	this->setTokenOwner(RN_NONE);
@@ -46,7 +46,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
     this->lastSiteVisitedIndex = RN_NONE;
 	laserLandmarks = new std::vector<RNLandmark*>();
 	visualLandmarks = new std::vector<RNLandmark*>();
-	kalmanFuzzy = new std::vector<fuzzy::Trapezoid*>();
+	kalmanFuzzy = new std::vector<fl::Trapezoid*>();
 	
 	robotState = Matrix(3, 1);
 	robotEncoderPosition = Matrix(3, 1);
@@ -67,7 +67,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	//std::string servo_positions;
 	//setGesture("26", servo_positions);
-	ttsLipSync = new DorisLipSync(this->maestroControllers, RNUtils::getApplicationPath());
+	//ttsLipSync = new DorisLipSync(this->maestroControllers, RNUtils::getApplicationPath());
 	//ttsLipSync->textToViseme("Hola, ya estoy lista para funcionar");
 	this->currentMapId = RN_NONE;
 	this->currentSector = NULL;
@@ -80,25 +80,25 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
-	omnidirectionalTask = new RNOmnicameraTask("Omnidirectional Task");
-	dialogs = new RNDialogsTask(ttsLipSync);
-	gestures = new RNGesturesTask(this->maestroControllers);
+	//omnidirectionalTask = new RNOmnicameraTask("Omnidirectional Task");
+	//dialogs = new RNDialogsTask(ttsLipSync);
+	//gestures = new RNGesturesTask(this->maestroControllers);
 	//emotions = new RNEmotionsTask();
 	//eyesCameras = new RNCameraTask();
 
-	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
+	/*if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
 		localization = new RNKalmanLocalizationTask();
 	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PF_STR){
 		localization = new RNPFLocalizationTask();
-	}
-	rfidTask = new RNRFIdentificationTask();
+	}*/
+	//rfidTask = new RNRFIdentificationTask();
 
 	////Tasks added:
-	tasks->addTask(omnidirectionalTask);
-	tasks->addTask(dialogs);
-	tasks->addTask(gestures);
+	//tasks->addTask(omnidirectionalTask);
+	//tasks->addTask(dialogs);
+	//tasks->addTask(gestures);
 	//tasks->addTask(emotions);
-	tasks->addTask(localization);
+	//tasks->addTask(localization);
 	//tasks->addTask(eyesCameras);
 	//tasks->addTask(rfidTask);
 	
@@ -355,10 +355,14 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x13:
 			if(granted){
 				getPositions(cad, x, y, theta);
-				localization->kill();
+				if(localization != NULL){
+					localization->kill();
+				}
 				if(currentSector != NULL){
 					setRobotPosition(x, y, theta);
-					localization->reset();
+					if(localization != NULL){
+						localization->reset();
+					}
 					sendMsg(socketIndex, 0x13, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 				} else {
 					RNUtils::printLn("Command 0x13. No current sector available to set robot position to ", getClientIPAddress(socketIndex));
@@ -389,9 +393,15 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(granted){
 				getMapSectorId(cad, mapId, sectorId);
 				this->currentMapId = mapId;
-				localization->kill();
+				if(localization != NULL){
+					localization->kill();	
+				}
+				
 				loadSector(mapId, sectorId);
-				localization->reset();
+				if(localization != NULL){
+					localization->reset();	
+				}
+				
 				sendMsg(socketIndex, 0x16, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				RNUtils::printLn("Command 0x16. Setting Map into Robot denied to %s", getClientIPAddress(socketIndex));
@@ -985,7 +995,7 @@ void GeneralController::setGesture(std::string face_id, std::string& servo_posit
 					pthread_t t1;
 					continue_dynamic_thread = true;
 					
-					pthread_create(&t1,NULL, GeneralController::dynamicFaceThread, (void *)(data));
+					pthread_create(&t1, NULL, GeneralController::dynamicFaceThread, (void *)(data));
 				}
 			}
 		}
@@ -1201,7 +1211,6 @@ void GeneralController::loadSector(int mapId, int sectorId){
 					}
 				}
 				
-				
 				if(sites_root_node->first_node() !=  NULL){
 					for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
 						s_site* tempSite = new s_site;
@@ -1227,6 +1236,7 @@ void GeneralController::loadSector(int mapId, int sectorId){
     }
 
     the_file.close();
+
 }
 
 void GeneralController::loadRobotConfig(){
@@ -2305,7 +2315,7 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 	robotEncoderPosition(0, 0) = x;
 	robotEncoderPosition(1, 0) = y;
 	robotEncoderPosition(2, 0) = theta;
-	
+
 	robotVelocity(0, 0) = transSpeed;
 	robotVelocity(1, 0) = rotSpeed;
 	if(currentSector != NULL){
@@ -2579,15 +2589,15 @@ int GeneralController::initializeKalmanVariables(){
 
 		int totalLandmarks = 0;
 
-		fuzzy::Trapezoid* xxKK = new fuzzy::Trapezoid("Xx(k|k)", robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
+		fl::Trapezoid* xxKK = new fl::Trapezoid("Xx(k|k)", robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
 		
-		fuzzy::Trapezoid* xyKK = new fuzzy::Trapezoid("Xy(k|k)", robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
+		fl::Trapezoid* xyKK = new fl::Trapezoid("Xy(k|k)", robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
 		
-		fuzzy::Trapezoid* xThKK = new fuzzy::Trapezoid("XTh(k|k)", robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x1, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x2, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x3, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x4);	
+		fl::Trapezoid* xThKK = new fl::Trapezoid("XTh(k|k)", robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x1, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x2, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x3, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x4);	
 		
-		fuzzy::Trapezoid* vdK1 = new fuzzy::Trapezoid("Vd(k + 1)", robotConfig->navParams->processNoise->dZone->x1, robotConfig->navParams->processNoise->dZone->x2, robotConfig->navParams->processNoise->dZone->x3, robotConfig->navParams->processNoise->dZone->x4);
+		fl::Trapezoid* vdK1 = new fl::Trapezoid("Vd(k + 1)", robotConfig->navParams->processNoise->dZone->x1, robotConfig->navParams->processNoise->dZone->x2, robotConfig->navParams->processNoise->dZone->x3, robotConfig->navParams->processNoise->dZone->x4);
 		
-		fuzzy::Trapezoid* vThK1 = new fuzzy::Trapezoid("VTh(k + 1)", robotConfig->navParams->processNoise->thZone->x1, robotConfig->navParams->processNoise->thZone->x2, robotConfig->navParams->processNoise->thZone->x3, robotConfig->navParams->processNoise->thZone->x4);	
+		fl::Trapezoid* vThK1 = new fl::Trapezoid("VTh(k + 1)", robotConfig->navParams->processNoise->thZone->x1, robotConfig->navParams->processNoise->thZone->x2, robotConfig->navParams->processNoise->thZone->x3, robotConfig->navParams->processNoise->thZone->x4);	
 
 		uX = fuzzy::FStats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
 		uY = fuzzy::FStats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
@@ -2620,11 +2630,15 @@ int GeneralController::initializeKalmanVariables(){
 				
 				laserUX = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
 				laserUTh = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+				//laserUX = 0.1355e-3;      //forced meanwhile
+				//laserUTh = 0.3206e-3;
 
 			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
 				
 				cameraUX = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
-				cameraUTh = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+				//cameraUTh = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+
+				cameraUTh = 0.00022;   //forced meanwhile
 
 				cameraAngleVariance = cameraUTh;
 
@@ -2646,9 +2660,16 @@ int GeneralController::initializeKalmanVariables(){
 		if(rfidSensorActivated){
 			totalLandmarks += rfidLandmarksCount;
 		}
-
+ 		
 		R = Matrix(2 * totalLandmarks, 2 * totalLandmarks);
-		int laserIndex = 0, cameraIndex = laserLandmarksCount, rfidIndex = (laserLandmarksCount + cameraLandmarksCount);
+		int laserIndex = 0, cameraIndex = 0, rfidIndex = 0;
+		if(laserSensorActivated){
+			cameraIndex += laserLandmarksCount;
+			rfidIndex += laserLandmarksCount;
+		}
+		if(cameraSensorActivated){
+			rfidIndex += cameraLandmarksCount;
+		}
 
 		for(int i = 0; i < currentSector->landmarksSize(); i++){
 			if(laserSensorActivated){
@@ -2675,7 +2696,6 @@ int GeneralController::initializeKalmanVariables(){
 				}
 			}
 		}
-
 		kalmanFuzzy->clear();
 		kalmanFuzzy->push_back(xxKK);
 		kalmanFuzzy->push_back(xyKK);
@@ -2783,24 +2803,6 @@ void GeneralController::setRFIDLandmarks(std::vector<RNLandmark*>* landmarks){
 
 PointXY GeneralController::getNextSectorCoord(){
 	return this->nextSectorCoord;
-}
-
-void* GeneralController::trackRobotThread(void* object){
-	GeneralController* self = (GeneralController*)object;
-		
-	self->keepRobotTracking = RN_YES;
-	float alpha = self->robotConfig->navParams->alpha;
-	Matrix Ak = Matrix::eye(3);
-	Matrix Bk(3, 2);
-	Matrix pk1;
-	Matrix Hk;
-	Matrix Pk = self->P;
-	
-	while(RNUtils::ok() and self->keepRobotTracking == RN_YES){
-		
-	}
-	self->keepRobotTracking = RN_NO;
-	return NULL;
 }
 
 bool GeneralController::isFirstQuadrant(float angle){

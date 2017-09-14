@@ -2,6 +2,8 @@
 #define RN_PID_CONTROLLER_H
 
 #include <string.h>
+#include <limits>
+#include <cmath>
 
 class RNPIDController{
 public:
@@ -25,11 +27,16 @@ public:
 	double getTarget(void);
 	void setTarget(double target);
 
+	double getLastInput(void);
+	void reset(void);
+
 private:
 	char* name;
 	double kp;
 	double ti;
 	double td;
+
+	bool firstIteration;
 
 	double setPoint;
 

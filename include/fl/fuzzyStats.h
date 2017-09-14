@@ -1,7 +1,8 @@
 #ifndef FUZZY_FSTATS_H
 #define FUZZY_FSTATS_H
 
-#include "fl/mf/mf.h"
+#include "fl/term/Term.h"
+#include "stats.h"
 
 namespace fuzzy{
 
@@ -10,8 +11,8 @@ namespace fuzzy{
 		static float area(float x1, float x2, float x3, float x4);
 	public:
 		
-		static float evaluateMF(MF* member, float value);
-		static std::vector<float> evaluateMF(MF* member, std::vector<float> values);
+		static float evaluateMF(fl::Term* member, float value);
+		static std::vector<float> evaluateMF(fl::Term* member, std::vector<float> values);
 		
 		static float expectation(float x1, float x2, float x3, float x4);
 		static float expectation(std::vector<float> evaluatedMembership, std::vector<float> values);
