@@ -40,6 +40,50 @@
 #define RN_NO 0
 #define MAYBE 2
 
+template <class T1, class T2, class T3>
+class Trio{
+private:
+	T1 first;
+	T2 second;
+	T3 third;
+public:
+	Trio() : first(), second(), third() { }
+	Trio(const T1 a, const T2 b, const T3 c) : first(a), second(b), third(c) { }
+	Trio(const Trio<T1, T2, T3>& p) : first(p.first), second(p.second), third(p.third) { }
+
+	void setFirst(T1 v){
+		first = v;
+	}
+
+	void setSecond(T2 v){
+		second = v;
+	}
+
+	void setThird(T3 v){
+		third = v;
+	}
+
+	T1 getFirst(){
+		return first;
+	}
+
+	T2 getSecond(){
+		return second;
+	}
+
+	T3 getThird(){
+		return third;
+	}
+
+	Trio& operator=(const Trio<T1, T2, T3>& p){
+		this->first = p.first;
+		this->second = p.second;
+		this->third = p.third;
+
+		return *this;
+	}
+};
+
 class PointXY{
 private:
 	double x, y;

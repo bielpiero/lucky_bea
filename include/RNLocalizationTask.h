@@ -2,7 +2,7 @@
 #define RN_LOCALIZATION_TASK_H
 
 #include "RNRecurrentTask.h"
-#include "RNLandmark.h"
+#include "RNLandmarkList.h"
 #include "Matrix.h"
 
 #define STATE_VARIABLES 3
@@ -18,6 +18,7 @@ public:
 protected:
 	virtual void task() = 0;
 	virtual void onKilled() = 0;
+	virtual void estimateGlobalPosition() = 0;
 public:
 	virtual void init() = 0;
 };

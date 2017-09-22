@@ -36,6 +36,10 @@ void RNKalmanLocalizationTask::init(){
 	}
 }
 
+void RNKalmanLocalizationTask::estimateGlobalPosition(){
+	std::vector<Trio<int, int, int> > *location;
+}
+
 void RNKalmanLocalizationTask::onKilled(){
 	enableLocalization = false;
 }
@@ -138,6 +142,7 @@ void RNKalmanLocalizationTask::task(){
 				std::vector<std::pair<int, float> > euclideanDistances;
 				for (int j = laserIndex; j < cameraIndex; j++){
 					float ed = std::sqrt(std::pow(zkl(j, 0), 2) + std::pow(lndmrk->getPointsXMean(), 2) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
+					//ed = ed / std::sqrt(gn->getCameraAngleVariance());
 					euclideanDistances.push_back(std::pair<int, float>(j, ed));
 					//RNUtils::printLn("Euclidean Distance[%d]: %f", j, euclideanDistances.at(j));	
 				}

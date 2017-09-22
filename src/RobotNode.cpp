@@ -55,7 +55,7 @@ RobotNode::RobotNode(const char* port){
     gotoPoseAction = new RNActionGoto;
  	robot->addAction(gotoPoseAction, 89);
 
- 	/*laserConnector = new ArLaserConnector(argparser, robot, connector);
+ 	laserConnector = new ArLaserConnector(argparser, robot, connector);
 	if(!laserConnector->connectLasers(false, false, true)){
 		printf("Could not connect to configured lasers.\n");
 	}
@@ -65,7 +65,7 @@ RobotNode::RobotNode(const char* port){
 		printf("Error. Not Connected to any laser.\n");
 	} else {
 		printf("Connected to SICK LMS200 laser.\n");
-	}*/
+	}
     this->keepActiveSecurityDistanceTimerThread = RN_NO;
     this->keepActiveSensorDataThread = RN_NO;
     this->keepActiveLaserDataThread = RN_NO;
@@ -337,11 +337,49 @@ void RobotNode::getSonarsScan(void){
 }
 
 void RobotNode::computePositionFromEncoders(){
-    long int rightEncoderData = getRightEncoder();
+    double currentDistance = robot->getOdometerDistance();
+    double currentRads = RNUtils::deg2Rad(robot->getOdometerDegrees());
+
+    double currentVel = robot->getVel();
+    double currentRotVel = robot->getRotVel();
+    
+    //RNUtils::printLn("odometer: {d: %lf, th: %lf}, vel: {lin: %lf, rot: %lf}", currentDistance, currentRads, robot->getVel(), robot->getRotVel());
+
+    if(isFirstFakeEstimation){
+        prevDistance = currentDistance;
+        prevRads = currentRads;
+        prevVel = currentVel;
+        prevRotVel = currentRotVel;
+        isFirstFakeEstimation = false;
+    }
+
+    deltaDistance = currentDistance - prevDistance;
+    deltaDegrees = currentRads - prevRads;
+
+    if(robot->getVel() < 0){
+        deltaDistance *= -1.0;
+    }
+
+    if(currentRotVel < 0){
+        if(deltaDegrees > 0){
+            deltaDegrees *= -1.0;    
+        }
+    }
+
+    getRawPoseFromOdometry();
+    //RNUtils::printLn("pose-Robot: {%f, %f, %f}, pose-Raw: {%f, %f, %f}, delta: {%f, %f}", robot->getPose().getX(), robot->getPose().getY(), robot->getPose().getThRad(), myRawPose->getX(), myRawPose->getY(), myRawPose->getThRad(), deltaDistance, deltaDegrees);
+    prevVel = currentVel;
+    prevRotVel = currentRotVel;
+    prevDistance = currentDistance;
+    prevRads = currentRads;
+
+    robot->resetTripOdometer();
+    /*long int rightEncoderData = getRightEncoder();
     long int leftEncoderData = getLeftEncoder();
 
-    //RNUtils::printLn("encoders: {R: %ld, L: %ld}", rightEncoderData, leftEncoderData);
-    
+    RNUtils::printLn("odometer{d: %lf, th: %lf}", robot->getOdometerDistance(), robot->getOdometerDegrees());
+
+        
     if(isFirstFakeEstimation){
         prevRightEncoderData = rightEncoderData;
         prevLeftEncoderData = leftEncoderData;
@@ -394,24 +432,27 @@ void RobotNode::computePositionFromEncoders(){
         driftFactorIncrement = 0;
     }
 
-    driftFactorIncrement += std::abs(deltaLeftMM);*/
+    driftFactorIncrement += std::abs(deltaLeftMM);
 
     //RNUtils::printLn("encoders: {FL: %d, FR: %d, BL: %d, BR: %d}", resultCheck[0], resultCheck[2], resultCheck[1], resultCheck[3]);
     
     //RNUtils::printLn("delta: {R: %d, L: %d}, DFI: %d", deltaRightMM, deltaLeftMM, driftFactorIncrement);
     RNUtils::printLn("delta: {R: %d, L: %d}", deltaRightMM, deltaLeftMM);
+    if(deltaLeftMM != 0 and deltaRightMM != 0){
+        deltaDistance = ((deltaLeftMM + deltaRightMM) / 2) / getTicksMM();
+        //deltaDegrees = robot->getPose().getThRad() - myRawPose->getThRad();
+        deltaDegrees = ((float)(deltaLeftMM - deltaRightMM)) * getAngleConvFactor() / robot->getRobotWidth();
+        getRawPoseFromOdometry();
 
-    deltaDistance = ((deltaLeftMM + deltaRightMM) / 2) / getTicksMM();
-    //deltaDegrees = robot->getPose().getThRad() - myRawPose->getThRad();
-    deltaDegrees = round(((float)(-deltaLeftMM + deltaRightMM)) * getEncoderScaleFactor()) / robot->getRobotWidth();
-    /*if(std::abs(deltaDegrees) < getAngleConvFactor()){
-        deltaDegrees = 0.0;
-    }*/
+    } else {
+        deltaDegrees = 0;
+        deltaDistance = 0;
+    }
     
-    getRawPoseFromOdometry();
+    
     RNUtils::printLn("pose-Robot: {%f, %f, %f}, pose-Raw: {%f, %f, %f}, delta: {%f, %f}", robot->getPose().getX(), robot->getPose().getY(), robot->getPose().getThRad(), myRawPose->getX(), myRawPose->getY(), myRawPose->getThRad(), deltaDistance, deltaDegrees);
     prevRightEncoderData = rightEncoderData;
-    prevLeftEncoderData = leftEncoderData;
+    prevLeftEncoderData = leftEncoderData;*/
 }
 
 
@@ -447,18 +488,15 @@ void RobotNode::getRawPoseFromOdometry(){
     double x = 0, y = 0, th = 0;
     pthread_mutex_lock(&mutexRawPositionLocker);
     //th = myRawPose->getThRad() + deltaDegrees;
-    double dx = (deltaDistance * std::cos(deltaDegrees));
-    double dy = (deltaDistance * std::sin(deltaDegrees));
-    printf("{dx: %lf, dy:%lf}\n", dx, dy);
-    x = myRawPose->getX() + (dx * std::cos(myRawPose->getThRad())) + (dy * std::sin(myRawPose->getThRad()));
-    y = myRawPose->getY() + (dx * std::sin(myRawPose->getThRad())) + (dy * std::cos(myRawPose->getThRad()));
+    x = myRawPose->getX() + deltaDistance * std::cos(myRawPose->getThRad() + (deltaDegrees / 2.0));
+    y = myRawPose->getY() + deltaDistance * std::sin(myRawPose->getThRad() + (deltaDegrees / 2.0));
     th = myRawPose->getThRad() + deltaDegrees;
     
     
     pthread_mutex_unlock(&mutexRawPositionLocker);
-    //this->setPosition(x / 1000.0, y / 1000.0, th);
+    this->setPosition(x / 1000.0, y / 1000.0, th);
 
-    myRawPose->setPose(x, y, RNUtils::rad2Deg(th));
+    //myRawPose->setPose(x, y, RNUtils::rad2Deg(th));
     //pthread_mutex_unlock(&mutexRawPositionLocker);
 
 }

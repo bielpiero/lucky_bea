@@ -10,6 +10,7 @@ public:
 	virtual void task();
 	virtual void onKilled();
 	virtual void init();
+	virtual void estimateGlobalPosition();
 private:
 	
 private:

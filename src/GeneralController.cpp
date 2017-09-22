@@ -44,8 +44,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	this->rfidSensorActivated = false;
 
     this->lastSiteVisitedIndex = RN_NONE;
-	laserLandmarks = new std::vector<RNLandmark*>();
-	visualLandmarks = new std::vector<RNLandmark*>();
+	laserLandmarks = new RNLandmarkList();
+	visualLandmarks = new RNLandmarkList();
 	kalmanFuzzy = new std::vector<fl::Trapezoid*>();
 	
 	robotState = Matrix(3, 1);
@@ -86,11 +86,11 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	//emotions = new RNEmotionsTask();
 	//eyesCameras = new RNCameraTask();
 
-	/*if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
+	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
 		localization = new RNKalmanLocalizationTask();
 	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PF_STR){
 		localization = new RNPFLocalizationTask();
-	}*/
+	}
 	//rfidTask = new RNRFIdentificationTask();
 
 	////Tasks added:
@@ -98,7 +98,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	//tasks->addTask(dialogs);
 	//tasks->addTask(gestures);
 	//tasks->addTask(emotions);
-	//tasks->addTask(localization);
+	tasks->addTask(localization);
 	//tasks->addTask(eyesCameras);
 	//tasks->addTask(rfidTask);
 	
@@ -162,10 +162,7 @@ GeneralController::~GeneralController(void){
 	RNUtils::printLn("Deleted currentSector...");
 	delete robotConfig;
 	RNUtils::printLn("Deleted robotConfig...");
-	for(int i = 0; i < laserLandmarks->size(); i++){
-		delete laserLandmarks->at(i);
-	}
-	laserLandmarks->clear();
+
 	delete laserLandmarks;
 	RNUtils::printLn("Deleted laserLandmarks...");
 
@@ -2402,9 +2399,6 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 
 	lockLaserLandmarks();
 
-	for(int i = 0; i < laserLandmarks->size(); i++){
-		delete laserLandmarks->at(i);
-	}
 	laserLandmarks->clear();
 	RNLandmark* current = new RNLandmark;
 
@@ -2417,7 +2411,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 			} else {
 				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
 				if(current->size() > 1){
-					laserLandmarks->push_back(current);
+					laserLandmarks->add(current);
 				}
 				current = new RNLandmark;
 			}
@@ -2425,11 +2419,11 @@ void GeneralController::onLaserScanCompleted(LaserScan* laser){
 			if((dataIndices[i] - dataIndices[i - 1]) <= 10){
 				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
 				if(current->size() > 1){
-					laserLandmarks->push_back(current);
+					laserLandmarks->add(current);
 				}
 			} else if(current->size() > 0){
 				if(current->size() > 1){
-					laserLandmarks->push_back(current);
+					laserLandmarks->add(current);
 				}
 			}
 		}
@@ -2602,9 +2596,7 @@ int GeneralController::initializeKalmanVariables(){
 		uX = fuzzy::FStats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
 		uY = fuzzy::FStats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
 		uTh = fuzzy::FStats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
-		//uX = .36;
-		//uY = .36;
-		//uTh = .05;
+		RNUtils::printLn("Position {ux: %f, uy: %f, uth:%f}", uX, uY, uTh);
 
 		P(0, 0) = uX; 	P(0, 1) = 0; 	P(0, 2) = 0;
 		P(1, 0) = 0; 	P(1, 1) = uY;	P(1, 2) = 0;
@@ -2617,7 +2609,7 @@ int GeneralController::initializeKalmanVariables(){
 		
 		Q(0, 0) = uX; 	Q(0, 1) = 0;
 		Q(1, 0) = 0; 	Q(1, 1) = uTh;
-
+		RNUtils::printLn("Process {ux: %f, uth:%f}", uX, uTh);
 		float laserUX = 0, laserUTh = 0, cameraUX = 0, cameraUTh = 0, rfidUX = 0, rfidUTh = 0;
 
 		for(int i = 0; i < robotConfig->navParams->sensors->size(); i++){
@@ -2632,6 +2624,7 @@ int GeneralController::initializeKalmanVariables(){
 				laserUTh = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
 				//laserUX = 0.1355e-3;      //forced meanwhile
 				//laserUTh = 0.3206e-3;
+				RNUtils::printLn("Laser {ux: %f, uth:%f}", laserUX, laserUTh);
 
 			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
 				
@@ -2777,25 +2770,25 @@ void GeneralController::setLastVisitedNode(int id){
 	this->lastSiteVisitedIndex = id;
 }
 
-std::vector<RNLandmark*>* GeneralController::getLaserLandmarks(){
+RNLandmarkList* GeneralController::getLaserLandmarks(){
 	return this->laserLandmarks;
 }
 
-std::vector<RNLandmark*>* GeneralController::getVisualLandmarks(){
+RNLandmarkList* GeneralController::getVisualLandmarks(){
 	return this->visualLandmarks;
 }
 
-std::vector<RNLandmark*>* GeneralController::getRFIDLandmarks(){
+RNLandmarkList* GeneralController::getRFIDLandmarks(){
 	return this->rfidLandmarks;
 }
 
-void GeneralController::setVisualLandmarks(std::vector<RNLandmark*>* landmarks){
+void GeneralController::setVisualLandmarks(RNLandmarkList* landmarks){
 	lockVisualLandmarks();
 	this->visualLandmarks = landmarks;
 	unlockVisualLandmarks();
 }
 
-void GeneralController::setRFIDLandmarks(std::vector<RNLandmark*>* landmarks){
+void GeneralController::setRFIDLandmarks(RNLandmarkList* landmarks){
 	lockRFIDLandmarks();
 	this->rfidLandmarks = landmarks;
 	unlockRFIDLandmarks();

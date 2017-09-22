@@ -10,14 +10,14 @@
 			<landmark id="1" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="160" ypos="40"/>
 			<landmark id="2" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="200" ypos="80"/>
 			<landmark id="3" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="80" ypos="240"/>
-			<landmark id="4" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="200" ypos="280"/>
-			<landmark id="11" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="320" ypos="280"/>
-			<landmark id="5" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="320" ypos="160"/>
-			<landmark id="6" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="440" ypos="160"/>
-			<landmark id="7" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="480" ypos="280"/>
-			<landmark id="8" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="560" ypos="160"/>
-			<landmark id="9" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="680" ypos="280"/>
-			<landmark id="10" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="800" ypos="160"/>
+			<landmark id="4" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="200" ypos="303"/>
+			<landmark id="11" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="320" ypos="317"/>
+			<landmark id="5" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="320" ypos="58"/>
+			<landmark id="6" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="440" ypos="138"/>
+			<landmark id="7" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="480" ypos="317"/>
+			<landmark id="8" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="560" ypos="130"/>
+			<landmark id="9" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="720" ypos="280"/>
+			<landmark id="10" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="820" ypos="160"/>
 			<!-- I rock-->
 			<landmark id="19" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="5" ypos="210"/>
 			<landmark id="20" type="camera" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="300" ypos="12"/>

@@ -236,14 +236,7 @@ void RNOmnicameraTask::poseEstimation(){
 		cv::Point markerCenter = marker.getRotatedRect().center;
 		cv::Point tikiPoint = imageCenter - markerCenter;
 		double angleInRadians = std::atan2(tikiPoint.y, tikiPoint.x) - (M_PI / 2);
-		/*double angleInRadians = RNUtils::linearInterpolator((float)markerCenter.x, PointXY(0, 2 * M_PI), PointXY((float)RECTIFIED_IMAGE_WIDTH, 0));
-		double weight;
-		if(markerCenter.x < (RECTIFIED_IMAGE_WIDTH / 2)){
-			weight = RNUtils::linearInterpolator((float)markerCenter.x, PointXY(0, 1), PointXY(((float)RECTIFIED_IMAGE_WIDTH / 2), 0));
-		} else {
-			weight = RNUtils::linearInterpolator((float)markerCenter.x, PointXY(((float)RECTIFIED_IMAGE_WIDTH / 2), 0), PointXY(RECTIFIED_IMAGE_WIDTH, 1));
-		}
-		marker.setWeight(weight);*/
+
 		if(angleInRadians > M_PI){
 			angleInRadians = angleInRadians - 2 * M_PI;
 		} else if(angleInRadians < -M_PI){
@@ -677,29 +670,18 @@ void RNOmnicameraTask::task(){
 			landmarks = gn->getVisualLandmarks();
 			clearLandmarks();
 			//cv::Mat rectImage = flipped.clone();
-			std::ostringstream print_str;
-			print_str.str("");
-			print_str.clear();
-			print_str << "\"Markers\": {\"Marker\": [";
 			for(size_t i = 0; i < tikiMarkers.size(); i++){
 				//drawRectangle(rectImage, tikiMarkers[i]);
 				//cv::imwrite("que ves.jpg", rectImage);
-				print_str << "{" << "\"id\": \"" << tikiMarkers.at(i).getMarkerId() << "\",\"angle\": \"" << tikiMarkers.at(i).getThRad() << "\"}";
+				
 				RNLandmark* visualLand = new RNLandmark();
-				//RNUtils::printLn("Map Id: (%d), Sector Id (%d), Marker Id (%d) - angle: %lf", tikiMarkers.at(i).getMapId(), tikiMarkers.at(i).getSectorId(), tikiMarkers.at(i).getMarkerId(), tikiMarkers.at(i).getThRad());
+				
 				visualLand->addPoint(0, tikiMarkers.at(i).getThRad());
 				visualLand->setMapId(tikiMarkers.at(i).getMapId());
 				visualLand->setSectorId(tikiMarkers.at(i).getSectorId());
 				visualLand->setMarkerId(tikiMarkers.at(i).getMarkerId());
-				landmarks->push_back(visualLand);
-				if(i < tikiMarkers.size() - 1){
-					print_str << ",";
-				}
+				landmarks->add(visualLand);
 			}
-			print_str << "]}";
-			RNUtils::printLn("%s", print_str.str().c_str());
-			//tikiGray.release();
-			//tikiThreshold.release();
 			gn->setVisualLandmarks(landmarks);
 		}
 		flipped.release();

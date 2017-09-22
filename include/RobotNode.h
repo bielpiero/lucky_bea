@@ -117,6 +117,11 @@ private:
     long int prevLeftEncoderData;
     long int prevRightEncoderData;
 
+    double prevDistance;
+    double prevRads;
+    double prevVel;
+    double prevRotVel;
+
     int driftFactorIncrement;
 
     int deltaLeftMM;

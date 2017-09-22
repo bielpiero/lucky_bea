@@ -64,6 +64,16 @@ public:
 	    return meanY;
 	}
 
+	bool isEqualTo(RNLandmark* landmark){
+		bool result = false;
+		if(landmark != NULL){
+			if(this->getMapId() == landmark->getMapId() and this->getSectorId() == landmark->getSectorId() and this->getMarkerId() == landmark->getMarkerId()){
+				result = true;
+			}	
+		}
+		return result;
+	}
+
 	void setMapId(int id){
 		this->mapId = id;
 	}

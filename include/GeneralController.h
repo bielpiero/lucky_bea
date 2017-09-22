@@ -2,7 +2,7 @@
 #define GENERAL_CONTROLLER_H
 
 #include "RobotNode.h"
-#include "RNLandmark.h"
+#include "RNLandmarkList.h"
 
 #include "SocketNode2.h"
 #include "SerialPort.h"
@@ -295,12 +295,12 @@ public:
 	Matrix getRawDeltaPosition();
 
 	MapSector* getCurrentSector();
-	std::vector<RNLandmark*>* getLaserLandmarks();
-	std::vector<RNLandmark*>* getVisualLandmarks();
-	std::vector<RNLandmark*>* getRFIDLandmarks();
+	RNLandmarkList* getLaserLandmarks();
+	RNLandmarkList* getVisualLandmarks();
+	RNLandmarkList* getRFIDLandmarks();
 
-	void setVisualLandmarks(std::vector<RNLandmark*>* landmarks);
-	void setRFIDLandmarks(std::vector<RNLandmark*>* landmarks);
+	void setVisualLandmarks(RNLandmarkList* landmarks);
+	void setRFIDLandmarks(RNLandmarkList* landmarks);
 private:
 	static const float LASER_MAX_RANGE;
 	static const float LANDMARK_RADIUS;
@@ -340,9 +340,9 @@ private:
 	int tokenRequester;
     int lastSiteVisitedIndex;
 	
-	std::vector<RNLandmark*>* laserLandmarks;
-	std::vector<RNLandmark*>* visualLandmarks;
-	std::vector<RNLandmark*>* rfidLandmarks;
+	RNLandmarkList* laserLandmarks;
+	RNLandmarkList* visualLandmarks;
+	RNLandmarkList* rfidLandmarks;
 	
 	bool setChargerPosition;
 	bool hasAchievedGoal;

@@ -22,6 +22,10 @@ void RNPFLocalizationTask::init(){
 	}
 }
 
+void RNPFLocalizationTask::estimateGlobalPosition(){
+	
+}
+
 void RNPFLocalizationTask::onKilled(){
 	enableLocalization = false;
 }

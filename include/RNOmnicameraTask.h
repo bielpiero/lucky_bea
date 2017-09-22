@@ -2,7 +2,7 @@
 #define RN_OMNICAMERA_TASK_H
 
 #include "RNRecurrentTask.h"
-#include "RNLandmark.h"
+#include "RNLandmarkList.h"
 #include <opencv2/opencv.hpp>
 #include <curl/curl.h>
 
@@ -130,7 +130,7 @@ private:
 	std::vector<RNMarker> tikiMarkers;
 
 	static const double PI_DEGREES;
-	std::vector<RNLandmark*>* landmarks;
+	RNLandmarkList* landmarks;
 	cv::VideoCapture capture;
 
 	enum{
