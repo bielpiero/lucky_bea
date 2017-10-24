@@ -18,7 +18,7 @@ public:
 protected:
 	virtual void task() = 0;
 	virtual void onKilled() = 0;
-	virtual void estimateGlobalPosition() = 0;
+
 public:
 	virtual void init() = 0;
 };

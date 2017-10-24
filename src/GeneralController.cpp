@@ -11,6 +11,7 @@
 #include "RNEmotionsTask.h"
 #include "RNDialogsTask.h"
 #include "RNGesturesTask.h"
+#include "RNGlobalLocalizationTask.h"
 
 const float GeneralController::LASER_MAX_RANGE = 11.6;
 const float GeneralController::LANDMARK_RADIUS = 0.045;
@@ -80,7 +81,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
-	//omnidirectionalTask = new RNOmnicameraTask("Omnidirectional Task");
+	omnidirectionalTask = new RNOmnicameraTask("Omnidirectional Task");
+	//globalLocalization = new RNGlobalLocalizationTask();
 	//dialogs = new RNDialogsTask(ttsLipSync);
 	//gestures = new RNGesturesTask(this->maestroControllers);
 	//emotions = new RNEmotionsTask();
@@ -94,7 +96,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	//rfidTask = new RNRFIdentificationTask();
 
 	////Tasks added:
-	//tasks->addTask(omnidirectionalTask);
+	//tasks->addTask(globalLocalization);
+	tasks->addTask(omnidirectionalTask);
 	//tasks->addTask(dialogs);
 	//tasks->addTask(gestures);
 	//tasks->addTask(emotions);
@@ -124,7 +127,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	spdWSServer->startThread();
 
 	RNUtils::getTimestamp(emotionsTimestamp);
-	RNUtils::getTimestamp(mappingEnvironmentTimestamp);
+	RNUtils::getTimestamp(mappingSectorTimestamp);
 	RNUtils::getTimestamp(mappingLandmarksTimestamp);
 	RNUtils::getTimestamp(mappingFeaturesTimestamp);
 	RNUtils::getTimestamp(mappingSitesTimestamp);
@@ -1147,13 +1150,30 @@ void GeneralController::loadSector(int mapId, int sectorId){
 
 						tempLandmark->id = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 						tempLandmark->type = std::string(landmark_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value());
-						tempLandmark->varMinX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100;
-						tempLandmark->varMaxX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100;
-						tempLandmark->varMinY = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100;
-						tempLandmark->varMaxY = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100;
+						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)){
+							tempLandmark->varMinX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100;
+						}
+						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)){
+							tempLandmark->varMaxX = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100;
+						}
+						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)){
+							tempLandmark->varMinY = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100;
+						}
+						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)){
+							tempLandmark->varMaxY = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100;
+						}
+						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Z_STR)){
+							tempLandmark->varMinZ = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Z_STR)->value())) / 100;
+						}
+						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Z_STR)){
+							tempLandmark->varMaxZ = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Z_STR)->value())) / 100;
+						}	
+
 						tempLandmark->xpos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
 						tempLandmark->ypos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
-
+						if(landmark_node->first_attribute(XML_ATTRIBUTE_Z_POSITION_STR)){
+							tempLandmark->zpos = ((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Z_POSITION_STR)->value())) / 100;
+						}
 						currentSector->addLandmark(tempLandmark);
 					}
 				}
@@ -1231,7 +1251,8 @@ void GeneralController::loadSector(int mapId, int sectorId){
     	}
 
     }
-
+    RNUtils::getTimestamp(mappingSectorTimestamp);
+    RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", sectorId, currentSector->getName().c_str());
     the_file.close();
 
 }
@@ -1254,6 +1275,9 @@ void GeneralController::loadRobotConfig(){
 	robotConfig = new s_robot;
 
 	xml_node<>* root_node = doc.first_node(XML_ELEMENT_ROBOT_STR);
+	if(root_node->first_attribute(XML_ATTRIBUTE_ROBOT_HEIGHT_STR)){
+		robotConfig->height = std::atof(root_node->first_attribute(XML_ATTRIBUTE_ROBOT_HEIGHT_STR)->value());
+	}
 	if(root_node->first_attribute(XML_ATTRIBUTE_LOCALIZATION_STR)){
 		robotConfig->localization = std::string(root_node->first_attribute(XML_ATTRIBUTE_LOCALIZATION_STR)->value());
 	} else {
@@ -2838,6 +2862,10 @@ int GeneralController::unlockVisualLandmarks(){
 	return pthread_mutex_unlock(&visualLandmarksLocker);
 }
 
+float GeneralController::getRobotHeight(){
+	return (robotConfig != NULL ? robotConfig->height : 0.0);
+}
+
 void GeneralController::onSensorsScanCompleted(){
 	std::ostringstream buffer_str;
 	int mapId = currentMapId;
@@ -2846,7 +2874,15 @@ void GeneralController::onSensorsScanCompleted(){
 		sectorId = currentSector->getId();
 	}
 	buffer_str.clear();
-	buffer_str << "$DORIS|" << mapId << "," << sectorId << "," << emotionsTimestamp.str() << "," << mappingEnvironmentTimestamp.str() << "," << mappingLandmarksTimestamp.str() << "," << mappingFeaturesTimestamp.str() << "," + mappingSitesTimestamp.str() << "," << laserLandmarks->size() << "," << visualLandmarks->size();
+	buffer_str << "$DORIS|" << mapId << "," 
+				<< sectorId << "," 
+				<< emotionsTimestamp.str() << "," 
+				<< mappingSectorTimestamp.str() << "," 
+				<< mappingLandmarksTimestamp.str() << "," 
+				<< mappingFeaturesTimestamp.str() << "," 
+				<< mappingSitesTimestamp.str() << "," 
+				<< laserLandmarks->size() << "," 
+				<< visualLandmarks->size();
 
 	if(spdUDPClient != NULL){
 		spdUDPClient->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());

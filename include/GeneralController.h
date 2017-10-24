@@ -58,7 +58,7 @@
 using namespace rapidxml;
 
 class GeneralController;
-
+class RNGlobalLocalizationTask;
 class RNLocalizationTask;
 class RNKalmanLocalizationTask;
 class RNPFLocalizationTask;
@@ -178,9 +178,11 @@ struct s_navigation_params{
 };
 
 struct s_robot{
+	float height;
 	std::string localization;
 	s_navigation_params* navParams;
 	s_robot(){
+		height = 0.0;
 		localization = "kalman";
 		navParams = new s_navigation_params();
 	}
@@ -206,7 +208,7 @@ private:
 	std::string xmlRobotConfigFullPath;
 	
 	std::ostringstream emotionsTimestamp;
-	std::ostringstream mappingEnvironmentTimestamp;
+	std::ostringstream mappingSectorTimestamp;
 	std::ostringstream mappingLandmarksTimestamp;
 	std::ostringstream mappingFeaturesTimestamp;
 	std::ostringstream mappingSitesTimestamp;
@@ -286,6 +288,7 @@ public:
 	Matrix getR();
 
 	float getCameraAngleVariance();
+	float getRobotHeight();
 
 	bool isLaserSensorActivated();
 	bool isCameraSensorActivated();
@@ -313,6 +316,7 @@ private:
 	RNDialogsTask* dialogs;
 	RNRecurrentTaskMap* tasks;
 	RNLocalizationTask* localization;
+	RNGlobalLocalizationTask* globalLocalization;
 	RNOmnicameraTask* omnidirectionalTask;
 	RNRFIdentificationTask* rfidTask; //future
 	RNCameraTask* eyesCameras;

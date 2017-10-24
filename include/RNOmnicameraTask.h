@@ -4,14 +4,13 @@
 #include "RNRecurrentTask.h"
 #include "RNLandmarkList.h"
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/affine.hpp>
 #include <curl/curl.h>
 
 #define CURVE_SIZE 4
 #define CELL_MARKER_SIZE 7
 #define IMAGE_OFFSET_X 15
-#define IMAGE_OFFSET_Y 5
-#define RECTIFIED_IMAGE_WIDTH 1812
-#define RECTIFIED_IMAGE_HEIGHT 679
+#define IMAGE_OFFSET_Y 10
 #define BLOCK_SIZE_FOR_ADAPTIVE_THRESHOLD 75
 
 class RNMarker{
@@ -24,7 +23,9 @@ private:
 	int contourIdx;
 	double area;
 	double weight;
-	double angleInRadians;
+	double angleRad;
+	double distance;
+	double opticalTheta;
 	cv::RotatedRect rect;
 
 public:
@@ -40,12 +41,16 @@ public:
 	void setContourIdx(unsigned int contourIdx) { this->contourIdx = contourIdx; }
 	void setArea(double area) { this->area = area; }
 	void setWeight(double weight) { this->weight = weight; }
-	void setThRad(double angle) { this->angleInRadians = angle; }
+	void setDistance(double distance) { this->distance = distance; }
+	void setOpticalTheta(double angle) { this->opticalTheta = angle; }
+	void setThRad(double angle) { this->angleRad = angle; }
 	void setRotatedRect(cv::RotatedRect rect) { this->rect = rect; }
 
 	double getArea() { return this->area; }
 	double getWeight() { return this->weight; }
-	double getThRad() { return this->angleInRadians; }
+	double getDistance() { return this->distance; }
+	double getThRad() { return this->angleRad; }
+	double getOpticalTheta() { return this->opticalTheta; }
 	int getContourIdx() { return this->contourIdx; }
 	cv::RotatedRect getRotatedRect() { return this->rect;}
 	std::vector<cv::Point2f> getMarkerPoints() { return this->markerPoints; }
@@ -89,12 +94,10 @@ private:
 	void markerIdNumber(const cv::Mat &bits, int &mapId, int &sectorId, int &markerId);
 	int getBrightnessAverageFromHistogram(const cv::Mat& input);
 
-	void initUndistortRectifyMap(cv::InputArray K, cv::InputArray D, cv::InputArray xi, cv::InputArray R, cv::InputArray P, const cv::Size& size,
-        int m1type, cv::OutputArray map1, cv::OutputArray map2, int flags);
-	void undistortImage(cv::InputArray distorted, cv::OutputArray undistorted, cv::InputArray K, cv::InputArray D, cv::InputArray xi, int flags,
-        cv::InputArray knew = cv::noArray(), const cv::Size& newSize = cv::Size(), cv::InputArray R = cv::Mat::eye(3, 3, CV_64F));
+	void undistortPoints(cv::InputArray distorted, cv::OutputArray undistorted,
+        cv::InputArray K, cv::InputArray D, cv::InputArray R = cv::noArray(), cv::InputArray P = cv::noArray());
+
 private:
-	void clearLandmarks();
 	void drawRectangle(cv::Mat &img, RNMarker marker);
 	float perimeter(const std::vector<cv::Point2f> &a);
 	int markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations, RNMarker &marker);
@@ -120,10 +123,7 @@ private:
 	cv::Mat canonicalMarkerImage;
 	cv::Mat camMatrix;
 	cv::Mat distCoeff;
-	cv::Mat xi;
-	cv::Matx33f Knew;
-	cv::Size newSize;
-	cv::Mat tiki, rectified, mapX, mapY, flipped;
+	cv::Mat tiki;
 	cv::Mat edges;
 	cv::Mat tikiGray, tikiThreshold;
 

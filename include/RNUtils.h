@@ -85,7 +85,7 @@ public:
 };
 
 class PointXY{
-private:
+protected:
 	double x, y;
 public:
 	PointXY(){
@@ -103,10 +103,19 @@ public:
 	
 	void setX(double x){ this->x = x; }
 	void setY(double y){ this->y = y; }
+
+	virtual const char* toString() const{
+		std::ostringstream print_str;
+		print_str.str("");
+		print_str.clear();
+		print_str << "{x: " << x << ", y: " << y << "}";
+		std::string strprint = print_str.str();
+		return strprint.c_str();
+	}
 };
 
 class PointXYZ : public PointXY{
-private:
+protected:
 	double z;
 public:
 	PointXYZ() : PointXY() {
@@ -120,6 +129,15 @@ public:
 	double getZ() const { return this->z; }
 	
 	void setZ(double z){ this->z = z; }
+
+	virtual const char* toString() const{
+		std::ostringstream print_str;
+		print_str.str("");
+		print_str.clear();
+		print_str << "{x: " << x << ", y: " << y << ", z: " << z << "}";
+		std::string strprint = print_str.str();
+		return strprint.c_str();
+	}
 };
 
 

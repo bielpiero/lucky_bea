@@ -1,4 +1,5 @@
 <maps>
 	<map id="0" name="Main Building" filename="00 - BeaMain.xml"/>
-	<map id="1" name="DISAM" filename="01 - BeaDisam.xml"/>
+	<map id="10" name="DISAM" filename="01 - BeaDisam.xml"/>
+	<map id="11" name="LCOE" filename="02 - BeaLcoe.xml"/>
 </maps>

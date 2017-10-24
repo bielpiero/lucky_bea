@@ -42,7 +42,7 @@ add_executable(lucky_bea
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-add_dependencies(lucky_bea lucky_bea_generate_messages_cpp)
+# add_dependencies(lucky_bea lucky_bea_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(lucky_bea

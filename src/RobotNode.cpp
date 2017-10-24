@@ -23,6 +23,8 @@ RobotNode::RobotNode(const char* port){
     robot->disableSonar();   
 
     robot->runAsync(true);
+    //robot->setCycleTime(1000);
+    robot->setCycleWarningTime(0);
     robot->setMutexUnlockWarningTime(2000);
     robot->setNoTimeWarningThisCycle(true);
 
@@ -251,12 +253,12 @@ void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed
 
 void RobotNode::setPosition(double x, double y, double theta){
     
-    this->lockRobot();
+    //robot->lock();
     //pthread_mutex_lock(&mutexRawPositionLocker);
     myRawPose->setPose(x * 1000, y * 1000, theta * 180 / M_PI);
     //pthread_mutex_unlock(&mutexRawPositionLocker);
     robot->moveTo(ArPose(x * 1000, y * 1000, theta * 180 / M_PI));
-    this->unlockRobot();
+    //robot->unlock();
 }
 
 void RobotNode::setMotorsStatus(bool enabled){

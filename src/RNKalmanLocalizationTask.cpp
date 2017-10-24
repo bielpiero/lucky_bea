@@ -23,7 +23,7 @@ void RNKalmanLocalizationTask::init(){
 		cameraLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_CAMERA_STR);
 		rfidLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_RFID_STR);
 
-		laserThresholdMatching = 0.2;
+		laserThresholdMatching = 0.1;
 		cameraThresholdMatching = MAX_CAMERA_ANGLE_ERROR / std::sqrt(gn->getCameraAngleVariance());
 		rfidThresholdMatching = 0.2;
 		enableLocalization = true;
@@ -34,10 +34,6 @@ void RNKalmanLocalizationTask::init(){
 	} else{
 		enableLocalization = false;
 	}
-}
-
-void RNKalmanLocalizationTask::estimateGlobalPosition(){
-	std::vector<Trio<int, int, int> > *location;
 }
 
 void RNKalmanLocalizationTask::onKilled(){
@@ -175,7 +171,7 @@ void RNKalmanLocalizationTask::task(){
 				int mapId = lndmrk->getMapId();
 				int sectorId = lndmrk->getSectorId();
 				int markerId = lndmrk->getMarkerId();
-
+				std::pair<std::string, float>* extraParameter = lndmrk->getExtraParameter(OPTICAL_THETA_STR);
 				bool validQR = true;		
 
 				if (mapId > 0 && sectorId > 0 && markerId > 0){
@@ -195,8 +191,8 @@ void RNKalmanLocalizationTask::task(){
 				//If the current landmark has a unique id, checks if there's a match with the database
 				if (validQR){
 					for (int j = cameraIndex; j < (cameraIndex + cameraLandmarksCount); j++){
-						if(markerId == ((int)zkl(j, 2))){
-							zl(2 * j, 0) = 0;
+						if(markerId == ((int)zkl(j, 3))){
+							zl(2 * j, 0) = (zkl(j, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second);
 							zl(2 * j + 1, 0) = std::abs(lndmrk->getPointsYMean()) - std::abs(zkl(j, 1));
 							RNUtils::printLn("markerId: %d, Ángulo estimado: %f, BD: %f, error de posición angular: %f", markerId, lndmrk->getPointsYMean(), zkl(j, 1), zl(2 * j + 1, 0));
 						}
@@ -219,7 +215,7 @@ void RNKalmanLocalizationTask::task(){
 					}
 
 					if(indexFound > RN_NONE){
-						zl(2 * indexFound, 0) = 0;
+						zl(2 * indexFound, 0) = (zkl(indexFound, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second);
 						zl(2 * indexFound + 1, 0) = std::abs(lndmrk->getPointsYMean()) - std::abs(zkl(indexFound, 1));
 
 					}
@@ -271,23 +267,22 @@ void RNKalmanLocalizationTask::task(){
 			}
 			gn->unlockRFIDLandmarks();
 		}
-
-
+		//zl.print();
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		Matrix newPosition = gn->getRawEncoderPosition() + Wk * zl;
 		
 		gn->setPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
-		float angle = 0;
+		float angle = 0.0;
 		bool isInsidePolygon = gn->getCurrentSector()->checkPointXYInPolygon(PointXY(newPosition(0, 0), newPosition(1, 0)), angle);
 
 		if(not isInsidePolygon){
 			gn->loadSector(gn->getCurrenMapId(), gn->getNextSectorId());
-			RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", gn->getNextSectorId(), gn->getCurrentSector()->getName().c_str());
+			//RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", gn->getNextSectorId(), gn->getCurrentSector()->getName().c_str());
 			gn->setNextSectorId(RN_NONE);
 			//new position
 			gn->setLastVisitedNode(0);
 	        gn->setPosition(newPosition(0, 0) + gn->getNextSectorCoord().getX(), newPosition(1, 0) + gn->getNextSectorCoord().getY(), newPosition(2, 0));
-			gn->initializeKalmanVariables();
+	        init();
 		}
 	} else {
 		init();
@@ -314,7 +309,7 @@ void RNKalmanLocalizationTask::getObservations(Matrix& observations){
 		totalLandmarks += rfidLandmarksCount;
 	}
 
-	Matrix result(totalLandmarks, 3);
+	Matrix result(totalLandmarks, 4);
 
 	for(int k = 0, zIndex = 0; k < gn->getCurrentSector()->landmarksSize(); k++){
 
@@ -349,7 +344,8 @@ void RNKalmanLocalizationTask::getObservations(Matrix& observations){
 		}
 
 		result(zIndex, 1) = angle;
-		result(zIndex, 2) = (float)landmark->id;
+		result(zIndex, 2) = landmark->zpos;
+		result(zIndex, 3) = (float)landmark->id;
 	}
 
 	observations = result;

@@ -142,7 +142,7 @@ std::vector<s_feature*> MapSector::findFeaturesByName(std::string name){
 	int index = RN_NONE;
 	std::vector<s_feature*> values;
 	for (int i = 0; i < features->size(); i++){
-		if(features->at(i)->name == name){
+		if(features->at(i)->name.find(name) < features->at(i)->name.length()){
 			values.push_back(features->at(i));
 		}
 	}
@@ -298,7 +298,20 @@ bool MapSector::checkPointXYInPolygon(PointXY g, float &angle){
 	PointXY a;
 	PointXY b;
 	bool result = false;
-	for(unsigned int i = 0; i < polygon->size() - 1; i++){
+
+	for(int i=0, j = polygon->size() - 1; i < polygon->size(); j = i++){
+    	if (((polygon->at(i)->getY() < g.getY() and polygon->at(j)->getY() >= g.getY()) or (polygon->at(j)->getY() < g.getY() and polygon->at(i)->getY() >= g.getY())) and (polygon->at(i)->getX() <= g.getX() or polygon->at(j)->getX() <= g.getX())) {
+      		if ((polygon->at(i)->getX() + (g.getY() - polygon->at(i)->getY()) / (polygon->at(j)->getY() - polygon->at(i)->getY()) * (polygon->at(j)->getX() - polygon->at(i)->getX())) < g.getX()) {
+        		result = !result; 
+        	}
+        }
+    }
+    //printf("%s\n", g.toString());
+    if(std::abs(g.getX()) <= 0.01 and std::abs(g.getY()) <= 0.01){
+    	result = true;
+    }
+
+	/*for(unsigned int i = 0; i < polygon->size() - 1; i++){
 		a.setX(polygon->at(i)->getX() - g.getX());
 		a.setY(polygon->at(i)->getY() - g.getY());
 		b.setX(polygon->at(i + 1)->getX() - g.getX());
@@ -308,8 +321,8 @@ bool MapSector::checkPointXYInPolygon(PointXY g, float &angle){
 	}
 	if((std::abs(angle) <= (2.00001 * M_PI)) and (std::abs(angle) >= M_PI)){
 		result = true;
-	} else if(std::abs((int)angle) == 0){
+	} /*else if(std::abs((int)angle) == 0.0){
 		result = true;
-	}
+	}*/
 	return result;
 }

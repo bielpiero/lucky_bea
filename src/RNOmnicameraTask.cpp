@@ -26,45 +26,31 @@ RNOmnicameraTask::RNOmnicameraTask(const char* name, const char* description) : 
 	markerCorners3d.push_back(cv::Point3f(.5f, .5f, 0));
 
 	camMatrix = cv::Mat(3, 3, CV_32F);
-	camMatrix.at<float>(0, 0) = 8.5101024687735935e+02;
-	camMatrix.at<float>(0, 1) = -2.2255059056366439e-01;
-	camMatrix.at<float>(0, 2) = 6.5571465382877625e+02;
+	camMatrix.at<float>(0, 0) = 3.3148337972624245e+02;
+	camMatrix.at<float>(0, 1) = 0;
+	camMatrix.at<float>(0, 2) = 6.5050896530720797e+02;
 	camMatrix.at<float>(1, 0) = 0.0;
-	camMatrix.at<float>(1, 1) = 8.5170243585411265e+02;;
-	camMatrix.at<float>(1, 2) = 5.1216084358475405e+02;
+	camMatrix.at<float>(1, 1) = 3.3296507853901846e+02;
+	camMatrix.at<float>(1, 2) = 4.9324794942591592e+02;
 	camMatrix.at<float>(2, 0) = 0.0;
 	camMatrix.at<float>(2, 1) = 0.0;
 	camMatrix.at<float>(2, 2) = 1.0;
 
 	distCoeff = cv::Mat(4, 1, CV_32F);
-	distCoeff.at<float>(0, 0) = -4.2648301140911193e-01;
-  	distCoeff.at<float>(1, 0) = 3.1105618959437248e-01;
-  	distCoeff.at<float>(2, 0) = -1.3775384616268102e-02;
-  	distCoeff.at<float>(3, 0) = -1.9560559208606078e-03;
-
- 	newSize = cv::Size (RECTIFIED_IMAGE_WIDTH, RECTIFIED_IMAGE_HEIGHT);
-	Knew = cv::Matx33f(newSize.width / (2 * M_PI), 0, 0, 0, newSize.height / M_PI, 0, 0, 0, 1);
+	distCoeff.at<float>(0, 0) = -5.0278669230113635e-02;
+  	distCoeff.at<float>(1, 0) = 2.7927571053875219e-02;
+  	distCoeff.at<float>(2, 0) = -9.7303697830329119e-03;
+  	distCoeff.at<float>(3, 0) = 0;
 
 	landmarks = NULL;
 
-	xi = cv::Mat(1, 1, CV_32FC1);
-	xi.at<float>(0, 0) = 1.5861076761699640e+00;
 	
 }
 
 RNOmnicameraTask::~RNOmnicameraTask(){
 	curl_easy_cleanup(curl);
-	clearLandmarks();
+	landmarks->clear();
 	delete landmarks;
-}
-
-void RNOmnicameraTask::clearLandmarks(){
-	if(landmarks != NULL){
-		for (int i = 0; i < landmarks->size(); i++){
-			delete landmarks->at(i);
-		}
-		landmarks->clear();
-	}
 }
 
 size_t RNOmnicameraTask::write_data(char *ptr, size_t size, size_t nmemb, void *userdata) {
@@ -232,9 +218,28 @@ void RNOmnicameraTask::recognizeMarkers(){
 void RNOmnicameraTask::poseEstimation(){
 	for (size_t i = 0; i < tikiMarkers.size(); i++){
 		RNMarker &marker = tikiMarkers.at(i);
+		std::vector<cv::Point2f> distortedPoint;
+		std::vector<cv::Point2f> undistortedPoint;
 		cv::Point imageCenter(tiki.cols / 2 + IMAGE_OFFSET_X, tiki.rows / 2 + IMAGE_OFFSET_Y);
 		cv::Point markerCenter = marker.getRotatedRect().center;
+
 		cv::Point tikiPoint = imageCenter - markerCenter;
+		distortedPoint.push_back(cv::Point2f(marker.getRotatedRect().center.x, marker.getRotatedRect().center.y));
+		undistortPoints(distortedPoint, undistortedPoint, camMatrix, distCoeff, cv::Mat::eye(3, 3, CV_32F), camMatrix);
+
+		float distanceToCenter = 0;
+		float theta = 0;
+		float realWorldDistance = 0;
+
+		distanceToCenter = sqrt(pow(abs(undistortedPoint.at(0).x - camMatrix.at<float>(0, 2)),2) + std::pow(abs(undistortedPoint.at(0).y - camMatrix.at<float>(1, 2)),2));
+
+		theta = std::atan(distanceToCenter / camMatrix.at<float>(0, 0));
+		marker.setOpticalTheta(theta);
+		//realWorldDistance = MARKER_HEIGHT * std::tan(theta);
+
+		//std::cout << "Real world distance: " << realWorldDistance << " cm, should be " << cmCounter << " cm. Error: " << abs(realWorldDistance - cmCounter) << " cm" << std::endl;
+
+	
 		double angleInRadians = std::atan2(tikiPoint.y, tikiPoint.x) - (M_PI / 2);
 
 		if(angleInRadians > M_PI){
@@ -347,8 +352,7 @@ int RNOmnicameraTask::hammingDistance(cv::Mat bits){
 	return dist;
 }
 
-cv::Mat RNOmnicameraTask::rotate(cv::Mat input)
-{
+cv::Mat RNOmnicameraTask::rotate(cv::Mat input){
 	cv::Mat out;
 	input.copyTo(out);
 	for (int i = 0; i < input.rows; i++){
@@ -434,227 +438,100 @@ int RNOmnicameraTask::getBrightnessAverageFromHistogram(const cv::Mat& input){
 	return (int)avgBrightness;
 }
 
-void RNOmnicameraTask::initUndistortRectifyMap(cv::InputArray K, cv::InputArray D, cv::InputArray xi, cv::InputArray R, cv::InputArray P, const cv::Size& size,
-        int m1type, cv::OutputArray map1, cv::OutputArray map2, int flags){
-	CV_Assert( m1type == CV_16SC2 || m1type == CV_32F || m1type <=0 );
-    map1.create( size, m1type <= 0 ? CV_16SC2 : m1type );
-    map2.create( size, map1.type() == CV_16SC2 ? CV_16UC1 : CV_32F );
+void RNOmnicameraTask::undistortPoints(cv::InputArray distorted, cv::OutputArray undistorted, cv::InputArray K, cv::InputArray D, cv::InputArray R, cv::InputArray P){
+    //CV_INSTRUMENT_REGION()
 
-    CV_Assert((K.depth() == CV_32F || K.depth() == CV_64F) && (D.depth() == CV_32F || D.depth() == CV_64F));
-    CV_Assert(K.size() == cv::Size(3, 3) && (D.empty() || D.total() == 4));
-    CV_Assert(P.empty()|| (P.depth() == CV_32F || P.depth() == CV_64F));
+    // will support only 2-channel data now for points
+    CV_Assert(distorted.type() == CV_32FC2 || distorted.type() == CV_64FC2);
+    undistorted.create(distorted.size(), distorted.type());
+
     CV_Assert(P.empty() || P.size() == cv::Size(3, 3) || P.size() == cv::Size(4, 3));
-    CV_Assert(R.empty() || (R.depth() == CV_32F || R.depth() == CV_64F));
     CV_Assert(R.empty() || R.size() == cv::Size(3, 3) || R.total() * R.channels() == 3);
-    CV_Assert(flags == RECTIFY_PERSPECTIVE || flags == RECTIFY_CYLINDRICAL || flags == RECTIFY_LONGLATI
-        || flags == RECTIFY_STEREOGRAPHIC);
-    CV_Assert(xi.total() == 1 && (xi.depth() == CV_32F || xi.depth() == CV_64F));
+    CV_Assert(D.total() == 4 && K.size() == cv::Size(3, 3) && (K.depth() == CV_32F || K.depth() == CV_64F));
 
     cv::Vec2d f, c;
-    double s;
-    if (K.depth() == CV_32F)
-    {
+    if (K.depth() == CV_32F){
         cv::Matx33f camMat = K.getMat();
         f = cv::Vec2f(camMat(0, 0), camMat(1, 1));
         c = cv::Vec2f(camMat(0, 2), camMat(1, 2));
-        s = (double)camMat(0, 1);
-    }
-    else
-    {
+    } else {
         cv::Matx33d camMat = K.getMat();
         f = cv::Vec2d(camMat(0, 0), camMat(1, 1));
         c = cv::Vec2d(camMat(0, 2), camMat(1, 2));
-        s = camMat(0, 1);
     }
 
-    cv::Vec4d kp = cv::Vec4d::all(0);
-    if (!D.empty())
-        kp = D.depth() == CV_32F ? (cv::Vec4d)*D.getMat().ptr<cv::Vec4f>(): *D.getMat().ptr<cv::Vec4d>();
-    double _xi = xi.depth() == CV_32F ? (double)*xi.getMat().ptr<float>() : *xi.getMat().ptr<double>();
-    cv::Vec2d k = cv::Vec2d(kp[0], kp[1]);
-    cv::Vec2d p = cv::Vec2d(kp[2], kp[3]);
-    cv::Matx33d RR  = cv::Matx33d::eye();
+    cv::Vec4d k = D.depth() == CV_32F ? (cv::Vec4d)*D.getMat().ptr<cv::Vec4f>(): *D.getMat().ptr<cv::Vec4d>();
+
+    cv::Matx33d RR = cv::Matx33d::eye();
     if (!R.empty() && R.total() * R.channels() == 3)
     {
         cv::Vec3d rvec;
         R.getMat().convertTo(rvec, CV_64F);
-        cv::Rodrigues(rvec, RR);
+        RR = cv::Affine3d(rvec).rotation();
     }
     else if (!R.empty() && R.size() == cv::Size(3, 3))
         R.getMat().convertTo(RR, CV_64F);
 
-    cv::Matx33d PP = cv::Matx33d::eye();
-    if (!P.empty())
+    if(!P.empty())
+    {
+        cv::Matx33d PP;
         P.getMat().colRange(0, 3).convertTo(PP, CV_64F);
-    else
-        PP = K.getMat();
-
-    cv::Matx33d iKR = (PP*RR).inv(cv::DECOMP_SVD);
-    cv::Matx33d iK = PP.inv(cv::DECOMP_SVD);
-    cv::Matx33d iR = RR.inv(cv::DECOMP_SVD);
-
-    if (flags == RECTIFY_PERSPECTIVE)
-    {
-        for (int i = 0; i < size.height; ++i)
-        {
-            float* m1f = map1.getMat().ptr<float>(i);
-            float* m2f = map2.getMat().ptr<float>(i);
-            short*  m1 = (short*)m1f;
-            ushort* m2 = (ushort*)m2f;
-
-            double _x = i*iKR(0, 1) + iKR(0, 2),
-                   _y = i*iKR(1, 1) + iKR(1, 2),
-                   _w = i*iKR(2, 1) + iKR(2, 2);
-            for(int j = 0; j < size.width; ++j, _x+=iKR(0,0), _y+=iKR(1,0), _w+=iKR(2,0))
-            {
-                // project back to unit sphere
-                double r = sqrt(_x*_x + _y*_y + _w*_w);
-                double Xs = _x / r;
-                double Ys = _y / r;
-                double Zs = _w / r;
-                // project to image plane
-                double xu = Xs / (Zs + _xi),
-                    yu = Ys / (Zs + _xi);
-                // add distortion
-                double r2 = xu*xu + yu*yu;
-                double r4 = r2*r2;
-                double xd = (1+k[0]*r2+k[1]*r4)*xu + 2*p[0]*xu*yu + p[1]*(r2+2*xu*xu);
-                double yd = (1+k[0]*r2+k[1]*r4)*yu + p[0]*(r2+2*yu*yu) + 2*p[1]*xu*yu;
-                // to image pixel
-                double u = f[0]*xd + s*yd + c[0];
-                double v = f[1]*yd + c[1];
-
-                if( m1type == CV_16SC2 )
-                {
-                    int iu = cv::saturate_cast<int>(u*cv::INTER_TAB_SIZE);
-                    int iv = cv::saturate_cast<int>(v*cv::INTER_TAB_SIZE);
-                    m1[j*2+0] = (short)(iu >> cv::INTER_BITS);
-                    m1[j*2+1] = (short)(iv >> cv::INTER_BITS);
-                    m2[j] = (ushort)((iv & (cv::INTER_TAB_SIZE-1))*cv::INTER_TAB_SIZE + (iu & (cv::INTER_TAB_SIZE-1)));
-                }
-                else if( m1type == CV_32FC1 )
-                {
-                    m1f[j] = (float)u;
-                    m2f[j] = (float)v;
-                }
-            }
-        }
+        RR = PP * RR;
     }
-    else if(flags == RECTIFY_CYLINDRICAL || flags == RECTIFY_LONGLATI ||
-        flags == RECTIFY_STEREOGRAPHIC)
+
+    // start undistorting
+    const cv::Vec2f* srcf = distorted.getMat().ptr<cv::Vec2f>();
+    const cv::Vec2d* srcd = distorted.getMat().ptr<cv::Vec2d>();
+    cv::Vec2f* dstf = undistorted.getMat().ptr<cv::Vec2f>();
+    cv::Vec2d* dstd = undistorted.getMat().ptr<cv::Vec2d>();
+
+    size_t n = distorted.total();
+    int sdepth = distorted.depth();
+
+    for(size_t i = 0; i < n; i++ )
     {
-        for (int i = 0; i < size.height; ++i)
+        cv::Vec2d pi = sdepth == CV_32F ? (cv::Vec2d)srcf[i] : srcd[i];  // image point
+        cv::Vec2d pw((pi[0] - c[0])/f[0], (pi[1] - c[1])/f[1]);      // world point
+
+        double scale = 1.0;
+
+        double theta_d = sqrt(pw[0]*pw[0] + pw[1]*pw[1]);
+
+        // the current camera model is only valid up to 180° FOV
+        // for larger FOV the loop below does not converge
+        // clip values so we still get plausible results for super fisheye images > 180°
+        theta_d = min(max(-CV_PI/2., theta_d), CV_PI/2.);
+
+        if (theta_d > 1e-8)
         {
-            float* m1f = map1.getMat().ptr<float>(i);
-            float* m2f = map2.getMat().ptr<float>(i);
-            short*  m1 = (short*)m1f;
-            ushort* m2 = (ushort*)m2f;
-
-            // for RECTIFY_LONGLATI, theta and h are longittude and latitude
-            double theta = i*iK(0, 1) + iK(0, 2),
-                   h     = i*iK(1, 1) + iK(1, 2);
-
-            for (int j = 0; j < size.width; ++j, theta+=iK(0,0), h+=iK(1,0))
+            // compensate distortion iteratively
+            double theta = theta_d;
+            for(int j = 0; j < 10; j++ )
             {
-                double _xt = 0.0, _yt = 0.0, _wt = 0.0;
-                if (flags == RECTIFY_CYLINDRICAL)
-                {
-                    //_xt = std::sin(theta);
-                    //_yt = h;
-                    //_wt = std::cos(theta);
-                    _xt = std::cos(theta);
-                    _yt = std::sin(theta);
-                    _wt = h;
-                }
-                else if (flags == RECTIFY_LONGLATI)
-                {
-                    _xt = -std::cos(theta);
-                    _yt = -std::sin(theta) * std::cos(h);
-                    _wt = std::sin(theta) * std::sin(h);
-                }
-                else if (flags == RECTIFY_STEREOGRAPHIC)
-                {
-                    double a = theta*theta + h*h + 4;
-                    double b = -2*theta*theta - 2*h*h;
-                    double c2 = theta*theta + h*h -4;
-
-                    _yt = (-b-std::sqrt(b*b - 4*a*c2))/(2*a);
-                    _xt = theta*(1 - _yt) / 2;
-                    _wt = h*(1 - _yt) / 2;
-                }
-                double _x = iR(0,0)*_xt + iR(0,1)*_yt + iR(0,2)*_wt;
-                double _y = iR(1,0)*_xt + iR(1,1)*_yt + iR(1,2)*_wt;
-                double _w = iR(2,0)*_xt + iR(2,1)*_yt + iR(2,2)*_wt;
-
-                double r = sqrt(_x*_x + _y*_y + _w*_w);
-                double Xs = _x / r;
-                double Ys = _y / r;
-                double Zs = _w / r;
-                // project to image plane
-                double xu = Xs / (Zs + _xi),
-                       yu = Ys / (Zs + _xi);
-                // add distortion
-                double r2 = xu*xu + yu*yu;
-                double r4 = r2*r2;
-                double xd = (1+k[0]*r2+k[1]*r4)*xu + 2*p[0]*xu*yu + p[1]*(r2+2*xu*xu);
-                double yd = (1+k[0]*r2+k[1]*r4)*yu + p[0]*(r2+2*yu*yu) + 2*p[1]*xu*yu;
-                // to image pixel
-                double u = f[0]*xd + s*yd + c[0];
-                double v = f[1]*yd + c[1];
-
-                if( m1type == CV_16SC2 )
-                {
-                    int iu = cv::saturate_cast<int>(u*cv::INTER_TAB_SIZE);
-                    int iv = cv::saturate_cast<int>(v*cv::INTER_TAB_SIZE);
-                    m1[j*2+0] = (short)(iu >> cv::INTER_BITS);
-                    m1[j*2+1] = (short)(iv >> cv::INTER_BITS);
-                    m2[j] = (ushort)((iv & (cv::INTER_TAB_SIZE-1))*cv::INTER_TAB_SIZE + (iu & (cv::INTER_TAB_SIZE-1)));
-                }
-                else if( m1type == CV_32FC1 )
-                {
-                    m1f[j] = (float)u;
-                    m2f[j] = (float)v;
-                }
+                double theta2 = theta*theta, theta4 = theta2*theta2, theta6 = theta4*theta2, theta8 = theta6*theta2;
+                theta = theta_d / (1 + k[0] * theta2 + k[1] * theta4 + k[2] * theta6 + k[3] * theta8);
             }
+
+            scale = std::tan(theta) / theta_d;
         }
+
+        cv::Vec2d pu = pw * scale; //undistorted point
+
+        // reproject
+        cv::Vec3d pr = RR * cv::Vec3d(pu[0], pu[1], 1.0); // rotated point optionally multiplied by new camera matrix
+        cv::Vec2d fi(pr[0]/pr[2], pr[1]/pr[2]);       // final
+
+        if( sdepth == CV_32F )
+            dstf[i] = fi;
+        else
+            dstd[i] = fi;
     }
-}
-
-void RNOmnicameraTask::undistortImage(cv::InputArray distorted, cv::OutputArray undistorted, cv::InputArray K, cv::InputArray D, cv::InputArray xi, int flags,
-        cv::InputArray knew, const cv::Size& newSize, cv::InputArray R){
-	cv::Size size = newSize.area() != 0 ? newSize : distorted.size();
-
-    cv::Mat map1, map2;
-    initUndistortRectifyMap(K, D, xi, R, knew, size, CV_16SC2, map1, map2, flags);
-    cv::remap(distorted, undistorted, map1, map2, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
 }
 
 void RNOmnicameraTask::task(){
 	//gn->lockSensorsReadings();
 	if(getFrameFromCamera(tiki) != RN_NONE){
-		/*undistortImage(tiki, rectified, camMatrix, distCoeff, xi, RECTIFY_CYLINDRICAL, Knew, newSize);
-		tiki.release();
-		flipped.create(rectified.size(), rectified.type());
-		mapX.create(flipped.size(), CV_32FC1);
-		mapY.create(flipped.size(), CV_32FC1);
 
-		for( int j = 0; j < newSize.height; j++ ){
-
-			for( int i = 1; i < newSize.width*0.75; i++ ){
-				mapX.at<float>(j,i) = (newSize.width*0.75 - i)-1;
-				mapY.at<float>(j,i) = newSize.height - j ;
-			}
-			for( int i = newSize.width*0.75; i <= newSize.width; i++ ){
-				mapX.at<float>(j,i) = (newSize.width*1.75 - i)-1;
-				mapY.at<float>(j,i) = newSize.height - j ;
-			}
-		}*/
-
-		//Corrects flipped image      
-		//cv::remap(rectified, flipped, mapX, mapY, cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
-		//rectified.release();
-		//mapX.release();
-		//mapY.release();
 		if (tiki.data){
 			//cv::imwrite("real-1.4m.jpg", flipped);
 			rgbToGrayscale(tiki, tikiGray);
@@ -668,7 +545,7 @@ void RNOmnicameraTask::task(){
 			//RNUtils::printLn("markers: %d", tikiMarkers.size());
 			poseEstimation();
 			landmarks = gn->getVisualLandmarks();
-			clearLandmarks();
+			landmarks->clear();
 			//cv::Mat rectImage = flipped.clone();
 			for(size_t i = 0; i < tikiMarkers.size(); i++){
 				//drawRectangle(rectImage, tikiMarkers[i]);
@@ -680,11 +557,12 @@ void RNOmnicameraTask::task(){
 				visualLand->setMapId(tikiMarkers.at(i).getMapId());
 				visualLand->setSectorId(tikiMarkers.at(i).getSectorId());
 				visualLand->setMarkerId(tikiMarkers.at(i).getMarkerId());
+				visualLand->addExtraParameter(OPTICAL_THETA_STR, tikiMarkers.at(i).getOpticalTheta());
 				landmarks->add(visualLand);
 			}
+			//RNUtils::printLn("%s", landmarks->toString());
 			gn->setVisualLandmarks(landmarks);
 		}
-		flipped.release();
 	} else {
 		RNUtils::printLn("chuta y ahora?");
 	}

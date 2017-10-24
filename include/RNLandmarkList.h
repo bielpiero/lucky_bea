@@ -72,7 +72,7 @@ public:
 		landmarks->clear();
 	}
 
-	const char* toString(){
+	const char* toString() const{
 		std::ostringstream print_str;
 		print_str.str("");
 		print_str.clear();

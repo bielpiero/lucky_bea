@@ -10,8 +10,24 @@ struct s_landmark{
 	float varMaxX;
 	float varMinY;
 	float varMaxY;
+	float varMinZ;
+	float varMaxZ;
 	float xpos;
 	float ypos;
+	float zpos;
+	s_landmark(){
+		id = RN_NONE;
+		type = "";
+		varMinX = 0;
+		varMaxX = 0;
+		varMinY = 0;
+		varMaxY = 0;
+		varMinZ = 0;
+		varMaxZ = 0;
+		xpos = 0;
+		ypos = 0;
+		zpos = 0;
+	}
 };
 
 struct s_feature{

@@ -1,45 +1,36 @@
 <sectors>
 	<sector id="0" name="Machine Hall" width="2123" height="2796" reference="2" polygon="m 0 0 l 0 2123 l 900 0 l 0 -2796 z">
 		<landmarks>
-			<landmark id="0" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="65" ypos="148"/>
-			<landmark id="1" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="180" ypos="312"/>
-			<landmark id="2" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="263" ypos="52"/>
-			<landmark id="3" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="380" ypos="312"/>
-			<landmark id="4" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="420" ypos="122"/>
-			<landmark id="5" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="535" ypos="312"/>
-			<landmark id="6" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="570" ypos="122"/>
-			<landmark id="7" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="725" ypos="272"/>
-			<landmark id="8" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="745" ypos="122"/>
-			<landmark id="9" type="laser" var-min-x="13" var-max-x="18" var-min-y="13" var-max-y="18" xpos="900" ypos="167"/>
+			
 		</landmarks>
 		<features>
-			<!--<feature id="16" name="charger" width="50" height="25" xpos="700" ypos="370"/>-->
-			<feature id="0" name="door" width="20" height="170" xpos="0" ypos="203"/>
-			<feature id="1" name="door" width="174" height="20" xpos="189" ypos="0"/>
-			<feature id="2" name="door" width="20" height="640" xpos="2123" ypos="1420"/>
+			<!--<feature id="16" name="charger" width="50" height="25" x="700" y="370"/>-->
+			<feature id="0" name="door" width="20" height="170" x="0" y="203"/>
+			<feature id="1" name="door" width="174" height="20" x="189" y="0"/>
+			<feature id="2" name="door" width="20" height="640" x="2123" y="1420"/>
 			
-			<feature id="3" name="Column 0" width="59" height="59" xpos="410" ypos="453"/>
-			<feature id="4" name="Column 1" width="59" height="59" xpos="823" ypos="453"/>
-			<feature id="5" name="Column 2" width="59" height="59" xpos="1241" ypos="453"/>
-			<feature id="6" name="Column 3" width="59" height="59" xpos="1656" ypos="453"/>
-			<feature id="7" name="Column 4" width="59" height="59" xpos="1656" ypos="965"/>
-			<feature id="8" name="Column 5" width="59" height="59" xpos="1656" ypos="1835"/>
-			<feature id="9" name="Column 6" width="59" height="59" xpos="1656" ypos="2347"/>
-			<feature id="10" name="Column 7" width="59" height="59" xpos="1241" ypos="2347"/>
-			<feature id="11" name="Column 8" width="59" height="59" xpos="823" ypos="2347"/>
-			<feature id="12" name="Column 9" width="59" height="59" xpos="410" ypos="2347"/>
-			<feature id="13" name="Column 10" width="59" height="59" xpos="410" ypos="1835"/>
-			<feature id="14" name="Column 11" width="59" height="59" xpos="410" ypos="965"/>
+			<feature id="3" name="Column 0" width="59" height="59" x="410" y="453"/>
+			<feature id="4" name="Column 1" width="59" height="59" x="823" y="453"/>
+			<feature id="5" name="Column 2" width="59" height="59" x="1241" y="453"/>
+			<feature id="6" name="Column 3" width="59" height="59" x="1656" y="453"/>
+			<feature id="7" name="Column 4" width="59" height="59" x="1656" y="965"/>
+			<feature id="8" name="Column 5" width="59" height="59" x="1656" y="1835"/>
+			<feature id="9" name="Column 6" width="59" height="59" x="1656" y="2347"/>s
+			<feature id="10" name="Column 7" width="59" height="59" x="1241" y="2347"/>
+			<feature id="11" name="Column 8" width="59" height="59" x="823" y="2347"/>
+			<feature id="12" name="Column 9" width="59" height="59" x="410" y="2347"/>
+			<feature id="13" name="Column 10" width="59" height="59" x="410" y="1835"/>
+			<feature id="14" name="Column 11" width="59" height="59" x="410" y="965"/>
 
-			<feature id="15" name="Big Machine" width="420" height="815" xpos="1001" ypos="1412"/>
+			<feature id="15" name="Big Machine" width="420" height="815" x="1001" y="1412"/>
 		</features>
 		<sites cyclic="yes" sequence="0,1,2,3">
-			<site id="0" name="site a" radius="0" tsec="0" xpos="222" ypos="121"/>
-			<site id="2" name="site c" radius="0" tsec="0" xpos="477" ypos="158"/>
-			<site id="3" name="site d" radius="0" tsec="0" xpos="631" ypos="241"/>
-			<site id="1" name="newdos" radius="0" tsec="0" xpos="348" ypos="258"/>
-			<site id="4" name="site p" radius="0" tsec="0" xpos="324" ypos="135"/>
-			<site id="6" name="nuevo2" radius="10" tsec="0" xpos="621" ypos="407"/>
+			<site id="0" name="site a" radius="0" tsec="0" x="222" y="121"/>
+			<site id="2" name="site c" radius="0" tsec="0" x="477" y="158"/>
+			<site id="3" name="site d" radius="0" tsec="0" x="631" y="241"/>
+			<site id="1" name="newdos" radius="0" tsec="0" x="348" y="258"/>
+			<site id="4" name="site p" radius="0" tsec="0" x="324" y="135"/>
+			<site id="6" name="nuevo2" radius="10" tsec="0" x="621" y="407"/>
 		</sites>
 	</sector>
 </sectors>

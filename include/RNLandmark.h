@@ -8,14 +8,19 @@ private:
 	int mapId;
 	int sectorId;
 	int markerId;
-	std::vector<PointXY*>* data;
+	std::vector<PointXYZ*>* data;
 	float meanX;
 	float meanY;
+	float meanZ;
+
+	std::vector<std::pair<std::string, float>* > *extras;
 public:
 	RNLandmark(){ 
-		data = new std::vector<PointXY*>(); 
+		data = new std::vector<PointXYZ*>();
+		extras = new std::vector<std::pair<std::string, float>* >();
 		meanX = std::numeric_limits<float>::infinity();
 		meanY = std::numeric_limits<float>::infinity();
+		meanZ = std::numeric_limits<float>::infinity();
 	}
 
 	~RNLandmark() {
@@ -23,15 +28,44 @@ public:
             delete data->at(i);
         }
 		data->clear();
-		delete data; 
+		delete data;
+
+		for (int i = 0; i < extras->size(); i++) {
+            delete extras->at(i);
+        }
+		extras->clear();
+		delete extras;
 	}
-	void addPoint(float x, float y){
+	void addPoint(float x, float y, float z = 0){
 		meanX = std::numeric_limits<float>::infinity();
 		meanY = std::numeric_limits<float>::infinity();
-		data->push_back(new PointXY(x, y));
+		meanZ = std::numeric_limits<float>::infinity();
+		data->push_back(new PointXYZ(x, y, z));
 	}
 
-	PointXY* getPointAt(int index){
+	void addExtraParameter(std::string name, float value){
+		std::string realName = RNUtils::toLowercase(name);
+		std::pair<std::string, float>* tuple = getExtraParameter(realName);
+		if(tuple == NULL){
+			extras->push_back(new std::pair<std::string, float>(realName, value));
+		} else {
+			tuple->second = value;
+		}
+	}
+
+	std::pair<std::string, float>* getExtraParameter(std::string name){
+		std::pair<std::string, float>* tuple = NULL;
+		bool stop = false;
+		for(int i = 0; i < extras->size() and not stop; i++){
+			if(extras->at(i)->first == name){
+				tuple = extras->at(i);
+				stop = true;
+			}
+		}
+		return tuple;
+	}
+
+	PointXYZ* getPointAt(int index){
 		return data->at(index);
 	}
 
@@ -62,6 +96,17 @@ public:
 	        meanY = (sum / (float)data->size());
 	    }
 	    return meanY;
+	}
+
+	float getPointsZMean(){
+		if(meanZ == std::numeric_limits<float>::infinity()){
+			float sum = 0;
+			for (int i = 0; i < data->size(); i++) {
+	            sum = sum + data->at(i)->getZ();
+	        }
+	        meanZ = (sum / (float)data->size());
+	    }
+	    return meanZ;
 	}
 
 	bool isEqualTo(RNLandmark* landmark){
@@ -101,8 +146,13 @@ public:
 	void setPointsXMean(float mean){
 		this->meanX = mean;
 	}
+
 	void setPointsYMean(float mean){
 		this->meanY = mean;
+	}
+
+	void setPointsZMean(float mean){
+		this->meanZ = mean;
 	}
 
 	size_t size(){
