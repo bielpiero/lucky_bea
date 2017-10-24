@@ -192,9 +192,10 @@ void RNKalmanLocalizationTask::task(){
 				if (validQR){
 					for (int j = cameraIndex; j < (cameraIndex + cameraLandmarksCount); j++){
 						if(markerId == ((int)zkl(j, 3))){
-							zl(2 * j, 0) = (zkl(j, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second);
+							lndmrk->setPointsXMean((zkl(j, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second));
+							zl(2 * j, 0) = std::abs(lndmrk->getPointsXMean()) - std::abs(zkl(j, 0));
 							zl(2 * j + 1, 0) = std::abs(lndmrk->getPointsYMean()) - std::abs(zkl(j, 1));
-							RNUtils::printLn("markerId: %d, Ángulo estimado: %f, BD: %f, error de posición angular: %f", markerId, lndmrk->getPointsYMean(), zkl(j, 1), zl(2 * j + 1, 0));
+							RNUtils::printLn("markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, error {d: %f, a: %f}", markerId, lndmrk->getPointsXMean(), lndmrk->getPointsYMean(), zkl(j, 0), zkl(j, 1), zl(2 * j, 0), zl(2 * j + 1, 0));
 						}
 					}
 				} else { 
@@ -215,6 +216,7 @@ void RNKalmanLocalizationTask::task(){
 					}
 
 					if(indexFound > RN_NONE){
+						lndmrk->setPointsXMean((zkl(indexFound, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second));
 						zl(2 * indexFound, 0) = (zkl(indexFound, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second);
 						zl(2 * indexFound + 1, 0) = std::abs(lndmrk->getPointsYMean()) - std::abs(zkl(indexFound, 1));
 

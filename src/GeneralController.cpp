@@ -1536,10 +1536,19 @@ void GeneralController::getSectorInformationLandmarks(int mapId, int sectorId, s
 							buffer_str << landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
 							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100) << ",";
 							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100) << ",";
-							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100) << ",";
-							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100) << ",";
-							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100) << ",";
-							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100);
+							buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Z_POSITION_STR)->value())) / 100);
+							if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)){
+								buffer_str << "," << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100) << ",";
+							}
+							if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)){
+								buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100) << ",";
+							}
+							if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)){
+								buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100) << ",";
+							}
+							if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)){
+								buffer_str << (((float)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100);
+							}
 
 							if(landmark_node->next_sibling() != NULL){
 								buffer_str << "|";
