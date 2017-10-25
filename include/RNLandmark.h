@@ -65,8 +65,12 @@ public:
 		return tuple;
 	}
 
+	std::pair<std::string, float>* getExtraParameterAt(int index){
+		return index > RN_NONE and index < extras->size() ? extras->at(index) : NULL;
+	}
+
 	PointXYZ* getPointAt(int index){
-		return data->at(index);
+		return index > RN_NONE and index < data->size() ? data->at(index) : NULL;
 	}
 
 	void erasePointAt(int index){
@@ -157,6 +161,10 @@ public:
 
 	size_t size(){
 		return data->size();
+	}
+
+	size_t extraParametersSize(){
+		return extras->size();
 	}
 };
 

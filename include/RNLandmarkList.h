@@ -84,6 +84,16 @@ public:
 			print_str << "\"Landmark-Id\": \"" << landmarks->at(i)->getMarkerId() << "\",";
 			print_str << "\"distance\": \"" << landmarks->at(i)->getPointsXMean() << "\",";
 			print_str << "\"angle\": \"" << landmarks->at(i)->getPointsYMean() << "\"";
+			if(landmarks->at(i)->extraParametersSize() > 0){
+				print_str << ",";
+			}
+			for(int j = 0; j < landmarks->at(i)->extraParametersSize(); j++){
+				std::pair<std::string, float>* tuple = landmarks->at(i)->getExtraParameterAt(j);
+				print_str << "\"" << tuple->first << "\": \"" << tuple->second << "\"";
+				if(j < landmarks->at(i)->extraParametersSize() - 1){
+					print_str << ",";
+				}
+			}
 			print_str << "}";
 
 			if(i < landmarks->size() - 1){

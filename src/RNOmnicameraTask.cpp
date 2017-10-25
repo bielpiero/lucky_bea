@@ -560,7 +560,7 @@ void RNOmnicameraTask::task(){
 				visualLand->addExtraParameter(OPTICAL_THETA_STR, tikiMarkers.at(i).getOpticalTheta());
 				landmarks->add(visualLand);
 			}
-			//RNUtils::printLn("%s", landmarks->toString());
+			RNUtils::printLn("%s", landmarks->toString());
 			gn->setVisualLandmarks(landmarks);
 		}
 	} else {
