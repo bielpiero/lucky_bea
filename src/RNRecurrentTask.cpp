@@ -12,8 +12,8 @@ RNRecurrentTask::~RNRecurrentTask(){
     kill();
 }
 
-void RNRecurrentTask::setController(GeneralController* gn){
-	this->gn = gn;
+void RNRecurrentTask::setController(RobotNode* rn){
+	this->rn = rn;
 }
 
 void RNRecurrentTask::go(){

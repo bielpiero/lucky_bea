@@ -2,6 +2,7 @@
 #define RN_RF_IDENTIFICATION_TASK_H
 
 #include "RNRecurrentTask.h"
+#include "GeneralController.h"
 #include "AntennaDataList.h"
 
 #include "rfid/ltkcpp.h"
@@ -156,6 +157,7 @@ private:
 	LLRP::CMessage* recvMessage(int msecMax);
 
 private:
+	GeneralController* gn;
 	unsigned int messageId;
 	bool deviceInitialized;
 	int readerDescriptor;

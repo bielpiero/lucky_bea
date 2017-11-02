@@ -25,7 +25,6 @@ const float AntennaData::TX_POWER_INDEX_MULTIPLIER = 0.25;
 GeneralController::GeneralController(const char* port):RobotNode(port){
 	
 	//this->maestroControllers = new SerialPort();
-
 	tokenRequester = RN_NONE;
 	this->setTokenOwner(RN_NONE);
 
@@ -172,6 +171,10 @@ GeneralController::~GeneralController(void){
 	if(!file){
 		std::fclose(file);
 	}
+}
+
+const char* GeneralController::getClassName() const{
+    return "GeneralController";
 }
 
 void GeneralController::onConnection(int socketIndex){ //callback for client and server
@@ -2296,8 +2299,9 @@ void GeneralController::moveRobot(float lin_vel, float angular_vel){
 }
 
 void GeneralController::setRobotPosition(float x, float y, float theta){
-	RNUtils::printLn("new position is: {x: %f, y: %f, theta: %f}", x, y, theta);
+	RNUtils::printLn("Changin' position...");
 	this->setPosition(x, y, theta);	
+	RNUtils::printLn("new position is: {x: %f, y: %f, \u03d1: %f}", x, y, theta);
 }
 
 void GeneralController::setRobotPosition(Matrix Xk){
@@ -2643,7 +2647,7 @@ int GeneralController::initializeKalmanVariables(){
 		Q(0, 0) = uX; 	Q(0, 1) = 0;
 		Q(1, 0) = 0; 	Q(1, 1) = uTh;
 		RNUtils::printLn("Process {ux: %f, uth:%f}", uX, uTh);
-		float laserUX = 0, laserUTh = 0, cameraUX = 0, cameraUTh = 0, rfidUX = 0, rfidUTh = 0;
+		float rfidUX = 0, rfidUTh = 0;
 
 		for(int i = 0; i < robotConfig->navParams->sensors->size(); i++){
 			s_trapezoid* dZone;
@@ -2653,20 +2657,18 @@ int GeneralController::initializeKalmanVariables(){
 
 			if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_LASER_STR){
 				
-				laserUX = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
-				laserUTh = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+				this->laserDistanceVariance = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
+				this->laserAngleVariance = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
 				//laserUX = 0.1355e-3;      //forced meanwhile
 				//laserUTh = 0.3206e-3;
-				RNUtils::printLn("Laser {ux: %f, uth:%f}", laserUX, laserUTh);
+				RNUtils::printLn("Laser {ux: %f, uth:%f}", this->laserDistanceVariance, this->laserAngleVariance);
 
 			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
 				
-				cameraUX = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
-				//cameraUTh = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
-
-				cameraUTh = 0.00022;   //forced meanwhile
-
-				cameraAngleVariance = cameraUTh;
+				this->cameraDistanceVariance = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
+				this->cameraAngleVariance = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+				RNUtils::printLn("Camara {ux: %f, uth:%f}", this->cameraDistanceVariance, this->cameraAngleVariance);
+				//cameraUTh = 0.00022;   //forced meanwhile
 
 			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_RFID_STR){
 				
@@ -2700,16 +2702,16 @@ int GeneralController::initializeKalmanVariables(){
 		for(int i = 0; i < currentSector->landmarksSize(); i++){
 			if(laserSensorActivated){
 				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
-					R(2 * laserIndex, 2 * laserIndex) = laserUX;
-					R(2 * laserIndex + 1, 2 * laserIndex + 1) = laserUTh;
+					R(2 * laserIndex, 2 * laserIndex) = this->laserDistanceVariance;
+					R(2 * laserIndex + 1, 2 * laserIndex + 1) = this->laserAngleVariance;
 					laserIndex++;
 				}	
 			}
 
 			if(cameraSensorActivated){
 				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
-					R(2 * cameraIndex, 2 * cameraIndex) = cameraUX;
-					R(2 * cameraIndex + 1, 2 * cameraIndex + 1) = cameraUTh;
+					R(2 * cameraIndex, 2 * cameraIndex) = this->cameraDistanceVariance;
+					R(2 * cameraIndex + 1, 2 * cameraIndex + 1) = this->cameraAngleVariance;
 					cameraIndex++;
 				}
 			}
@@ -2757,6 +2759,18 @@ Matrix GeneralController::getQ(){
 
 Matrix GeneralController::getR(){
 	return R;
+}
+
+float GeneralController::getLaserDistanceVariance(){
+	return laserDistanceVariance;
+}
+
+float GeneralController::getLaserAngleVariance(){
+	return laserAngleVariance;
+}
+
+float GeneralController::getCameraDistanceVariance(){
+	return cameraDistanceVariance;
 }
 
 float GeneralController::getCameraAngleVariance(){

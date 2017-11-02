@@ -2,6 +2,7 @@
 #define RN_EMOTIONS_TASK_H
 
 #include "RNRecurrentTask.h"
+#include "GeneralController.h"
 
 class RNEmotionsTask : public RNRecurrentTask{
 public:
@@ -9,6 +10,8 @@ public:
 	~RNEmotionsTask();
 	virtual void task();
 	virtual void onKilled();
+private:
+	GeneralController* gn;
 };
 
 #endif

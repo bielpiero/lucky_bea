@@ -17,14 +17,22 @@ private:
 	void getObservations(Matrix& observations);
 	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
 private:
+	static const float MAX_LASER_DISTANCE_ERROR;
+	static const float MAX_LASER_ANGLE_ERROR;
+	static const float MAX_CAMERA_DISTANCE_ERROR;
 	static const float MAX_CAMERA_ANGLE_ERROR;
+	static const float CAMERA_ERROR_POSITION_X;
+	static const float CAMERA_ERROR_POSITION_Y;
 	int laserLandmarksCount;
 	int cameraLandmarksCount;
 	int rfidLandmarksCount;
 
-	float laserThresholdMatching;
-	float cameraThresholdMatching;
-	float rfidThresholdMatching;
+	float laserTMDistance;
+	float laserTMAngle;
+	float cameraTMDistance;
+	float cameraTMAngle;
+	float rfidTMDistance;
+	float rfidTMAngle;
 
 	bool enableLocalization;
 

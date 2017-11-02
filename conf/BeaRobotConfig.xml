@@ -6,17 +6,17 @@
 			<th-zone x1="-0.2618" x2="-0.22618" x3="0.22618" x4="0.2618"/> <!-- radians -->
 		</initial-position>
 		<process-noise>
-			<d-zone x1="-10" x2="-4" x3="4" x4="10"/> <!-- centimeters -->
-			<th-zone x1="-0.15" x2="-0.1" x3="0.1" x4="0.15"/> <!-- radians -->
+			<d-zone x1="-17" x2="-10" x3="10" x4="17"/> <!-- centimeters -->
+			<th-zone x1="-0.17" x2="-0.12" x3="0.12" x4="0.17"/> <!-- radians -->
 		</process-noise>
 		<sensors>
 			<sensor type="laser" activated="1">
 				<observation-noise>
 					<d-zone x1="-7" x2="-5" x3="5" x4="7"/>  <!-- centimeters -->
-					<th-zone x1="-0.04" x2="-0.02" x3="0.0351" x4="0.04"/> <!-- radians -->
+					<th-zone x1="-0.04" x2="-0.02" x3="0.02" x4="0.04"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
-			<sensor type="camera" activated="0">
+			<sensor type="camera" activated="1">
 				<observation-noise>
 					<d-zone x1="-4" x2="-2" x3="3" x4="4"/>  <!-- centimeters -->
 					<th-zone x1="-0.05" x2="-0.04" x3="0.04" x4="0.05"/> <!-- radians -->

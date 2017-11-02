@@ -2,6 +2,7 @@
 #define RN_GESTURES_TASK_H
 
 #include "RNRecurrentTask.h"
+#include "GeneralController.h"
 #include "xmldefs.h"
 
 #define XML_GESTURE_FILE_PATH "conf/BeaConSuerte.xml"
@@ -92,6 +93,7 @@ public:
 
 class RNGesturesTask : public RNRecurrentTask{
 private:
+    GeneralController* gn;
     std::vector<Gesture*> *gestures;
     std::string gestureId;
     SerialPort* maestroController;

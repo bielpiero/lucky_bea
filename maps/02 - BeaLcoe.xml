@@ -36,17 +36,17 @@
 			<landmark id="7" type="laser" x="2865" y="209" z="0"/>
 			<landmark id="8" type="laser" x="2646" y="0" z="0"/>
 			<!--Camera landmarks-->
-			<landmark id="0" type="camera" x="0" y="338" z="241"/>
-			<landmark id="8" type="camera" x="487" y="300" z="247"/>
-			<landmark id="10" type="camera" x="636" y="468" z="253"/>
-			<landmark id="2" type="camera" x="926" y="300" z="242"/>
-			<landmark id="1" type="camera" x="1429" y="468" z="253"/>
-			<landmark id="3" type="camera" x="1623" y="300" z="245"/>
-			<landmark id="9" type="camera" x="2039" y="468" z="256"/>
-			<landmark id="5" type="camera" x="2410" y="300" z="245"/>
-			<landmark id="4" type="camera" x="2616" y="468" z="246"/>
+			<landmark id="0" type="camera" x="0" y="338" z="243"/>
+			<landmark id="8" type="camera" x="487" y="300" z="249"/>
+			<landmark id="10" type="camera" x="636" y="468" z="256"/>
+			<landmark id="2" type="camera" x="926" y="300" z="244"/>
+			<landmark id="1" type="camera" x="1429" y="468" z="255"/>
+			<landmark id="3" type="camera" x="1623" y="300" z="247"/>
+			<landmark id="9" type="camera" x="2039" y="468" z="257"/>
+			<landmark id="5" type="camera" x="2410" y="300" z="247"/>
+			<landmark id="4" type="camera" x="2616" y="468" z="248"/>
 			<landmark id="7" type="camera" x="2865" y="224" z="247"/>
-			<landmark id="6" type="camera" x="2683" y="0" z="242"/>
+			<landmark id="6" type="camera" x="2683" y="0" z="243"/>
 		</landmarks>
 		<features>
 			<feature id="2" name="charger" width="50" height="25" x="658" y="397" linked-sector-id="7" xcoord="420" ycoord="0"/>

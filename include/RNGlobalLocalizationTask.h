@@ -3,6 +3,7 @@
 
 #include "RNRecurrentTask.h"
 #include "RNLandmarkList.h"
+#include "GeneralController.h"
 
 #define STATE_VARIABLES 3
 #define LOCATION_HISTORY 10
@@ -16,7 +17,8 @@ protected:
 	virtual void onKilled();
 
 private:
-	//std::vector<Trio<int, int, int> > *history; 
+	//std::vector<Trio<int, int, int> > *history;
+	GeneralController* gn;
 	bool enableGlobalLocalization;
 };
 

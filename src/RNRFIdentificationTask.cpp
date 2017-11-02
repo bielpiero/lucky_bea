@@ -7,6 +7,7 @@ const char* RNRFIdentificationTask::DEVICE_NAME = "192.168.0.20";
 const unsigned int RNRFIdentificationTask::ANTENNAS_NUMBER = 2;
 
 RNRFIdentificationTask::RNRFIdentificationTask(const char* name, const char* description) : RNRecurrentTask(name, description){
+	this->gn = (GeneralController*)rn;
 	conn = NULL;
 	messageId = 0;
 	readerDescriptor = RN_NONE;

@@ -2,6 +2,7 @@
 #define RN_DIALOGS_TASK_H
 
 #include "RNRecurrentTask.h"
+#include "GeneralController.h"
 #include "DorisLipSync.h"
 
 #define XML_DIALOGS_FILE_PATH "conf/BeaInputOutput.xml"
@@ -70,6 +71,7 @@ public:
 
 class RNDialogsTask : public RNRecurrentTask{
 private:
+    GeneralController* gn;
     std::string inputMessage;
     std::string state;
     DorisLipSync* tts;

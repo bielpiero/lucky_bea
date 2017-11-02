@@ -8,9 +8,9 @@
 class RNRecurrentTaskMap{
 private:
 	std::vector<RNRecurrentTask*>* tasks;
-	GeneralController* gn;
+	RobotNode* rn;
 public:
-	RNRecurrentTaskMap(GeneralController* gn);
+	RNRecurrentTaskMap(RobotNode* rn);
 	virtual ~RNRecurrentTaskMap();
 
 	void addTask(RNRecurrentTask* task);

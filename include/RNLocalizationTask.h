@@ -4,17 +4,20 @@
 #include "RNRecurrentTask.h"
 #include "RNLandmarkList.h"
 #include "Matrix.h"
+#include "GeneralController.h"
 
 #define STATE_VARIABLES 3
 
 class RNLocalizationTask : public RNRecurrentTask{
 public:
 	RNLocalizationTask(const char* name = "Localization Task", const char* description = "") : RNRecurrentTask(name, description){
-
+		this->gn = (GeneralController*)rn;
 	}
 	~RNLocalizationTask(){
 
 	}
+protected:
+	GeneralController* gn;
 protected:
 	virtual void task() = 0;
 	virtual void onKilled() = 0;

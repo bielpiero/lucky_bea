@@ -6,6 +6,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/affine.hpp>
 #include <curl/curl.h>
+#include "GeneralController.h"
 
 #define CURVE_SIZE 4
 #define CELL_MARKER_SIZE 7
@@ -109,7 +110,7 @@ private:
 	CURLcode res;
 	std::vector<char> data;
 	std::ostringstream cameraStream;
-
+	GeneralController* gn;
 	static const std::string cameraUrl;
 
 	float minContourLengthAllowed;

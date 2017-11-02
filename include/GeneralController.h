@@ -194,7 +194,7 @@ struct s_robot{
 
 class GeneralController : public CSocketNode, public RobotNode // la clase GeneralController hereda de la clase CSocketNode
 {
-private:
+private: //variables emotions
 	SerialPort* maestroControllers;
 	DorisLipSync* ttsLipSync;
 
@@ -213,7 +213,9 @@ private:
 	std::ostringstream mappingFeaturesTimestamp;
 	std::ostringstream mappingSitesTimestamp;
 	std::FILE* file;
-public:
+protected: // functions
+	virtual const char* getClassName() const;
+public: // emotions functions
 	
 	GeneralController(const char* port);
 	~GeneralController(void);
@@ -287,7 +289,11 @@ public:
 	Matrix getQ();
 	Matrix getR();
 
+	float getLaserDistanceVariance();
+	float getLaserAngleVariance();
+	float getCameraDistanceVariance();
 	float getCameraAngleVariance();
+
 	float getRobotHeight();
 
 	bool isLaserSensorActivated();
@@ -323,9 +329,6 @@ private:
 
 	RNVirtualFace* virtualFace;
 
-	//OpenCV
-	//std::vector<cv::VideoCapture> vc;
-	//cv::VideoCapture vcSecond;
 	//possibilistic navigation
 	Matrix robotVelocity;
 	Matrix robotEncoderPosition;
@@ -339,6 +342,9 @@ private:
 	Matrix Q;
 	Matrix R;
 
+	float laserDistanceVariance;
+	float laserAngleVariance;
+	float cameraDistanceVariance;
 	float cameraAngleVariance;
 
 	int tokenRequester;

@@ -2,7 +2,7 @@
 #define RN_RECURRENT_TASK_H
 
 #include "RNAsyncTask.h"
-#include "GeneralController.h"
+#include "RobotNode.h"
 
 class RNRecurrentTask : public RNAsyncTask{
 public:
@@ -18,12 +18,12 @@ public:
     void kill();
     
     void* runThread(void* object);
-	void setController(GeneralController* gn);
+	void setController(RobotNode* rn);
 	std::string getTaskName();
 private:
 	void waitUtilTaskFinished();
 protected:
-	GeneralController* gn;
+	RobotNode* rn;
 private:
 	std::string name;
 	std::string description;

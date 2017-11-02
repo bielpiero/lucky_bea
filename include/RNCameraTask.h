@@ -2,6 +2,7 @@
 #define RN_CAMERA_TASK_H
 
 #include "RNRecurrentTask.h"
+#include "GeneralController.h"
 #include <opencv2/opencv.hpp>
 
 #define LEFT_EYE_CAMERA 0

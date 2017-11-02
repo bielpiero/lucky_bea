@@ -1,3 +1,6 @@
+#ifndef ROBOT_NODE_H
+#define ROBOT_NODE_H
+
 #include "RNUtils.h"
 #include "RNActionGoto.h"
 
@@ -15,81 +18,6 @@
 
 #define DEFAULT_SECURITY_DISTANCE_WARNING_TIME 30
 #define DEFAULT_SECURITY_DISTANCE_STOP_TIME 60
-
-class LsColor{
-private:
-	unsigned char red;
-	unsigned char green;
-	unsigned char blue;
-public:
-	LsColor(unsigned char red, unsigned char green, unsigned char blue){
-		this->red = red;
-		this->green = green;
-		this->blue = blue;
-	}
-	~LsColor(){}
-	unsigned char getRed(){ return red; }
-	unsigned char getGreen(){ return green; }
-	unsigned char getBlue(){ return blue; }
-	std::string getHexadecimalColorString(){
-		char buf[6]={};
-		sprintf(buf, "%02x%02x%02x", red & 0xFF, green & 0xFF, blue & 0xFF);
-		return buf;
-
-	}
-};
-
-class LaserScan{
-private:
-	std::vector<float>* ranges;
-	std::vector<float>* intensities;
-	std::vector<LsColor*>* color;
-
-public:
-	LaserScan(){
-		ranges = new std::vector<float>();
-		intensities = new std::vector<float>();
-		color = new std::vector<LsColor*>();
-	}
-    ~LaserScan(){
-        clear();
-        delete ranges;
-        delete intensities;
-        delete color;
-    }
-
-	std::vector<float>* getRanges() { return ranges; }
-	std::vector<float>* getIntensities() { return intensities; }
-	std::vector<LsColor*>* getColors() { return color; }
-
-	void clear(){
-		ranges->clear();
-        intensities->clear();
-        
-        for (int i = 0; i < color->size(); i++){
-            delete color->at(i);
-        }
-        color->clear();
-	}
-
-	void addLaserScanData(float range, float intensity = 0) { 
-		ranges->push_back(range); 
-		intensities->push_back(intensity);
-	}
-
-	void setScanPrimaryColor(unsigned char red, unsigned char green, unsigned char blue){
-		color->push_back(new LsColor(red, green, blue));
-	}
-
-	float getRange(int index) { return ranges->at(index); }
-	float getIntensity(int index) { return intensities->at(index); }
-	LsColor* getColor(int index) { return color->at(index); }
-
-	int size() { return ranges->size(); }
-	float getAngleMin() { return (-M_PI / 2.0); }
-	float getAngleMax() { return (M_PI / 2.0); }
-	float getIncrement() { return (0.5 * M_PI / 180); }
-};
 
 class RobotNode{
 private:
@@ -210,12 +138,10 @@ private:
     void unlockRobot();
 	void computePositionFromEncoders();
 	void getRawPoseFromOdometry();
-    short checkForwardLimitTransition(double enc_k, double enc_k_1);
-    short checkBackwardLimitTransition(double enc_k, double enc_k_1);
     void securityDistanceChecker();
     
 protected:
-	
+	virtual const char* getClassName() const;
 	virtual void onLaserScanCompleted(LaserScan* data) = 0;
 	virtual void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear) = 0;
 	virtual void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed) = 0;
@@ -226,3 +152,4 @@ protected:
     virtual void onSecurityDistanceStopSignal() = 0;
     virtual void onSensorsScanCompleted() = 0;
 };
+#endif

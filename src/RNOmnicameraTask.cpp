@@ -6,6 +6,7 @@ const std::string RNOmnicameraTask::cameraUrl = "http://192.168.0.19/record/curr
 //const std::string RNOmnicameraTask::cameraUrl = "http://admin:C0n7r01_au70@192.168.1.33/control/faststream.jpg?stream=full&fps=24&noaudio&data=v.mjpg";
 
 RNOmnicameraTask::RNOmnicameraTask(const char* name, const char* description) : RNRecurrentTask(name, description){
+	this->gn = (GeneralController*)rn;
 	curl = curl_easy_init();
 	curl_easy_setopt(curl, CURLOPT_URL, cameraUrl.c_str());
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &RNOmnicameraTask::write_data);
@@ -560,7 +561,7 @@ void RNOmnicameraTask::task(){
 				visualLand->addExtraParameter(OPTICAL_THETA_STR, tikiMarkers.at(i).getOpticalTheta());
 				landmarks->add(visualLand);
 			}
-			RNUtils::printLn("%s", landmarks->toString());
+			//RNUtils::printLn("%s", landmarks->toString());
 			gn->setVisualLandmarks(landmarks);
 		}
 	} else {
