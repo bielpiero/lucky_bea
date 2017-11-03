@@ -1,7 +1,7 @@
 #include "RNLaserTask.h"
 
 RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
-	
+	this->gn = gn
 	laserConnector = new ArLaserConnector(rn->getArgumentParser(), rn->getRobot(), rn->getRobotConnector());
 	if(!laserConnector->connectLasers(false, false, true)){
 		printf("Could not connect to configured lasers.\n");
