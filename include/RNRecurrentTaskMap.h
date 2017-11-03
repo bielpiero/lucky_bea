@@ -1,8 +1,6 @@
 #ifndef RN_RECURRENT_TASK_MAP_H
 #define RN_RECURRENT_TASK_MAP_H
 
-#include <vector>
-
 #include "RNRecurrentTask.h"
 
 class RNRecurrentTaskMap{
@@ -10,7 +8,7 @@ private:
 	std::vector<RNRecurrentTask*>* tasks;
 	RobotNode* rn;
 public:
-	RNRecurrentTaskMap(RobotNode* rn);
+	RNRecurrentTaskMap(RobotNode* rn = NULL);
 	virtual ~RNRecurrentTaskMap();
 
 	void addTask(RNRecurrentTask* task);

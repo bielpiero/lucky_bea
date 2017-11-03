@@ -1,7 +1,7 @@
 #include "RNCameraTask.h"
 
 
-RNCameraTask::RNCameraTask(const char* name, const char* description) : RNRecurrentTask(name, description){
+RNCameraTask::RNCameraTask(const GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
 	leftEye = cv::VideoCapture(LEFT_EYE_CAMERA);
 	rightEye = cv::VideoCapture(RIGHT_EYE_CAMERA);
 	leftEye.set(CV_CAP_PROP_FOURCC, CV_FOURCC('M', 'J', 'P', 'G'));

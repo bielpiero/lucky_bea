@@ -214,7 +214,7 @@ private: //variables emotions
 	std::ostringstream mappingSitesTimestamp;
 	std::FILE* file;
 protected: // functions
-	virtual const char* getClassName() const;
+	
 public: // emotions functions
 	
 	GeneralController(const char* port);
@@ -222,6 +222,7 @@ public: // emotions functions
 	
 	virtual void onConnection(int socketIndex);//callback for client and server
 	virtual void onMsg(int socketIndex, char* cad, unsigned long long int length);//callback for client and server
+	virtual const char* getClassName() const;
 	void stopDynamicGesture();
 private:
 

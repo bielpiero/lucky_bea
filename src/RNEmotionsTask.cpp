@@ -1,7 +1,7 @@
 #include "RNEmotionsTask.h"
 
-RNEmotionsTask::RNEmotionsTask(const char* name, const char* description) : RNRecurrentTask(name, description){
-	this->gn = (GeneralController*)rn;
+RNEmotionsTask::RNEmotionsTask(const GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
+	this->gn = (GeneralController*)gn;
 }
 
 RNEmotionsTask::~RNEmotionsTask(){

@@ -6,8 +6,8 @@ const char* RNRFIdentificationTask::DEVICE_NAME = "192.168.0.20";
 //const char* RNRFIdentificationTask::DEVICE_NAME = "speedwayr-11-94-a3.local";
 const unsigned int RNRFIdentificationTask::ANTENNAS_NUMBER = 2;
 
-RNRFIdentificationTask::RNRFIdentificationTask(const char* name, const char* description) : RNRecurrentTask(name, description){
-	this->gn = (GeneralController*)rn;
+RNRFIdentificationTask::RNRFIdentificationTask(const GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
+	this->gn = (GeneralController*)gn;
 	conn = NULL;
 	messageId = 0;
 	readerDescriptor = RN_NONE;

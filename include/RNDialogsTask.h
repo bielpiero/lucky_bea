@@ -76,7 +76,7 @@ private:
     std::string state;
     DorisLipSync* tts;
 public:
-	RNDialogsTask(DorisLipSync* tts, const char* name = "Dialogs Task", const char* description = "Doris Speech");
+	RNDialogsTask(const GeneralController* gn, DorisLipSync* tts, const char* name = "Dialogs Task", const char* description = "Doris Speech");
 	~RNDialogsTask();
 	virtual void task();
 	virtual void onKilled();

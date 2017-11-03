@@ -6,7 +6,7 @@
 
 class RNEmotionsTask : public RNRecurrentTask{
 public:
-	RNEmotionsTask(const char* name = "Emotions Task", const char* description = "Doris Feelings");
+	RNEmotionsTask(const GeneralController* gn, const char* name = "Emotions Task", const char* description = "Doris Feelings");
 	~RNEmotionsTask();
 	virtual void task();
 	virtual void onKilled();

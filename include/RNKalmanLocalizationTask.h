@@ -7,7 +7,7 @@
 
 class RNKalmanLocalizationTask : public RNLocalizationTask{
 public:
-	RNKalmanLocalizationTask(const char* name = "Kalman Localization Task", const char* description = "");
+	RNKalmanLocalizationTask(const GeneralController* gn, const char* name = "Kalman Localization Task", const char* description = "");
 	~RNKalmanLocalizationTask();
 	virtual void task();
 	virtual void onKilled();

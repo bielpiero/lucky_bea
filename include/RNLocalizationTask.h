@@ -10,8 +10,8 @@
 
 class RNLocalizationTask : public RNRecurrentTask{
 public:
-	RNLocalizationTask(const char* name = "Localization Task", const char* description = "") : RNRecurrentTask(name, description){
-		this->gn = (GeneralController*)rn;
+	RNLocalizationTask(const GeneralController* gn, const char* name = "Localization Task", const char* description = "") : RNRecurrentTask(gn, name, description){
+		this->gn = (GeneralController*)gn;
 	}
 	~RNLocalizationTask(){
 

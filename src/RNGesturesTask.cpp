@@ -1,7 +1,7 @@
 #include "RNGesturesTask.h"
 
-RNGesturesTask::RNGesturesTask(SerialPort* maestroController, const char* name, const char* description) : RNRecurrentTask(name, description){
-	this->gn = (GeneralController*)rn;
+RNGesturesTask::RNGesturesTask(const GeneralController* gn, SerialPort* maestroController, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
+	this->gn = (GeneralController*)gn;
 	this->maestroController = maestroController;
 	gestures = new std::vector<Gesture*>();
 	

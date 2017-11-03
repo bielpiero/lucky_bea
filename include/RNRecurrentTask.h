@@ -6,7 +6,7 @@
 
 class RNRecurrentTask : public RNAsyncTask{
 public:
-	RNRecurrentTask(const char* name = "", const char* description = "");
+	RNRecurrentTask(const RobotNode* rn = NULL, const char* name = "", const char* description = "");
 	virtual ~RNRecurrentTask();
 	virtual void task() = 0;
 

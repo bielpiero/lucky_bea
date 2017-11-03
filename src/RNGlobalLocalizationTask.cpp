@@ -1,7 +1,7 @@
 #include "RNGlobalLocalizationTask.h"
 
-RNGlobalLocalizationTask::RNGlobalLocalizationTask(const char* name, const char* description) : RNRecurrentTask(name, description){
-	this->gn = (GeneralController*)rn;
+RNGlobalLocalizationTask::RNGlobalLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
+	this->gn = (GeneralController*)gn;
 	enableGlobalLocalization = false;
 	//history = new std::vector<Trio<int, int, int> >();
 }

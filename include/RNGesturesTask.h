@@ -98,7 +98,7 @@ private:
     std::string gestureId;
     SerialPort* maestroController;
 public:
-	RNGesturesTask(SerialPort* maestroController, const char* name = "Gestures Task", const char* description = "Doris Faces");
+	RNGesturesTask(const GeneralController* gn, SerialPort* maestroController, const char* name = "Gestures Task", const char* description = "Doris Faces");
 	~RNGesturesTask();
 	virtual void task();
 	virtual void onKilled();

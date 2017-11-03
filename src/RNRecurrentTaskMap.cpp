@@ -1,8 +1,9 @@
 #include "RNRecurrentTaskMap.h"
-#include "RobotNode.h"
+//#include "RobotNode.h"
 
 RNRecurrentTaskMap::RNRecurrentTaskMap(RobotNode* rn){
 	this->rn = rn;
+	
 	tasks = new std::vector<RNRecurrentTask*>();
 }
 
@@ -12,7 +13,7 @@ RNRecurrentTaskMap::~RNRecurrentTaskMap(){
 }
 
 void RNRecurrentTaskMap::addTask(RNRecurrentTask* task){
-    task->setController(rn);
+    //task->setController(rn);
     tasks->push_back(task);
     RNUtils::printLn("Task %s added", task->getTaskName().c_str());
 }

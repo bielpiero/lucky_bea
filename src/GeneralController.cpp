@@ -80,19 +80,19 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
-	omnidirectionalTask = new RNOmnicameraTask("Omnidirectional Task");
-	//globalLocalization = new RNGlobalLocalizationTask();
-	//dialogs = new RNDialogsTask(ttsLipSync);
-	//gestures = new RNGesturesTask(this->maestroControllers);
-	//emotions = new RNEmotionsTask();
-	//eyesCameras = new RNCameraTask();
+	omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
+	//globalLocalization = new RNGlobalLocalizationTask(this);
+	//dialogs = new RNDialogsTask(this, ttsLipSync);
+	//gestures = new RNGesturesTask(this, this->maestroControllers);
+	//emotions = new RNEmotionsTask(this);
+	//eyesCameras = new RNCameraTask(this);
 
 	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
-		localization = new RNKalmanLocalizationTask();
+		localization = new RNKalmanLocalizationTask(this);
 	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PF_STR){
-		localization = new RNPFLocalizationTask();
+		localization = new RNPFLocalizationTask(this);
 	}
-	//rfidTask = new RNRFIdentificationTask();
+	//rfidTask = new RNRFIdentificationTask(this);
 
 	////Tasks added:
 	//tasks->addTask(globalLocalization);

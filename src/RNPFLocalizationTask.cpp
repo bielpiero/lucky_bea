@@ -1,6 +1,6 @@
 #include "RNPFLocalizationTask.h"
 
-RNPFLocalizationTask::RNPFLocalizationTask(const char* name, const char* description) : RNLocalizationTask(name, description){
+RNPFLocalizationTask::RNPFLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description){
 	enableLocalization = false;
 }
 

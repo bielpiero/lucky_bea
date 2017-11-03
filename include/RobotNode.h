@@ -80,7 +80,8 @@ private:
 public:
 	RobotNode(const char* port);
 	virtual ~RobotNode();
-
+    virtual const char* getClassName() const;
+    
 	void disconnect();
     
     bool isGoalAchieved(void);
@@ -141,7 +142,6 @@ private:
     void securityDistanceChecker();
     
 protected:
-	virtual const char* getClassName() const;
 	virtual void onLaserScanCompleted(LaserScan* data) = 0;
 	virtual void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear) = 0;
 	virtual void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed) = 0;

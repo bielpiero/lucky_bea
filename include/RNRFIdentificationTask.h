@@ -116,7 +116,7 @@ public:
 	static const unsigned int RF_BUFFER_SIZE;
 	static const unsigned int RO_SPEC_ID;
 	static const unsigned int ANTENNAS_NUMBER;
-	RNRFIdentificationTask(const char* name = "RF Identification Task", const char* description = "");
+	RNRFIdentificationTask(const GeneralController* gn, const char* name = "RF Identification Task", const char* description = "");
 	~RNRFIdentificationTask();
 	int init(void);
 	virtual void task();

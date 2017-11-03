@@ -10,7 +10,7 @@
 
 class RNGlobalLocalizationTask : public RNRecurrentTask{
 public:
-	RNGlobalLocalizationTask(const char* name = "Global Localization Task", const char* description = "");
+	RNGlobalLocalizationTask(const GeneralController* gn, const char* name = "Global Localization Task", const char* description = "");
 	~RNGlobalLocalizationTask();
 protected:
 	virtual void task();

@@ -11,7 +11,7 @@
 
 class RNCameraTask : public RNRecurrentTask{
 public:
-	RNCameraTask(const char* name = "Camera Task", const char* description = "");
+	RNCameraTask(const GeneralController* gn, const char* name = "Camera Task", const char* description = "");
 	~RNCameraTask();
 	virtual void task();
 	virtual void onKilled();

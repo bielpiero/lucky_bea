@@ -1,7 +1,7 @@
 #include "RNDialogsTask.h"
 
-RNDialogsTask::RNDialogsTask(DorisLipSync* tts, const char* name, const char* description) : RNRecurrentTask(name, description){
-    this->gn = (GeneralController*)rn;
+RNDialogsTask::RNDialogsTask(const GeneralController* gn, DorisLipSync* tts, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
+    this->gn = (GeneralController*)gn;
     srand (time(NULL));// Initialize random seed
     inputMessages = new std::vector<InputMessage*>();
     outputMessages = new std::vector<OutputMessage*>();

@@ -1,13 +1,13 @@
 <robot height="1.425" cameras="2" localization="kalman"> <!--localization: {kalman, particle-filter}-->
 	<navigation alpha="70">
 		<initial-position>
-			<x-zone x1="-40" x2="-30" x3="30" x4="40"/> <!-- centimeters -->
-			<y-zone x1="-90" x2="-80" x3="80" x4="90"/> <!-- centimeters -->
+			<x-zone x1="-50" x2="-45" x3="45" x4="50"/> <!-- centimeters -->
+			<y-zone x1="-50" x2="-45" x3="45" x4="50"/> <!-- centimeters -->
 			<th-zone x1="-0.2618" x2="-0.22618" x3="0.22618" x4="0.2618"/> <!-- radians -->
 		</initial-position>
 		<process-noise>
-			<d-zone x1="-17" x2="-10" x3="10" x4="17"/> <!-- centimeters -->
-			<th-zone x1="-0.17" x2="-0.12" x3="0.12" x4="0.17"/> <!-- radians -->
+			<d-zone x1="-25" x2="-23" x3="23" x4="25"/> <!-- centimeters -->
+			<th-zone x1="-0.2" x2="-0.18" x3="0.18" x4="0.2"/> <!-- radians -->
 		</process-noise>
 		<sensors>
 			<sensor type="laser" activated="1">

@@ -8,7 +8,7 @@ const float RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.08;
 const float RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.2695;
 const float RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.0109;
 
-RNKalmanLocalizationTask::RNKalmanLocalizationTask(const char* name, const char* description) : RNLocalizationTask(name, description){
+RNKalmanLocalizationTask::RNKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description){
 	enableLocalization = false;
 	test = std::fopen("localization-data.txt","w+");
 }

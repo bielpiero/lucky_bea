@@ -5,8 +5,9 @@ const double RNOmnicameraTask::PI_DEGREES = 180.0;
 const std::string RNOmnicameraTask::cameraUrl = "http://192.168.0.19/record/current.jpg";
 //const std::string RNOmnicameraTask::cameraUrl = "http://admin:C0n7r01_au70@192.168.1.33/control/faststream.jpg?stream=full&fps=24&noaudio&data=v.mjpg";
 
-RNOmnicameraTask::RNOmnicameraTask(const char* name, const char* description) : RNRecurrentTask(name, description){
-	this->gn = (GeneralController*)rn;
+RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
+	this->gn = (GeneralController*)gn;
+	//RNUtils::printLn(".......................%s", this->gn->getClassName());
 	curl = curl_easy_init();
 	curl_easy_setopt(curl, CURLOPT_URL, cameraUrl.c_str());
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &RNOmnicameraTask::write_data);

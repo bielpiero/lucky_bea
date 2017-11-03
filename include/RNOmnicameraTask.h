@@ -79,7 +79,7 @@ public:
 
 class RNOmnicameraTask : public RNRecurrentTask{
 public:
-	RNOmnicameraTask(const char* name = "Omnicamera Task", const char* description = "");
+	RNOmnicameraTask(const GeneralController* gn, const char* name = "Omnicamera Task", const char* description = "");
 	~RNOmnicameraTask();
 	virtual void task();
 	virtual void onKilled();

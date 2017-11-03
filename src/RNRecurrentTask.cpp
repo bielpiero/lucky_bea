@@ -1,10 +1,11 @@
 #include "RNRecurrentTask.h"
 
-RNRecurrentTask::RNRecurrentTask(const char* name, const char* description){
+RNRecurrentTask::RNRecurrentTask(const RobotNode* rn, const char* name, const char* description){
     this->name = "RNRecurrentTask: " + std::string(name);
     this->description = std::string(description);
     setThreadName(this->name.c_str());
     running = goRequested = killed = false;
+    this->rn = (RobotNode*)rn;
     create();
 }
 
