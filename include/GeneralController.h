@@ -58,6 +58,7 @@
 using namespace rapidxml;
 
 class GeneralController;
+class RNLaserTask;
 class RNGlobalLocalizationTask;
 class RNLocalizationTask;
 class RNKalmanLocalizationTask;
@@ -318,6 +319,7 @@ private:
 	UDPClient* spdUDPClient;
 	RobotDataStreamer* spdWSServer;
 	// Tasks Objects
+	RNLaserTask* laserTask;
 	RNEmotionsTask* emotions;
 	RNGesturesTask* gestures;
 	RNDialogsTask* dialogs;

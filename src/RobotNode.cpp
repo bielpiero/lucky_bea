@@ -1,4 +1,5 @@
 #include "RobotNode.h"
+#include "RNLaserTask.h"
 
 const float RobotNode::SECURITY_DISTANCE = 0.5;
 
@@ -11,7 +12,7 @@ RobotNode::RobotNode(const char* port){
 	args->add("-robotPort"); // pass robot's serial port to Aria
     args->add(port);
 
-  	ArArgumentParser *argparser = new ArArgumentParser(args); // Warning never freed
+  	argparser = new ArArgumentParser(args); // Warning never freed
   	argparser->loadDefaultArguments(); // adds any arguments given in /etc/Aria.args.  Useful on robots with unusual serial port or baud rate (e.g. pioneer lx)
   	argparser->addDefaultArgument("-connectLaser -lp /dev/ttyS2 -lrb 1ref -ld 180 -li half -lf true"); //-lp /dev/ttyS2 port to connect
 
@@ -56,8 +57,8 @@ RobotNode::RobotNode(const char* port){
 
     gotoPoseAction = new RNActionGoto;
  	robot->addAction(gotoPoseAction, 89);
-
- 	laserConnector = new ArLaserConnector(argparser, robot, connector);
+    
+ 	/*laserConnector = new ArLaserConnector(argparser, robot, connector);
 	if(!laserConnector->connectLasers(false, false, true)){
 		printf("Could not connect to configured lasers.\n");
 	}
@@ -72,9 +73,9 @@ RobotNode::RobotNode(const char* port){
     this->keepActiveSensorDataThread = RN_NO;
     this->keepActiveLaserDataThread = RN_NO;
     pthread_mutex_init(&mutexRawPositionLocker, NULL);
-    pthread_mutex_init(&mutexSensorsReadingsLocker, NULL);
+    pthread_mutex_init(&mutexSensorsReadingsLocker, NULL);*/
     pthread_create(&sensorDataThread, NULL, dataPublishingThread, (void *)(this)  );
-    pthread_create(&laserDataThread, NULL, laserPublishingThread, (void *)(this)  );
+    //pthread_create(&laserDataThread, NULL, laserPublishingThread, (void *)(this)  );
     printf("Connection Timeout: %d\n", robot->getConnectionTimeoutTime());
     printf("TicksMM: %d, DriftFactor: %d, RevCount: %d\n", getTicksMM(), getDriftFactor(), getRevCount());
     printf("DiffConvFactor: %f, DistConvFactor: %f, VelocityConvFactor: %f, AngleConvFactor: %f\n", getDiffConvFactor(), getDistConvFactor(), getVelConvFactor(), getAngleConvFactor());
@@ -110,6 +111,18 @@ RobotNode::~RobotNode(){
 
 const char* RobotNode::getClassName() const{
     return "RobotNode";
+}
+
+ArRobotConnector* RobotNode::getRobotConnector() const{
+    return connector;
+}
+
+ArRobot* RobotNode::getRobot() const{
+    return robot;
+}
+
+ArArgumentParser* RobotNode::getArgumentParser() const{
+    return argparser;
 }
 
 void RobotNode::disconnect(){

@@ -3,7 +3,7 @@
 const float RNKalmanLocalizationTask::MAX_LASER_DISTANCE_ERROR = 0.07;
 const float RNKalmanLocalizationTask::MAX_LASER_ANGLE_ERROR = 0.025;
 const float RNKalmanLocalizationTask::MAX_CAMERA_DISTANCE_ERROR = 0.4;
-const float RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.08;
+const float RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.1;
 
 const float RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.2695;
 const float RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.0109;

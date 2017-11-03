@@ -23,6 +23,7 @@ class RobotNode{
 private:
 	ArRobotConnector *connector;
 	ArLaserConnector *laserConnector;
+    ArArgumentParser *argparser;
 	ArLaser *laser;
     RNActionGoto *gotoPoseAction;
     ArRobot *robot;
@@ -30,7 +31,7 @@ private:
     ArPose *myRawPose;
     ArSonarDevice *sonar;
     LaserScan *laserDataScan;
-    
+
     double maxTransVel;
     double maxAbsoluteTransVel;
     double maxRotVel;
@@ -83,7 +84,11 @@ public:
     virtual const char* getClassName() const;
     
 	void disconnect();
-    
+
+    ArRobotConnector* getRobotConnector() const;
+    ArRobot* getRobot() const;
+    ArArgumentParser* getArgumentParser() const;
+
     bool isGoalAchieved(void);
     bool isGoalCanceled(void);
     

@@ -2,6 +2,7 @@
 
 #include "RNRecurrentTask.h"
 #include "RNRecurrentTaskMap.h"
+#include "RNLaserTask.h"
 #include "RNLocalizationTask.h"
 #include "RNKalmanLocalizationTask.h"
 #include "RNPFLocalizationTask.h"
@@ -80,6 +81,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
+	laserTask = new RNLaserTask(this);
 	omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
 	//globalLocalization = new RNGlobalLocalizationTask(this);
 	//dialogs = new RNDialogsTask(this, ttsLipSync);
@@ -96,6 +98,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	////Tasks added:
 	//tasks->addTask(globalLocalization);
+	tasks->addTask(laserTask);
 	tasks->addTask(omnidirectionalTask);
 	//tasks->addTask(dialogs);
 	//tasks->addTask(gestures);
