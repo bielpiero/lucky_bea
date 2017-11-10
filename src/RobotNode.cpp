@@ -1,8 +1,6 @@
 #include "RobotNode.h"
 #include "RNLaserTask.h"
 
-const float RobotNode::SECURITY_DISTANCE = 0.5;
-
 RobotNode::RobotNode(const char* port){
 	Aria::init();
 
@@ -35,11 +33,9 @@ RobotNode::RobotNode(const char* port){
 	this->maxAbsoluteTransVel = robot->getAbsoluteMaxTransVel();
 	this->maxRotVel = robot->getRotVelMax();
 	this->maxAbsoluteRotVel = robot->getAbsoluteMaxRotVel();
-
-    laserDataScan = NULL;
-    
-    isDirectMotion = false;
-    isGoingForward = false;
+        
+    directMotion = false;
+    goingForward = false;
     wasDeactivated = false;
     doNotMove = false;
 
@@ -58,24 +54,12 @@ RobotNode::RobotNode(const char* port){
     gotoPoseAction = new RNActionGoto;
  	robot->addAction(gotoPoseAction, 89);
     
- 	/*laserConnector = new ArLaserConnector(argparser, robot, connector);
-	if(!laserConnector->connectLasers(false, false, true)){
-		printf("Could not connect to configured lasers.\n");
-	}
-
-	laser = robot->findLaser(1);
-	if(!laser){
-		printf("Error. Not Connected to any laser.\n");
-	} else {
-		printf("Connected to SICK LMS200 laser.\n");
-	}
-    this->keepActiveSecurityDistanceTimerThread = RN_NO;
+ 	this->keepActiveSecurityDistanceTimerThread = RN_NO;
     this->keepActiveSensorDataThread = RN_NO;
-    this->keepActiveLaserDataThread = RN_NO;
     pthread_mutex_init(&mutexRawPositionLocker, NULL);
-    pthread_mutex_init(&mutexSensorsReadingsLocker, NULL);*/
-    pthread_create(&sensorDataThread, NULL, dataPublishingThread, (void *)(this)  );
-    //pthread_create(&laserDataThread, NULL, laserPublishingThread, (void *)(this)  );
+    
+    pthread_create(&sensorDataThread, NULL, dataPublishingThread, (void *)(this));
+
     printf("Connection Timeout: %d\n", robot->getConnectionTimeoutTime());
     printf("TicksMM: %d, DriftFactor: %d, RevCount: %d\n", getTicksMM(), getDriftFactor(), getRevCount());
     printf("DiffConvFactor: %f, DistConvFactor: %f, VelocityConvFactor: %f, AngleConvFactor: %f\n", getDiffConvFactor(), getDistConvFactor(), getVelConvFactor(), getAngleConvFactor());
@@ -117,7 +101,7 @@ ArRobotConnector* RobotNode::getRobotConnector() const{
     return connector;
 }
 
-ArRobot* RobotNode::getRobot() const{
+ArRobot* RobotNode::getRobot(){
     return robot;
 }
 
@@ -154,30 +138,7 @@ void RobotNode::finishThreads(){
     RNUtils::printLn("Stopped Robot Data Aquisition Thread");
 }
 
-void RobotNode::getLaserScan(void){
-	if(laser != NULL){
-		laser->lockDevice();
-        
-		const std::list<ArSensorReading*> *currentReadings = new std::list<ArSensorReading*>(*laser->getRawReadings());
-        lockSensorsReadings();
-        if(laserDataScan == NULL){
-            laserDataScan = new LaserScan();
-        } else {
-		  laserDataScan->clear();
-        }
-		for(std::list<ArSensorReading*>::const_iterator it = currentReadings->begin(); it != currentReadings->end(); ++it){
-			laserDataScan->addLaserScanData((float)(*it)->getRange() / 1000, (float)(*it)->getExtraInt());
-		}
-        
-        laser->unlockDevice();
 
-        securityDistanceChecker();
-        onLaserScanCompleted(laserDataScan);
-
-        delete currentReadings;
-        unlockSensorsReadings();
-	}
-}
 
 int RobotNode::lockSensorsReadings(){
     return pthread_mutex_lock(&mutexSensorsReadingsLocker);
@@ -185,10 +146,6 @@ int RobotNode::lockSensorsReadings(){
 
 int RobotNode::unlockSensorsReadings(){
     return pthread_mutex_unlock(&mutexSensorsReadingsLocker);
-}
-
-LaserScan* RobotNode::getRawLaserReadings(void){
-    return laserDataScan;
 }
 
 void RobotNode::getRobotPosition(){
@@ -222,8 +179,8 @@ void RobotNode::move(double distance, double speed){
 }
 
 void RobotNode::moveAtSpeed(double linearVelocity, double angularVelocity){
-    isDirectMotion = true;
-    isGoingForward = false;
+    directMotion = true;
+    goingForward = false;
     this->lockRobot();
     gotoPoseAction->cancelGoal();
     if(gotoPoseAction->isActive()){
@@ -232,11 +189,11 @@ void RobotNode::moveAtSpeed(double linearVelocity, double angularVelocity){
     
     if(linearVelocity == 0.0 && angularVelocity == 0.0){
         robot->stop();
-        isDirectMotion = false;
+        directMotion = false;
     } else {
         robot->clearDirectMotion();
         if(linearVelocity > 0.0){
-            isGoingForward = true;
+            goingForward = true;
         }
         RNUtils::printLn("{LinVel: %f, AngVel: %f}\n", linearVelocity, angularVelocity);
         robot->setVel(linearVelocity*1e3);
@@ -251,7 +208,7 @@ void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed
     ArPose newPose(x * 1000, y * 1000);
     newPose.setThRad(theta);
 
-    isDirectMotion = false;
+    directMotion = false;
     this->lockRobot();
 
     doNotMove = false;
@@ -301,6 +258,20 @@ bool RobotNode::isGoalCanceled(){
     return gotoPoseAction->haveCanceledGoal();
 }
 
+bool RobotNode::isGoalActive(void){
+    return gotoPoseAction->isActive();
+}
+
+void RobotNode::activateGoal(void){
+    this->wasDeactivated = false;
+    gotoPoseAction->activate();
+}
+
+void RobotNode::deactivateGoal(void){
+    this->wasDeactivated = true;
+    gotoPoseAction->deactivate();
+}
+
 void RobotNode::setSonarStatus(bool enabled){
     this->lockRobot();
     if (enabled) {
@@ -313,6 +284,21 @@ void RobotNode::setSonarStatus(bool enabled){
 
 bool RobotNode::getSonarsStatus(){
     return robot->areSonarsEnabled();
+}
+
+bool RobotNode::isDirectMotion(){
+    return this->directMotion;
+}
+bool RobotNode::isGoingForward(){
+    return this->goingForward;
+}
+
+bool RobotNode::isNotAllowedToMove(){
+    return this->doNotMove;
+}
+
+void RobotNode::notAllowedToMove(bool notAllowed){
+    this->doNotMove = notAllowed;
 }
 
 void RobotNode::getBumpersStatus(void){
@@ -509,49 +495,6 @@ void* RobotNode::dataPublishingThread(void* object){
     }
     self->keepActiveSensorDataThread = RN_NO;
     return NULL;
-}
-
-void* RobotNode::laserPublishingThread(void* object){
-    RobotNode* self = (RobotNode*)object;
-    self->keepActiveLaserDataThread = RN_YES;
-    ArUtil::sleep(2000);
-    while(RNUtils::ok() and self->keepActiveLaserDataThread == RN_YES){
-        self->getLaserScan();
-        ArUtil::sleep(10);
-    }
-    self->keepActiveLaserDataThread = RN_NO;
-    return NULL;
-}
-
-void RobotNode::securityDistanceChecker(){
-    
-    if(laserDataScan != NULL){
-        
-        bool thereIsSomethingInFront = false;
-        //pthread_mutex_lock(&mutexLaserDataLocker);
-        for(int it = MIN_INDEX_LASER_SECURITY_DISTANCE; (it < (laserDataScan->size() - MAX_INDEX_LASER_SECURITY_DISTANCE)) and not thereIsSomethingInFront; it++){
-            if(laserDataScan->getRange(it) < SECURITY_DISTANCE){
-                thereIsSomethingInFront = true;                
-            }
-        }
-        //pthread_mutex_unlock(&mutexLaserDataLocker);
-        if(thereIsSomethingInFront){
-            if(isDirectMotion and isGoingForward and not doNotMove){
-                doNotMove = true;
-                robot->stop();
-            } else if(gotoPoseAction->isActive()){
-                gotoPoseAction->deactivate();
-                wasDeactivated = true;
-                
-            }
-        } else {
-            doNotMove = false;
-            if(wasDeactivated){
-                wasDeactivated = false;
-                gotoPoseAction->activate();
-            }
-        }
-    }
 }
 
 void* RobotNode::securityDistanceTimerThread(void* object){

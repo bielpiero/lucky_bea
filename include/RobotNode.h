@@ -13,32 +13,23 @@
 #define UPPER_LIMIT_TRANSITION 2
 #define RN_MOVEMENT 3
 
-#define MIN_INDEX_LASER_SECURITY_DISTANCE 90
-#define MAX_INDEX_LASER_SECURITY_DISTANCE 120
-
-#define DEFAULT_SECURITY_DISTANCE_WARNING_TIME 30
-#define DEFAULT_SECURITY_DISTANCE_STOP_TIME 60
-
 class RobotNode{
 private:
 	ArRobotConnector *connector;
-	ArLaserConnector *laserConnector;
     ArArgumentParser *argparser;
-	ArLaser *laser;
     RNActionGoto *gotoPoseAction;
     ArRobot *robot;
     ArPose *myPose;
     ArPose *myRawPose;
     ArSonarDevice *sonar;
-    LaserScan *laserDataScan;
 
     double maxTransVel;
     double maxAbsoluteTransVel;
     double maxRotVel;
     double maxAbsoluteRotVel;
     
-    bool isDirectMotion;
-    bool isGoingForward;
+    bool directMotion;
+    bool goingForward;
     bool wasDeactivated;
     bool doNotMove;
     char prevBatteryChargeState;
@@ -66,16 +57,11 @@ private:
     unsigned int securityDistanceStopTime;
     
     char keepActiveSensorDataThread;
-    char keepActiveLaserDataThread;
     char keepActiveSecurityDistanceTimerThread;
     
-    static const float SECURITY_DISTANCE;
-
     pthread_mutex_t mutexRawPositionLocker;
     pthread_mutex_t mutexSensorsReadingsLocker;
     pthread_t sensorDataThread;
-    pthread_t laserDataThread;
-    pthread_t distanceThread;
     pthread_t distanceTimerThread;
 
 public:
@@ -86,11 +72,20 @@ public:
 	void disconnect();
 
     ArRobotConnector* getRobotConnector() const;
-    ArRobot* getRobot() const;
+    ArRobot* getRobot();
     ArArgumentParser* getArgumentParser() const;
 
     bool isGoalAchieved(void);
     bool isGoalCanceled(void);
+
+    bool isDirectMotion();
+    bool isGoingForward();
+    bool isNotAllowedToMove();
+    void notAllowedToMove(bool allowed);
+
+    bool isGoalActive(void);
+    void activateGoal(void);
+    void deactivateGoal(void);
     
     void gotoPosition(double x, double y, double theta, double transSpeed = 200, double rotSpeed = 4.75);
 	void move(double distance, double speed = 200);
@@ -99,8 +94,7 @@ public:
 
     void getBatterChargeStatus(void);
     void getBumpersStatus(void);
-	void getLaserScan(void);
-	LaserScan* getRawLaserReadings(void);
+		
     bool getMotorsStatus(void);
     bool getSonarsStatus(void);
     void getSonarsScan(void);
@@ -136,7 +130,6 @@ public:
 
 private:
     static void* securityDistanceTimerThread(void* object);
-    static void* laserPublishingThread(void* object);
 	static void* dataPublishingThread(void* object);
     
     void finishThreads();
@@ -147,7 +140,6 @@ private:
     void securityDistanceChecker();
     
 protected:
-	virtual void onLaserScanCompleted(LaserScan* data) = 0;
 	virtual void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear) = 0;
 	virtual void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed) = 0;
 	virtual void onRawPositionUpdate(double x, double y, double theta, double deltaDistance, double deltaDegrees) = 0;

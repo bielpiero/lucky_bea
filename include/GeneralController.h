@@ -252,13 +252,11 @@ private:
 	static void* dynamicFaceThread(void*);
 
 public:
-
 	void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear);
 	void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed);
 	void onRawPositionUpdate(double x, double y, double theta, double deltaDistance, double deltaDegrees);
 	void onBatteryChargeStateChanged(char battery);
 	void onSonarsDataUpdate(std::vector<PointXY*>* data);
-	void onLaserScanCompleted(LaserScan* laser);
 	void onSecurityDistanceWarningSignal();
     void onSecurityDistanceStopSignal();
     void onSensorsScanCompleted();
@@ -310,11 +308,11 @@ public:
 	RNLandmarkList* getVisualLandmarks();
 	RNLandmarkList* getRFIDLandmarks();
 
+	void setLaserLandmarks(RNLandmarkList* landmarks);
 	void setVisualLandmarks(RNLandmarkList* landmarks);
 	void setRFIDLandmarks(RNLandmarkList* landmarks);
 private:
-	static const float LASER_MAX_RANGE;
-	static const float LANDMARK_RADIUS;
+	
 
 	UDPClient* spdUDPClient;
 	RobotDataStreamer* spdWSServer;

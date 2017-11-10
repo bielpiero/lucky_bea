@@ -14,9 +14,6 @@
 #include "RNGesturesTask.h"
 #include "RNGlobalLocalizationTask.h"
 
-const float GeneralController::LASER_MAX_RANGE = 11.6;
-const float GeneralController::LANDMARK_RADIUS = 0.045;
-
 const double AntennaData::TX_GAIN = 5.7;
 const double AntennaData::FREQUENCY = 866.9e6;
 const double AntennaData::C = 3e8;
@@ -2427,85 +2424,7 @@ void GeneralController::onBatteryChargeStateChanged(char battery){
 	}
 }
 
-void GeneralController::onLaserScanCompleted(LaserScan* laser){
-	
-	float angle_min = laser->getAngleMin();
-	float angle_max = laser->getAngleMax();
-	float angle_increment = laser->getIncrement();
-	std::vector<float>* data = laser->getRanges();
-	std::vector<float> dataIntensities = *laser->getIntensities();
 
-	std::vector<int> dataIndices = stats::findIndicesHigherThan(dataIntensities, 0);
-
-	lockLaserLandmarks();
-
-	laserLandmarks->clear();
-	RNLandmark* current = new RNLandmark;
-
-
-	for(int i = 0; i < dataIndices.size(); i++){
-		if(i < dataIndices.size() - 1){
-			if((dataIndices[i + 1] - dataIndices[i]) <= 10){
-				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
-				
-			} else {
-				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
-				if(current->size() > 1){
-					laserLandmarks->add(current);
-				}
-				current = new RNLandmark;
-			}
-		} else {
-			if((dataIndices[i] - dataIndices[i - 1]) <= 10){
-				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
-				if(current->size() > 1){
-					laserLandmarks->add(current);
-				}
-			} else if(current->size() > 0){
-				if(current->size() > 1){
-					laserLandmarks->add(current);
-				}
-			}
-		}
-	}
-	
-	std::ostringstream buffFile;
-	for(int i = 0; i < laserLandmarks->size(); i++){
-		
-		//RNUtils::printLn("Questa Merda prima alla correzione [%d] è {d: %f, a: %f}", i, laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, laserLandmarks->at(i)->getPointsYMean());
-		Matrix Pkl = Matrix::eye(2);
-		Matrix Rkl = std::pow(0.003, 2) * Matrix::eye(laserLandmarks->at(i)->size());
-		Matrix Zk(laserLandmarks->at(i)->size(), 1);
-		Matrix Zke(laserLandmarks->at(i)->size(), 1);
-		Matrix Hkl(laserLandmarks->at(i)->size(), 2);
-		Matrix Pc(2, 1);
-		Pc(0, 0) = laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS;
-		Pc(1, 0) = laserLandmarks->at(i)->getPointsYMean();
-
-		//fprintf(file, "$MEAN_LASER_RAW\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
-		for(int j = 0; j < laserLandmarks->at(i)->size(); j++){
-			Zk(j, 0) = laserLandmarks->at(i)->getPointAt(j)->getX();
-			Zke(j, 0) = Pc(0, 0) * cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) - LANDMARK_RADIUS * cos(asin((Pc(0, 0) / LANDMARK_RADIUS) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY())));
-
-			//fprintf(file, "$LASER_POINT\t%d\t%d\t%f\t%f\t%f\n", (i + 1), (j + 1), Zk(j, 0), Zke(j, 0), laserLandmarks->at(i)->getPointAt(j)->getY());
-
-			float calc = (1 / LANDMARK_RADIUS) * (1 / std::sqrt(1 - ((std::pow(Pc(0, 0), 2) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2))/(std::pow(LANDMARK_RADIUS, 2)))));
-			Hkl(j, 0) = cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + Pc(0, 0) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2) * calc;
-			Hkl(j, 1) = -Pc(0, 0) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + std::pow(Pc(0, 0), 2) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) * cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) * calc;
-		}
-
-		Matrix Skl = Hkl * Pkl * ~Hkl + Rkl;
-		Matrix Wkl = Pkl * ~Hkl * !Skl;
-		Pc = Pc + (Wkl * (Zk - Zke));
-		//fprintf(file, "$MEAN_LASER_FIXED\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
-		laserLandmarks->at(i)->setPointsXMean(Pc(0, 0));
-		laserLandmarks->at(i)->setPointsYMean(Pc(1, 0));
-
-		//RNUtils::printLn("Questa Merda dopo della correzione [%d] è {d: %f, a: %f}", i, laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, laserLandmarks->at(i)->getPointsYMean());
-		
-	}
-	unlockLaserLandmarks();
-}
 
 void GeneralController::onSecurityDistanceWarningSignal(){
 	RNUtils::printLn("Alert on something is blocking Doris to achieve goal...");
@@ -2830,6 +2749,12 @@ RNLandmarkList* GeneralController::getVisualLandmarks(){
 
 RNLandmarkList* GeneralController::getRFIDLandmarks(){
 	return this->rfidLandmarks;
+}
+
+void GeneralController::setLaserLandmarks(RNLandmarkList* landmarks){
+	lockLaserLandmarks();
+	this->laserLandmarks = landmarks;
+	unlockLaserLandmarks();
 }
 
 void GeneralController::setVisualLandmarks(RNLandmarkList* landmarks){
