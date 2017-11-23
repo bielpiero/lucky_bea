@@ -47,15 +47,16 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	if(this->currentState == STATE_GOING_TO_GOAL){
 
 		double deltaThetaLocal, distanceLocal;
-		if(this->goal.getTh() != 0){
-			distanceLocal = 0;
+		if(this->goal.getTh() != 0.0){
+			distanceLocal = 0.0;
 			deltaThetaLocal = -myRobot->getPose().getTh() + this->goal.getTh();
 		} else {
 			distanceLocal = myRobot->getPose().findDistanceTo(this->goal);
 	    	deltaThetaLocal = myRobot->findDeltaHeadingTo(this->goal);
 	    }
-    	//RNUtils::printLn("{Distance: %f, DeltaTheta: %f}\n", distanceLocal, deltaThetaLocal);
-    	if(ArMath::fabs(deltaThetaLocal) > this->minimumAngle){
+	    
+    	RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
+    	/*if(ArMath::fabs(deltaThetaLocal) > this->minimumAngle){
     		//turn to point to goal
 
     		double angVel = angularController->getSystemInput(deltaThetaLocal);
@@ -69,17 +70,20 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     		//printf("{angVel after correction: %f}\n", angVel);
     		myDesired->setRotVel(angVel);
     		
-    	} else if(distanceLocal > minimumDistance and ArMath::fabs(linearController->getLastInput()) >= 0.5){
+    	} else*/ if(distanceLocal > minimumDistance /*and ArMath::fabs(linearController->getLastInput()) >= 0.5*/){
     		myDesired->setRotVel(0);
-    		double linVel = linearController->getSystemInput(distanceLocal);
-    	
-    		if(linVel >= linearSpeed){
+    		//double linVel = linearController->getSystemInput(distanceLocal);
+    		double linVel = 0.0;
+    		
+    		linVel = this->linearSpeed;
+    		
+    		/*if(linVel >= linearSpeed){
     			linVel = -linearSpeed;
     		} else if(linVel <= -linearSpeed){
     			linVel = linearSpeed;
     		} else {
     			linVel *= -1;
-    		}
+    		}*/
     		//printf("{linVel after correction: %f}\n", linVel);
     		myDesired->setVel(linVel);
     	} else {

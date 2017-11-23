@@ -63,7 +63,7 @@
 		<permission function="0x21" token-required="1"/>
 		<permission function="0x22" token-required="0"/>
 		<permission function="0x23" token-required="0"/>
-		<permission function="0x30" token-required="0"/>
+		<permission function="0x30" token-required="1"/>
 		<permission function="0x31" token-required="0"/>
 		<permission function="0x7C" token-required="0"/>
 		<permission function="0x7D" token-required="1"/>

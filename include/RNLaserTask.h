@@ -7,9 +7,6 @@
 #define MIN_INDEX_LASER_SECURITY_DISTANCE 90
 #define MAX_INDEX_LASER_SECURITY_DISTANCE 120
 
-#define DEFAULT_SECURITY_DISTANCE_WARNING_TIME 30
-#define DEFAULT_SECURITY_DISTANCE_STOP_TIME 60
-
 class RNLaserTask : public RNRecurrentTask{
 public:
 	RNLaserTask(GeneralController* gn, const char* name = "Laser Task", const char* description = "");

@@ -75,6 +75,7 @@ void* RNRecurrentTask::runThread(void* object){
         while(not goRequested){
             RNUtils::sleep(10);
         }
+        testCancel(); 
         lock();
         running = true;
         unlock();

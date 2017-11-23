@@ -111,6 +111,9 @@ private:
 	std::vector<char> data;
 	std::ostringstream cameraStream;
 	GeneralController* gn;
+
+	bool enableVideoProcessing;
+	
 	static const std::string cameraUrl;
 
 	float minContourLengthAllowed;
@@ -118,7 +121,7 @@ private:
 	std::vector<cv::Point2f> markerCorners2d;
 	std::vector<cv::Point3f> markerCorners3d;
 	std::vector<std::vector<cv::Point> > contours;
-	std::vector<std::vector<cv::Point> > allContours;
+	
 	std::vector<RNMarker> possibleMarkersPoints;
 	cv::Size markerSize;
 	cv::Mat canonicalMarkerImage;

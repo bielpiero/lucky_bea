@@ -13,6 +13,9 @@
 #define UPPER_LIMIT_TRANSITION 2
 #define RN_MOVEMENT 3
 
+class RNFactorySensorsTask;
+class RNDistanceTimerTask;
+
 class RobotNode{
 private:
 	ArRobotConnector *connector;
@@ -20,8 +23,12 @@ private:
     RNActionGoto *gotoPoseAction;
     ArRobot *robot;
     ArPose *myPose;
-    ArPose *myRawPose;
-    ArSonarDevice *sonar;
+
+    ArFunctorC<RobotNode> connectedCB;
+    ArFunctorC<RobotNode> connFailCB;
+    ArFunctorC<RobotNode> disconnectedCB;
+    ArFunctorC<RobotNode> connLostCB;
+    //ArPose *myRawPose;
 
     double maxTransVel;
     double maxAbsoluteTransVel;
@@ -34,14 +41,6 @@ private:
     bool doNotMove;
     char prevBatteryChargeState;
 
-    long int prevLeftEncoderData;
-    long int prevRightEncoderData;
-
-    double prevDistance;
-    double prevRads;
-    double prevVel;
-    double prevRotVel;
-
     int driftFactorIncrement;
 
     int deltaLeftMM;
@@ -49,19 +48,18 @@ private:
     
     double deltaDistance;
     double deltaDegrees;
-
-    bool isFirstFakeEstimation;
     
     unsigned int timerSecs;
     unsigned int securityDistanceWarningTime;
     unsigned int securityDistanceStopTime;
     
-    char keepActiveSensorDataThread;
     char keepActiveSecurityDistanceTimerThread;
     
-    pthread_mutex_t mutexRawPositionLocker;
-    pthread_mutex_t mutexSensorsReadingsLocker;
-    pthread_t sensorDataThread;
+    RNFactorySensorsTask* sensors;
+    RNDistanceTimerTask* distanceTimer;
+
+    pthread_mutex_t mutexIncrements;
+
     pthread_t distanceTimerThread;
 
 public:
@@ -86,6 +84,7 @@ public:
     bool isGoalActive(void);
     void activateGoal(void);
     void deactivateGoal(void);
+    void cancelGoal();
     
     void gotoPosition(double x, double y, double theta, double transSpeed = 200, double rotSpeed = 4.75);
 	void move(double distance, double speed = 200);
@@ -97,7 +96,6 @@ public:
 		
     bool getMotorsStatus(void);
     bool getSonarsStatus(void);
-    void getSonarsScan(void);
 	void getRobotPosition(void);
 	void getRawRobotPosition(void);
 	    
@@ -105,32 +103,28 @@ public:
     void setPosition(double x, double y, double theta);
     void setSonarStatus(bool enabled);
 
+    void setIncrementPosition(double deltaDistance, double deltaDegrees);
+    void getIncrementPosition(double* deltaDistance, double* deltaDegrees);
+
     int getDriftFactor();
 	int getRevCount();
 	int getTicksMM();
 	double getEncoderScaleFactor();
 	
-	double getDeltaDegrees();
-	double getDeltaDistance();
 
 	double getEncoderX();
 	double getEncoderY();
 	double getEncoderTh();
 
-	long int getLeftEncoder();
-	long int getRightEncoder();
 
 	double getDiffConvFactor();
 	double getDistConvFactor();
 	double getVelConvFactor();
 	double getAngleConvFactor();
 
-	int lockSensorsReadings();
-	int unlockSensorsReadings();
 
 private:
     static void* securityDistanceTimerThread(void* object);
-	static void* dataPublishingThread(void* object);
     
     void finishThreads();
     void lockRobot();
@@ -138,8 +132,18 @@ private:
 	void computePositionFromEncoders();
 	void getRawPoseFromOdometry();
     void securityDistanceChecker();
+
+    // called if the connection was sucessfully made
+    void connected(void);
+    // called if the connection failed. stop the robot processing thread.
+    void connectionFailed(void);
+    // called when the connection is closed
+    void disconnected(void);
+    // called if the connection is lost due to an error
+    void connectionLost(void);
+
     
-protected:
+public:
 	virtual void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear) = 0;
 	virtual void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed) = 0;
 	virtual void onRawPositionUpdate(double x, double y, double theta, double deltaDistance, double deltaDegrees) = 0;

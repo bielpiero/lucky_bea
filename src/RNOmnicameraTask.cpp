@@ -9,6 +9,7 @@ RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name
 	this->gn = (GeneralController*)gn;
 	//RNUtils::printLn(".......................%s", this->gn->getClassName());
 	curl = curl_easy_init();
+	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 1);
 	curl_easy_setopt(curl, CURLOPT_URL, cameraUrl.c_str());
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &RNOmnicameraTask::write_data);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cameraStream);
@@ -46,11 +47,11 @@ RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name
 
 	landmarks = NULL;
 
-	
+	enableVideoProcessing = true;
 }
 
 RNOmnicameraTask::~RNOmnicameraTask(){
-	curl_easy_cleanup(curl);
+	//curl_easy_cleanup(curl);
 	landmarks->clear();
 	delete landmarks;
 }
@@ -69,15 +70,28 @@ int RNOmnicameraTask::getFrameFromCamera(cv::Mat &frame){
 	cameraStream.clear();
 
 	res = curl_easy_perform(curl);
-	std::string strCameraStream = cameraStream.str();
-
-	std::copy(strCameraStream.begin(), strCameraStream.end(), std::back_inserter(data));
-
-	if(data.size() > 0){
-		cv::Mat data_mat = cv::Mat(data);
-		frame = cv::Mat(cv::imdecode(data_mat, 1));
-		data_mat.release();
+	if(res == CURLE_OK){
+		std::string strCameraStream = cameraStream.str();
+		std::copy(strCameraStream.begin(), strCameraStream.end(), std::back_inserter(data));
 	}
+	if(data.size() > 0){
+		cv::Mat data_mat;
+		try{
+			data_mat = cv::Mat(data);	
+		} catch(cv::Exception& e1){
+			RNUtils::printLn("Couldn't do convertion from data array to mat: %s", e1.what());
+		}
+		
+		try{
+			frame = cv::Mat(cv::imdecode(data_mat, 1));
+		} catch(cv::Exception& e2){
+			RNUtils::printLn("Couldn't decode image: %s", e2.what());
+		}
+	}
+	if(not enableVideoProcessing){
+		RNUtils::printLn("...........................FinishedCapture...........................");	
+	}
+	
 	return result;
 }
 
@@ -104,8 +118,9 @@ void RNOmnicameraTask::clearNoisyDots(const cv::Mat input, cv::Mat& output){
 }
 
 void RNOmnicameraTask::findContours(int minContourPointsAllowed){
-	allContours.clear();
-	contours.clear();
+	std::vector<std::vector<cv::Point> > allContours;
+	std::vector<std::vector<cv::Point> > contours;
+
 	cv::Canny(tikiThreshold, edges, 100, 180, 5);
 	try{
 		cv::findContours(edges, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);	
@@ -121,6 +136,7 @@ void RNOmnicameraTask::findContours(int minContourPointsAllowed){
 			contours.push_back(allContours.at(i));
 		}
 	}
+	this->contours = contours;
 }
 
 void RNOmnicameraTask::findCandidates(){
@@ -532,7 +548,7 @@ void RNOmnicameraTask::undistortPoints(cv::InputArray distorted, cv::OutputArray
 
 void RNOmnicameraTask::task(){
 	//gn->lockSensorsReadings();
-	if(getFrameFromCamera(tiki) != RN_NONE){
+	if(enableVideoProcessing and getFrameFromCamera(tiki) != RN_NONE){
 
 		if (tiki.data){
 			//cv::imwrite("real-1.4m.jpg", flipped);
@@ -579,5 +595,5 @@ void RNOmnicameraTask::drawRectangle(cv::Mat &img, RNMarker marker){
 }
 
 void RNOmnicameraTask::onKilled(){
-
+	enableVideoProcessing = false;
 }

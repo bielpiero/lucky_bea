@@ -134,18 +134,9 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 }
 
 GeneralController::~GeneralController(void){
-
-	//rfidConnection->closeConnection();
-
-	closeConnection();
 	
-	//pthread_mutex_destroy(&laserLandmarksLocker);
-	//pthread_mutex_destroy(&rfidLandmarksLocker);
-	//pthread_mutex_destroy(&visualLandmarksLocker);
-	stopDynamicGesture();
-	stopCurrentTour();
 	disconnect();
-
+	stopDynamicGesture();	
 	delete tasks;
 	RNUtils::printLn("Deleted tasks...");
 	for (int i = 0; i < kalmanFuzzy->size(); i++){
@@ -165,12 +156,29 @@ GeneralController::~GeneralController(void){
 	delete robotConfig;
 	RNUtils::printLn("Deleted robotConfig...");
 
+	unlockLaserLandmarks();
+	unlockVisualLandmarks();
+	unlockRFIDLandmarks();
+	delete visualLandmarks;
+	RNUtils::printLn("Deleted visualLandmarks...");
+	delete rfidLandmarks;
+	RNUtils::printLn("Deleted rfidLandmarks...");
 	delete laserLandmarks;
 	RNUtils::printLn("Deleted laserLandmarks...");
 
-	if(!file){
+	/*if(!file){
 		std::fclose(file);
-	}
+	}*/
+	pthread_mutex_destroy(&laserLandmarksLocker);
+	RNUtils::printLn("Deleted laserLandmarksLocker...");
+	pthread_mutex_destroy(&rfidLandmarksLocker);
+	RNUtils::printLn("Deleted rfidLandmarksLocker...");
+	pthread_mutex_destroy(&visualLandmarksLocker);
+	RNUtils::printLn("Deleted visualLandmarksLocker...");
+
+	
+	closeConnection();
+	
 }
 
 const char* GeneralController::getClassName() const{
@@ -534,7 +542,19 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			sendMsg(socketIndex, 0x23, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
 			break;	
 		case 0x30:
-			
+			if(granted){
+				if(localization != NULL){
+					localization->kill();
+				}
+				setRobotPosition(0.0, 0.0, 0.0);
+				if(localization != NULL){
+					localization->reset();
+				}
+				sendMsg(socketIndex, 0x30, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
+			} else {
+				RNUtils::printLn("Command 0x30. Reset odometry denied to ", getClientIPAddress(socketIndex));
+				sendMsg(socketIndex, 0x30, (char*)jsonSectorNotLoadedError.c_str(), (unsigned int)jsonSectorNotLoadedError.length());
+			}
 			break;
 		case 0x31:
 			

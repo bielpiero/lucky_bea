@@ -44,7 +44,7 @@ CSocketNode::CSocketNode()
 
 CSocketNode::~CSocketNode(){
 	pingTimerThreadStatus = 0;
-	pthread_cancel(pingThread);
+	//pthread_cancel(pingThread);
 }
 
 int CSocketNode::init(const char *address,int port, int t){

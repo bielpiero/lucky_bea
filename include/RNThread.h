@@ -23,6 +23,8 @@ public:
 	void cancel(void);
 	void stop(void);
 
+	void testCancel(void);
+
 	void threadStarted();
 	bool isThreadStarted() const;
 

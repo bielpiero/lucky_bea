@@ -9,7 +9,7 @@
 
 class RNActionGoto : public ArAction{
 public:
-	RNActionGoto(const char* name = "goto", ArPose goal = ArPose(0.0, 0.0, 0.0), double linearSpeed = 100, double angularSpeed = 10, double minimumDistance = 100, double minimumAngle = 1);
+	RNActionGoto(const char* name = "goto", ArPose goal = ArPose(0.0, 0.0, 0.0), double linearSpeed = 100, double angularSpeed = 10, double minimumDistance = 90, double minimumAngle = 1);
 	virtual ~RNActionGoto();
 
 	virtual ArActionDesired* fire(ArActionDesired current);

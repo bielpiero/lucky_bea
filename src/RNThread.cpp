@@ -141,6 +141,10 @@ void RNThread::cancel(void){
 	pthread_cancel(this->thread);
 }
 
+void RNThread::testCancel(void){
+	pthread_testcancel(); 
+}
+
 void RNThread::stop(void){
 	isRunning = false;
 }
