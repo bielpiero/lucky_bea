@@ -260,6 +260,7 @@ public:
 	void onSecurityDistanceWarningSignal();
     void onSecurityDistanceStopSignal();
     void onSensorsScanCompleted();
+    void onLaserScanCompleted(LaserScan* data);
 	
 	int initializeKalmanVariables();
 	void loadSector(int mapId, int sectorId);
@@ -313,8 +314,6 @@ public:
 	void setRFIDLandmarks(RNLandmarkList* landmarks);
 private:
 	
-
-	UDPClient* spdUDPClient;
 	RobotDataStreamer* spdWSServer;
 	// Tasks Objects
 	RNLaserTask* laserTask;
@@ -359,7 +358,7 @@ private:
 	bool hasAchievedGoal;
 	bool frontBumpersOk;
 	bool rearBumpersOk;
-	int spdUDPPort;
+
 	unsigned char streamingActive;
 	
 	unsigned char keepRobotTracking;

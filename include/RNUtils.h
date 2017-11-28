@@ -195,7 +195,7 @@ public:
         color->clear();
 	}
 
-	void addLaserScanData(float range, float intensity = 0) { 
+	void addRange(float range, float intensity = 0) { 
 		ranges->push_back(range); 
 		intensities->push_back(intensity);
 	}

@@ -34,7 +34,7 @@ CSocketNode::CSocketNode()
 	tokenOwner = -1;
 	lastTokenOwner = -1;
 	for(int i = 0; i < MAX_CLIENTS; i++){
-		socket_conn[i] = TCPSocketClient(INVALID_SOCKET);
+		socket_conn[i] = TCPSocketClient();
 	}
 
 	thread_status = 0;
@@ -53,7 +53,7 @@ int CSocketNode::init(const char *address,int port, int t){
 	strcpy(this->ip_address, address);
 	
 	for(int i = 0; i < MAX_CLIENTS; i++){
-		socket_conn[i] = TCPSocketClient(INVALID_SOCKET);
+		socket_conn[i] = TCPSocketClient();
 	}
 
 // Configuracion del socket del Servidor	
@@ -188,6 +188,25 @@ void CSocketNode::error(int socketIndex, const char* cad){
 		std::cout << "Salta en el error" << std::endl;
 		onConnection(socketIndex);
 	}
+}
+
+int CSocketNode::connectClientUDP(int socketIndex, UDPClient* client){
+	if(socket_conn[socketIndex].getSocket() != INVALID_SOCKET){
+		if(!socket_conn[socketIndex].isWebSocket()){
+			socket_conn[socketIndex].setUDPClient(client);
+		}
+	}
+	return 0;
+}
+
+UDPClient* CSocketNode::getClientUDP(int socketIndex){
+	UDPClient* client = NULL;
+	if(socket_conn[socketIndex].getSocket() != INVALID_SOCKET){
+		if(!socket_conn[socketIndex].isWebSocket()){
+			client = socket_conn[socketIndex].getUDPClient();
+		}
+	}
+	return client;
 }
 
 int CSocketNode::sendMsg(int socketIndex, const char opr, const char* cad, unsigned long long int length){
@@ -370,19 +389,24 @@ int CSocketNode::receiveMsg(int socketIndex, char* cad, unsigned long long int& 
 			if (header[0] != 57 ||	// 12345 % 256
 				header[1] != 48 ||	// 12345 / 256
 				len <= 0){
-				error(socketIndex, "Header error");
+				//printf("0:%d 1:%d len: %llu\n", (int)header[0], (int)header[1], len);
+				//error(socketIndex, "Header error");
 				result = -2; //header error
 			}
-			memset(&Buffer_in, 0, BUFFER_SIZE);
-			memset(cad, 0, BUFFER_SIZE);
-			result = receiveBytes(socketIndex, Buffer_in, len, timeout);
-			Buffer_in[len] = 0;
-			memcpy(cad, Buffer_in, size<len ? size : len);
+			if(result == 0){
+				memset(&Buffer_in, 0, BUFFER_SIZE);
+				memset(cad, 0, BUFFER_SIZE);
+				result = receiveBytes(socketIndex, Buffer_in, len, timeout);
+				Buffer_in[len] = 0;
+				memcpy(cad, Buffer_in, size<len ? size : len);
 
-			if (size<len)
-				result = -3;//short buffer
+				if (size<len){
+					result = -3;//short buffer
+				}
 
-			size = len;
+				size = len;
+			}
+			
 
 		} else {
 			result = -1;
@@ -472,6 +496,9 @@ int CSocketNode::closeConnection(){
 	RNUtils::printLn("Finished Connections Thread...");
 	for(int i = 0; i < MAX_CLIENTS; i++){
 		if(socket_conn[i].getSocket() != INVALID_SOCKET){
+			if(socket_conn[i].getUDPClient() != NULL){
+				socket_conn[i].getUDPClient()->closeConnection();
+			}
 			shutdown(socket_conn[i].getSocket(), SD_BOTH);
 			closesocket(socket_conn[i].getSocket());
 			socket_conn[i].setSocket(INVALID_SOCKET);

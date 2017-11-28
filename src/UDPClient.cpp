@@ -84,7 +84,8 @@ void UDPClient::closeConnection(){
 		while (thread_status != 0){
             RNUtils::sleep(100);
 		}
-	}	
+	}
+	RNUtils::printLn("UDP Client closed...");
 	closesocket(socket_conn);
 }
 

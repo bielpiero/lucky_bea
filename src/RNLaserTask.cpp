@@ -44,9 +44,9 @@ void RNLaserTask::getLaserScan(void){
 		  laserDataScan->clear();
         }
 		for(std::list<ArSensorReading*>::const_iterator it = currentReadings->begin(); it != currentReadings->end(); ++it){
-			laserDataScan->addLaserScanData((float)(*it)->getRange() / 1000, (float)(*it)->getExtraInt());
+			laserDataScan->addRange((float)(*it)->getRange() / 1000, (float)(*it)->getExtraInt());
 		}
-        
+        rn->onLaserScanCompleted(laserDataScan);
         laser->unlockDevice();
 
         delete currentReadings;
@@ -167,5 +167,4 @@ void RNLaserTask::task(){
 	getLaserScan();
 	securityDistanceChecker();
 	getReflectiveLandmarks();
-	RNUtils::sleep(10);
 }

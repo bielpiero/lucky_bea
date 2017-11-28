@@ -35,7 +35,6 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	this->hasAchievedGoal = false;
 	this->streamingActive = RN_NO;
 	this->keepRobotTracking = RN_NO;
-	this->spdUDPPort = 0;
 
 	this->laserSensorActivated = true;
 	this->cameraSensorActivated = false;
@@ -56,7 +55,6 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	P = Matrix(3, 3);
 	Q = Matrix(2, 2);
 	R = Matrix(3, 3);
-	spdUDPClient = NULL;
 
 	xmlFaceFullPath = RNUtils::getApplicationPath() + XML_FILE_PATH;
 	xmlMapsFullPath = RNUtils::getApplicationPath() + XML_FILE_MAPS_PATH;
@@ -159,6 +157,7 @@ GeneralController::~GeneralController(void){
 	unlockLaserLandmarks();
 	unlockVisualLandmarks();
 	unlockRFIDLandmarks();
+	RNUtils::printLn("unlocked all mutex...");
 	delete visualLandmarks;
 	RNUtils::printLn("Deleted visualLandmarks...");
 	delete rfidLandmarks;
@@ -169,6 +168,7 @@ GeneralController::~GeneralController(void){
 	/*if(!file){
 		std::fclose(file);
 	}*/
+
 	pthread_mutex_destroy(&laserLandmarksLocker);
 	RNUtils::printLn("Deleted laserLandmarksLocker...");
 	pthread_mutex_destroy(&rfidLandmarksLocker);
@@ -197,12 +197,12 @@ void GeneralController::onConnection(int socketIndex){ //callback for client and
 		clientsConnected--;
 		if(clientsConnected == 0){
 			setTokenOwner(RN_NONE);
-			if(spdUDPClient != NULL){
-				spdUDPClient->closeConnection();
-				spdUDPClient = NULL;
+			if(this->getClientUDP(socketIndex) != NULL){
+				this->getClientUDP(socketIndex)->closeConnection();
+				this->connectClientUDP(socketIndex, NULL);
 			}
-			stopDynamicGesture();
-			stopCurrentTour();
+			//stopDynamicGesture();
+			//stopCurrentTour();
 		}
 	}
 	RNUtils::printLn("Clients connected: %d", clientsConnected);
@@ -662,21 +662,23 @@ void GeneralController::releaseRobotControl(int socketIndex){
 }
 
 void GeneralController::initializeSPDPort(int socketIndex, char* cad){
-	this->spdUDPPort = atoi(cad);
-	if(!this->isWebSocket(socketIndex)){
-		if(this->spdUDPPort <= 0){
-			throw std::invalid_argument("Error!!! Could not initialize SPD streaming");
+	if(cad != NULL){
+		int spdUDPPort = atoi(cad);
+		if(!this->isWebSocket(socketIndex)){
+			if(spdUDPPort <= 0){
+				throw std::invalid_argument("Error!!! Could not initialize SPD streaming");
+			}
+			RNUtils::printLn("Connected to Port: %d of %s", spdUDPPort, this->getClientIPAddress(socketIndex));
+			UDPClient* spdUDPClient = new UDPClient(this->getClientIPAddress(socketIndex), spdUDPPort);
+			this->connectClientUDP(socketIndex, spdUDPClient);
+		} else {
+			RNUtils::printLn("Port: %d", spdWSServer->getServerPort());
+			std::ostringstream convert;
+			convert << spdWSServer->getServerPort();
+			std::string jsonString = "{\"streaming\":{\"port\":\""+ convert.str() + "\",\"error\":\"0\"}}";
+			sendMsg(socketIndex, 0x7F, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
 		}
-		RNUtils::printLn("Port: %d", this->spdUDPPort);
-		spdUDPClient = new UDPClient(this->getClientIPAddress(socketIndex), this->spdUDPPort);	
-	} else {
-		RNUtils::printLn("Port: %d", spdWSServer->getServerPort());
-		std::ostringstream convert;
-		convert << spdWSServer->getServerPort();
-		std::string jsonString = "{\"streaming\":{\"port\":\""+ convert.str() + "\",\"error\":\"0\"}}";
-		sendMsg(socketIndex, 0x7F, (char*)jsonString.c_str(), (unsigned int)jsonString.length());
-	}
-	
+	}	
 }
 
 void GeneralController::getMapSectorId(char* cad, int& mapId, int& sectorId){
@@ -2353,12 +2355,19 @@ void GeneralController::onBumpersUpdate(std::vector<bool> front, std::vector<boo
 	sprintf(bump, "$BUMPERS|%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", (int)front[0], (int)front[1], (int)front[2], (int)front[3], (int)front[4], (int)front[5],
 			(int)rear[0], (int)rear[1], (int)rear[2], (int)rear[3], (int)rear[4], (int)rear[5]);
 	int dataLen = strlen(bump);
-	if(spdUDPClient != NULL){
+	/*if(spdUDPClient != NULL){
 		spdUDPClient->sendData((unsigned char*)bump, dataLen);
-	}
+	}*/
 	for(int i = 0; i < MAX_CLIENTS; i++){
-		if(isConnected(i) && isWebSocket(i)){
-			spdWSServer->sendMsg(i, 0x00, bump, dataLen);
+		if(isConnected(i)){
+			if(isWebSocket(i)){
+				spdWSServer->sendMsg(i, 0x00, bump, dataLen);
+			} else {
+				if(this->getClientUDP(i) != NULL){
+					this->getClientUDP(i)->sendData((unsigned char*)bump, dataLen);	
+				}
+				
+			}
 		}
 	}
 	delete[] bump;
@@ -2402,12 +2411,16 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 	char* bump = new char[256];
 	sprintf(bump, "$POSE_VEL|%.4f,%.4f,%.4f,%.4f,%.4f", robotEncoderPosition(0, 0), robotEncoderPosition(1, 0), robotEncoderPosition(2, 0), robotVelocity(0, 0), robotVelocity(1, 0));
 	int dataLen = strlen(bump);
-	if(spdUDPClient != NULL){
-		spdUDPClient->sendData((unsigned char*)bump, dataLen);
-	}
+
 	for(int i = 0; i < MAX_CLIENTS; i++){
-		if(isConnected(i) && isWebSocket(i)){
-			spdWSServer->sendMsg(i, 0x00, bump, dataLen);
+		if(isConnected(i)){
+			if(isWebSocket(i)){
+				spdWSServer->sendMsg(i, 0x00, bump, dataLen);
+			} else {
+				if(this->getClientUDP(i) != NULL){
+					this->getClientUDP(i)->sendData((unsigned char*)bump, dataLen);
+				}
+			}
 		}
 	}
 	delete[] bump;
@@ -2837,6 +2850,29 @@ float GeneralController::getRobotHeight(){
 	return (robotConfig != NULL ? robotConfig->height : 0.0);
 }
 
+void GeneralController::onLaserScanCompleted(LaserScan* data){
+	std::ostringstream buffer_str;
+	buffer_str.clear();
+	buffer_str << "$LASER|";
+	for(int i = 0; i < data->size(); i++){
+		buffer_str << data->getRanges()->at(i);
+		if(i < data->size() - 1){
+			buffer_str << ",";
+		}
+	}
+	for(int i = 0; i < MAX_CLIENTS; i++){
+		if(isConnected(i)){
+			if(isWebSocket(i)){
+				spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
+			} else {
+				if(this->getClientUDP(i) != NULL){
+					this->getClientUDP(i)->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());
+				}
+			}
+		}
+	}
+}
+
 void GeneralController::onSensorsScanCompleted(){
 	std::ostringstream buffer_str;
 	int mapId = currentMapId;
@@ -2855,13 +2891,15 @@ void GeneralController::onSensorsScanCompleted(){
 				<< laserLandmarks->size() << "," 
 				<< visualLandmarks->size();
 
-	if(spdUDPClient != NULL){
-		spdUDPClient->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());
-	}
 	for(int i = 0; i < MAX_CLIENTS; i++){
-		if(isConnected(i) && isWebSocket(i)){
-			spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
+		if(isConnected(i)){
+			if(isWebSocket(i)){
+				spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
+			} else {
+				if(this->getClientUDP(i) != NULL){
+					this->getClientUDP(i)->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());
+				}
+			}
 		}
 	}
-
 }

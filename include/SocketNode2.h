@@ -5,32 +5,19 @@
 #if !defined(AFX_SOCKETNODE_H__895095F5_AD65_4FF5_973F_0DD16E9BC2FE__INCLUDED_)
 #define AFX_SOCKETNODE_H__895095F5_AD65_4FF5_973F_0DD16E9BC2FE__INCLUDED_
 
-#include <sys/socket.h>
+
 #include <sys/select.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include <netinet/tcp.h>
-
-#include "RNUtils.h"
-
 #include "handshake.h"
 #include "crypt/base64.h"
 #include "crypt/sha.h"
 #include "TCPSocketClient.h"
-
-
-#define INVALID_SOCKET -1
-#define SOCKET_ERROR -1
-#define SD_BOTH SHUT_RDWR
-#define closesocket(x) close(x)
 
 #define MAX_CLIENTS 10
 #define CLIENT_DEFAULT_INDEX 0
 
 #define SOCKET_SERVER 0
 #define SOCKET_CLIENT 1
-
-#define BUFFER_SIZE 1048576
 
 #define SOCKET_UDP 0
 #define SOCKET_TCP 1
@@ -63,6 +50,8 @@ public:
 	int sendBytes(int socketIndex, unsigned char* cad, unsigned long long int length);
 	int receiveMsg(int socketIndex, char* cad, unsigned long long int& size, int timeout=200);		
 	int receiveBytes(int socketIndex, unsigned char* cad, unsigned long long int& length, int timeout);
+	int connectClientUDP(int socketIndex, UDPClient* client);
+	UDPClient* getClientUDP(int socketIndex);
 	int getServerPort();
 
 	bool isWebSocket(int socketIndex);

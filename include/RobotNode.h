@@ -152,5 +152,6 @@ public:
     virtual void onSecurityDistanceWarningSignal() = 0;
     virtual void onSecurityDistanceStopSignal() = 0;
     virtual void onSensorsScanCompleted() = 0;
+    virtual void onLaserScanCompleted(LaserScan* data) = 0;
 };
 #endif

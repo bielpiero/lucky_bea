@@ -1,7 +1,7 @@
 #include "RNSocketClient.h"
 
 RNSocketClient::RNSocketClient(){
-		socketConn = new TCPSocketClient(RN_NONE);
+		socketConn = new TCPSocketClient();
 		thread_status = 0;
 }
 
