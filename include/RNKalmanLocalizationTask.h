@@ -37,6 +37,9 @@ private:
 	bool enableLocalization;
 
 	std::FILE* test;
+	
+	Matrix xk;		//current position
+	Matrix xk_1;	// previous position
 
 	Matrix Ak;
 	Matrix Bk;

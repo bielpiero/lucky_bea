@@ -14,6 +14,7 @@ public:
 	~RNLandmarkList(){
 		clear();
 		delete landmarks;
+
 	}
 
 	int add(RNLandmark* landmark){

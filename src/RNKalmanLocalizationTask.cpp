@@ -14,7 +14,7 @@ RNKalmanLocalizationTask::RNKalmanLocalizationTask(const GeneralController* gn, 
 }
 
 RNKalmanLocalizationTask::~RNKalmanLocalizationTask(){
-	if(test!= NULL){
+	if(test != NULL){
 		std::fclose(test);
 	}
 }
@@ -37,6 +37,8 @@ void RNKalmanLocalizationTask::init(){
 		rfidTMAngle = 0.2;
 		enableLocalization = true;
 
+		xk = gn->getRawEncoderPosition();
+
 		gn->unlockLaserLandmarks();
 		gn->unlockVisualLandmarks();
 
@@ -50,16 +52,18 @@ void RNKalmanLocalizationTask::onKilled(){
 }
 
 void RNKalmanLocalizationTask::task(){
+	bool save = true;
 	if(enableLocalization){
 		pk1 = Pk;
-		Ak(0, 2) = -gn->getRawDeltaPosition()(0, 0) * std::sin(gn->getRawEncoderPosition()(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
-		Ak(1, 2) = gn->getRawDeltaPosition()(0, 0) * std::cos(gn->getRawEncoderPosition()(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
+		xk_1 = xk;
+		Ak(0, 2) = -gn->getRawDeltaPosition()(0, 0) * std::sin(xk_1(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
+		Ak(1, 2) = gn->getRawDeltaPosition()(0, 0) * std::cos(xk_1(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
 
-		Bk(0, 0) = std::cos(gn->getRawEncoderPosition()(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
-		Bk(0, 1) = -0.5 * gn->getRawDeltaPosition()(0, 0) * std::sin(gn->getRawEncoderPosition()(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
+		Bk(0, 0) = std::cos(xk_1(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
+		Bk(0, 1) = -0.5 * gn->getRawDeltaPosition()(0, 0) * std::sin(xk_1(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
 
-		Bk(1, 0) = std::sin(gn->getRawEncoderPosition()(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
-		Bk(1, 1) = 0.5 * gn->getRawDeltaPosition()(0, 0) * std::cos(gn->getRawEncoderPosition()(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
+		Bk(1, 0) = std::sin(xk_1(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
+		Bk(1, 1) = 0.5 * gn->getRawDeltaPosition()(0, 0) * std::cos(xk_1(2, 0) + gn->getRawDeltaPosition()(1, 0)/2);
 
 		Bk(2, 0) = 0.0;
 		Bk(2, 1) = 1.0;
@@ -67,6 +71,7 @@ void RNKalmanLocalizationTask::task(){
 		Matrix currentQ = gn->getQ();
 		if(gn->getRawDeltaPosition()(0, 0) == 0.0 and gn->getRawDeltaPosition()(1, 0) == 0.0){
 			currentQ = Matrix(2, 2);
+			save = false;
 		}
 
 		Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
@@ -111,12 +116,12 @@ void RNKalmanLocalizationTask::task(){
 					rfidIndex++;
 				}
 			}
-			Hk(zIndex, 0) = -((gn->getCurrentSector()->landmarkAt(i)->xpos) - gn->getRawEncoderPosition()(0, 0))/std::sqrt(std::pow((gn->getCurrentSector()->landmarkAt(i)->xpos) - gn->getRawEncoderPosition()(0, 0), 2) + std::pow((gn->getCurrentSector()->landmarkAt(i)->ypos) - gn->getRawEncoderPosition()(1, 0), 2));
-			Hk(zIndex, 1) = -((gn->getCurrentSector()->landmarkAt(i)->ypos) - gn->getRawEncoderPosition()(1, 0))/std::sqrt(std::pow((gn->getCurrentSector()->landmarkAt(i)->xpos) - gn->getRawEncoderPosition()(0, 0), 2) + std::pow((gn->getCurrentSector()->landmarkAt(i)->ypos) - gn->getRawEncoderPosition()(1, 0), 2));
+			Hk(zIndex, 0) = -((gn->getCurrentSector()->landmarkAt(i)->xpos) - xk_1(0, 0))/std::sqrt(std::pow((gn->getCurrentSector()->landmarkAt(i)->xpos) - gn->getRawEncoderPosition()(0, 0), 2) + std::pow((gn->getCurrentSector()->landmarkAt(i)->ypos) - xk_1(1, 0), 2));
+			Hk(zIndex, 1) = -((gn->getCurrentSector()->landmarkAt(i)->ypos) - xk_1(1, 0))/std::sqrt(std::pow((gn->getCurrentSector()->landmarkAt(i)->xpos) - gn->getRawEncoderPosition()(0, 0), 2) + std::pow((gn->getCurrentSector()->landmarkAt(i)->ypos) - xk_1(1, 0), 2));
 			Hk(zIndex, 2) = 0.0;
 
-			Hk(zIndex + 1, 0) = ((gn->getCurrentSector()->landmarkAt(i)->ypos) - gn->getRawEncoderPosition()(1, 0))/(std::pow((gn->getCurrentSector()->landmarkAt(i)->xpos) - gn->getRawEncoderPosition()(0, 0), 2) + std::pow((gn->getCurrentSector()->landmarkAt(i)->ypos) - gn->getRawEncoderPosition()(1, 0), 2));
-			Hk(zIndex + 1, 1) = -((gn->getCurrentSector()->landmarkAt(i)->xpos) - gn->getRawEncoderPosition()(0, 0))/(std::pow((gn->getCurrentSector()->landmarkAt(i)->xpos) - gn->getRawEncoderPosition()(0, 0), 2) + std::pow((gn->getCurrentSector()->landmarkAt(i)->ypos) - gn->getRawEncoderPosition()(1, 0), 2));
+			Hk(zIndex + 1, 0) = ((gn->getCurrentSector()->landmarkAt(i)->ypos) - xk_1(1, 0))/(std::pow((gn->getCurrentSector()->landmarkAt(i)->xpos) - xk_1(0, 0), 2) + std::pow((gn->getCurrentSector()->landmarkAt(i)->ypos) - xk_1(1, 0), 2));
+			Hk(zIndex + 1, 1) = -((gn->getCurrentSector()->landmarkAt(i)->xpos) - xk_1(0, 0))/(std::pow((gn->getCurrentSector()->landmarkAt(i)->xpos) - xk_1(0, 0), 2) + std::pow((gn->getCurrentSector()->landmarkAt(i)->ypos) - xk_1(1, 0), 2));
 			Hk(zIndex + 1, 2) = -1.0;
 		}
 
@@ -305,11 +310,18 @@ void RNKalmanLocalizationTask::task(){
 		}
 		//zl.print();
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
-		Matrix newPosition = gn->getRawEncoderPosition() + Wk * zl;
+		xk = xk_1 + Wk * zl;
+		if(save){
+			char buffer[1024];
+			sprintf(buffer, "Raw{x: %.2lf, y: %.2lf, \u03d1: %.2lf}, Kalman{x: %.2lf, y: %.2lf, \u03d1: %.2lf}\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0));
+			if(test != NULL){
+				fprintf(test, "%s", buffer);
+			}
+		}
 		
-		gn->setPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
+		//gn->setPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
 		float angle = 0.0;
-		bool isInsidePolygon = gn->getCurrentSector()->checkPointXYInPolygon(PointXY(newPosition(0, 0), newPosition(1, 0)), angle);
+		bool isInsidePolygon = gn->getCurrentSector()->checkPointXYInPolygon(PointXY(xk(0, 0), xk(1, 0)), angle);
 
 		/*if(not isInsidePolygon){
 			gn->loadSector(gn->getCurrenMapId(), gn->getNextSectorId());

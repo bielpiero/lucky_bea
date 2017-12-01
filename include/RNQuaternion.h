@@ -9,6 +9,7 @@ private:
 	RNVector3 axis;
 public:
 	RNQuaternion(const float scalar = 0, const RNVector3 axis = RNVector3());
+	RNQuaternion (const float scalar, const float a, const float b,const float c);
 	static RNQuaternion initFromEuler(const float yaw, const float pitch, const float roll);
 	static RNQuaternion initFromRPY(const float roll, const float pitch, const float yaw);
 	const char* toString() const;
@@ -57,7 +58,7 @@ public:
 	float length() const;
 	float length2() const;
 
-	float angle(const RNQuaternion& q) const;
+	float angleBetween(const RNQuaternion& q) const;
 	float angleShortestPath(const RNQuaternion& q) const;
 
 	RNQuaternion exp();
@@ -75,6 +76,9 @@ public:
 	void setScalar(float scalar);
 	void setAxis(RNVector3 axis);
 
+	RNQuaternion slerpQuat (const RNQuaternion& q, const float& t);
+	float toAngle();
+	
 };
 
 #endif

@@ -97,6 +97,8 @@ private:
 public:
 	RNDualNumber(const RNQuaternion real = RNQuaternion(), const RNQuaternion dual = RNQuaternion());
 	const char* toString() const;
+	
+	RNDualNumber operator*(const RNDualNumber& q);
 };
 
 #endif

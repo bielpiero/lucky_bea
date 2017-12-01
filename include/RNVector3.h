@@ -9,6 +9,8 @@
 #include <iomanip>
 #include <cstdio>
 
+#include <math.h>
+
 class RNVector3{
 private:
 	std::vector<float> data;

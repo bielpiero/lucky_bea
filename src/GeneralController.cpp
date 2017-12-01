@@ -158,12 +158,13 @@ GeneralController::~GeneralController(void){
 	unlockVisualLandmarks();
 	unlockRFIDLandmarks();
 	RNUtils::printLn("unlocked all mutex...");
-	delete visualLandmarks;
-	RNUtils::printLn("Deleted visualLandmarks...");
 	delete rfidLandmarks;
 	RNUtils::printLn("Deleted rfidLandmarks...");
 	delete laserLandmarks;
 	RNUtils::printLn("Deleted laserLandmarks...");
+	delete visualLandmarks;
+	RNUtils::printLn("Deleted visualLandmarks...");
+	
 
 	/*if(!file){
 		std::fclose(file);
@@ -2863,7 +2864,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* data){
 	for(int i = 0; i < MAX_CLIENTS; i++){
 		if(isConnected(i)){
 			if(isWebSocket(i)){
-				spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
+				//spdWSServer->sendMsg(i, 0x00, buffer_str.str().c_str(), buffer_str.str().length());
 			} else {
 				if(this->getClientUDP(i) != NULL){
 					this->getClientUDP(i)->sendData((unsigned char*)buffer_str.str().c_str(), buffer_str.str().length());

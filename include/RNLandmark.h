@@ -35,6 +35,7 @@ public:
         }
 		extras->clear();
 		delete extras;
+
 	}
 	void addPoint(float x, float y, float z = 0){
 		meanX = std::numeric_limits<float>::infinity();

@@ -51,9 +51,8 @@ RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name
 }
 
 RNOmnicameraTask::~RNOmnicameraTask(){
-	//curl_easy_cleanup(curl);
-	landmarks->clear();
-	delete landmarks;
+	curl_easy_cleanup(curl);
+	
 }
 
 size_t RNOmnicameraTask::write_data(char *ptr, size_t size, size_t nmemb, void *userdata) {

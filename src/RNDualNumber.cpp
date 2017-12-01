@@ -43,3 +43,14 @@ RNDualNumber<RNQuaternion>::RNDualNumber(const RNQuaternion real, const RNQuater
 	this->real = real;
 	this->dual = dual;
 }
+
+
+//AÑADIDO POR MI, AUN SIN COMPROBAR
+//multiplicacion de dos quaternios duales
+RNDualNumber<RNQuaternion> RNDualNumber<RNQuaternion>:: operator*(const RNDualNumber& q){
+	RNDualNumber<RNQuaternion> R;
+	R.real=this->real * q.real;
+	R.dual=this->real*q.dual + this->dual*q.real;
+	return R;
+}
+
