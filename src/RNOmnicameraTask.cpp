@@ -100,7 +100,7 @@ void RNOmnicameraTask::rgbToGrayscale(const cv::Mat& input, cv::Mat& output){
 
 void RNOmnicameraTask::thresholding(const cv::Mat& inputGrayscale, cv::Mat& output){
 	int avgBrightness = getBrightnessAverageFromHistogram(inputGrayscale);
-  	double index = 75.0 / 255.0 * avgBrightness;
+  	float index = 75.0 / 255.0 * (float)avgBrightness;
   	//RNUtils::printLn("[Brightness avg: %d, Index: %f]", avgBrightness, index);
 	//int thresholdValue = 100;
 	//cv::threshold(inputGrayscale, output, thresholdValue, 255, cv::THRESH_BINARY_INV);
@@ -145,10 +145,10 @@ void RNOmnicameraTask::findCandidates(){
 		double eps = contours.at(i).size() * .1;
 		cv::approxPolyDP(contours.at(i), approxCurve, eps, true);
 		if (approxCurve.size() == CURVE_SIZE && cv::isContourConvex(approxCurve)){
-			double minDist = std::numeric_limits<double>::max();
+			float minDist = std::numeric_limits<float>::max();
 			for (int j = 0; j < approxCurve.size(); j++){
 				cv::Point side = approxCurve.at(j) - approxCurve.at((j + 1) % 4);
-				minDist = std::min(minDist, (double)side.dot(side));
+				minDist = std::min(minDist, (float)side.dot(side));
 			}
 			
 			if (minDist > this->minContourLengthAllowed){
@@ -180,7 +180,7 @@ void RNOmnicameraTask::findCandidates(){
 		RNMarker markerA = possibleMarkersPoints.at(i);
 		for (int j = i + 1; j < possibleMarkersPoints.size(); j++){
 			RNMarker markerB = possibleMarkersPoints.at(j);
-			double distSquared = 0;
+			float distSquared = 0;
 			for (int k = 0; k < CURVE_SIZE; k++){
 				cv::Point v = markerA.getPoint(k) - markerB.getPoint(k);
 				distSquared += v.dot(v);
@@ -194,8 +194,8 @@ void RNOmnicameraTask::findCandidates(){
 	}
 	std::vector<bool> removalMask(possibleMarkersPoints.size(), false);
 	for (int i = 0; i < closestCandidates.size(); i++){
-		double p1 = perimeter(possibleMarkersPoints.at(closestCandidates.at(i).first).getMarkerPoints());
-		double p2 = perimeter(possibleMarkersPoints.at(closestCandidates.at(i).second).getMarkerPoints());
+		float p1 = perimeter(possibleMarkersPoints.at(closestCandidates.at(i).first).getMarkerPoints());
+		float p2 = perimeter(possibleMarkersPoints.at(closestCandidates.at(i).second).getMarkerPoints());
 
 		int index;
 		if (p1 > p2){
@@ -244,13 +244,13 @@ void RNOmnicameraTask::poseEstimation(){
 		distortedPoint.push_back(cv::Point2f(marker.getRotatedRect().center.x, marker.getRotatedRect().center.y));
 		undistortPoints(distortedPoint, undistortedPoint, camMatrix, distCoeff, cv::Mat::eye(3, 3, CV_32F), camMatrix);
 
-		double distanceToCenter = 0;
-		double theta = 0;
-		double realWorldDistance = 0;
+		float distanceToCenter = 0;
+		float theta = 0;
+		float realWorldDistance = 0;
 
-		distanceToCenter = sqrt(pow(abs(undistortedPoint.at(0).x - camMatrix.at<double>(0, 2)),2) + std::pow(abs(undistortedPoint.at(0).y - camMatrix.at<double>(1, 2)),2));
+		distanceToCenter = sqrt(pow(abs(undistortedPoint.at(0).x - camMatrix.at<float>(0, 2)),2) + std::pow(abs(undistortedPoint.at(0).y - camMatrix.at<float>(1, 2)),2));
 
-		theta = std::atan(distanceToCenter / camMatrix.at<double>(0, 0));
+		theta = std::atan(distanceToCenter / camMatrix.at<float>(0, 0));
 		marker.setOpticalTheta(theta);
 		//realWorldDistance = MARKER_HEIGHT * std::tan(theta);
 
@@ -399,8 +399,8 @@ void RNOmnicameraTask::markerIdNumber(const cv::Mat &bits, int &mapId, int &sect
     }
 }
 
-double RNOmnicameraTask::perimeter(const std::vector<cv::Point2f> &a){
-	double result = 0, dx, dy;
+float RNOmnicameraTask::perimeter(const std::vector<cv::Point2f> &a){
+	float result = 0, dx, dy;
 	for (int i = 0; i < a.size(); i++){
 		dx = a[i].x - a[(i + 1) % a.size()].x;
 		dy = a[i].y - a[(i + 1) % a.size()].y;
@@ -433,15 +433,15 @@ int RNOmnicameraTask::getBrightnessAverageFromHistogram(const cv::Mat& input){
 	cv::normalize(hist, hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat() );
 
 	for( int i = 1; i < histSize; i++ ){
-		line( histImage, cv::Point( bin_w*(i-1), hist_h - cvRound(hist.at<double>(i-1)) ) ,
-			cv::Point( bin_w*(i), hist_h - cvRound(hist.at<double>(i)) ),
+		line( histImage, cv::Point( bin_w*(i-1), hist_h - cvRound(hist.at<float>(i-1)) ) ,
+			cv::Point( bin_w*(i), hist_h - cvRound(hist.at<float>(i)) ),
 			cv::Scalar( 0, 0, 255), 2, 8, 0  );
 	}
 
-	double avgBrightness = 0;
+	float avgBrightness = 0;
 
 	for(int i =0; i< 256; i++){
-	    avgBrightness += hist.at<double>(i)*i/cv::sum(hist)[0];  //Media ponderada
+	    avgBrightness += hist.at<float>(i)*i/cv::sum(hist)[0];  //Media ponderada
 	}
 
 	//std::cout << "Greyscale average brightness (0-255): " << (int)avgBrightness << std::endl;
@@ -510,9 +510,9 @@ void RNOmnicameraTask::undistortPoints(cv::InputArray distorted, cv::OutputArray
         cv::Vec2d pi = sdepth == CV_32F ? (cv::Vec2d)srcf[i] : srcd[i];  // image point
         cv::Vec2d pw((pi[0] - c[0])/f[0], (pi[1] - c[1])/f[1]);      // world point
 
-        double scale = 1.0;
+        float scale = 1.0;
 
-        double theta_d = sqrt(pw[0]*pw[0] + pw[1]*pw[1]);
+        float theta_d = sqrt(pw[0]*pw[0] + pw[1]*pw[1]);
 
         // the current camera model is only valid up to 180° FOV
         // for larger FOV the loop below does not converge
@@ -522,10 +522,10 @@ void RNOmnicameraTask::undistortPoints(cv::InputArray distorted, cv::OutputArray
         if (theta_d > 1e-8)
         {
             // compensate distortion iteratively
-            double theta = theta_d;
+            float theta = theta_d;
             for(int j = 0; j < 10; j++ )
             {
-                double theta2 = theta*theta, theta4 = theta2*theta2, theta6 = theta4*theta2, theta8 = theta6*theta2;
+                float theta2 = theta*theta, theta4 = theta2*theta2, theta6 = theta4*theta2, theta8 = theta6*theta2;
                 theta = theta_d / (1 + k[0] * theta2 + k[1] * theta4 + k[2] * theta6 + k[3] * theta8);
             }
 
