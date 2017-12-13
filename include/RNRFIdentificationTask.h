@@ -34,17 +34,17 @@ public:
 		this->antenna = antenna;
 	}
 
-	void update(double rssi, float phaseAngle, float dopplerFrequency){
+	void update(double rssi, double phaseAngle, double dopplerFrequency){
 		this->rssi = rssi;
 		this->angle = phaseAngle;
 		this->dopplerFrequency = dopplerFrequency;
 		convertToDistance();
 	}
 
-	float getRSSI(void){ return rssi; }
-	float getPhaseAngle(void){ return angle; }
-	float getDistance(void){ return distance; }
-	float getDopplerFrequency(void){ return dopplerFrequency; }
+	double getRSSI(void){ return rssi; }
+	double getPhaseAngle(void){ return angle; }
+	double getDistance(void){ return distance; }
+	double getDopplerFrequency(void){ return dopplerFrequency; }
 	int getAntenna(void){ return antenna; }
 
 	void initializeFromString(std::string data){
@@ -83,11 +83,11 @@ public:
 	}
 private:
 	void convertToDistance(){
-		float txPwIndex = (float)TRANSMISSION_POWER_INDEX_1;
+		double txPwIndex = (double)TRANSMISSION_POWER_INDEX_1;
 		/*if(antenna == 2){
-			txPwIndex = (float)TRANSMISSION_POWER_INDEX_2;
+			txPwIndex = (double)TRANSMISSION_POWER_INDEX_2;
 		}*/
-		float ptx = -txPwIndex * AntennaData::TX_POWER_INDEX_MULTIPLIER + AntennaData::TX_POWER_OFFSET_DBM;
+		double ptx = -txPwIndex * AntennaData::TX_POWER_INDEX_MULTIPLIER + AntennaData::TX_POWER_OFFSET_DBM;
 		
 		double wavelength = AntennaData::C / AntennaData::FREQUENCY;
 		
@@ -104,8 +104,8 @@ private:
 	std::string timestamp;
 	double rssi;
 	double distance;
-	float angle;
-	float dopplerFrequency;
+	double angle;
+	double dopplerFrequency;
 	int antenna;
 
 };

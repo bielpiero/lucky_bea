@@ -3,7 +3,7 @@
 Matrix::Matrix(unsigned int rows, unsigned int cols){
 	this->rows = rows;
 	this->cols = cols;
-	this->data = std::vector<std::vector<float> >(rows, std::vector<float>(cols, 0));
+	this->data = std::vector<std::vector<double> >(rows, std::vector<double>(cols, 0));
 }
 
 Matrix::~Matrix(){
@@ -34,7 +34,7 @@ Matrix Matrix::operator+(const Matrix& rhs){
 	return result;
 }
 
-Matrix Matrix::operator+(const float& rhs){
+Matrix Matrix::operator+(const double& rhs){
 	Matrix result(this->rows, this->cols);
 	for(int i = 0; i < result.rows_size(); i++){
 		for (int j = 0; j < result.cols_size(); j++){
@@ -44,7 +44,7 @@ Matrix Matrix::operator+(const float& rhs){
 	return result;
 }
 
-Matrix operator+(const float& scalar, Matrix rhs){
+Matrix operator+(const double& scalar, Matrix rhs){
 	return (rhs + scalar);
 }
 
@@ -64,7 +64,7 @@ Matrix Matrix::operator-(const Matrix& rhs){
 	return result;
 }
 
-Matrix Matrix::operator-(const float& rhs){
+Matrix Matrix::operator-(const double& rhs){
 	Matrix result(this->rows, this->cols);
 	for(int i = 0; i < result.rows_size(); i++){
 		for (int j = 0; j < result.cols_size(); j++){
@@ -74,7 +74,7 @@ Matrix Matrix::operator-(const float& rhs){
 	return result;
 }
 
-Matrix operator-(const float& scalar, Matrix rhs){
+Matrix operator-(const double& scalar, Matrix rhs){
 	return (scalar + (-1 * rhs));
 }
 
@@ -96,7 +96,7 @@ Matrix Matrix::operator*(const Matrix& rhs){
 	return result;
 }
 
-Matrix Matrix::operator*(const float& rhs){
+Matrix Matrix::operator*(const double& rhs){
 	Matrix result(this->rows, this->cols);
 	for(int i = 0; i < result.rows_size(); i++){
 		for (int j = 0; j < result.cols_size(); j++){
@@ -106,7 +106,7 @@ Matrix Matrix::operator*(const float& rhs){
 	return result;
 }
 
-Matrix operator*(const float& scalar, Matrix rhs){
+Matrix operator*(const double& scalar, Matrix rhs){
 	return (rhs*scalar);
 }
 
@@ -118,15 +118,15 @@ Matrix operator~(Matrix rhs){
 	return rhs.transpose();
 }
 
-const float& Matrix::operator() (const int row, const int col) const{
+const double& Matrix::operator() (const int row, const int col) const{
 	if(row < 0 && row >= data.size() || col < 0 && col >= data[row].size()){
 		throw std::invalid_argument("Invalid subscripting dimension");
 	}
 	return data[row][col];
 }
 
-float& Matrix::operator() (const int row, const int col){
-	float value = NAN;
+double& Matrix::operator() (const int row, const int col){
+	double value = NAN;
 	if(row < 0 && row >= data.size() || col < 0 && col >= data[row].size()){
 		throw std::invalid_argument("Invalid subscripting dimension");
 	}
@@ -170,7 +170,7 @@ Matrix Matrix::inv(){
 	for (int i = 0; i < this->rows_size(); i++){
 		Matrix Z(this->rows_size(), 1);
 		for (int j = 0; j < this->rows_size(); j++){
-			float sum = 0;
+			double sum = 0;
 			for (int k = 0; k < j; k++){
 				sum += L(j, k) * Z(k, 0);
 			}
@@ -178,7 +178,7 @@ Matrix Matrix::inv(){
 		}
 		
 		for (int j = this->rows_size() - 1; j >= 0; j--){
-			float sum = 0;
+			double sum = 0;
 			for (int k = j + 1; k < this->rows_size(); k++){
 				sum += U(j, k) * result(k, i);
 			}
@@ -208,14 +208,14 @@ Matrix Matrix::sort(int mode){
 			for(int i = 0; i < this->rows - 1; i++){
 				if(mode == MATRIX_ASCENDING){
 					if(result(i, j) > result(i + 1, j)){
-						float tempValue = result(i + 1, j);
+						double tempValue = result(i + 1, j);
 						result(i + 1, j) = result(i, j);
 						result(i, j) = tempValue;
 						change = true;
 					}
 				} else {
 					if(result(i, j) < result(i + 1, j)){
-						float tempValue = result(i + 1, j);
+						double tempValue = result(i + 1, j);
 						result(i + 1, j) = result(i, j);
 						result(i, j) = tempValue;
 						change = true;
@@ -232,14 +232,14 @@ Matrix Matrix::sort(int mode){
 			for(int j = 0; j < this->cols - 1; j++){
 				if(mode == MATRIX_ASCENDING){
 					if(result(i, j) > result(i, j + 1)){
-						float tempValue = result(i, j + 1);
+						double tempValue = result(i, j + 1);
 						result(i, j + 1) = result(i, j);
 						result(i, j) = tempValue;
 						change = true;
 					}
 				} else {
 					if(result(i, j) < result(i, j + 1)){
-						float tempValue = result(i, j + 1);
+						double tempValue = result(i, j + 1);
 						result(i, j + 1) = result(i, j);
 						result(i, j) = tempValue;
 						change = true;
@@ -261,14 +261,14 @@ Matrix Matrix::sort_rows(int mode){
 			for(int i = 0; i < this->rows - 1; i++){
 				if(mode == MATRIX_ASCENDING){
 					if(result(i, j) > result(i + 1, j)){
-						float tempValue = result(i + 1, j);
+						double tempValue = result(i + 1, j);
 						result(i + 1, j) = result(i, j);
 						result(i, j) = tempValue;
 						change = true;
 					}
 				} else {
 					if(result(i, j) < result(i + 1, j)){
-						float tempValue = result(i + 1, j);
+						double tempValue = result(i + 1, j);
 						result(i + 1, j) = result(i, j);
 						result(i, j) = tempValue;
 						change = true;
@@ -290,14 +290,14 @@ Matrix Matrix::sort_cols(int mode){
 			for(int j = 0; j < this->cols - 1; j++){
 				if(mode == MATRIX_ASCENDING){
 					if(result(i, j) > result(i, j + 1)){
-						float tempValue = result(i, j + 1);
+						double tempValue = result(i, j + 1);
 						result(i, j + 1) = result(i, j);
 						result(i, j) = tempValue;
 						change = true;
 					}
 				} else {
 					if(result(i, j) < result(i, j + 1)){
-						float tempValue = result(i, j + 1);
+						double tempValue = result(i, j + 1);
 						result(i, j + 1) = result(i, j);
 						result(i, j) = tempValue;
 						change = true;
@@ -332,17 +332,17 @@ void Matrix::svd(Matrix& u, Matrix& s, Matrix& v){
 	u = (*this)*(this->transpose());
 }
 
-float Matrix::det(){
+double Matrix::det(){
 	if(this->rows_size() != this->cols_size()){
 		throw std::invalid_argument("Invalid matrix dimension. Matrix must be square");
 	}
-	float determinant = 0;
+	double determinant = 0;
 	Matrix self = *this;
 	Matrix L;
 	Matrix U;
 	self.factorizationLU(L, U);
 
-	float diagL = 1, diagU = 1;
+	double diagL = 1, diagU = 1;
 	for(int i = 0; i < self.rows_size(); i++){
 		diagL = diagL * L(i, i);
 		diagU = diagU * U(i, i);
@@ -357,7 +357,7 @@ void Matrix::factorizationLU(Matrix& L, Matrix& U){
 
 	L = Matrix(rhs.rows_size(), rhs.cols_size());
 	U = eye(rhs.rows_size());	
-	float sum = 0;
+	double sum = 0;
 
 	for(int j = 0; j < rhs.rows_size(); j++){
 		for(int i = j; i < rhs.rows_size(); i++){

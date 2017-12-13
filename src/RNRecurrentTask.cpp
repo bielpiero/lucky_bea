@@ -18,11 +18,11 @@ void RNRecurrentTask::setController(RobotNode* rn){
 }
 
 void RNRecurrentTask::go(){
-    lock();
+    //lock();
     goRequested = true;
     running = true;
     killed = false;
-    unlock();
+    //unlock();
 }
 
 int RNRecurrentTask::done(){

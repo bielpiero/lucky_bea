@@ -24,9 +24,9 @@ private:
 	ArLaser *laser;
 	RNLandmarkList* laserLandmarks;
 
-	static const float SECURITY_DISTANCE;
-	static const float LASER_MAX_RANGE;
-	static const float LANDMARK_RADIUS;
+	static const double SECURITY_DISTANCE;
+	static const double LASER_MAX_RANGE;
+	static const double LANDMARK_RADIUS;
 };
 
 #endif

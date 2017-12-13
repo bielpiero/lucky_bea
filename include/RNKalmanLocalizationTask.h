@@ -15,30 +15,29 @@ public:
 private:
 	
 	void getObservations(Matrix& observations);
-	void landmarkObservation(Matrix Xk, s_landmark* landmark, float& distance, float& angle);
+	void landmarkObservation(const Matrix& xk, s_landmark* landmark, double& distance, double& angle);
 private:
-	static const float MAX_LASER_DISTANCE_ERROR;
-	static const float MAX_LASER_ANGLE_ERROR;
-	static const float MAX_CAMERA_DISTANCE_ERROR;
-	static const float MAX_CAMERA_ANGLE_ERROR;
-	static const float CAMERA_ERROR_POSITION_X;
-	static const float CAMERA_ERROR_POSITION_Y;
+	static const double MAX_LASER_DISTANCE_ERROR;
+	static const double MAX_LASER_ANGLE_ERROR;
+	static const double MAX_CAMERA_DISTANCE_ERROR;
+	static const double MAX_CAMERA_ANGLE_ERROR;
+	static const double CAMERA_ERROR_POSITION_X;
+	static const double CAMERA_ERROR_POSITION_Y;
 	int laserLandmarksCount;
 	int cameraLandmarksCount;
 	int rfidLandmarksCount;
 
-	float laserTMDistance;
-	float laserTMAngle;
-	float cameraTMDistance;
-	float cameraTMAngle;
-	float rfidTMDistance;
-	float rfidTMAngle;
+	double laserTMDistance;
+	double laserTMAngle;
+	double cameraTMDistance;
+	double cameraTMAngle;
+	double rfidTMDistance;
+	double rfidTMAngle;
 
 	bool enableLocalization;
 
 	std::FILE* test;
-	
-	Matrix xk;		//current position
+	Matrix xk;		// current position
 	Matrix xk_1;	// previous position
 
 	Matrix Ak;

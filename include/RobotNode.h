@@ -129,8 +129,6 @@ private:
     void finishThreads();
     void lockRobot();
     void unlockRobot();
-	void computePositionFromEncoders();
-	void getRawPoseFromOdometry();
     void securityDistanceChecker();
 
     // called if the connection was sucessfully made

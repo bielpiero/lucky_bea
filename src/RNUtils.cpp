@@ -176,8 +176,8 @@ void RNUtils::getTimestamp(std::ostringstream& timestamp){
 
 void RNUtils::getBezierCurve(std::vector<PointXY> bezierPointXYs, std::vector<PointXY> &bezierCurve){
 	int n = bezierPointXYs.size() - 1;
-	for(float t = 0; t < 1.0; t+=0.01){
-		float px = 0, py = 0;
+	for(double t = 0; t < 1.0; t+=0.01){
+		double px = 0, py = 0;
 		for(unsigned int j = 0; j < bezierPointXYs.size(); j++){
 			int b = binomialCoeff(n, j);
 			px += b * std::pow((1.0 - t), (n - j)) * std::pow(t, j) * bezierPointXYs.at(j).getX();
@@ -235,6 +235,10 @@ double RNUtils::dBmTomilliwatts(const double& dBm){
 	return (std::pow(10, ((double)dBm) / 10));
 }
 
+double RNUtils::distanceTo(const double& x1, const double& y1, const double& x2, const double& y2){
+	return std::sqrt(std::pow(x1 - x2, 2) + std::pow(y1 - y2, 2));
+}
+
 double RNUtils::deg2Rad(double degrees){
 	while(degrees > 360.0){
 		degrees -= 360.0;
@@ -265,14 +269,56 @@ double RNUtils::rad2Deg(double rad){
 	return (rad * 180.0 / M_PI);
 }
 
-float RNUtils::linearInterpolator(const float& x, const PointXY& p1, const PointXY& p2){
+void RNUtils::getOdometryPose(const double& xk, const double& yk, const double& thk, const double& deltaDistance, const double& deltaDegrees, double* xk1, double* yk1, double* thk1){
+    //printf("Pre-Raw: %lf, %lf, %lf\n", xk, yk, thk);
+    *xk1 = xk + deltaDistance * std::cos(thk + (deltaDegrees / 2.0));
+    *yk1 = yk + deltaDistance * std::sin(thk + (deltaDegrees / 2.0));
+    *thk1 = thk + deltaDegrees;
+    //printf("Raw: %lf, %lf, %lf\n", *xk1, *yk1, *thk1);
+}
+
+void RNUtils::getOdometryPose(const Matrix& posk, const Matrix& increment, Matrix& posk1){
+	double x, y, th;
+	getOdometryPose(posk(0, 0), posk(1, 0), posk(2, 0), increment(0, 0), increment(1, 0), &x, &y, &th);
+	posk1(0, 0) = x;
+	posk1(1, 0) = y;
+	posk1(2, 0) = th;
+}
+
+void RNUtils::getOdometryPose(const Matrix& posk, const double& deltaDistance, const double& deltaDegrees, Matrix& posk1){
+	double x, y, th;
+	getOdometryPose(posk(0, 0), posk(1, 0), posk(2, 0), deltaDistance, deltaDegrees, &x, &y, &th);
+	posk1(0, 0) = x;
+	posk1(1, 0) = y;
+	posk1(2, 0) = th;
+}
+
+void RNUtils::getOdometryPose(const ArPose& posk, const Matrix& increment, ArPose* posk1){
+	double x, y, th;
+	getOdometryPose(posk.getX(), posk.getY(), posk.getThRad(), increment(0, 0), increment(1, 0), &x, &y, &th);
+	posk1->setX(x);
+	posk1->setY(y);
+	posk1->setThRad(th);
+
+}
+
+void RNUtils::getOdometryPose(const ArPose& posk, const double& deltaDistance, const double& deltaDegrees, ArPose* posk1){
+	double x, y, th;
+	getOdometryPose(posk.getX(), posk.getY(), posk.getThRad(), deltaDistance, deltaDegrees, &x, &y, &th);
+	posk1->setX(x);
+	posk1->setY(y);
+	posk1->setThRad(th);
+
+}
+
+double RNUtils::linearInterpolator(const double& x, const PointXY& p1, const PointXY& p2){
 	return (((x - p1.getX())/(p2.getX() - p1.getX()) * (p2.getY() - p1.getY())) + p1.getY());
 }
 
-float RNUtils::quadraticInterpolator(const float& x, const PointXY& p1, const PointXY& p2, const PointXY& p3){
-	float term1 = (((x - p2.getX()) * (x - p3.getX()))/((p1.getX() - p2.getX()) * (p1.getX() - p3.getX()))) * p1.getY();
-	float term2 = (((x - p1.getX()) * (x - p3.getX()))/((p2.getX() - p1.getX()) * (p2.getX() - p3.getX()))) * p2.getY();
-	float term3 = (((x - p1.getX()) * (x - p2.getX()))/((p3.getX() - p1.getX()) * (p3.getX() - p2.getX()))) * p3.getY();
+double RNUtils::quadraticInterpolator(const double& x, const PointXY& p1, const PointXY& p2, const PointXY& p3){
+	double term1 = (((x - p2.getX()) * (x - p3.getX()))/((p1.getX() - p2.getX()) * (p1.getX() - p3.getX()))) * p1.getY();
+	double term2 = (((x - p1.getX()) * (x - p3.getX()))/((p2.getX() - p1.getX()) * (p2.getX() - p3.getX()))) * p2.getY();
+	double term3 = (((x - p1.getX()) * (x - p2.getX()))/((p3.getX() - p1.getX()) * (p3.getX() - p2.getX()))) * p3.getY();
 	return (term3 + term2 + term1);
 }
 

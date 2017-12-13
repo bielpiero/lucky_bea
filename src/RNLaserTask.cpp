@@ -1,8 +1,8 @@
 #include "RNLaserTask.h"
 
-const float RNLaserTask::SECURITY_DISTANCE = 0.5;
-const float RNLaserTask::LASER_MAX_RANGE = 11.6;
-const float RNLaserTask::LANDMARK_RADIUS = 0.045;
+const double RNLaserTask::SECURITY_DISTANCE = 0.5;
+const double RNLaserTask::LASER_MAX_RANGE = 11.6;
+const double RNLaserTask::LANDMARK_RADIUS = 0.045;
 
 RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
 	this->gn = gn;
@@ -44,7 +44,7 @@ void RNLaserTask::getLaserScan(void){
 		  laserDataScan->clear();
         }
 		for(std::list<ArSensorReading*>::const_iterator it = currentReadings->begin(); it != currentReadings->end(); ++it){
-			laserDataScan->addRange((float)(*it)->getRange() / 1000, (float)(*it)->getExtraInt());
+			laserDataScan->addRange((double)(*it)->getRange() / 1000, (double)(*it)->getExtraInt());
 		}
         rn->onLaserScanCompleted(laserDataScan);
         laser->unlockDevice();
@@ -82,11 +82,11 @@ void RNLaserTask::securityDistanceChecker(){
 
 void RNLaserTask::getReflectiveLandmarks(){
 	
-	float angle_min = laserDataScan->getAngleMin();
-	float angle_max = laserDataScan->getAngleMax();
-	float angle_increment = laserDataScan->getIncrement();
-	std::vector<float>* data = laserDataScan->getRanges();
-	std::vector<float> dataIntensities = *laserDataScan->getIntensities();
+	double angle_min = laserDataScan->getAngleMin();
+	double angle_max = laserDataScan->getAngleMax();
+	double angle_increment = laserDataScan->getIncrement();
+	std::vector<double>* data = laserDataScan->getRanges();
+	std::vector<double> dataIntensities = *laserDataScan->getIntensities();
 
 	std::vector<int> dataIndices = stats::findIndicesHigherThan(dataIntensities, 0);
 
@@ -100,10 +100,10 @@ void RNLaserTask::getReflectiveLandmarks(){
 	for(int i = 0; i < dataIndices.size(); i++){
 		if(i < dataIndices.size() - 1){
 			if((dataIndices[i + 1] - dataIndices[i]) <= 10){
-				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
+				current->addPoint(data->at(dataIndices[i]), (angle_max - ((double)dataIndices[i] * angle_increment)));
 				
 			} else {
-				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
+				current->addPoint(data->at(dataIndices[i]), (angle_max - ((double)dataIndices[i] * angle_increment)));
 				if(current->size() > 1){
 					laserLandmarks->add(current);
 				}
@@ -111,7 +111,7 @@ void RNLaserTask::getReflectiveLandmarks(){
 			}
 		} else {
 			if((dataIndices[i] - dataIndices[i - 1]) <= 10){
-				current->addPoint(data->at(dataIndices[i]), (angle_max - ((float)dataIndices[i] * angle_increment)));
+				current->addPoint(data->at(dataIndices[i]), (angle_max - ((double)dataIndices[i] * angle_increment)));
 				if(current->size() > 1){
 					laserLandmarks->add(current);
 				}
@@ -143,7 +143,7 @@ void RNLaserTask::getReflectiveLandmarks(){
 
 			//fprintf(file, "$LASER_POINT\t%d\t%d\t%f\t%f\t%f\n", (i + 1), (j + 1), Zk(j, 0), Zke(j, 0), laserLandmarks->at(i)->getPointAt(j)->getY());
 
-			float calc = (1 / LANDMARK_RADIUS) * (1 / std::sqrt(1 - ((std::pow(Pc(0, 0), 2) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2))/(std::pow(LANDMARK_RADIUS, 2)))));
+			double calc = (1 / LANDMARK_RADIUS) * (1 / std::sqrt(1 - ((std::pow(Pc(0, 0), 2) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2))/(std::pow(LANDMARK_RADIUS, 2)))));
 			Hkl(j, 0) = cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + Pc(0, 0) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2) * calc;
 			Hkl(j, 1) = -Pc(0, 0) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + std::pow(Pc(0, 0), 2) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) * cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) * calc;
 		}

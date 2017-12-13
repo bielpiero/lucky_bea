@@ -1,11 +1,11 @@
 #include "stats.h"
 
 
-float stats::max(std::vector<float> values){
-	float max = -std::numeric_limits<float>::infinity();
+double stats::max(std::vector<double> values){
+	double max = -std::numeric_limits<double>::infinity();
 	if(values.size() > 0){
 		for(int i = 0; i < values.size(); i++){
-			if(values[i] > max  && values[i] != std::numeric_limits<float>::quiet_NaN()){
+			if(values[i] > max  && values[i] != std::numeric_limits<double>::quiet_NaN()){
 				max = values[i];
 			}
 		}
@@ -13,11 +13,11 @@ float stats::max(std::vector<float> values){
 	return max;
 }
 
-float stats::min(std::vector<float> values){
-	float min = std::numeric_limits<float>::infinity();
+double stats::min(std::vector<double> values){
+	double min = std::numeric_limits<double>::infinity();
 	if(values.size() > 0){
 		for(int i = 0; i < values.size(); i++){
-			if(values[i] < min && values[i] != std::numeric_limits<float>::quiet_NaN()){
+			if(values[i] < min && values[i] != std::numeric_limits<double>::quiet_NaN()){
 				min = values[i];
 			}
 		}
@@ -25,7 +25,7 @@ float stats::min(std::vector<float> values){
 	return min;
 }
 
-std::vector<int> stats::findIndicesEqual(std::vector<float> values, float k){
+std::vector<int> stats::findIndicesEqual(std::vector<double> values, double k){
     std::vector<int> indices;
     for(int i = 0; i < values.size(); i++){
         if(k == values[i]){
@@ -35,7 +35,7 @@ std::vector<int> stats::findIndicesEqual(std::vector<float> values, float k){
     return indices;
 }
 
-std::vector<int> stats::findIndicesHigherThan(std::vector<float> values, float k){
+std::vector<int> stats::findIndicesHigherThan(std::vector<double> values, double k){
     std::vector<int> indices;
     for(int i = 0; i < values.size(); i++){
         if(values[i] > k){
@@ -45,7 +45,7 @@ std::vector<int> stats::findIndicesHigherThan(std::vector<float> values, float k
     return indices;
 }
 
-std::vector<int> stats::findIndicesLessThan(std::vector<float> values, float k){
+std::vector<int> stats::findIndicesLessThan(std::vector<double> values, double k){
     std::vector<int> indices;
     for(int i = 0; i < values.size(); i++){
         if(values[i] < k){
@@ -55,8 +55,8 @@ std::vector<int> stats::findIndicesLessThan(std::vector<float> values, float k){
     return indices;
 }
 
-float stats::sum(std::vector<float> values){
-    float sum = std::numeric_limits<float>::quiet_NaN();
+double stats::sum(std::vector<double> values){
+    double sum = std::numeric_limits<double>::quiet_NaN();
     if(values.size() > 0){  
         sum = 0;
         for(int i = 0; i < values.size(); i++){
@@ -66,16 +66,16 @@ float stats::sum(std::vector<float> values){
     return sum;
 }
 
-bool stats::isInf(float value){
-	return (std::abs(value) == std::numeric_limits<float>::infinity());
+bool stats::isInf(double value){
+	return (std::abs(value) == std::numeric_limits<double>::infinity());
 }
 
-bool stats::isNaN(float value){
-	return (value == std::numeric_limits<float>::quiet_NaN());
+bool stats::isNaN(double value){
+	return (value == std::numeric_limits<double>::quiet_NaN());
 }
 
-float stats::expectation(std::vector<float> values){
-	float mean = std::numeric_limits<float>::quiet_NaN();
+double stats::expectation(std::vector<double> values){
+	double mean = std::numeric_limits<double>::quiet_NaN();
 	if(values.size() > 0){
 		mean = 0;
 		for(int i = 0; i < values.size(); i++){
@@ -86,12 +86,12 @@ float stats::expectation(std::vector<float> values){
 	return mean;
 }
 
-float stats::variance(std::vector<float> values){
+double stats::variance(std::vector<double> values){
 	return variance(values, expectation(values));
 }
 
-float stats::variance(std::vector<float> values, float expect){
-	float var = std::numeric_limits<float>::quiet_NaN();
+double stats::variance(std::vector<double> values, double expect){
+	double var = std::numeric_limits<double>::quiet_NaN();
 	if(!isNaN(expect)){
 		var = 0;
 		for(int i = 0; i < values.size(); i++){
@@ -102,10 +102,10 @@ float stats::variance(std::vector<float> values, float expect){
 	return var;
 }
 
-float stats::covariance(std::vector<float> x, std::vector<float> y){
-	float expX = expectation(x);
-	float expY = expectation(y);
-	float cov = std::numeric_limits<float>::quiet_NaN();
+double stats::covariance(std::vector<double> x, std::vector<double> y){
+	double expX = expectation(x);
+	double expY = expectation(y);
+	double cov = std::numeric_limits<double>::quiet_NaN();
 	if(!isNaN(expX) && !isNaN(expY)){
 		if(x.size() == y.size()){
 			cov = 0;
@@ -120,9 +120,9 @@ float stats::covariance(std::vector<float> x, std::vector<float> y){
 	return cov;
 }
 
-float stats::standarDeviation(std::vector<float> values){
-	float var = variance(values);
-	float stdD = std::numeric_limits<float>::quiet_NaN();
+double stats::standarDeviation(std::vector<double> values){
+	double var = variance(values);
+	double stdD = std::numeric_limits<double>::quiet_NaN();
 	if(!isNaN(var)){
 		stdD = std::sqrt(var);
 	}
@@ -130,11 +130,11 @@ float stats::standarDeviation(std::vector<float> values){
 }
 
 
-float stats::correlationCoefficient(std::vector<float> x, std::vector<float> y){
-	float cov = covariance(x, y);
-	float stdX = standarDeviation(x);
-	float stdY = standarDeviation(y);
-	float cc = std::numeric_limits<float>::quiet_NaN();
+double stats::correlationCoefficient(std::vector<double> x, std::vector<double> y){
+	double cov = covariance(x, y);
+	double stdX = standarDeviation(x);
+	double stdY = standarDeviation(y);
+	double cc = std::numeric_limits<double>::quiet_NaN();
 	if(!isNaN(cov) && !isNaN(stdX) && !isNaN(stdY)){
 		cc = cov / (stdX * stdY);
 	}

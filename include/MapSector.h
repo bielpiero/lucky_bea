@@ -6,15 +6,15 @@
 struct s_landmark{
 	int id;
 	std::string type;
-	float varMinX;
-	float varMaxX;
-	float varMinY;
-	float varMaxY;
-	float varMinZ;
-	float varMaxZ;
-	float xpos;
-	float ypos;
-	float zpos;
+	double varMinX;
+	double varMaxX;
+	double varMinY;
+	double varMaxY;
+	double varMinZ;
+	double varMaxZ;
+	double xpos;
+	double ypos;
+	double zpos;
 	s_landmark(){
 		id = RN_NONE;
 		type = "";
@@ -33,22 +33,22 @@ struct s_landmark{
 struct s_feature{
 	int id;
 	std::string name;
-	float width;
-	float height;
-	float xpos;
-	float ypos;
+	double width;
+	double height;
+	double xpos;
+	double ypos;
 	int linkedSectorId;
-    float xcoord;
-    float ycoord;
+    double xcoord;
+    double ycoord;
 };
 
 struct s_site{
 	int id;
 	std::string name;
-	float tsec;
-	float radius;
-	float xpos;
-	float ypos;
+	double tsec;
+	double radius;
+	double xpos;
+	double ypos;
 	int linkedFeatureId;
 };
 
@@ -56,8 +56,8 @@ class MapSector{
 private:
 	int id;
 	std::string name;
-	float width;
-	float height;
+	double width;
+	double height;
 	std::string polygonDefinition;
 	std::vector<PointXY*> *polygon;
 	bool sitesCyclic;
@@ -67,13 +67,13 @@ private:
 	std::vector<s_site*> *sites;
 private:
 	void getPolygonFromString();
-	float getAngle(PointXY a, PointXY b);
+	double getAngle(PointXY a, PointXY b);
 public:
 	MapSector();
 	~MapSector();
 
 	void setId(int id);
-	float getId();
+	int getId();
 
 	void setName(std::string name);
 	std::string getName();
@@ -81,14 +81,14 @@ public:
 	void setPolygon(std::string polygon);
 	std::string getPolygonDefinition();
 
-	void setWidth(float width);
-	float getWidth();
+	void setWidth(double width);
+	double getWidth();
 
-	void setHeight(float height);
-	float getHeight();
+	void setHeight(double height);
+	double getHeight();
 
 	void setIfSitesCyclic(bool sitesCyclic);
-	float isSitesCyclic();
+	double isSitesCyclic();
 
 	void setSequence(std::string sequence);
 	std::string getSequence();
@@ -126,7 +126,7 @@ public:
     void deleteAllLandmarks();
     void deletePolygon();
 
-    bool checkPointXYInPolygon(PointXY g, float &angle);
+    bool checkPointXYInPolygon(PointXY g, double &angle);
 
 };
 

@@ -11,7 +11,7 @@ RNPIDController::RNPIDController(const char* name, double setPoint, double sampl
 	firstIteration = true;
 	this->setPoint = setPoint;
 
-	this->lastInput = std::numeric_limits<float>::infinity();
+	this->lastInput = std::numeric_limits<double>::infinity();
 	this->lastError = 0;
 	this->pastLastError = 0;
 	this->currentError = 0;
@@ -57,7 +57,7 @@ double RNPIDController::getSystemInput(int measure){
 
 void RNPIDController::reset(void){
 	firstIteration = true;
-	this->lastInput = std::numeric_limits<float>::infinity();
+	this->lastInput = std::numeric_limits<double>::infinity();
 	this->lastError = 0;
 	this->pastLastError = 0;
 	this->currentError = 0;

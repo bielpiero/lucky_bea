@@ -99,10 +99,10 @@ struct dynamic_face_info{
 
 
 struct s_trapezoid{
-	float x1;
-	float x2;
-	float x3;
-	float x4;
+	double x1;
+	double x2;
+	double x3;
+	double x4;
 	s_trapezoid(){
 		x1 = 0;
 		x2 = 0;
@@ -157,7 +157,7 @@ struct s_sensor{
 };
 
 struct s_navigation_params{
-	float alpha;
+	double alpha;
 	s_position* initialPosition;
 	s_obs_dth* processNoise;
 	std::vector<s_sensor*>* sensors;
@@ -179,7 +179,7 @@ struct s_navigation_params{
 };
 
 struct s_robot{
-	float height;
+	double height;
 	std::string localization;
 	s_navigation_params* navParams;
 	s_robot(){
@@ -286,16 +286,22 @@ public:
 	int lockVisualLandmarks();
 	int unlockVisualLandmarks();
 
+	int lockRawDeltaEncoders();
+	int unlockRawDeltaEncoders();
+
+	int lockRawPosition();
+	int unlockRawPosition();
+
 	Matrix getP();
 	Matrix getQ();
 	Matrix getR();
 
-	float getLaserDistanceVariance();
-	float getLaserAngleVariance();
-	float getCameraDistanceVariance();
-	float getCameraAngleVariance();
+	double getLaserDistanceVariance();
+	double getLaserAngleVariance();
+	double getCameraDistanceVariance();
+	double getCameraAngleVariance();
 
-	float getRobotHeight();
+	double getRobotHeight();
 
 	bool isLaserSensorActivated();
 	bool isCameraSensorActivated();
@@ -342,10 +348,10 @@ private:
 	Matrix Q;
 	Matrix R;
 
-	float laserDistanceVariance;
-	float laserAngleVariance;
-	float cameraDistanceVariance;
-	float cameraAngleVariance;
+	double laserDistanceVariance;
+	double laserAngleVariance;
+	double cameraDistanceVariance;
+	double cameraAngleVariance;
 
 	int tokenRequester;
     int lastSiteVisitedIndex;
@@ -380,6 +386,8 @@ private:
 	pthread_mutex_t laserLandmarksLocker;
 	pthread_mutex_t rfidLandmarksLocker;
 	pthread_mutex_t visualLandmarksLocker;
+	pthread_mutex_t rawDeltaEncoderLocker;
+	pthread_mutex_t rawPositionLocker;
 
 	void getMapId(char* cad, int& mapId);
 	
@@ -387,13 +395,13 @@ private:
 	
 	void initializeSPDPort(int socketIndex, char* cad);
 	
-	void getVelocities(char* cad, float& lin_vel, float& angular_vel);
-	void moveRobot(float lin_vel, float angular_vel);
+	void getVelocities(char* cad, double& lin_vel, double& angular_vel);
+	void moveRobot(double lin_vel, double angular_vel);
 
 	void setRobotPosition(Matrix pose);
-	void setRobotPosition(float x, float y, float theta);
-	void moveRobotToPosition(float x, float y, float th);
-	void getPositions(char* cad, float& x, float& y, float& theta);
+	void setRobotPosition(double x, double y, double theta);
+	void moveRobotToPosition(double x, double y, double th);
+	void getPositions(char* cad, double& x, double& y, double& theta);
 
 	void getMapSectorId(char* cad, int& mapId, int& sectorId);
 	void getMapsAvailable(std::string& mapsAvailable);
@@ -418,10 +426,10 @@ private:
 	
 	void startSitesTour();
 
-	bool isFirstQuadrant(float angle);
-	bool isSecondQuadrant(float angle);
-	bool isThirdQuadrant(float angle);
-	bool isFouthQuadrant(float angle);
+	bool isFirstQuadrant(double angle);
+	bool isSecondQuadrant(double angle);
+	bool isThirdQuadrant(double angle);
+	bool isFouthQuadrant(double angle);
 	
 	static void* sitesTourThread(void*);
 };

@@ -26,15 +26,21 @@
 	<sector id="1" name="Main Hall" width="2865" height="521" reference="2" polygon="m 0 277 l 0 168 l 127 0 l 0 53 l 101 0 l 0 -53 l 2383 0 l 0 53 l 115 0 l 0 -53 l 91 0 l 0 -468 l -254 0 l 0 300 z">
 		<landmarks>
 			<!--Laser landmarks-->
-			<landmark id="0" type="laser" x="118" y="468" z="0"/>
-			<landmark id="1" type="laser" x="472" y="300" z="0"/>
-			<landmark id="2" type="laser" x="911" y="468" z="0"/>
-			<landmark id="3" type="laser" x="1608" y="300" z="0"/>
-			<landmark id="4" type="laser" x="2024" y="468" z="0"/>
-			<landmark id="5" type="laser" x="2395" y="300" z="0"/>
-			<landmark id="6" type="laser" x="2600" y="468" z="0"/>
-			<landmark id="7" type="laser" x="2865" y="209" z="0"/>
-			<landmark id="8" type="laser" x="2646" y="0" z="0"/>
+			<landmark id="0" type="laser" x="118" y="300" z="0"/>
+			<landmark id="1" type="laser" x="118" y="468" z="0"/>
+			<landmark id="2" type="laser" x="472" y="300" z="0"/>
+			<landmark id="3" type="laser" x="472" y="468" z="0"/>
+			<landmark id="4" type="laser" x="904" y="300" z="0"/>
+			<landmark id="5" type="laser" x="904" y="468" z="0"/>
+			<landmark id="6" type="laser" x="1608" y="300" z="0"/>
+			<landmark id="7" type="laser" x="1608" y="468" z="0"/>
+			<landmark id="8" type="laser" x="2024" y="468" z="0"/>
+			<landmark id="9" type="laser" x="2395" y="300" z="0"/>
+			<landmark id="10" type="laser" x="2395" y="468" z="0"/>
+			<landmark id="11" type="laser" x="2600" y="468" z="0"/>
+			<landmark id="12" type="laser" x="2865" y="209" z="0"/>
+			<landmark id="13" type="laser" x="2610" y="209" z="0"/>
+			<landmark id="14" type="laser" x="2646" y="0" z="0"/>
 			<!--Camera landmarks-->
 			<landmark id="0" type="camera" x="0" y="338" z="243"/>
 			<landmark id="8" type="camera" x="487" y="300" z="249"/>

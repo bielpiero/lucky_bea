@@ -1,43 +1,43 @@
 #include "RNQuaternion.h"
 
-RNQuaternion::RNQuaternion(const float scalar, const RNVector3 axis){
+RNQuaternion::RNQuaternion(const double scalar, const RNVector3 axis){
 	this->scalar = scalar;
 	this->axis = axis;
 }
 
-RNQuaternion RNQuaternion::initFromEuler(const float yaw, const float pitch, const float roll){
-	float halfYaw = yaw * 0.5;  
-	float halfPitch = pitch * 0.5;
-	float halfRoll = roll * 0.5;
-	float cosYaw = std::cos(halfYaw);
-	float sinYaw = std::sin(halfYaw);
-	float cosPitch = std::cos(halfPitch);
-	float sinPitch = std::sin(halfPitch);
-	float cosRoll = std::cos(halfRoll);
-	float sinRoll = std::sin(halfRoll);
+RNQuaternion RNQuaternion::initFromEuler(const double yaw, const double pitch, const double roll){
+	double halfYaw = yaw * 0.5;  
+	double halfPitch = pitch * 0.5;
+	double halfRoll = roll * 0.5;
+	double cosYaw = std::cos(halfYaw);
+	double sinYaw = std::sin(halfYaw);
+	double cosPitch = std::cos(halfPitch);
+	double sinPitch = std::sin(halfPitch);
+	double cosRoll = std::cos(halfRoll);
+	double sinRoll = std::sin(halfRoll);
 	return RNQuaternion(cosRoll * cosPitch * cosYaw + sinRoll * sinPitch * sinYaw,
 						RNVector3(cosRoll * sinPitch * cosYaw + sinRoll * cosPitch * sinYaw,
 								  cosRoll * cosPitch * sinYaw - sinRoll * sinPitch * cosYaw,
 								  sinRoll * cosPitch * cosYaw - cosRoll * sinPitch * sinYaw));
 }
 
-RNQuaternion RNQuaternion::initFromRPY(const float roll, const float pitch, const float yaw){
-	float halfYaw = yaw * 0.5;  
-	float halfPitch = pitch * 0.5;
-	float halfRoll = roll * 0.5;
-	float cosYaw = std::cos(halfYaw);
-	float sinYaw = std::sin(halfYaw);
-	float cosPitch = std::cos(halfPitch);
-	float sinPitch = std::sin(halfPitch);
-	float cosRoll = std::cos(halfRoll);
-	float sinRoll = std::sin(halfRoll);
+RNQuaternion RNQuaternion::initFromRPY(const double roll, const double pitch, const double yaw){
+	double halfYaw = yaw * 0.5;  
+	double halfPitch = pitch * 0.5;
+	double halfRoll = roll * 0.5;
+	double cosYaw = std::cos(halfYaw);
+	double sinYaw = std::sin(halfYaw);
+	double cosPitch = std::cos(halfPitch);
+	double sinPitch = std::sin(halfPitch);
+	double cosRoll = std::cos(halfRoll);
+	double sinRoll = std::sin(halfRoll);
 	return RNQuaternion(cosRoll * cosPitch * cosYaw + sinRoll * sinPitch * sinYaw,
 						RNVector3(sinRoll * cosPitch * cosYaw - cosRoll * sinPitch * sinYaw,
 								  cosRoll * sinPitch * cosYaw + sinRoll * cosPitch * sinYaw,
 								  cosRoll * cosPitch * sinYaw - sinRoll * sinPitch * cosYaw));
 }
 
-RNQuaternion::RNQuaternion (const float scalar, const float a, const float b,const float c){
+RNQuaternion::RNQuaternion (const double scalar, const double a, const double b,const double c){
 	RNVector3 R (a,b,c);
 	RNQuaternion (scalar,R);
 }
@@ -47,7 +47,7 @@ void RNQuaternion::operator=(const RNQuaternion& v){
 	axis = v.axis;
 }
 
-float RNQuaternion::getScalar() const{
+double RNQuaternion::getScalar() const{
 	return this->scalar;
 }
 
@@ -55,19 +55,19 @@ RNVector3 RNQuaternion::getAxis() const{
 	return this->axis;
 }
 
-float RNQuaternion::getX() const{
+double RNQuaternion::getX() const{
 	return this->axis.getX();
 }
 
-float RNQuaternion::getY() const{
+double RNQuaternion::getY() const{
 	return this->axis.getY();
 }
 
-float RNQuaternion::getZ() const{
+double RNQuaternion::getZ() const{
 	return this->axis.getZ();
 }
 
-void RNQuaternion::setScalar(float scalar){
+void RNQuaternion::setScalar(double scalar){
 	this->scalar = scalar;
 }
 
@@ -79,7 +79,7 @@ RNQuaternion RNQuaternion::operator+(const RNQuaternion& v){
 	return RNQuaternion(this->scalar + v.scalar, this->axis + v.axis);
 }
 
-RNQuaternion RNQuaternion::operator+(const float& v){
+RNQuaternion RNQuaternion::operator+(const double& v){
 	return RNQuaternion(this->scalar + v, this->axis);
 }
 //NC
@@ -94,7 +94,7 @@ RNQuaternion& RNQuaternion::operator+=(const RNQuaternion& v){
 	return *this;
 }
 //No lo hace así, solo suma la parte escalar
-RNQuaternion& RNQuaternion::operator+=(const float& v){
+RNQuaternion& RNQuaternion::operator+=(const double& v){
 	scalar += v;
 	axis += RNVector3();
 	return *this;
@@ -108,7 +108,7 @@ RNQuaternion RNQuaternion::operator-(const RNQuaternion& v){
 	return RNQuaternion(this->scalar - v.scalar, this->axis - v.axis);
 }
 
-RNQuaternion RNQuaternion::operator-(const float& v){
+RNQuaternion RNQuaternion::operator-(const double& v){
 	return RNQuaternion(this->scalar - v, this->axis);
 }
 //NC
@@ -122,7 +122,7 @@ RNQuaternion& RNQuaternion::operator-=(const RNQuaternion& v){
 	return *this;
 }
 //No lo hace así, solo resta la parte escalar
-RNQuaternion& RNQuaternion::operator-=(const float& v){
+RNQuaternion& RNQuaternion::operator-=(const double& v){
 	scalar -= v;
 	axis -= RNVector3();
 	return *this;
@@ -135,7 +135,7 @@ RNQuaternion RNQuaternion::operator*(const RNQuaternion& v){
 	return result;
 }
 
-RNQuaternion RNQuaternion::operator*(const float& v){
+RNQuaternion RNQuaternion::operator*(const double& v){
 	return RNQuaternion(this->scalar * v, this->axis * v);
 }
 //modificado
@@ -148,17 +148,17 @@ RNQuaternion operator*(const RNQuaternion& v1, const RNQuaternion& v2){
 //DIFERENCIA ENTRE LOS DOS OPERATOR*????
 
 
-RNQuaternion& RNQuaternion::operator*=(const float& v){
+RNQuaternion& RNQuaternion::operator*=(const double& v){
 	this->scalar *= v;
 	this->axis *= v;
 	return *this;
 }
 
-RNQuaternion RNQuaternion::operator/(const float& v){
+RNQuaternion RNQuaternion::operator/(const double& v){
 	return *this * (1.0 / v);
 }
 
-RNQuaternion& RNQuaternion::operator/=(const float& v){
+RNQuaternion& RNQuaternion::operator/=(const double& v){
 	return *this *= (1.0 / v);
 }
 //NC
@@ -178,15 +178,15 @@ bool RNQuaternion::isZero(){
 	return (this->scalar == 0.0 and this->axis.isZero());
 }
 
-float RNQuaternion::dot(const RNQuaternion& v) const{
+double RNQuaternion::dot(const RNQuaternion& v) const{
 	return this->scalar * v.scalar + this->axis.dot(v.axis);
 }
 //NC//NC
-float RNQuaternion::length() const{
+double RNQuaternion::length() const{
 	return std::sqrt(length2());
 }
 //NC
-float RNQuaternion::length2() const{
+double RNQuaternion::length2() const{
 	return dot(*this);
 }
 //NC
@@ -202,14 +202,14 @@ RNQuaternion RNQuaternion::conjugate(){
 	return RNQuaternion(this->scalar, -this->axis);
 }
 //NC
-float RNQuaternion::angleBetween(const RNQuaternion& q) const{
-	float s = std::sqrt(length2() * q.length2());
+double RNQuaternion::angleBetween(const RNQuaternion& q) const{
+	double s = std::sqrt(length2() * q.length2());
 	return std::acos(dot(q) / s);
 }
 //NC
-float RNQuaternion::angleShortestPath(const RNQuaternion& q) const{
-	float s = std::sqrt(length2() * q.length2());
-	float result = 0;
+double RNQuaternion::angleShortestPath(const RNQuaternion& q) const{
+	double s = std::sqrt(length2() * q.length2());
+	double result = 0;
 	if(dot(q) < 0){
 		result = std::acos(dot(-q) / s) * 2.0;
 	} else {
@@ -220,12 +220,12 @@ float RNQuaternion::angleShortestPath(const RNQuaternion& q) const{
 //gestionar los 180º
 
 
-RNQuaternion RNQuaternion::slerp(const RNQuaternion& q, const float& t) const{
-	float theta = angleShortestPath(q) / 2.0;
+RNQuaternion RNQuaternion::slerp(const RNQuaternion& q, const double& t) const{
+	double theta = angleShortestPath(q) / 2.0;
 	if(theta != 0.0){
-		float d = 1.0 / std::sin(theta);
-		float s0 = std::sin((1.0 - t) * theta);
-		float s1 = std::sin(t * theta);
+		double d = 1.0 / std::sin(theta);
+		double s0 = std::sin((1.0 - t) * theta);
+		double s1 = std::sin(t * theta);
 		RNQuaternion result;
 
 		//y si sintheta es muy pequeño?? mirar abajo
@@ -258,7 +258,7 @@ RNQuaternion RNQuaternion::slerp(const RNQuaternion& q, const float& t) const{
 
 //interpolacion slerp entre cuaternios más rápida
 /*
-RNQuaternion RNQuaternion::slerpQuat (const RNQuaternion& q, const float& t){
+RNQuaternion RNQuaternion::slerpQuat (const RNQuaternion& q, const double& t){
 	RNQuaternion R;
 	R=this;
 	R.inverse();
@@ -282,7 +282,7 @@ RNQuaternion RNQuaternion::ln(){
 	return RNQuaternion(log2(this->length()), (this->axis.sign() * std::acos(this->scalar / this->length())));
 }
 //NC
-RNQuaternion RNQuaternion::pow(float n){
+RNQuaternion RNQuaternion::pow(double n){
 	return (n * this->ln()).exp();
 }
 //NC
@@ -302,6 +302,6 @@ const char* RNQuaternion::toString() const{
 
 
 //mejor a angulo o a pasos?
-float RNQuaternion::toAngle(){
+double RNQuaternion::toAngle(){
 	return acos(this->scalar)*360/M_PI; //acos(this->scalar)*2*360/(2*PI)
 }

@@ -9,18 +9,18 @@ private:
 	int sectorId;
 	int markerId;
 	std::vector<PointXYZ*>* data;
-	float meanX;
-	float meanY;
-	float meanZ;
+	double meanX;
+	double meanY;
+	double meanZ;
 
-	std::vector<std::pair<std::string, float>* > *extras;
+	std::vector<std::pair<std::string, double>* > *extras;
 public:
 	RNLandmark(){ 
 		data = new std::vector<PointXYZ*>();
-		extras = new std::vector<std::pair<std::string, float>* >();
-		meanX = std::numeric_limits<float>::infinity();
-		meanY = std::numeric_limits<float>::infinity();
-		meanZ = std::numeric_limits<float>::infinity();
+		extras = new std::vector<std::pair<std::string, double>* >();
+		meanX = std::numeric_limits<double>::infinity();
+		meanY = std::numeric_limits<double>::infinity();
+		meanZ = std::numeric_limits<double>::infinity();
 	}
 
 	~RNLandmark() {
@@ -37,25 +37,25 @@ public:
 		delete extras;
 
 	}
-	void addPoint(float x, float y, float z = 0){
-		meanX = std::numeric_limits<float>::infinity();
-		meanY = std::numeric_limits<float>::infinity();
-		meanZ = std::numeric_limits<float>::infinity();
+	void addPoint(double x, double y, double z = 0){
+		meanX = std::numeric_limits<double>::infinity();
+		meanY = std::numeric_limits<double>::infinity();
+		meanZ = std::numeric_limits<double>::infinity();
 		data->push_back(new PointXYZ(x, y, z));
 	}
 
-	void addExtraParameter(std::string name, float value){
+	void addExtraParameter(std::string name, double value){
 		std::string realName = RNUtils::toLowercase(name);
-		std::pair<std::string, float>* tuple = getExtraParameter(realName);
+		std::pair<std::string, double>* tuple = getExtraParameter(realName);
 		if(tuple == NULL){
-			extras->push_back(new std::pair<std::string, float>(realName, value));
+			extras->push_back(new std::pair<std::string, double>(realName, value));
 		} else {
 			tuple->second = value;
 		}
 	}
 
-	std::pair<std::string, float>* getExtraParameter(std::string name){
-		std::pair<std::string, float>* tuple = NULL;
+	std::pair<std::string, double>* getExtraParameter(std::string name){
+		std::pair<std::string, double>* tuple = NULL;
 		bool stop = false;
 		for(int i = 0; i < extras->size() and not stop; i++){
 			if(extras->at(i)->first == name){
@@ -66,7 +66,7 @@ public:
 		return tuple;
 	}
 
-	std::pair<std::string, float>* getExtraParameterAt(int index){
+	std::pair<std::string, double>* getExtraParameterAt(int index){
 		return index > RN_NONE and index < extras->size() ? extras->at(index) : NULL;
 	}
 
@@ -81,35 +81,35 @@ public:
 		}
 	}
 
-	float getPointsXMean(){
-		if(meanX == std::numeric_limits<float>::infinity()){
-			float sum = 0;
+	double getPointsXMean(){
+		if(meanX == std::numeric_limits<double>::infinity()){
+			double sum = 0;
 			for (int i = 0; i < data->size(); i++) {
 	            sum = sum + data->at(i)->getX();
 	        }
-	        meanX = (sum / (float)data->size());
+	        meanX = (sum / (double)data->size());
 	    }
 	    return meanX;
 	}
 
-	float getPointsYMean(){
-		if(meanY == std::numeric_limits<float>::infinity()){
-			float sum = 0;
+	double getPointsYMean(){
+		if(meanY == std::numeric_limits<double>::infinity()){
+			double sum = 0;
 			for (int i = 0; i < data->size(); i++) {
 	            sum = sum + data->at(i)->getY();
 	        }
-	        meanY = (sum / (float)data->size());
+	        meanY = (sum / (double)data->size());
 	    }
 	    return meanY;
 	}
 
-	float getPointsZMean(){
-		if(meanZ == std::numeric_limits<float>::infinity()){
-			float sum = 0;
+	double getPointsZMean(){
+		if(meanZ == std::numeric_limits<double>::infinity()){
+			double sum = 0;
 			for (int i = 0; i < data->size(); i++) {
 	            sum = sum + data->at(i)->getZ();
 	        }
-	        meanZ = (sum / (float)data->size());
+	        meanZ = (sum / (double)data->size());
 	    }
 	    return meanZ;
 	}
@@ -148,15 +148,15 @@ public:
 		return sectorId;
 	}
 
-	void setPointsXMean(float mean){
+	void setPointsXMean(double mean){
 		this->meanX = mean;
 	}
 
-	void setPointsYMean(float mean){
+	void setPointsYMean(double mean){
 		this->meanY = mean;
 	}
 
-	void setPointsZMean(float mean){
+	void setPointsZMean(double mean){
 		this->meanZ = mean;
 	}
 

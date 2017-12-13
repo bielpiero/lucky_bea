@@ -15,11 +15,13 @@ private:
 	void getRawRobotPosition(void);
 	void getBumpersStatus(void);
 	void computePositionFromEncoders(void);
-	void getRawPoseFromOdometry(void);
+	void getRawPoseFromOdometry(ArPose* rawPose);
 	void getSonarsScan(void);
 
 private:
 	bool isFirstFakeEstimation;
+
+	ArPose prevRawPose;
 
 	double prevDistance;
     double prevRads;

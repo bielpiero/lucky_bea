@@ -16,31 +16,31 @@ class Matrix{
 	private:
 		unsigned int rows;
 		unsigned int cols;
-		std::vector<std::vector<float> > data;
+		std::vector<std::vector<double> > data;
 
 	public:
 		Matrix(unsigned int rows = 1, unsigned int cols = 1);
 		virtual ~Matrix();
 		void operator=(const Matrix& rhs);
 		Matrix operator+(const Matrix& rhs);
-		Matrix operator+(const float& rhs);
-		friend Matrix operator+(const float& scalar, Matrix rhs);
+		Matrix operator+(const double& rhs);
+		friend Matrix operator+(const double& scalar, Matrix rhs);
 		
 		Matrix operator-(const Matrix& rhs);
-		Matrix operator-(const float& rhs);
-		friend Matrix operator-(const float& scalar, Matrix rhs);
+		Matrix operator-(const double& rhs);
+		friend Matrix operator-(const double& scalar, Matrix rhs);
 		
 		Matrix operator*(const Matrix& rhs);
-		Matrix operator*(const float& rhs);
-		friend Matrix operator*(const float& scalar, Matrix rhs);
+		Matrix operator*(const double& rhs);
+		friend Matrix operator*(const double& scalar, Matrix rhs);
 
 		friend Matrix  operator !(Matrix m);
 		friend Matrix  operator ~(Matrix m);
 		
 		Matrix operator() (const int row) const;
 		
-		float& operator() (const int row, const int col);
-		const float& operator() (const int row, const int col) const;
+		double& operator() (const int row, const int col);
+		const double& operator() (const int row, const int col) const;
 		
 		Matrix mlDivide(const Matrix& rhs);
 		
@@ -57,7 +57,7 @@ class Matrix{
 		
 		static Matrix eye(int dim);
 		
-		float det();
+		double det();
 		void factorizationLU(Matrix& L, Matrix& U);
 		void svd(Matrix& u, Matrix& s, Matrix& v);
 		

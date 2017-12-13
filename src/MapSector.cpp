@@ -27,7 +27,7 @@ void MapSector::setId(int id){
 	this->id = id; 
 }
 
-float MapSector::getId(){
+int MapSector::getId(){
 	return this->id; 
 }
 
@@ -39,19 +39,19 @@ std::string MapSector::getName(){
 	return this->name; 
 }
 
-void MapSector::setWidth(float width){ 
+void MapSector::setWidth(double width){ 
 	this->width = width; 
 }
 
-float MapSector::getWidth(){ 
+double MapSector::getWidth(){ 
 	return this->width; 
 }
 
-void MapSector::setHeight(float height){ 
+void MapSector::setHeight(double height){ 
 	this->height = height; 
 }
 
-float MapSector::getHeight(){ 
+double MapSector::getHeight(){ 
 	return this->height; 
 }
 
@@ -59,7 +59,7 @@ void MapSector::setIfSitesCyclic(bool sitesCyclic){
 	this->sitesCyclic = sitesCyclic; 
 }
 
-float MapSector::isSitesCyclic(){ 
+double MapSector::isSitesCyclic(){ 
 	return this->sitesCyclic; 
 }
 
@@ -239,7 +239,7 @@ std::string MapSector::getPolygonDefinition(){
 void MapSector::getPolygonFromString(){
 	polygon->clear();
 	std::vector<std::string> values = RNUtils::split((char*)this->polygonDefinition.c_str(), " ");
-	float px = 0, py = 0;
+	double px = 0, py = 0;
 	PointXY mPoint;
 	for(unsigned int idx = 0; idx < values.size(); ){
 
@@ -280,8 +280,8 @@ void MapSector::getPolygonFromString(){
 	}
 }
 
-float MapSector::getAngle(PointXY a, PointXY b){
-	float result = 0;
+double MapSector::getAngle(PointXY a, PointXY b){
+	double result = 0;
 	result = std::atan2(b.getY(), b.getX()) - std::atan2(a.getY(), a.getX());
 	while(result > M_PI){
 		result = result - 2 * M_PI;
@@ -294,7 +294,7 @@ float MapSector::getAngle(PointXY a, PointXY b){
 	return result;
 }
 
-bool MapSector::checkPointXYInPolygon(PointXY g, float &angle){
+bool MapSector::checkPointXYInPolygon(PointXY g, double &angle){
 	PointXY a;
 	PointXY b;
 	bool result = false;

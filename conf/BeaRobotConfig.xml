@@ -6,13 +6,13 @@
 			<th-zone x1="-0.2618" x2="-0.22618" x3="0.22618" x4="0.2618"/> <!-- radians -->
 		</initial-position>
 		<process-noise>
-			<d-zone x1="-25" x2="-23" x3="23" x4="25"/> <!-- centimeters -->
+			<d-zone x1="-35" x2="-30" x3="30" x4="35"/> <!-- centimeters -->
 			<th-zone x1="-0.2" x2="-0.18" x3="0.18" x4="0.2"/> <!-- radians -->
 		</process-noise>
 		<sensors>
 			<sensor type="laser" activated="1">
 				<observation-noise>
-					<d-zone x1="-7" x2="-5" x3="5" x4="7"/>  <!-- centimeters -->
+					<d-zone x1="-20" x2="-15" x3="15" x4="20"/>  <!-- centimeters -->
 					<th-zone x1="-0.04" x2="-0.02" x3="0.02" x4="0.04"/> <!-- radians -->
 				</observation-noise>
 			</sensor>

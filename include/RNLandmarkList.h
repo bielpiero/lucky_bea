@@ -89,7 +89,7 @@ public:
 				print_str << ",";
 			}
 			for(int j = 0; j < landmarks->at(i)->extraParametersSize(); j++){
-				std::pair<std::string, float>* tuple = landmarks->at(i)->getExtraParameterAt(j);
+				std::pair<std::string, double>* tuple = landmarks->at(i)->getExtraParameterAt(j);
 				print_str << "\"" << tuple->first << "\": \"" << tuple->second << "\"";
 				if(j < landmarks->at(i)->extraParametersSize() - 1){
 					print_str << ",";

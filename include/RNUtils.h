@@ -29,6 +29,8 @@
 #include <locale>
 #include <algorithm>
 
+#include "Matrix.h"
+
 #include "Aria.h"
 
 #define RN_DEFAULT_PORT "/dev/ttyS0"
@@ -164,14 +166,14 @@ public:
 
 class LaserScan{
 private:
-	std::vector<float>* ranges;
-	std::vector<float>* intensities;
+	std::vector<double>* ranges;
+	std::vector<double>* intensities;
 	std::vector<LsColor*>* color;
 
 public:
 	LaserScan(){
-		ranges = new std::vector<float>();
-		intensities = new std::vector<float>();
+		ranges = new std::vector<double>();
+		intensities = new std::vector<double>();
 		color = new std::vector<LsColor*>();
 	}
     ~LaserScan(){
@@ -181,8 +183,8 @@ public:
         delete color;
     }
 
-	std::vector<float>* getRanges() { return ranges; }
-	std::vector<float>* getIntensities() { return intensities; }
+	std::vector<double>* getRanges() { return ranges; }
+	std::vector<double>* getIntensities() { return intensities; }
 	std::vector<LsColor*>* getColors() { return color; }
 
 	void clear(){
@@ -195,7 +197,7 @@ public:
         color->clear();
 	}
 
-	void addRange(float range, float intensity = 0) { 
+	void addRange(double range, double intensity = 0) { 
 		ranges->push_back(range); 
 		intensities->push_back(intensity);
 	}
@@ -204,14 +206,14 @@ public:
 		color->push_back(new LsColor(red, green, blue));
 	}
 
-	float getRange(int index) { return ranges->at(index); }
-	float getIntensity(int index) { return intensities->at(index); }
+	double getRange(int index) { return ranges->at(index); }
+	double getIntensity(int index) { return intensities->at(index); }
 	LsColor* getColor(int index) { return color->at(index); }
 
 	int size() { return ranges->size(); }
-	float getAngleMin() { return (-M_PI / 2.0); }
-	float getAngleMax() { return (M_PI / 2.0); }
-	float getIncrement() { return (0.5 * M_PI / 180); }
+	double getAngleMin() { return (-M_PI / 2.0); }
+	double getAngleMax() { return (M_PI / 2.0); }
+	double getIncrement() { return (0.5 * M_PI / 180); }
 };
 
 
@@ -248,9 +250,16 @@ public: // functions
 	static std::string getVirtualScenarioPort();
 	static void getVirtualFaceIpPort(std::string& ip, int& port);
 
-	static float linearInterpolator(const float& x, const PointXY& p1, const PointXY& p2);
-	static float quadraticInterpolator(const float& x, const PointXY& p1, const PointXY& p2, const PointXY& x3);
+	static double linearInterpolator(const double& x, const PointXY& p1, const PointXY& p2);
+	static double quadraticInterpolator(const double& x, const PointXY& p1, const PointXY& p2, const PointXY& x3);
 
+	static void getOdometryPose(const double& xk, const double& yk, const double& thk, const double& deltaDistance, const double& deltaDegrees, double* xk1, double* yk1, double* thk1);
+	static void getOdometryPose(const Matrix& posk, const Matrix& increment, Matrix& posk1);
+	static void getOdometryPose(const Matrix& posk, const double& deltaDistance, const double& deltaDegrees, Matrix& posk1);
+	static void getOdometryPose(const ArPose& posk, const Matrix& increment, ArPose* posk1);
+	static void getOdometryPose(const ArPose& posk, const double& deltaDistance, const double& deltaDegrees, ArPose* posk1);
+	
+	static double distanceTo(const double& x1, const double& y1, const double& x2, const double& y2);
 	static double deg2Rad(double degrees);
 	static double rad2Deg(double rad);
 

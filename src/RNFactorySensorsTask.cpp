@@ -1,7 +1,8 @@
 #include "RNFactorySensorsTask.h"
 
 RNFactorySensorsTask::RNFactorySensorsTask(const RobotNode* rn, const char* name, const char* description) : RNRecurrentTask(rn, name, description){
-	this->isFirstFakeEstimation = true;
+	prevRawPose = ArPose(0.0, 0.0, 0.0);
+    this->isFirstFakeEstimation = true;
 }
 
 RNFactorySensorsTask::~RNFactorySensorsTask(){
@@ -20,13 +21,16 @@ void RNFactorySensorsTask::task(){
 void RNFactorySensorsTask::getRawRobotPosition(){
     computePositionFromEncoders();
     ArPose *myRawPose = new ArPose(rn->getRobot()->getPose());
-    rn->onRawPositionUpdate(myRawPose->getX()/1e3, myRawPose->getY()/1e3, myRawPose->getThRad(), this->deltaDistance, this->deltaDegrees);
+    rn->onRawPositionUpdate(myRawPose->getX()/1.0e3, myRawPose->getY()/1.0e3, myRawPose->getThRad(), this->deltaDistance/1.0e3, this->deltaDegrees);
     delete myRawPose;
     myRawPose = NULL;
 }
 
 void RNFactorySensorsTask::computePositionFromEncoders(void){
+    ArPose *currentRawPose = new ArPose(rn->getRobot()->getPose());
+
     double currentDistance = rn->getRobot()->getOdometerDistance();
+    //double currentDistance = RNUtils::distanceTo(currentRawPose->getX(), currentRawPose->getY(), prevRawPose.getX(), prevRawPose.getY());
     double currentRads = RNUtils::deg2Rad(rn->getRobot()->getOdometerDegrees());
 
     double currentVel = rn->getRobot()->getVel();
@@ -54,32 +58,38 @@ void RNFactorySensorsTask::computePositionFromEncoders(void){
             deltaDegrees *= -1.0;    
         }
     }
-    rn->setIncrementPosition(deltaDistance, deltaDegrees);
+    rn->setIncrementPosition(deltaDistance/1.0e3, deltaDegrees);
+    
+    /*if(deltaDistance != 0.0 and deltaDegrees != 0.0){
+        RNUtils::printLn("delta: {%f, %f}", deltaDistance/1.0e3, deltaDegrees);
+        getRawPoseFromOdometry(currentRawPose);
+    }*/
 
-    getRawPoseFromOdometry();
-    //RNUtils::printLn("pose-Robot: {%f, %f, %f}, pose-Raw: {%f, %f, %f}, delta: {%f, %f}", robot->getPose().getX(), robot->getPose().getY(), robot->getPose().getThRad(), myRawPose->getX(), myRawPose->getY(), myRawPose->getThRad(), deltaDistance, deltaDegrees);
+    prevRawPose.setX(currentRawPose->getX());
+    prevRawPose.setY(currentRawPose->getY());
+    prevRawPose.setTh(currentRawPose->getTh());
+
     prevVel = currentVel;
     prevRotVel = currentRotVel;
     prevDistance = currentDistance;
     prevRads = currentRads;
 
-    rn->getRobot()->resetTripOdometer();
+    delete currentRawPose;
+    currentRawPose = NULL;
+    //rn->getRobot()->resetTripOdometer();
     
 }
 
-void RNFactorySensorsTask::getRawPoseFromOdometry(void){
+void RNFactorySensorsTask::getRawPoseFromOdometry(ArPose* rawPose){
     double x = 0, y = 0, th = 0;
     
-    //th = myRawPose->getThRad() + deltaDegrees;
-    ArPose *myRawPose = new ArPose(rn->getRobot()->getPose());
-    x = myRawPose->getX() + deltaDistance * std::cos(myRawPose->getThRad() + (deltaDegrees / 2.0));
-    y = myRawPose->getY() + deltaDistance * std::sin(myRawPose->getThRad() + (deltaDegrees / 2.0));
-    th = myRawPose->getThRad() + deltaDegrees;
+    x = rawPose->getX() + deltaDistance * std::cos(rawPose->getThRad() + (deltaDegrees / 2.0));
+    y = rawPose->getY() + deltaDistance * std::sin(rawPose->getThRad() + (deltaDegrees / 2.0));
+    th = rawPose->getThRad() + deltaDegrees;
     
-    delete myRawPose;
-    myRawPose = NULL;
+    RNUtils::printLn("Raw{x: %.2lf, y: %.2lf, \u03d1: %.2lf}, P{x: %.2lf, y: %.2lf, \u03d1: %.2lf}", rawPose->getX(), rawPose->getY(), rawPose->getThRad(), x, y, th);
 
-    rn->setPosition(x / 1000.0, y / 1000.0, th);
+    //rn->setPosition(x / 1000.0, y / 1000.0, th);
 
 }
 

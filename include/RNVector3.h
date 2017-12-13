@@ -13,74 +13,74 @@
 
 class RNVector3{
 private:
-	std::vector<float> data;
+	std::vector<double> data;
 
-	float& operator() (const unsigned int pos);
-	const float& operator() (const unsigned int pos) const;
+	double& operator() (const unsigned int pos);
+	const double& operator() (const unsigned int pos) const;
 public:
 	RNVector3();
 	virtual ~RNVector3();
-	RNVector3(const float x, const float y, const float z);
+	RNVector3(const double x, const double y, const double z);
 
 	void operator=(const RNVector3& v);
 
 	RNVector3 operator+(const RNVector3& v);
-	RNVector3 operator+(const float& v);
+	RNVector3 operator+(const double& v);
 	friend RNVector3 operator+(const RNVector3& v1, const RNVector3& v2);
-	friend RNVector3 operator+(const float& scalar, RNVector3 rhs);
+	friend RNVector3 operator+(const double& scalar, RNVector3 rhs);
 
 	RNVector3& operator+=(const RNVector3& v);
-	RNVector3& operator+=(const float& v);
+	RNVector3& operator+=(const double& v);
 
 	RNVector3 operator-() const;
 	RNVector3 operator-(const RNVector3& v);
-	RNVector3 operator-(const float& v);
+	RNVector3 operator-(const double& v);
 	friend RNVector3 operator-(const RNVector3& v1, const RNVector3& v2);
-	friend RNVector3 operator-(const float& scalar, RNVector3 rhs);
+	friend RNVector3 operator-(const double& scalar, RNVector3 rhs);
 
 	RNVector3& operator-=(const RNVector3& v);
-	RNVector3& operator-=(const float& v);
+	RNVector3& operator-=(const double& v);
 
 	RNVector3 operator*(const RNVector3& v);
-	RNVector3 operator*(const float& v);
+	RNVector3 operator*(const double& v);
 	friend RNVector3 operator*(const RNVector3& v1, const RNVector3& v2);
-	friend RNVector3 operator*(const float& scalar, RNVector3 rhs);
+	friend RNVector3 operator*(const double& scalar, RNVector3 rhs);
 
 	RNVector3& operator*=(const RNVector3& v);
-	RNVector3& operator*=(const float& v);
+	RNVector3& operator*=(const double& v);
 
 	RNVector3 operator/(const RNVector3& v);
-	RNVector3 operator/(const float& v);
+	RNVector3 operator/(const double& v);
 	friend RNVector3 operator/(const RNVector3& v1, const RNVector3& v2);
-	friend RNVector3 operator/(const float& scalar, RNVector3 rhs);
+	friend RNVector3 operator/(const double& scalar, RNVector3 rhs);
 
 	RNVector3& operator/=(const RNVector3& v);
-	RNVector3& operator/=(const float& v);
+	RNVector3& operator/=(const double& v);
 
 	bool operator==(const RNVector3& v) const;
 	bool operator!=(const RNVector3& v) const;
 
-	float dot(const RNVector3& v) const;
+	double dot(const RNVector3& v) const;
 
-	float length2() const;
-	float length() const;
+	double length2() const;
+	double length() const;
 
 	RNVector3 norm();
 	RNVector3 absolute() const;
 	RNVector3 sign();
 
-	float angle(const RNVector3& v) const;
+	double angle(const RNVector3& v) const;
 
-	float distance(const RNVector3& v) const;
-	float distance2(const RNVector3& v) const;
+	double distance(const RNVector3& v) const;
+	double distance2(const RNVector3& v) const;
 
-	float getX() const;
-	float getY() const;
-	float getZ() const;
+	double getX() const;
+	double getY() const;
+	double getZ() const;
 
-	void setX(float x);
-	void setY(float y);
-	void setZ(float z);
+	void setX(double x);
+	void setY(double y);
+	void setZ(double z);
 
 	void setZero();
 	bool isZero();

@@ -50,8 +50,8 @@ public:
 	static const double TX_GAIN;
 	static const double FREQUENCY;
 	static const double C;
-	static const float TX_POWER_OFFSET_DBM;
-	static const float TX_POWER_INDEX_MULTIPLIER;
+	static const double TX_POWER_OFFSET_DBM;
+	static const double TX_POWER_INDEX_MULTIPLIER;
 private:
 	unsigned short antennaId;
 	unsigned short txHopTableId;

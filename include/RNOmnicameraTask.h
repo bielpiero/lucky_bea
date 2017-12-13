@@ -100,7 +100,7 @@ private:
 
 private:
 	void drawRectangle(cv::Mat &img, RNMarker marker);
-	float perimeter(const std::vector<cv::Point2f> &a);
+	double perimeter(const std::vector<cv::Point2f> &a);
 	int markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations, RNMarker &marker);
 	int hammingDistance(cv::Mat bits);
 	cv::Mat rotate(cv::Mat input);
@@ -116,8 +116,8 @@ private:
 	
 	static const std::string cameraUrl;
 
-	float minContourLengthAllowed;
-	float maxContourLengthAllowed;
+	double minContourLengthAllowed;
+	double maxContourLengthAllowed;
 	std::vector<cv::Point2f> markerCorners2d;
 	std::vector<cv::Point3f> markerCorners3d;
 	std::vector<std::vector<cv::Point> > contours;
