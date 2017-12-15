@@ -18,8 +18,6 @@
 #include "DorisLipSync.h"
 #include "MapSector.h"
 
-#include "Matrix.h"
-#include "stats.h"
 #include "fl/Headers.h"
 #include "fl/fuzzyStats.h"
 

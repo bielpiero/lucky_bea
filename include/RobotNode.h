@@ -48,12 +48,14 @@ private:
     
     double deltaDistance;
     double deltaDegrees;
-    
-    unsigned int timerSecs;
-    unsigned int securityDistanceWarningTime;
-    unsigned int securityDistanceStopTime;
-    
-    char keepActiveSecurityDistanceTimerThread;
+
+    double prevDistance;
+    double prevRads;
+    double prevVel;
+    double prevRotVel;
+
+    bool isFirstFakeEstimation;
+
     
     RNFactorySensorsTask* sensors;
     RNDistanceTimerTask* distanceTimer;
@@ -125,7 +127,6 @@ public:
 
 private:
     
-    void finishThreads();
     void lockRobot();
     void unlockRobot();
     void securityDistanceChecker();

@@ -2,6 +2,7 @@
 #define STATS_H
 
 #include <iostream>
+#include <cstdarg>
 #include <cmath>
 #include <algorithm>
 #include <limits>
@@ -10,6 +11,9 @@
 
 class stats{
 public:
+	static double max(double a, double b);
+	static double min(double a, double b);
+
 	static double max(std::vector<double> values);
 	static double min(std::vector<double> values);
 	

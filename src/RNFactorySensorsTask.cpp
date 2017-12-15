@@ -19,7 +19,7 @@ void RNFactorySensorsTask::task(){
 }
 
 void RNFactorySensorsTask::getRawRobotPosition(){
-    computePositionFromEncoders();
+    //computePositionFromEncoders();
     ArPose *myRawPose = new ArPose(rn->getRobot()->getPose());
     rn->onRawPositionUpdate(myRawPose->getX()/1.0e3, myRawPose->getY()/1.0e3, myRawPose->getThRad(), this->deltaDistance/1.0e3, this->deltaDegrees);
     delete myRawPose;
@@ -76,6 +76,7 @@ void RNFactorySensorsTask::computePositionFromEncoders(void){
 
     delete currentRawPose;
     currentRawPose = NULL;
+    RNUtils::sleep(20);
     //rn->getRobot()->resetTripOdometer();
     
 }
@@ -133,5 +134,8 @@ void RNFactorySensorsTask::getSonarsScan(void){
 }
 
 void RNFactorySensorsTask::onKilled(){
-	
+	this->isFirstFakeEstimation = true;
+    prevRawPose.setX(0.0);
+    prevRawPose.setY(0.0);
+    prevRawPose.setTh(0.0);
 }

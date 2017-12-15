@@ -1,5 +1,20 @@
 #include "stats.h"
 
+double stats::max(double a, double b){
+	double r = b;
+	if(a > b){
+		r = a;
+	}
+	return r;
+}
+
+double stats::min(double a, double b){
+	double r = b;
+	if(a < b){
+		r = a;
+	}
+	return r;
+}
 
 double stats::max(std::vector<double> values){
 	double max = -std::numeric_limits<double>::infinity();

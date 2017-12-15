@@ -100,7 +100,7 @@ private:
 
 private:
 	void drawRectangle(cv::Mat &img, RNMarker marker);
-	double perimeter(const std::vector<cv::Point2f> &a);
+	float perimeter(const std::vector<cv::Point2f> &a);
 	int markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations, RNMarker &marker);
 	int hammingDistance(cv::Mat bits);
 	cv::Mat rotate(cv::Mat input);

@@ -517,7 +517,7 @@ void RNOmnicameraTask::undistortPoints(cv::InputArray distorted, cv::OutputArray
         // the current camera model is only valid up to 180° FOV
         // for larger FOV the loop below does not converge
         // clip values so we still get plausible results for super fisheye images > 180°
-        theta_d = min(max(-CV_PI/2., theta_d), CV_PI/2.);
+        theta_d = stats::min(stats::max(-CV_PI/2., theta_d), CV_PI/2.);
 
         if (theta_d > 1e-8)
         {

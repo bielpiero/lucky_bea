@@ -55,10 +55,6 @@ RobotNode::RobotNode(const char* port){
 
     this->driftFactorIncrement = 0;
     
-
-    timerSecs = 0;
-    this->securityDistanceWarningTime =  DEFAULT_SECURITY_DISTANCE_WARNING_TIME;
-    this->securityDistanceStopTime = DEFAULT_SECURITY_DISTANCE_STOP_TIME;
     
     sensors = new RNFactorySensorsTask(this);
     sensors->go();
@@ -68,7 +64,7 @@ RobotNode::RobotNode(const char* port){
 
     //robot->requestEncoderPackets();
     //myRawPose = new ArPose(0.0, 0.0, 0.0);
-
+    isFirstFakeEstimation = true;
     gotoPoseAction = new RNActionGoto;
  	robot->addAction(gotoPoseAction, 89);
     
@@ -150,19 +146,6 @@ void RobotNode::disconnect(){
     robot->stopRunning();
     //connector->disconnectAll();
     //finishThreads();    
-}
-
-void RobotNode::finishThreads(){
-    
-    if (keepActiveSecurityDistanceTimerThread == RN_YES) {
-        keepActiveSecurityDistanceTimerThread = MAYBE;
-        while (keepActiveSecurityDistanceTimerThread != RN_NO) {
-            RNUtils::sleep(10);
-        }
-        pthread_cancel(distanceTimerThread);
-    }
-    
-    RNUtils::printLn("Stopped Security Distance Timer Thread");
 }
 
 void RobotNode::getRobotPosition(){
@@ -254,7 +237,11 @@ void RobotNode::setPosition(double x, double y, double theta){
     //pthread_mutex_lock(&mutexRawPositionLocker);
     //myRawPose->setPose(x * 1000, y * 1000, theta * 180 / M_PI);
     //pthread_mutex_unlock(&mutexRawPositionLocker);
+    sensors->kill();
+    isFirstFakeEstimation = true;
+    robot->resetTripOdometer();
     robot->moveTo(ArPose(x * 1000, y * 1000, theta * 180 / M_PI));
+    sensors->reset();
     robot->unlock();
 }
 
@@ -394,9 +381,42 @@ void RobotNode::setIncrementPosition(double deltaDistance, double deltaDegrees){
 
 void RobotNode::getIncrementPosition(double* deltaDistance, double* deltaDegrees){
     if(deltaDistance != NULL and deltaDegrees != NULL){
+        double currentDistance = robot->getOdometerDistance();
+        double currentRads = RNUtils::deg2Rad(robot->getOdometerDegrees());
+
+        double currentVel = robot->getVel();
+        double currentRotVel = robot->getRotVel();
+    
+        //RNUtils::printLn("odometer: {d: %lf, th: %lf}, vel: {lin: %lf, rot: %lf}", currentDistance, currentRads, robot->getVel(), robot->getRotVel());
+
+        if(isFirstFakeEstimation){
+            prevDistance = currentDistance;
+            prevRads = currentRads;
+            prevVel = currentVel;
+            prevRotVel = currentRotVel;
+            isFirstFakeEstimation = false;
+        }
+
+        this->deltaDistance = currentDistance - prevDistance;
+        this->deltaDegrees = currentRads - prevRads;
+
+        if(robot->getVel() < 0){
+            this->deltaDistance *= -1.0;
+        }
+
+        if(currentRotVel < 0){
+            if(this->deltaDegrees > 0){
+                this->deltaDegrees *= -1.0;    
+            }
+        }
+        prevVel = currentVel;
+        prevRotVel = currentRotVel;
+        prevDistance = currentDistance;
+        prevRads = currentRads;
+
         pthread_mutex_lock(&mutexIncrements);
         *deltaDegrees = this->deltaDegrees;
-        *deltaDistance = this->deltaDistance;
+        *deltaDistance = this->deltaDistance/1.0e3;
         pthread_mutex_unlock(&mutexIncrements);
     }
 }
@@ -418,4 +438,5 @@ LaserScan* RobotNode::getLaserScan(){
     pthread_mutex_unlock(&mutexLaser);
     return result;
 }
+
 

@@ -30,7 +30,7 @@
 #include <algorithm>
 
 #include "Matrix.h"
-
+#include "stats.h"
 #include "Aria.h"
 
 #define RN_DEFAULT_PORT "/dev/ttyS0"
