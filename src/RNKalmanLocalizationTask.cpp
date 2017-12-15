@@ -1,9 +1,9 @@
 #include "RNKalmanLocalizationTask.h"
 
-const double RNKalmanLocalizationTask::MAX_LASER_DISTANCE_ERROR = 0.5;
-const double RNKalmanLocalizationTask::MAX_LASER_ANGLE_ERROR = 0.1;
+const double RNKalmanLocalizationTask::MAX_LASER_DISTANCE_ERROR = 0.1;
+const double RNKalmanLocalizationTask::MAX_LASER_ANGLE_ERROR = 0.17;
 const double RNKalmanLocalizationTask::MAX_CAMERA_DISTANCE_ERROR = 0.4;
-const double RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.12;
+const double RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.17;
 
 const double RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.2695;
 const double RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.0109;

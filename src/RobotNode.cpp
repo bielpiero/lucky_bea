@@ -25,6 +25,7 @@ RobotNode::RobotNode(const char* port){
 
     robot->runAsync(true);
     robot->startStabilization();
+    dataLaser = NULL;
     //robot->setCycleTime(1000);
     //robot->setCycleWarningTime(0);
     //robot->setMutexUnlockWarningTime(2000);
@@ -74,12 +75,11 @@ RobotNode::RobotNode(const char* port){
  	//this->keepActiveSecurityDistanceTimerThread = RN_NO;
     //pthread_mutex_init(&mutexRawPositionLocker, NULL);
     pthread_mutex_init(&mutexIncrements, NULL);
+    pthread_mutex_init(&mutexLaser, NULL);
 
     printf("Connection Timeout: %d\n", robot->getConnectionTimeoutTime());
     printf("TicksMM: %d, DriftFactor: %d, RevCount: %d\n", getTicksMM(), getDriftFactor(), getRevCount());
     printf("DiffConvFactor: %f, DistConvFactor: %f, VelocityConvFactor: %f, AngleConvFactor: %f\n", getDiffConvFactor(), getDistConvFactor(), getVelConvFactor(), getAngleConvFactor());
-    
-    //pthread_create(&distanceTimerThread, NULL, securityDistanceTimerThread, (void *)(this)  );
 
 }
 
@@ -101,6 +101,8 @@ RobotNode::~RobotNode(){
     }
     
     pthread_mutex_destroy(&mutexIncrements);
+    RNUtils::printLn("Deleted mutexIncrements...");
+    pthread_mutex_destroy(&mutexLaser);
     RNUtils::printLn("Deleted mutexIncrements...");
     
     RNUtils::printLn("Destroyed RobotNode...");
@@ -399,31 +401,21 @@ void RobotNode::getIncrementPosition(double* deltaDistance, double* deltaDegrees
     }
 }
 
-void* RobotNode::securityDistanceTimerThread(void* object){
-    RobotNode* self = (RobotNode*)object;
-    self->keepActiveSecurityDistanceTimerThread = RN_YES;
-    while(RNUtils::ok() and self->keepActiveSecurityDistanceTimerThread == RN_YES){
-        pthread_testcancel();
-        if(self->wasDeactivated){
-            ArUtil::sleep(987);
-            self->timerSecs++;
-            if(self->timerSecs == self->securityDistanceWarningTime){
-                self->onSecurityDistanceWarningSignal();
-            } else if(self->timerSecs == self->securityDistanceStopTime){
-                self->lockRobot();
-                self->gotoPoseAction->cancelGoal();
-                self->robot->clearDirectMotion();
-                self->unlockRobot();
-                self->wasDeactivated = false;
-                self->doNotMove = false;
-                self->timerSecs = 0;
-                self->onSecurityDistanceStopSignal();
-            }
-        } else{
-            self->timerSecs = 0;
-        }
-        ArUtil::sleep(13);
+void RobotNode::onLaserScanCompleted(LaserScan* data){
+    pthread_mutex_lock(&mutexLaser);
+    if(dataLaser != NULL){
+        delete dataLaser;
+        dataLaser = NULL;
     }
-    self->keepActiveSecurityDistanceTimerThread = RN_NO;
-    return NULL;
+    dataLaser = new LaserScan(*data);
+    pthread_mutex_unlock(&mutexLaser);
 }
+
+LaserScan* RobotNode::getLaserScan(){
+    LaserScan* result;
+    pthread_mutex_lock(&mutexLaser);
+    result = new LaserScan(*dataLaser);
+    pthread_mutex_unlock(&mutexLaser);
+    return result;
+}
+

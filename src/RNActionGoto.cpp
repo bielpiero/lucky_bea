@@ -56,6 +56,11 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	    }
 	    
     	RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
+    	/*if(caso pasillo){
+    		hallwayController->getSystemInput(distanceLocal);
+    	} else {
+    		hallwayController->reset();
+    	}*/
     	/*if(ArMath::fabs(deltaThetaLocal) > this->minimumAngle){
     		//turn to point to goal
 

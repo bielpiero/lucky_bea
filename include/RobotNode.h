@@ -23,12 +23,12 @@ private:
     RNActionGoto *gotoPoseAction;
     ArRobot *robot;
     ArPose *myPose;
+    LaserScan* dataLaser;
 
     ArFunctorC<RobotNode> connectedCB;
     ArFunctorC<RobotNode> connFailCB;
     ArFunctorC<RobotNode> disconnectedCB;
     ArFunctorC<RobotNode> connLostCB;
-    //ArPose *myRawPose;
 
     double maxTransVel;
     double maxAbsoluteTransVel;
@@ -59,8 +59,7 @@ private:
     RNDistanceTimerTask* distanceTimer;
 
     pthread_mutex_t mutexIncrements;
-
-    pthread_t distanceTimerThread;
+    pthread_mutex_t mutexLaser;
 
 public:
 	RobotNode(const char* port);
@@ -93,6 +92,7 @@ public:
 
     void getBatterChargeStatus(void);
     void getBumpersStatus(void);
+    LaserScan* getLaserScan();
 		
     bool getMotorsStatus(void);
     bool getSonarsStatus(void);
@@ -124,7 +124,6 @@ public:
 
 
 private:
-    static void* securityDistanceTimerThread(void* object);
     
     void finishThreads();
     void lockRobot();
@@ -150,6 +149,6 @@ public:
     virtual void onSecurityDistanceWarningSignal() = 0;
     virtual void onSecurityDistanceStopSignal() = 0;
     virtual void onSensorsScanCompleted() = 0;
-    virtual void onLaserScanCompleted(LaserScan* data) = 0;
+    virtual void onLaserScanCompleted(LaserScan* data);
 };
 #endif

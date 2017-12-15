@@ -46,6 +46,8 @@ private:
 	RNPIDController* linearController;
 	RNPIDController* angularController;
 
+	//RNHallwayController* hallwayController;
+
 	double linearSpeed;
 	double angularSpeed;
 	double minimumDistance;
