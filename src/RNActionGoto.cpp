@@ -1,8 +1,8 @@
 #include "RNActionGoto.h"
 
-RNActionGoto::RNActionGoto(const char* name, ArPose goal, double linearSpeed, double angularSpeed, double minimumDistance, double minimumAngle) :
+RNActionGoto::RNActionGoto(RobotNode* rn, const char* name, ArPose goal, double linearSpeed, double angularSpeed, double minimumDistance, double minimumAngle) :
 ArAction(name, "BP Implementation for turning and moving to a point"){
-
+	this->rn = rn;
 	this->actionDistance = SATURATION_DISTANCE_MM;
 	this->actionDegrees = SATURATION_ANGLE_DEG;
 	myDesired = new ArActionDesired;
@@ -27,6 +27,7 @@ ArAction(name, "BP Implementation for turning and moving to a point"){
 
 	linearController = new RNPIDController;
 	angularController = new RNPIDController;
+	hallwayController = new RNHallwayController;
 
 	angularController->setSamplingTime(100);
 	angularController->setProportionalGain(1);
@@ -39,6 +40,7 @@ ArAction(name, "BP Implementation for turning and moving to a point"){
 
 RNActionGoto::~RNActionGoto(){
 	delete myDesired;
+	delete hallwayController;
 	delete linearController;
 	delete angularController;
 }
@@ -47,6 +49,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	if(this->currentState == STATE_GOING_TO_GOAL){
 
 		double deltaThetaLocal, distanceLocal;
+
 		if(this->goal.getTh() != 0.0){
 			distanceLocal = 0.0;
 			deltaThetaLocal = -myRobot->getPose().getTh() + this->goal.getTh();
@@ -56,11 +59,13 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	    }
 	    
     	RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
-    	/*if(caso pasillo){
-    		hallwayController->getSystemInput(distanceLocal);
+
+    	if(this->isHallway){
+    		hallwayController->getSystemInput(rn->getLaserScan(), &linearSpeed, &angularSpeed);
+    		RNUtils::printLn("{lin-vel: %f, rot-vel: %f}", linearSpeed, angularSpeed);
     	} else {
     		hallwayController->reset();
-    	}*/
+    	}
     	/*if(ArMath::fabs(deltaThetaLocal) > this->minimumAngle){
     		//turn to point to goal
 
@@ -120,7 +125,8 @@ void RNActionGoto::cancelGoal(void){
 
 }
 
-void RNActionGoto::setGoal(ArPose goal){
+void RNActionGoto::setGoal(ArPose goal, bool isHallway){
+	this->isHallway = isHallway;
 	this->currentState = STATE_GOING_TO_GOAL;
 	this->previousGoal = this->goal;
 	this->goal = goal;

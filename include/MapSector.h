@@ -2,6 +2,7 @@
 #define MAP_SECTOR_H
 
 #include "RNUtils.h"
+#include "semdefs.h"
 
 struct s_landmark{
 	int id;
@@ -74,6 +75,8 @@ public:
 
 	void setId(int id);
 	int getId();
+
+	bool isHallway(void);
 
 	void setName(std::string name);
 	std::string getName();

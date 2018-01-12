@@ -1,7 +1,7 @@
 #include "RNKalmanLocalizationTask.h"
 
-const double RNKalmanLocalizationTask::MAX_LASER_DISTANCE_ERROR = 0.1;
-const double RNKalmanLocalizationTask::MAX_LASER_ANGLE_ERROR = 0.17;
+const double RNKalmanLocalizationTask::MAX_LASER_DISTANCE_ERROR = 0.05;
+const double RNKalmanLocalizationTask::MAX_LASER_ANGLE_ERROR = 0.07;
 const double RNKalmanLocalizationTask::MAX_CAMERA_DISTANCE_ERROR = 0.4;
 const double RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.17;
 
@@ -171,18 +171,19 @@ void RNKalmanLocalizationTask::task(){
 					}	
 				}
 				
-				RNUtils::printLn("Matched landmark: {idx : %d, MHD: %f}\n", indexFound, minorDistance);
+				RNUtils::printLn("Matched landmark: {idx : %d, MHD: %f}", indexFound, minorDistance);
 				if(indexFound > RN_NONE){
 					zl(2 * indexFound, 0) = lndmrk->getPointsXMean() - zkl(indexFound, 0);
 					zl(2 * indexFound + 1, 0) = lndmrk->getPointsYMean() - zkl(indexFound, 1);
 					
 					double mdDistance = std::abs(zl(2 * indexFound, 0) / std::sqrt(gn->getLaserDistanceVariance()));
 					double mdAngle = std::abs(zl(2 * indexFound + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
-					printf("Mhd: (%d), %lg, %lg, nud: %lg, nua: %lg\n", i, mdDistance, mdAngle, zl(2 * i, 0), zl(2 * i + 1, 0));
+					printf("Mhd: (%d), %lg, %lg, nud: %lg, nua: %lg\n", i, mdDistance, mdAngle, zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
 					if (mdDistance > laserTMDistance and mdAngle > laserTMAngle){
 						//distanceThreshold = (máxima zl que permite un buen matching)/sigma
-						zl(2 * i, 0) = 0.0;
-						zl(2 * i + 1, 0) = 0.0;
+						RNUtils::printLn("landmark %d rejected...", indexFound);
+						zl(2 * indexFound, 0) = 0.0;
+						zl(2 * indexFound + 1, 0) = 0.0;
 					}
 					
 				}

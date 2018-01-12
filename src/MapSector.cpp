@@ -31,6 +31,10 @@ int MapSector::getId(){
 	return this->id; 
 }
 
+bool MapSector::isHallway(void){
+	return RNUtils::toLowercase(this->name).find(std::string(SEMANTIC_HALLWAY_STR)) != std::string::npos;
+}
+
 void MapSector::setName(std::string name){ 
 	this->name = name; 
 }

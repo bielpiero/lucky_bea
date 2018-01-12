@@ -1,7 +1,8 @@
 #ifndef RN_ACTION_GOTO_H
 #define RN_ACTION_GOTO_H
 
-#include "RNUtils.h"
+#include "RobotNode.h"
+#include "RNHallwayController.h"
 #include "RNPIDController.h"
 
 #define SATURATION_DISTANCE_MM 1000
@@ -9,7 +10,7 @@
 
 class RNActionGoto : public ArAction{
 public:
-	RNActionGoto(const char* name = "goto", ArPose goal = ArPose(0.0, 0.0, 0.0), double linearSpeed = 100, double angularSpeed = 10, double minimumDistance = 90, double minimumAngle = 1);
+	RNActionGoto(RobotNode* rn, const char* name = "goto", ArPose goal = ArPose(0.0, 0.0, 0.0), double linearSpeed = 100, double angularSpeed = 10, double minimumDistance = 90, double minimumAngle = 1);
 	virtual ~RNActionGoto();
 
 	virtual ArActionDesired* fire(ArActionDesired current);
@@ -18,7 +19,7 @@ public:
 	bool haveCanceledGoal(void);
 
 	void cancelGoal(void);
-	void setGoal(ArPose goal);
+	void setGoal(ArPose goal, bool isHallway = false);
 	ArPose getGoal(void);
 
 	double getLinearSpeed(void);
@@ -45,8 +46,8 @@ private:
 
 	RNPIDController* linearController;
 	RNPIDController* angularController;
-
-	//RNHallwayController* hallwayController;
+	RobotNode* rn;
+	RNHallwayController* hallwayController;
 
 	double linearSpeed;
 	double angularSpeed;
@@ -56,6 +57,7 @@ private:
 	double actionDegrees;
 	double directionToTurn;
 	ArActionDesired* myDesired;
+	bool isHallway;
 	enum RNState{
 		STATE_NO_GOAL,
 		STATE_ACHIEVED_GOAL,

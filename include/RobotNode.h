@@ -2,7 +2,6 @@
 #define ROBOT_NODE_H
 
 #include "RNUtils.h"
-#include "RNActionGoto.h"
 
 #define FULL_ENCODER_TICKS 32768
 #define WHEEL_DIAMETER_MM 194
@@ -15,6 +14,8 @@
 
 class RNFactorySensorsTask;
 class RNDistanceTimerTask;
+
+class RNActionGoto;
 
 class RobotNode{
 private:
@@ -87,7 +88,7 @@ public:
     void deactivateGoal(void);
     void cancelGoal();
     
-    void gotoPosition(double x, double y, double theta, double transSpeed = 200, double rotSpeed = 4.75);
+    void gotoPosition(double x, double y, double theta, bool isHallway = false, double transSpeed = 200, double rotSpeed = 4.75);
 	void move(double distance, double speed = 200);
     void moveAtSpeed(double linearVelocity, double angularVelocity);
     void stopRobot(void);

@@ -206,11 +206,11 @@ public:
 		color->push_back(new LsColor(red, green, blue));
 	}
 
-	double getRange(int index) { return ranges->at(index); }
+	double getRange(int index) const { return ranges->at(index); }
 	double getIntensity(int index) { return intensities->at(index); }
 	LsColor* getColor(int index) { return color->at(index); }
 
-	int size() { return ranges->size(); }
+	int size() const { return ranges->size(); }
 	double getAngleMin() { return (-M_PI / 2.0); }
 	double getAngleMax() { return (M_PI / 2.0); }
 	double getIncrement() { return (0.5 * M_PI / 180); }

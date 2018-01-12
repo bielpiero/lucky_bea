@@ -347,7 +347,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 
 			if(granted){
 				if(currentSector != NULL){
-					startSitesTour();
+					//startSitesTour();
 				} else {
 					RNUtils::printLn("Command 0x11. No current sector available to start tour to ", getClientIPAddress(socketIndex));
 					sendMsg(socketIndex, 0x11, (char*)jsonSectorNotLoadedError.c_str(), (unsigned int)jsonSectorNotLoadedError.length());
@@ -2343,7 +2343,8 @@ void GeneralController::setRobotPosition(Matrix Xk){
 }
 
 void GeneralController::moveRobotToPosition(double x, double y, double theta){
-	this->gotoPosition(x, y, theta);
+	//this->gotoPosition(x, y, theta);
+	this->gotoPosition(x, y, theta, (currentSector != NULL ? currentSector->isHallway() : false));
 }
 
 void GeneralController::onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear){

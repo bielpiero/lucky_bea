@@ -11,8 +11,6 @@
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
 
-#include "semdefs.h"
-
 #include "RNVirtualFace.h"
 #include "RobotDataStreamer.h"
 #include "DorisLipSync.h"

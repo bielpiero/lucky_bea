@@ -18,11 +18,11 @@ void RNRecurrentTask::setController(RobotNode* rn){
 }
 
 void RNRecurrentTask::go(){
-    //lock();
+    lock();
     goRequested = true;
     running = true;
     killed = false;
-    //unlock();
+    unlock();
 }
 
 int RNRecurrentTask::done(){
@@ -47,18 +47,20 @@ void RNRecurrentTask::reset(){
 }
 
 void RNRecurrentTask::kill(){
-    if(running){
-        RNUtils::printLn("Thread %s will be killed...", this->getTaskName().c_str());
-        //lock();
-        goRequested = false;
-        running = false;
-        killed = true;
-        //unlock();
-        stop();
-        waitUtilTaskFinished();
-        cancel();
-        onKilled();
-    }
+    //if(isRunning){
+        
+        if(isThreadRunning()){
+            RNUtils::printLn("Thread %s will be killed...", this->getTaskName().c_str());
+            lock();
+            goRequested = false;
+            running = false;
+            killed = true;
+            unlock();
+            cancel();
+            onKilled();
+        }
+        
+    //}
 }
 
 void RNRecurrentTask::waitUtilTaskFinished(){
@@ -72,22 +74,24 @@ void* RNRecurrentTask::runThread(void* object){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
     while(RNUtils::ok() and isRunning){
-        while(not goRequested){
-            RNUtils::sleep(10);
-        }
         testCancel(); 
+        bool doit;
         lock();
-        running = true;
+        doit = goRequested;
         unlock();
-        task();
-        lock();
-        running = false;
-        unlock();
+        if(doit){
+            lock();
+            running = true;
+            unlock();
+            task();
+            lock();
+            running = false;
+            unlock();
+        }
         RNUtils::sleep(20);
     }
-    RNUtils::printLn("%s threadFinished...", this->name.c_str());
     threadFinished();
-
+    stop();
     return NULL;
 }
 

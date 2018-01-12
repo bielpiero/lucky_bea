@@ -1,4 +1,5 @@
 #include "RobotNode.h"
+#include "RNActionGoto.h"
 #include "RNLaserTask.h"
 #include "RNFactorySensorsTask.h"
 #include "RNDistanceTimerTask.h"
@@ -27,7 +28,7 @@ RobotNode::RobotNode(const char* port){
     robot->startStabilization();
     dataLaser = NULL;
     //robot->setCycleTime(1000);
-    //robot->setCycleWarningTime(0);
+    robot->setCycleWarningTime(0);
     //robot->setMutexUnlockWarningTime(2000);
     //robot->setNoTimeWarningThisCycle(true);
 
@@ -65,7 +66,7 @@ RobotNode::RobotNode(const char* port){
     //robot->requestEncoderPackets();
     //myRawPose = new ArPose(0.0, 0.0, 0.0);
     isFirstFakeEstimation = true;
-    gotoPoseAction = new RNActionGoto;
+    gotoPoseAction = new RNActionGoto(this);
  	robot->addAction(gotoPoseAction, 89);
     
  	//this->keepActiveSecurityDistanceTimerThread = RN_NO;
@@ -211,7 +212,7 @@ void RobotNode::moveAtSpeed(double linearVelocity, double angularVelocity){
     this->unlockRobot();
 }
 
-void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed, double rotSpeed){
+void RobotNode::gotoPosition(double x, double y, double theta, bool isHallway, double transSpeed, double rotSpeed){
     ArPose newPose(x * 1000, y * 1000);
     newPose.setThRad(theta);
 
@@ -225,7 +226,7 @@ void RobotNode::gotoPosition(double x, double y, double theta, double transSpeed
         gotoPoseAction->activate();
     }
     RNUtils::printLn("Going to: {x: %f, y: %f, \u03d1: %f}", x, y, theta);
-    gotoPoseAction->setGoal(newPose);
+    gotoPoseAction->setGoal(newPose, isHallway);
         
     this->unlockRobot();
     ArUtil::sleep(100);
