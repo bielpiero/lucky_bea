@@ -68,7 +68,7 @@ int RNThread::create(RNFunPointer* func, bool joinable, bool lowerPriority){
 			RNUtils::printLn("Created thread %s with Id %llu", this->threadName.c_str(), this->thread);
 		} 	
 	}
- 	
+ 	return result;
 }
 
 RNThread::~RNThread(){

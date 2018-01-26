@@ -24,7 +24,8 @@ private:
     RNActionGoto *gotoPoseAction;
     ArRobot *robot;
     ArPose *myPose;
-    LaserScan* dataLaser;
+    ArPose *altPose;
+    LaserScan dataLaser;
 
     ArFunctorC<RobotNode> connectedCB;
     ArFunctorC<RobotNode> connFailCB;
@@ -56,12 +57,14 @@ private:
     double prevRotVel;
 
     bool isFirstFakeEstimation;
+    bool laserReady;
 
     
     RNFactorySensorsTask* sensors;
     RNDistanceTimerTask* distanceTimer;
 
     pthread_mutex_t mutexIncrements;
+    pthread_mutex_t mutexAltPose;
     pthread_mutex_t mutexLaser;
 
 public:
@@ -96,11 +99,12 @@ public:
     void getBatterChargeStatus(void);
     void getBumpersStatus(void);
     LaserScan* getLaserScan();
+    bool isLaserReady();
+    void setLaserReady(bool ready);
 		
     bool getMotorsStatus(void);
     bool getSonarsStatus(void);
 	void getRobotPosition(void);
-	void getRawRobotPosition(void);
 	    
     void setMotorsStatus(bool enabled);
     void setPosition(double x, double y, double theta);
@@ -113,13 +117,10 @@ public:
 	int getRevCount();
 	int getTicksMM();
 	double getEncoderScaleFactor();
-	
 
-	double getEncoderX();
-	double getEncoderY();
-	double getEncoderTh();
-
-
+    ArPose* getAltPose();
+    void setAltPose(ArPose pose);
+    
 	double getDiffConvFactor();
 	double getDistConvFactor();
 	double getVelConvFactor();

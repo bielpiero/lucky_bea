@@ -12,7 +12,7 @@ RNDistanceTimerTask::~RNDistanceTimerTask(){
 }
 
 void RNDistanceTimerTask::task(){
-	if(rn->isGoalActive()){
+	if(rn != NULL and rn->isGoalActive()){
 		timerSecs++;
 		RNUtils::sleep(987);
         if(this->timerSecs == this->SECURITY_DISTANCE_WARNING_TIME){

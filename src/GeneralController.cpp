@@ -2893,6 +2893,7 @@ double GeneralController::getRobotHeight(){
 }
 
 void GeneralController::onLaserScanCompleted(LaserScan* data){
+	RobotNode::onLaserScanCompleted(data);
 	std::ostringstream buffer_str;
 	buffer_str.clear();
 	buffer_str << "$LASER|";

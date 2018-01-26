@@ -31,10 +31,12 @@ RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name
 	camMatrix = cv::Mat(3, 3, CV_32F);
 	camMatrix.at<float>(0, 0) = 3.3148337972624245e+02;
 	camMatrix.at<float>(0, 1) = 0;
-	camMatrix.at<float>(0, 2) = 6.5050896530720797e+02;
+	camMatrix.at<float>(0, 2) = 6.546903437322123e+02;
+	//camMatrix.at<float>(0, 2) = 6.5050896530720797e+02;
 	camMatrix.at<float>(1, 0) = 0.0;
 	camMatrix.at<float>(1, 1) = 3.3296507853901846e+02;
-	camMatrix.at<float>(1, 2) = 4.9324794942591592e+02;
+	camMatrix.at<float>(1, 2) = 4.845906577833345e+02;
+	//camMatrix.at<float>(1, 2) = 4.9324794942591592e+02;
 	camMatrix.at<float>(2, 0) = 0.0;
 	camMatrix.at<float>(2, 1) = 0.0;
 	camMatrix.at<float>(2, 2) = 1.0;

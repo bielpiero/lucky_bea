@@ -49,26 +49,37 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	if(this->currentState == STATE_GOING_TO_GOAL){
 
 		double deltaThetaLocal, distanceLocal;
-
+		ArPose* currPose = rn->getAltPose();
+		//RNUtils::printLn("{currpose: {x: %f, y: %f, th: %f}}", currPose.getX(), currPose.getY(), currPose.getThRad());
+		//RNUtils::printLn("{goal: {x: %f, y: %f, th: %f}}", goal.getX(), goal.getY(), goal.getThRad());
 		if(this->goal.getTh() != 0.0){
 			distanceLocal = 0.0;
-			deltaThetaLocal = -myRobot->getPose().getTh() + this->goal.getTh();
+			deltaThetaLocal = -currPose->getTh() + this->goal.getTh();
 		} else {
-			distanceLocal = myRobot->getPose().findDistanceTo(this->goal);
-	    	deltaThetaLocal = myRobot->findDeltaHeadingTo(this->goal);
+			distanceLocal = currPose->findDistanceTo(this->goal);
+	    	deltaThetaLocal = ArMath::subAngle(currPose->findAngleTo(this->goal), currPose->getTh());
 	    }
-	    
-    	RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
+    	//RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
+    	delete currPose;
+		if(rn->isLaserReady() and (deltaThetaLocal > minimumAngle or distanceLocal > minimumDistance)){
+			LaserScan* laserData = rn->getLaserScan();
+			RNUtils::printLn("Laser size: %d", laserData->size());
+			hallwayController->getSystemInput(laserData, &linearSpeed, &angularSpeed);
+			RNUtils::printLn("{lin-vel: %f, rot-vel: %f}", linearSpeed, angularSpeed*180/M_PI);
+			myDesired->setRotVel(angularSpeed*180/M_PI);
+    		myDesired->setVel(linearSpeed);
+		} else {
+			myDesired->setVel(0);
+    		myDesired->setRotVel(0);
+    		angularController->reset();
+    		linearController->reset();
+    		currentState = STATE_ACHIEVED_GOAL;
+		}
 
-    	if(this->isHallway){
-    		hallwayController->getSystemInput(rn->getLaserScan(), &linearSpeed, &angularSpeed);
-    		RNUtils::printLn("{lin-vel: %f, rot-vel: %f}", linearSpeed, angularSpeed);
-    	} else {
-    		hallwayController->reset();
-    	}
-    	/*if(ArMath::fabs(deltaThetaLocal) > this->minimumAngle){
+    	/*if(std::abs(deltaThetaLocal) > this->minimumAngle){
     		//turn to point to goal
-
+    		myDesired->setVel(0);
+    		linearController->reset();
     		double angVel = angularController->getSystemInput(deltaThetaLocal);
     		if(angVel >= angularSpeed){
     			angVel = -angularSpeed;
@@ -78,22 +89,21 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     			angVel *= -1;
     		}
     		//printf("{angVel after correction: %f}\n", angVel);
+
     		myDesired->setRotVel(angVel);
     		
-    	} else*/ if(distanceLocal > minimumDistance /*and ArMath::fabs(linearController->getLastInput()) >= 0.5*/){
+    	} else if(distanceLocal > minimumDistance){
     		myDesired->setRotVel(0);
-    		//double linVel = linearController->getSystemInput(distanceLocal);
-    		double linVel = 0.0;
+    		angularController->reset();
+    		double linVel = linearController->getSystemInput(distanceLocal);
     		
-    		linVel = this->linearSpeed;
-    		
-    		/*if(linVel >= linearSpeed){
+    		if(linVel >= linearSpeed){
     			linVel = -linearSpeed;
     		} else if(linVel <= -linearSpeed){
     			linVel = linearSpeed;
     		} else {
     			linVel *= -1;
-    		}*/
+    		}
     		//printf("{linVel after correction: %f}\n", linVel);
     		myDesired->setVel(linVel);
     	} else {
@@ -101,8 +111,9 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     		myDesired->setRotVel(0);
     		angularController->reset();
     		linearController->reset();
+    		RNUtils::printLn("Doris Stopped by this condition of goal achieved...");
     		currentState = STATE_ACHIEVED_GOAL;
-    	}
+    	}*/
     } else {
     	return NULL;
     }
@@ -127,9 +138,9 @@ void RNActionGoto::cancelGoal(void){
 
 void RNActionGoto::setGoal(ArPose goal, bool isHallway){
 	this->isHallway = isHallway;
-	this->currentState = STATE_GOING_TO_GOAL;
 	this->previousGoal = this->goal;
 	this->goal = goal;
+	this->currentState = STATE_GOING_TO_GOAL;
 }
 
 double RNActionGoto::getLinearSpeed(void){

@@ -26,7 +26,8 @@ RobotNode::RobotNode(const char* port){
 
     robot->runAsync(true);
     robot->startStabilization();
-    dataLaser = NULL;
+    //dataLaser = NULL;
+    laserReady = false;
     //robot->setCycleTime(1000);
     robot->setCycleWarningTime(0);
     //robot->setMutexUnlockWarningTime(2000);
@@ -55,22 +56,18 @@ RobotNode::RobotNode(const char* port){
     doNotMove = false;
 
     this->driftFactorIncrement = 0;
-    
+
+    isFirstFakeEstimation = true;
+    altPose = NULL;
+    gotoPoseAction = new RNActionGoto(this);
+    robot->addAction(gotoPoseAction, 89);
     
     sensors = new RNFactorySensorsTask(this);
     sensors->go();
 
-    distanceTimer = new RNDistanceTimerTask(this);
-    distanceTimer->go();
+    //distanceTimer = new RNDistanceTimerTask(this);
+    //distanceTimer->go();
 
-    //robot->requestEncoderPackets();
-    //myRawPose = new ArPose(0.0, 0.0, 0.0);
-    isFirstFakeEstimation = true;
-    gotoPoseAction = new RNActionGoto(this);
- 	robot->addAction(gotoPoseAction, 89);
-    
- 	//this->keepActiveSecurityDistanceTimerThread = RN_NO;
-    //pthread_mutex_init(&mutexRawPositionLocker, NULL);
     pthread_mutex_init(&mutexIncrements, NULL);
     pthread_mutex_init(&mutexLaser, NULL);
 
@@ -84,8 +81,10 @@ RobotNode::~RobotNode(){
     sensors->kill();
     delete sensors;
 
-    distanceTimer->kill();
-    delete distanceTimer;
+    if(distanceTimer){
+        distanceTimer->kill();
+        delete distanceTimer;
+    }
 
     if(connector){
         delete connector;
@@ -107,6 +106,14 @@ RobotNode::~RobotNode(){
 
 const char* RobotNode::getClassName() const{
     return "RobotNode";
+}
+
+bool RobotNode::isLaserReady(){
+    return laserReady;
+}
+
+void RobotNode::setLaserReady(bool ready){
+    laserReady = ready;
 }
 
 // called if the connection was sucessfully made
@@ -328,6 +335,28 @@ void RobotNode::unlockRobot(){
     }
 }
 
+ArPose* RobotNode::getAltPose(){
+    pthread_mutex_lock(&mutexAltPose);
+    ArPose* r = NULL;
+    if(altPose != NULL){
+        r = new ArPose(*altPose);
+    } else{ 
+        r = new ArPose(0.0, 0.0, 0.0);
+    }
+    pthread_mutex_unlock(&mutexAltPose);
+    return r;
+}
+
+void RobotNode::setAltPose(ArPose pose){
+    pthread_mutex_lock(&mutexAltPose);
+    if(altPose != NULL){
+        delete altPose;
+        altPose = NULL;
+    }
+    altPose = new ArPose(pose.getX()*1000, pose.getY()*1000, pose.getTh());
+    pthread_mutex_unlock(&mutexAltPose);
+}
+
 int RobotNode::getDriftFactor(){
     return robot->getOrigRobotConfig()->getDriftFactor();
 }
@@ -354,22 +383,6 @@ double RobotNode::getVelConvFactor(){
 
 double RobotNode::getAngleConvFactor(){
     return robot->getRobotParams()->getAngleConvFactor();
-}
-
-double RobotNode::getEncoderX(){
-    return robot->getEncoderX();
-}
-
-double RobotNode::getEncoderY(){
-    return robot->getEncoderY();
-}
-
-double RobotNode::getEncoderTh(){
-    return robot->getEncoderTh();
-}
-
-double RobotNode::getEncoderScaleFactor(){
-    return (((double)WHEEL_DIAMETER_MM) * M_PI / (double)getRevCount());
 }
 
 
@@ -424,18 +437,22 @@ void RobotNode::getIncrementPosition(double* deltaDistance, double* deltaDegrees
 
 void RobotNode::onLaserScanCompleted(LaserScan* data){
     pthread_mutex_lock(&mutexLaser);
-    if(dataLaser != NULL){
+    /*if(dataLaser != NULL){
         delete dataLaser;
         dataLaser = NULL;
+    }*/
+    if(data != NULL){
+        dataLaser = *data;
     }
-    dataLaser = new LaserScan(*data);
     pthread_mutex_unlock(&mutexLaser);
 }
 
 LaserScan* RobotNode::getLaserScan(){
-    LaserScan* result;
+    LaserScan* result = NULL;
     pthread_mutex_lock(&mutexLaser);
-    result = new LaserScan(*dataLaser);
+    //if(dataLaser != NULL){
+        result = new LaserScan(dataLaser);
+    //}
     pthread_mutex_unlock(&mutexLaser);
     return result;
 }

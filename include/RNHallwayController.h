@@ -4,6 +4,8 @@
 #include "RNUtils.h"
 #include "Headers.h"
 
+#define NUMBER_FUZZY_INPUTS_FILTER 300
+
 class RNHallwayController{
 public:
 	RNHallwayController(const char* name = "Doris Hallway Controller");
@@ -40,6 +42,9 @@ private:
 
 	bool firstIteration;
 
+	bool isCheckingLeft;
+	bool isCheckingRight;
+
 	double setPoint;
 
 	double samplingTime;
@@ -51,6 +56,23 @@ private:
 	std::vector<double>* hallwayLeftInput;
 	std::vector<double>* hallwayFrontInput;
 	std::vector<double>* hallwayRightInput;
+
+	double* lastInputsLSector;
+	double* lastInputsFSector;
+	double* lastInputsRSector;
+
+	double* lastInputsLeftDoorCheck;
+	double* lastInputsRightDoorCheck;
+
+	double* linearVelocityCheck;
+	double* angularVelocityCheck;
+
+	double hallwayLeftFuzzyInput;
+	double hallwayFrontFuzzyInput;
+	double hallwayRightFuzzyInput;
+
+	int counterLeftDoorCheckIterations;
+	int counterRightDoorCheckIterations;
 };
 
 #endif

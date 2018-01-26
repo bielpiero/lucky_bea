@@ -6,6 +6,7 @@ const double RNLaserTask::LANDMARK_RADIUS = 0.045;
 
 RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
 	this->gn = gn;
+	rn->setLaserReady(false);
 	laserConnector = new ArLaserConnector(rn->getArgumentParser(), rn->getRobot(), rn->getRobotConnector());
 	if(!laserConnector->connectLasers(false, true, false)){
 		printf("Could not connect to configured lasers.\n");
@@ -16,12 +17,14 @@ RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* de
 		printf("Error. Not Connected to any laser.\n");
 	} else {
 		printf("Connected to SICK LMS200 laser.\n");
+		rn->setLaserReady(true);
 	}
 	laserDataScan = NULL;
 	laserLandmarks = NULL;
 
 	//pthread_mutex_init(&mutexSensorsReadingsLocker, NULL);
 }
+
 
 RNLaserTask::~RNLaserTask(){
 	//delete laser;

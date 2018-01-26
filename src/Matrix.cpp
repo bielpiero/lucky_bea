@@ -195,7 +195,7 @@ Matrix Matrix::pInv(){
 }
 
 Matrix Matrix::eig(){
-	
+	return Matrix();
 }
 
 Matrix Matrix::sort(int mode){

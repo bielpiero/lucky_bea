@@ -11,11 +11,17 @@ RNFactorySensorsTask::~RNFactorySensorsTask(){
 
 void RNFactorySensorsTask::task(){
 	getRawRobotPosition();
-    rn->getBatterChargeStatus();
+    if(rn){
+        rn->getBatterChargeStatus();
+    }
     getBumpersStatus();
-    rn->getRobotPosition();
+    if(rn){
+        rn->getRobotPosition();
+    }
     getSonarsScan();
-    rn->onSensorsScanCompleted();
+    if(rn){
+        rn->onSensorsScanCompleted();
+    }
 }
 
 void RNFactorySensorsTask::getRawRobotPosition(){
