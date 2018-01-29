@@ -30,29 +30,24 @@ RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name
 	markerCorners3d.push_back(cv::Point3f(.5f, .5f, 0));
 
 	camMatrix = cv::Mat(3, 3, CV_32F);
-	//camMatrix.at<float>(0, 0) = 8.5101024687735935e+02;
-	camMatrix.at<float>(0, 0) = 3.3148337972624245e+02;
+	camMatrix.at<float>(0, 0) = 6.770749405106462e+02;
 	camMatrix.at<float>(0, 1) = 0;
-	camMatrix.at<float>(0, 2) = 6.546903437322123e+02;
-	//camMatrix.at<float>(0, 2) = 6.5050896530720797e+02;
+	camMatrix.at<float>(0, 2) = 6.519413209218039e+02;
 	camMatrix.at<float>(1, 0) = 0.0;
-	//camMatrix.at<float>(1, 1) = 8.5170243585411265e+02;
-	camMatrix.at<float>(1, 1) = 3.3296507853901846e+02;
-	camMatrix.at<float>(1, 2) = 4.845906577833345e+02;
-	//camMatrix.at<float>(1, 2) = 4.9324794942591592e+02;
+	camMatrix.at<float>(1, 1) = 6.796232319523746e+02;
+	camMatrix.at<float>(1, 2) = 4.900742597987814e+02;
 	camMatrix.at<float>(2, 0) = 0.0;
 	camMatrix.at<float>(2, 1) = 0.0;
 	camMatrix.at<float>(2, 2) = 1.0;
 
 	distCoeff = cv::Mat(4, 1, CV_32F);
-	distCoeff.at<float>(0, 0) = -4.2648301140911193e-01;
-    distCoeff.at<float>(1, 0) = 3.1105618959437248e-01;
-    distCoeff.at<float>(2, 0) = -1.3775384616268102e-02;
-    distCoeff.at<float>(3, 0) = -1.9560559208606078e-03;
-	/*distCoeff.at<float>(0, 0) = -5.0278669230113635e-02;
-  	distCoeff.at<float>(1, 0) = 2.7927571053875219e-02;
-  	distCoeff.at<float>(2, 0) = -9.7303697830329119e-03;
-  	distCoeff.at<float>(3, 0) = 0;*/
+	distCoeff.at<float>(0, 0) = -0.370852944821681;
+    distCoeff.at<float>(1, 0) = 0.760515587312566;
+    distCoeff.at<float>(2, 0) = 0.002165611668123;
+    distCoeff.at<float>(3, 0) = 0.003965311736544;
+
+    xi = cv::Mat(1, 1, CV_32F);
+    distCoeff.at<float>(0, 0) = 1.277926516360664;
 
 	landmarks = NULL;
 
@@ -251,7 +246,8 @@ void RNOmnicameraTask::poseEstimation(){
 
 		cv::Point tikiPoint = imageCenter - markerCenter;
 		distortedPoint.push_back(cv::Point2f(marker.getRotatedRect().center.x, marker.getRotatedRect().center.y));
-		undistortPoints(distortedPoint, undistortedPoint, camMatrix, distCoeff, cv::Mat::eye(3, 3, CV_32F), camMatrix);
+
+		undistortPoints(distortedPoint, undistortedPoint, camMatrix, distCoeff, xi, cv::Mat::eye(3, 3, CV_32F));
 
 		float distanceToCenter = 0;
 		float theta = 0;

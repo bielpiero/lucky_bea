@@ -126,6 +126,7 @@ private:
 	cv::Size markerSize;
 	cv::Mat canonicalMarkerImage;
 	cv::Mat camMatrix;
+	cv::Mat xi;
 	cv::Mat distCoeff;
 	cv::Mat tiki;
 	cv::Mat edges;
