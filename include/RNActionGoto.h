@@ -10,7 +10,7 @@
 
 class RNActionGoto : public ArAction{
 public:
-	RNActionGoto(RobotNode* rn, const char* name = "goto", ArPose goal = ArPose(0.0, 0.0, 0.0), double linearSpeed = 100, double angularSpeed = 10, double minimumDistance = 90, double minimumAngle = 1);
+	RNActionGoto(RobotNode* rn, const char* name = "goto", ArPose goal = ArPose(0.0, 0.0, 0.0), double linearSpeed = 50, double angularSpeed = 5, double minimumDistance = 90, double minimumAngle = 1);
 	virtual ~RNActionGoto();
 
 	virtual ArActionDesired* fire(ArActionDesired current);

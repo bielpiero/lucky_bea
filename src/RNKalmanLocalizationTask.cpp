@@ -3,14 +3,14 @@
 const double RNKalmanLocalizationTask::MAX_LASER_DISTANCE_ERROR = 0.05;
 const double RNKalmanLocalizationTask::MAX_LASER_ANGLE_ERROR = 0.07;
 const double RNKalmanLocalizationTask::MAX_CAMERA_DISTANCE_ERROR = 0.2;
-const double RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.07;
+const double RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.1;
 
 const double RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.2695;
 const double RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.0109;
 
 RNKalmanLocalizationTask::RNKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description){
 	enableLocalization = false;
-	test = std::fopen("solo_laser2.txt","w+");
+	test = std::fopen("solo_camera.txt","w+");
 }
 
 RNKalmanLocalizationTask::~RNKalmanLocalizationTask(){
@@ -207,7 +207,7 @@ void RNKalmanLocalizationTask::task(){
 				int mapId = lndmrk->getMapId();
 				int sectorId = lndmrk->getSectorId();
 				int markerId = lndmrk->getMarkerId();
-				std::pair<std::string, double>* extraParameter = lndmrk->getExtraParameter(OPTICAL_THETA_STR);
+				//std::pair<std::string, double>* extraParameter = lndmrk->getExtraParameter(OPTICAL_THETA_STR);
 				bool validQR = true;		
 
 				if (mapId > RN_NONE && sectorId > RN_NONE && markerId > RN_NONE){
@@ -228,18 +228,20 @@ void RNKalmanLocalizationTask::task(){
 				if (validQR){
 					for (int j = cameraIndex; j < (cameraIndex + cameraLandmarksCount); j++){
 						if(markerId == ((int)zkl(j, 3))){
-							double distanceFixed = (zkl(j, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second);
+							//double distanceFixed = (zkl(j, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second);
+							double distanceFixed = lndmrk->getPointsXMean();
 							double angleFixed = lndmrk->getPointsYMean();
 							
-							double xr = CAMERA_ERROR_POSITION_X + distanceFixed * std::cos(angleFixed);
-							double yr = CAMERA_ERROR_POSITION_Y + distanceFixed * std::sin(angleFixed);
+							double xr = CAMERA_ERROR_POSITION_X /*+ distanceFixed * std::cos(angleFixed)*/;
+							double yr = CAMERA_ERROR_POSITION_Y /*+ distanceFixed * std::sin(angleFixed)*/;
 							distanceFixed = std::sqrt(std::pow(xr, 2.0) + std::pow(yr, 2.0));
-							angleFixed = std::atan2(yr, xr);
+							angleFixed = angleFixed - std::atan(yr/xr);
 				
-							zl(2 * j, 0) = distanceFixed - zkl(j, 0);
-							if(distanceFixed > 1.0){
+							//zl(2 * j, 0) = distanceFixed - zkl(j, 0);
+							zl(2 * j, 0) = 0.0;
+							/*if(distanceFixed > 1.0){
 								currentR(2 * j, 2 * j) = currentR(2 * j, 2 * j) * std::exp(std::abs(distanceFixed - zkl(j, 0)));
-							}
+							}*/
 							zl(2 * j + 1, 0) = angleFixed - zkl(j, 1);
 							if(zl(2 * j + 1, 0) > M_PI){
 								zl(2 * j + 1, 0) = zl(2 * j + 1, 0) - 2 * M_PI;
@@ -252,7 +254,6 @@ void RNKalmanLocalizationTask::task(){
 				} else { 
 					std::vector<std::pair<int, double> > cameraDistances;
 					for (int j = cameraIndex; j < (cameraIndex + cameraLandmarksCount); j++){
-						double distanceApprox = std::tan(extraParameter->second);
 						double cd = std::sqrt(std::pow(zkl(j, 0), 2.0) + std::pow(lndmrk->getPointsXMean(), 2.0) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
 						
 						cameraDistances.push_back(std::pair<int, double>(j, cd));
@@ -269,7 +270,8 @@ void RNKalmanLocalizationTask::task(){
 					}
 
 					if(indexFound > RN_NONE){
-						double distanceFixed = (zkl(indexFound, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second);
+						//double distanceFixed = (zkl(j, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second);
+						double distanceFixed = lndmrk->getPointsXMean();
 						double angleFixed = lndmrk->getPointsYMean();
 						double xr = CAMERA_ERROR_POSITION_X + distanceFixed * std::cos(angleFixed);
 						double yr = CAMERA_ERROR_POSITION_Y + distanceFixed * std::sin(angleFixed);

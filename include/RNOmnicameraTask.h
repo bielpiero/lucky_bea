@@ -96,7 +96,7 @@ private:
 	int getBrightnessAverageFromHistogram(const cv::Mat& input);
 
 	void undistortPoints(cv::InputArray distorted, cv::OutputArray undistorted,
-        cv::InputArray K, cv::InputArray D, cv::InputArray R = cv::noArray(), cv::InputArray P = cv::noArray());
+        cv::InputArray K, cv::InputArray D, cv::InputArray xi, cv::InputArray R);
 
 private:
 	void drawRectangle(cv::Mat &img, RNMarker marker);
@@ -134,6 +134,7 @@ private:
 	std::vector<RNMarker> tikiMarkers;
 
 	static const double PI_DEGREES;
+	static const double MARKER_HEIGHT;
 	RNLandmarkList* landmarks;
 	cv::VideoCapture capture;
 

@@ -1,6 +1,7 @@
 #include "RNOmnicameraTask.h"
 
 const double RNOmnicameraTask::PI_DEGREES = 180.0;
+const double RNOmnicameraTask::MARKER_HEIGHT = 2.50; //meters
 
 const std::string RNOmnicameraTask::cameraUrl = "http://192.168.0.19/record/current.jpg";
 //const std::string RNOmnicameraTask::cameraUrl = "http://admin:C0n7r01_au70@192.168.1.33/control/faststream.jpg?stream=full&fps=24&noaudio&data=v.mjpg";
@@ -29,11 +30,13 @@ RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name
 	markerCorners3d.push_back(cv::Point3f(.5f, .5f, 0));
 
 	camMatrix = cv::Mat(3, 3, CV_32F);
+	//camMatrix.at<float>(0, 0) = 8.5101024687735935e+02;
 	camMatrix.at<float>(0, 0) = 3.3148337972624245e+02;
 	camMatrix.at<float>(0, 1) = 0;
 	camMatrix.at<float>(0, 2) = 6.546903437322123e+02;
 	//camMatrix.at<float>(0, 2) = 6.5050896530720797e+02;
 	camMatrix.at<float>(1, 0) = 0.0;
+	//camMatrix.at<float>(1, 1) = 8.5170243585411265e+02;
 	camMatrix.at<float>(1, 1) = 3.3296507853901846e+02;
 	camMatrix.at<float>(1, 2) = 4.845906577833345e+02;
 	//camMatrix.at<float>(1, 2) = 4.9324794942591592e+02;
@@ -42,10 +45,14 @@ RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name
 	camMatrix.at<float>(2, 2) = 1.0;
 
 	distCoeff = cv::Mat(4, 1, CV_32F);
-	distCoeff.at<float>(0, 0) = -5.0278669230113635e-02;
+	distCoeff.at<float>(0, 0) = -4.2648301140911193e-01;
+    distCoeff.at<float>(1, 0) = 3.1105618959437248e-01;
+    distCoeff.at<float>(2, 0) = -1.3775384616268102e-02;
+    distCoeff.at<float>(3, 0) = -1.9560559208606078e-03;
+	/*distCoeff.at<float>(0, 0) = -5.0278669230113635e-02;
   	distCoeff.at<float>(1, 0) = 2.7927571053875219e-02;
   	distCoeff.at<float>(2, 0) = -9.7303697830329119e-03;
-  	distCoeff.at<float>(3, 0) = 0;
+  	distCoeff.at<float>(3, 0) = 0;*/
 
 	landmarks = NULL;
 
@@ -386,17 +393,17 @@ void RNOmnicameraTask::markerIdNumber(const cv::Mat &bits, int &mapId, int &sect
     
     for (int j = 0; j < 5; j++){
     	if(bits.at<uchar>(1, j)){
-    		mapId += (16 / std::pow(2, j)) * bits.at<uchar>(1, j);
+    		mapId += 16/std::pow(2, j);
     	}
     }
     for (int j = 0; j < 5; j++){
     	if(bits.at<uchar>(2, j)){
-    		sectorId += (16 / std::pow(2, j)) * bits.at<uchar>(2, j);
+    		sectorId += 16/std::pow(2, j);
     	}
     }
     for (int j = 0; j < 5; j++){
     	if(bits.at<uchar>(3, j)){
-    		markerId += (16 / std::pow(2,j)) * bits.at<uchar>(3, j);
+    		markerId += 16/std::pow(2, j);
     	}
     }
 }
@@ -457,93 +464,89 @@ int RNOmnicameraTask::getBrightnessAverageFromHistogram(const cv::Mat& input){
 	return (int)avgBrightness;
 }
 
-void RNOmnicameraTask::undistortPoints(cv::InputArray distorted, cv::OutputArray undistorted, cv::InputArray K, cv::InputArray D, cv::InputArray R, cv::InputArray P){
-    //CV_INSTRUMENT_REGION()
+void RNOmnicameraTask::undistortPoints(cv::InputArray distorted, cv::OutputArray undistorted, cv::InputArray K, cv::InputArray D, cv::InputArray xi, cv::InputArray R){
+    CV_Assert(distorted.type() == CV_64FC2 || distorted.type() == CV_32FC2);
+    CV_Assert(R.empty() || (!R.empty() && (R.size() == cv::Size(3, 3) || R.total() * R.channels() == 3)
+        && (R.depth() == CV_64F || R.depth() == CV_32F)));
+    CV_Assert((D.depth() == CV_64F || D.depth() == CV_32F) && D.total() == 4);
+    CV_Assert(K.size() == cv::Size(3, 3) && (K.depth() == CV_64F || K.depth() == CV_32F));
+    CV_Assert(xi.total() == 1 && (xi.depth() == CV_64F || xi.depth() == CV_32F));
 
-    // will support only 2-channel data now for points
-    CV_Assert(distorted.type() == CV_32FC2 || distorted.type() == CV_64FC2);
     undistorted.create(distorted.size(), distorted.type());
 
-    CV_Assert(P.empty() || P.size() == cv::Size(3, 3) || P.size() == cv::Size(4, 3));
-    CV_Assert(R.empty() || R.size() == cv::Size(3, 3) || R.total() * R.channels() == 3);
-    CV_Assert(D.total() == 4 && K.size() == cv::Size(3, 3) && (K.depth() == CV_32F || K.depth() == CV_64F));
-
     cv::Vec2d f, c;
-    if (K.depth() == CV_32F){
+    double s = 0.0;
+    if (K.depth() == CV_32F) {
         cv::Matx33f camMat = K.getMat();
-        f = cv::Vec2f(camMat(0, 0), camMat(1, 1));
-        c = cv::Vec2f(camMat(0, 2), camMat(1, 2));
-    } else {
+        f = cv::Vec2f(camMat(0,0), camMat(1,1));
+        c = cv::Vec2f(camMat(0,2), camMat(1,2));
+        s = (double)camMat(0,1);
+    } else if (K.depth() == CV_64F) {
         cv::Matx33d camMat = K.getMat();
-        f = cv::Vec2d(camMat(0, 0), camMat(1, 1));
-        c = cv::Vec2d(camMat(0, 2), camMat(1, 2));
+        f = cv::Vec2d(camMat(0,0), camMat(1,1));
+        c = cv::Vec2d(camMat(0,2), camMat(1,2));
+        s = camMat(0,1);
     }
 
-    cv::Vec4d k = D.depth() == CV_32F ? (cv::Vec4d)*D.getMat().ptr<cv::Vec4f>(): *D.getMat().ptr<cv::Vec4d>();
+    cv::Vec4d kp = D.depth() == CV_32F ? (cv::Vec4d)*D.getMat().ptr<cv::Vec4f>():(cv::Vec4d)*D.getMat().ptr<cv::Vec4d>();
+    cv::Vec2d k = cv::Vec2d(kp[0], kp[1]);
+    cv::Vec2d p = cv::Vec2d(kp[2], kp[3]);
 
+    double _xi = xi.depth() == CV_32F ? (double)*xi.getMat().ptr<float>() : *xi.getMat().ptr<double>();
     cv::Matx33d RR = cv::Matx33d::eye();
-    if (!R.empty() && R.total() * R.channels() == 3)
+    // R is om
+    if(!R.empty() && R.total()*R.channels() == 3)
     {
         cv::Vec3d rvec;
         R.getMat().convertTo(rvec, CV_64F);
-        RR = cv::Affine3d(rvec).rotation();
+        cv::Rodrigues(rvec, RR);
     }
-    else if (!R.empty() && R.size() == cv::Size(3, 3))
+    else if (!R.empty() && R.size() == cv::Size(3,3))
+    {
         R.getMat().convertTo(RR, CV_64F);
-
-    if(!P.empty())
-    {
-        cv::Matx33d PP;
-        P.getMat().colRange(0, 3).convertTo(PP, CV_64F);
-        RR = PP * RR;
     }
 
-    // start undistorting
-    const cv::Vec2f* srcf = distorted.getMat().ptr<cv::Vec2f>();
-    const cv::Vec2d* srcd = distorted.getMat().ptr<cv::Vec2d>();
-    cv::Vec2f* dstf = undistorted.getMat().ptr<cv::Vec2f>();
-    cv::Vec2d* dstd = undistorted.getMat().ptr<cv::Vec2d>();
+    const cv::Vec2d *srcd = distorted.getMat().ptr<cv::Vec2d>();
+    const cv::Vec2f *srcf = distorted.getMat().ptr<cv::Vec2f>();
 
-    size_t n = distorted.total();
-    int sdepth = distorted.depth();
+    cv::Vec2d *dstd = undistorted.getMat().ptr<cv::Vec2d>();
+    cv::Vec2f *dstf = undistorted.getMat().ptr<cv::Vec2f>();
 
-    for(size_t i = 0; i < n; i++ )
-    {
-        cv::Vec2d pi = sdepth == CV_32F ? (cv::Vec2d)srcf[i] : srcd[i];  // image point
-        cv::Vec2d pw((pi[0] - c[0])/f[0], (pi[1] - c[1])/f[1]);      // world point
+    int n = (int)distorted.total();
+    for (int i = 0; i < n; i++){
+        cv::Vec2d pi = distorted.depth() == CV_32F ? (cv::Vec2d)srcf[i]:(cv::Vec2d)srcd[i];    // image point
+        cv::Vec2d pp((pi[0]*f[1]-c[0]*f[1]-s*(pi[1]-c[1]))/(f[0]*f[1]), (pi[1]-c[1])/f[1]); //plane
+        cv::Vec2d pu = pp;    // points without distortion
 
-        float scale = 1.0;
-
-        float theta_d = sqrt(pw[0]*pw[0] + pw[1]*pw[1]);
-
-        // the current camera model is only valid up to 180° FOV
-        // for larger FOV the loop below does not converge
-        // clip values so we still get plausible results for super fisheye images > 180°
-        theta_d = stats::min(stats::max(-CV_PI/2., theta_d), CV_PI/2.);
-
-        if (theta_d > 1e-8)
-        {
-            // compensate distortion iteratively
-            float theta = theta_d;
-            for(int j = 0; j < 10; j++ )
-            {
-                float theta2 = theta*theta, theta4 = theta2*theta2, theta6 = theta4*theta2, theta8 = theta6*theta2;
-                theta = theta_d / (1 + k[0] * theta2 + k[1] * theta4 + k[2] * theta6 + k[3] * theta8);
-            }
-
-            scale = std::tan(theta) / theta_d;
+        // remove distortion iteratively
+        for (int j = 0; j < 20; j++){
+            double r2 = pu[0]*pu[0] + pu[1]*pu[1];
+            double r4 = r2*r2;
+            pu[0] = (pp[0] - 2*p[0]*pu[0]*pu[1] - p[1]*(r2+2*pu[0]*pu[0])) / (1 + k[0]*r2 + k[1]*r4);
+            pu[1] = (pp[1] - 2*p[1]*pu[0]*pu[1] - p[0]*(r2+2*pu[1]*pu[1])) / (1 + k[0]*r2 + k[1]*r4);
         }
 
-        cv::Vec2d pu = pw * scale; //undistorted point
+        // project to unit sphere
+        double r2 = pu[0]*pu[0] + pu[1]*pu[1];
+        double a = (r2 + 1);
+        double b = 2*_xi*r2;
+        double cc = r2*_xi*_xi-1;
+        double Zs = (-b + sqrt(b*b - 4*a*cc))/(2*a);
+        cv::Vec3d Xw = cv::Vec3d(pu[0]*(Zs + _xi), pu[1]*(Zs +_xi), Zs);
 
-        // reproject
-        cv::Vec3d pr = RR * cv::Vec3d(pu[0], pu[1], 1.0); // rotated point optionally multiplied by new camera matrix
-        cv::Vec2d fi(pr[0]/pr[2], pr[1]/pr[2]);       // final
+        // rotate
+        Xw = RR * Xw;
 
-        if( sdepth == CV_32F )
-            dstf[i] = fi;
-        else
-            dstd[i] = fi;
+        // project back to sphere
+        cv::Vec3d Xs = Xw / cv::norm(Xw);
+
+        // reproject to camera plane
+        cv::Vec3d ppu = cv::Vec3d(Xs[0]/(Xs[2]+_xi), Xs[1]/(Xs[2]+_xi), 1.0);
+        if (undistorted.depth() == CV_32F){
+            dstf[i] = cv::Vec2f((float)ppu[0], (float)ppu[1]);
+        } else if (undistorted.depth() == CV_64F) {
+            dstd[i] = cv::Vec2d(ppu[0], ppu[1]);
+        }
     }
 }
 
@@ -571,8 +574,8 @@ void RNOmnicameraTask::task(){
 				//cv::imwrite("que ves.jpg", rectImage);
 				
 				RNLandmark* visualLand = new RNLandmark();
-				
-				visualLand->addPoint(0, tikiMarkers.at(i).getThRad());
+				float distance = (MARKER_HEIGHT - gn->getRobotHeight()) * std::tan(tikiMarkers.at(i).getOpticalTheta());
+				visualLand->addPoint(distance, tikiMarkers.at(i).getThRad());
 				visualLand->setMapId(tikiMarkers.at(i).getMapId());
 				visualLand->setSectorId(tikiMarkers.at(i).getSectorId());
 				visualLand->setMarkerId(tikiMarkers.at(i).getMarkerId());

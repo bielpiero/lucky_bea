@@ -61,7 +61,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	    }
     	//RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
     	delete currPose;
-		if(rn->isLaserReady() and (deltaThetaLocal > minimumAngle or distanceLocal > minimumDistance)){
+		/*if(rn->isLaserReady() and (deltaThetaLocal > minimumAngle or distanceLocal > minimumDistance)){
 			LaserScan* laserData = rn->getLaserScan();
 			RNUtils::printLn("Laser size: %d", laserData->size());
 			hallwayController->getSystemInput(laserData, &linearSpeed, &angularSpeed);
@@ -74,9 +74,9 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     		angularController->reset();
     		linearController->reset();
     		currentState = STATE_ACHIEVED_GOAL;
-		}
+		}*/
 
-    	/*if(std::abs(deltaThetaLocal) > this->minimumAngle){
+    	if(std::abs(deltaThetaLocal) > this->minimumAngle){
     		//turn to point to goal
     		myDesired->setVel(0);
     		linearController->reset();
@@ -113,7 +113,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     		linearController->reset();
     		RNUtils::printLn("Doris Stopped by this condition of goal achieved...");
     		currentState = STATE_ACHIEVED_GOAL;
-    	}*/
+    	}
     } else {
     	return NULL;
     }
