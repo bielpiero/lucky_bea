@@ -33,8 +33,10 @@ RNHallwayController::RNHallwayController(const char* name){
 	
 	firstIteration = true;
 
-	isCheckingLeft = false;
-	isCheckingRight = false;
+	isChecking = false;
+
+	//isCheckingLeft = false;
+	//isCheckingRight = false;
 
 	this->lastInput = std::numeric_limits<float>::infinity();
 	this->lastError = 0;
@@ -91,17 +93,17 @@ RNHallwayController::RNHallwayController(const char* name){
 	linearVelocity->setName("linearVelocity");
 	linearVelocity->setDescription("");
 	linearVelocity->setEnabled(true);
-	linearVelocity->setRange(-40.000, 80.000);
+	linearVelocity->setRange(-80.000, 160.000);
 	linearVelocity->setLockValueInRange(false);
 	linearVelocity->setAggregation(new fl::AlgebraicSum);
 	linearVelocity->setDefuzzifier(new fl::Centroid(100));
 	linearVelocity->setDefaultValue(0.0);
 	linearVelocity->setLockPreviousValue(false);
-	linearVelocity->addTerm(new fl::Triangle("Backwards", -40.000, -20.000, 0.000));
-	linearVelocity->addTerm(new fl::Triangle("Zero", -20.000, 0.000, 20.000));
-	linearVelocity->addTerm(new fl::Triangle("SlowForward", 0.000, 20.000, 40.000));
-	linearVelocity->addTerm(new fl::Triangle("MediumForward", 20.000, 40.000, 60.000));
-	linearVelocity->addTerm(new fl::Triangle("FastForward", 40.000, 60.000, 80.000));
+	linearVelocity->addTerm(new fl::Triangle("Backwards", -80.000, -40.000, 0.000));
+	linearVelocity->addTerm(new fl::Triangle("Zero", -40.000, 0.000, 40.000));
+	linearVelocity->addTerm(new fl::Triangle("SlowForward", 0.000, 40.000, 80.000));
+	linearVelocity->addTerm(new fl::Triangle("MediumForward", 40.000, 80.000, 120.000));
+	linearVelocity->addTerm(new fl::Triangle("FastForward", 80.000, 120.000, 160.000));
 	engine->addOutputVariable(linearVelocity);
 
 	/*Velocidad angular más alta cuanto más cerca está de las paredes, tiene que ser 0 si está muy lejos*/
@@ -337,7 +339,7 @@ void RNHallwayController::getSystemInput(const LaserScan* data, double* linearVe
 			*angularVelocity = 0.0;
 			i = NUMBER_FUZZY_INPUTS_FILTER;
 		}
-		else if(isCheckingLeft || isCheckingRight){
+		else if(isChecking){
 			*angularVelocity = linearVelocityCheck[i];
 			*linearVelocity = angularVelocityCheck[i];
 			i--;
@@ -390,8 +392,8 @@ void RNHallwayController::setHallwayFuzzyInputs(double lastLeftInput, double las
 		lastInputsLeftDoorCheck[0] = lastLeftInput;
 		lastInputsRightDoorCheck[0] = lastRightInput;
 
-		counterLeftDoorCheckIterations = 0;
-		counterRightDoorCheckIterations = 0;
+		//counterLeftDoorCheckIterations = 0;
+		//counterRightDoorCheckIterations = 0;
 
 		hallwayLeftFuzzyInput = lastLeftInput;
 		hallwayFrontFuzzyInput = lastFrontInput;
@@ -405,10 +407,77 @@ void RNHallwayController::setHallwayFuzzyInputs(double lastLeftInput, double las
 
 		printf("Entra al fuzzy Right: %lf\n", hallwayRightFuzzyInput);
 		this->laserRightZone->setValue(hallwayRightFuzzyInput);
-		firstIteration = false;
+		//firstIteration = false;
 	} else {
-		if ((lastLeftInput - hallwayLeftFuzzyInput) > doorCheckDistance){
-			isCheckingLeft = true;
+		/*if((lastLeftInput - hallwayLeftFuzzyInput) || (lastRightInput - lastRightInput-hallwayRightFuzzyInput) > doorCheckDistance){
+			if (counterDoorCheckIterations < doorCheckIterations){
+				isChecking = true;
+				for (int i = NUMBER_FUZZY_INPUTS_FILTER - 1; i > 0; i--){
+					lastInputsLeftDoorCheck[i] = lastInputsLeftDoorCheck[i - 1];
+					lastInputsRightDoorCheck[i] = lastInputsRightDoorCheck[i - 1];
+				}
+				lastInputsLeftDoorCheck[0] = lastLeftInput;
+				lastInputsRightDoorCheck[0] = lastRightInput;
+				counterDoorCheckIterations++;
+			}
+			else{
+				isChecking = false;
+				counterDoorCheckIterations = 0;
+				for(int i = NUMBER_FUZZY_INPUTS_FILTER - 1; i > 0; i--){
+					lastInputsLSector[i] = lastInputsLeftDoorCheck[i];
+					lastInputsRSector[i] = lastInputsRightDoorCheck[i];
+				}
+				for(int i = 0; i < NUMBER_FUZZY_INPUTS_FILTER; i++){
+					if(lastInputsLSector[i] != -std::numeric_limits<double>::infinity()){
+						counterLeftInputs+=lastInputsLSector[i];
+						leftCounter++;
+					}
+					if(lastInputsRSector[i] != -std::numeric_limits<double>::infinity()){
+						counterRightInputs+=lastInputsRSector[i];
+						rightCounter++;
+					}
+				}
+				hallwayLeftFuzzyInput = counterLeftInputs/(double)leftCounter;
+				hallwayRightFuzzyInput = counterRightInputs/(double)rightCounter;
+			}
+		}
+		else{*/
+			for(int i = NUMBER_FUZZY_INPUTS_FILTER; i > 0; i--){
+				lastInputsLSector[i] = lastInputsLSector[i - 1];
+				lastInputsRSector[i] = lastInputsRSector[i - 1];
+			}
+			lastInputsLSector[0] = lastLeftInput;
+			lastInputsRSector[0] = lastRightInput;
+			for(int i = 0; i < NUMBER_FUZZY_INPUTS_FILTER; i++){
+				if(lastInputsLSector[i] != -std::numeric_limits<double>::infinity()){
+					counterLeftInputs+=lastInputsLSector[i];
+					leftCounter++;
+				}
+				if(lastInputsRSector[i] != -std::numeric_limits<double>::infinity()){
+					counterRightInputs += lastInputsRSector[i];
+					rightCounter++;
+				}
+			}
+		//}
+		for(int i = NUMBER_FUZZY_INPUTS_FILTER - 1; i > 0; i--){
+			lastInputsFSector[i]=lastInputsFSector[i - 1];
+		}
+		lastInputsFSector[0]=lastFrontInput;
+		for(int i = 0; i < NUMBER_FUZZY_INPUTS_FILTER; i++){
+			if(lastInputsFSector[i] != -std::numeric_limits<double>::infinity()){
+				counterFrontInputs += lastInputsFSector[i];
+				frontCounter++;
+			}
+		}
+		hallwayLeftFuzzyInput = counterLeftInputs/(double)leftCounter;
+		hallwayFrontFuzzyInput = counterFrontInputs/(double)frontCounter;
+		hallwayRightFuzzyInput = counterRightInputs/(double)rightCounter;
+		this->laserLeftZone->setValue(hallwayLeftFuzzyInput);
+		this->laserFrontZone->setValue(hallwayFrontFuzzyInput);
+		this->laserRightZone->setValue(hallwayRightFuzzyInput);
+	}
+		/*
+		isCheckingLeft = true;
 			if (counterLeftDoorCheckIterations < doorCheckIterations){
 				for(int i = NUMBER_FUZZY_INPUTS_FILTER - 1; i > 0; i--){
 					lastInputsLeftDoorCheck[i] = lastInputsLeftDoorCheck[i - 1];
@@ -440,12 +509,10 @@ void RNHallwayController::setHallwayFuzzyInputs(double lastLeftInput, double las
 		}
 		printf("Entra al fuzzy Left: %lf\n", hallwayLeftFuzzyInput);
 		this->laserLeftZone->setValue(hallwayLeftFuzzyInput);
-
 		for(int i = NUMBER_FUZZY_INPUTS_FILTER - 1; i > 0; i--){
 			lastInputsFSector[i]=lastInputsFSector[i - 1];
 		}
 		lastInputsFSector[0]=lastFrontInput;
-
 		for(int i = 0; i < NUMBER_FUZZY_INPUTS_FILTER; i++){
 			if(lastInputsFSector[i] != -std::numeric_limits<double>::infinity()){
 				counterFrontInputs += lastInputsFSector[i];
@@ -453,10 +520,8 @@ void RNHallwayController::setHallwayFuzzyInputs(double lastLeftInput, double las
 			}
 		}
 		hallwayFrontFuzzyInput = counterFrontInputs/(double)frontCounter;
-
 		printf("Entra al fuzzy Front: %lf\n", hallwayFrontFuzzyInput);
-		this->laserFrontZone->setValue(hallwayFrontFuzzyInput);
-		
+		this->laserFrontZone->setValue(hallwayFrontFuzzyInput);		
 		if ((lastRightInput-hallwayRightFuzzyInput)>doorCheckDistance){
 			isCheckingRight = true;
 			if (counterRightDoorCheckIterations<doorCheckIterations){
@@ -489,11 +554,7 @@ void RNHallwayController::setHallwayFuzzyInputs(double lastLeftInput, double las
 			counterRightDoorCheckIterations = 0;
 		}
 		printf("Entra al fuzzy Right: %lf\n", hallwayRightFuzzyInput);
-		this->laserRightZone->setValue(hallwayRightFuzzyInput);
-	}
-	
-
-	
+		this->laserRightZone->setValue(hallwayRightFuzzyInput);*/	
 }
 
 double RNHallwayController::getHallwayLastLeftInput(void){

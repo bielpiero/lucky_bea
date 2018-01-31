@@ -231,11 +231,11 @@ void RNKalmanLocalizationTask::task(){
 							//double distanceFixed = (zkl(j, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second);
 							double distanceFixed = lndmrk->getPointsXMean();
 							double angleFixed = lndmrk->getPointsYMean();
-							
-							double xr = CAMERA_ERROR_POSITION_X /*+ distanceFixed * std::cos(angleFixed)*/;
-							double yr = CAMERA_ERROR_POSITION_Y /*+ distanceFixed * std::sin(angleFixed)*/;
+							//RNUtils::printLn("Marker original angle: %lf", angleFixed);
+							/*double xr = CAMERA_ERROR_POSITION_X + distanceFixed * std::cos(angleFixed);
+							double yr = CAMERA_ERROR_POSITION_Y + distanceFixed * std::sin(angleFixed);
 							distanceFixed = std::sqrt(std::pow(xr, 2.0) + std::pow(yr, 2.0));
-							angleFixed = angleFixed - std::atan(yr/xr);
+							angleFixed = angleFixed + std::atan2(-yr, -xr);*/
 				
 							//zl(2 * j, 0) = distanceFixed - zkl(j, 0);
 							zl(2 * j, 0) = 0.0;
@@ -273,15 +273,16 @@ void RNKalmanLocalizationTask::task(){
 						//double distanceFixed = (zkl(j, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second);
 						double distanceFixed = lndmrk->getPointsXMean();
 						double angleFixed = lndmrk->getPointsYMean();
-						double xr = CAMERA_ERROR_POSITION_X + distanceFixed * std::cos(angleFixed);
+						/*double xr = CAMERA_ERROR_POSITION_X + distanceFixed * std::cos(angleFixed);
 						double yr = CAMERA_ERROR_POSITION_Y + distanceFixed * std::sin(angleFixed);
 						distanceFixed = std::sqrt(std::pow(xr, 2) + std::pow(yr, 2));
-						angleFixed = std::atan2(yr, xr);
+						angleFixed = std::atan2(yr, xr);*/
 						if(distanceFixed > 1.0){
 							currentR(2 * indexFound, 2 * indexFound) = currentR(2 * indexFound, 2 * indexFound) * std::exp(std::abs(distanceFixed - zkl(indexFound, 0)));
 						}
 						
-						zl(2 * indexFound, 0) = distanceFixed - zkl(indexFound, 0);
+						//zl(2 * indexFound, 0) = distanceFixed - zkl(indexFound, 0);
+						zl(2 * indexFound, 0) = 0.0;
 						zl(2 * indexFound + 1, 0) = angleFixed - zkl(indexFound, 1);
 						if(zl(2 * indexFound + 1, 0) > M_PI){
 							zl(2 * indexFound + 1, 0) = zl(2 * indexFound + 1, 0) - 2 * M_PI;
@@ -399,8 +400,13 @@ void RNKalmanLocalizationTask::getObservations(Matrix& observations){
 	for(int k = 0, zIndex = 0; k < gn->getCurrentSector()->landmarksSize(); k++){
 
 		double distance = 0, angle = 0;
+		Matrix disp = Matrix(2, 1);
 		s_landmark* landmark = gn->getCurrentSector()->landmarkAt(k);
-		landmarkObservation(xk_1, landmark, distance, angle);
+		if(landmark->type == XML_SENSOR_TYPE_CAMERA_STR){
+			disp(0, 0) = CAMERA_ERROR_POSITION_X;
+			disp(1, 0) = CAMERA_ERROR_POSITION_Y;
+		}
+		landmarkObservation(xk_1, disp, landmark, distance, angle);
 
 		if(gn->isLaserSensorActivated()){
 			if(landmark->type == XML_SENSOR_TYPE_LASER_STR){
@@ -436,7 +442,7 @@ void RNKalmanLocalizationTask::getObservations(Matrix& observations){
 	observations = result;
 }
 
-void RNKalmanLocalizationTask::landmarkObservation(const Matrix& Xk, s_landmark* landmark, double& distance, double& angle){
-	distance = std::sqrt(std::pow(landmark->xpos - Xk(0, 0), 2) + std::pow(landmark->ypos - Xk(1, 0), 2));
-	angle = std::atan2(landmark->ypos - Xk(1, 0), landmark->xpos - Xk(0, 0)) - Xk(2, 0);
+void RNKalmanLocalizationTask::landmarkObservation(const Matrix& Xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle){
+	distance = std::sqrt(std::pow(landmark->xpos - (Xk(0, 0) + disp(0, 0)), 2) + std::pow(landmark->ypos - (Xk(1, 0) + disp(1, 0)), 2));
+	angle = std::atan2(landmark->ypos - (Xk(1, 0) + disp(1, 0)), landmark->xpos - (Xk(0, 0) + disp(0, 0))) - Xk(2, 0);
 }

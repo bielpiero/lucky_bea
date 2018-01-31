@@ -19,7 +19,7 @@
 			<sensor type="camera" activated="1">
 				<observation-noise>
 					<d-zone x1="-25" x2="-20" x3="20" x4="25"/>  <!-- centimeters -->
-					<th-zone x1="-0.035" x2="-0.025" x3="0.025" x4="0.035"/> <!-- radians -->
+					<th-zone x1="-0.02" x2="-0.015" x3="0.015" x4="0.02"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
 			<sensor type="rfid" activated="0">

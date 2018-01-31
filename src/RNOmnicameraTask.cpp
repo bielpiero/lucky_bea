@@ -30,21 +30,21 @@ RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name
 	markerCorners3d.push_back(cv::Point3f(.5f, .5f, 0));
 
 	camMatrix = cv::Mat(3, 3, CV_32F);
-	camMatrix.at<float>(0, 0) = 6.770749405106462e+02;
+	camMatrix.at<float>(0, 0) = 7.620795116277220e+02;
 	camMatrix.at<float>(0, 1) = 0;
-	camMatrix.at<float>(0, 2) = 6.519413209218039e+02;
+	camMatrix.at<float>(0, 2) = 6.487635885840072e+02;
 	camMatrix.at<float>(1, 0) = 0.0;
-	camMatrix.at<float>(1, 1) = 6.796232319523746e+02;
-	camMatrix.at<float>(1, 2) = 4.900742597987814e+02;
+	camMatrix.at<float>(1, 1) = 7.650912503869941e+02;
+	camMatrix.at<float>(1, 2) = 4.902109843845752e+02;
 	camMatrix.at<float>(2, 0) = 0.0;
 	camMatrix.at<float>(2, 1) = 0.0;
 	camMatrix.at<float>(2, 2) = 1.0;
 
 	distCoeff = cv::Mat(4, 1, CV_32F);
-	distCoeff.at<float>(0, 0) = -0.370852944821681;
-    distCoeff.at<float>(1, 0) = 0.760515587312566;
-    distCoeff.at<float>(2, 0) = 0.002165611668123;
-    distCoeff.at<float>(3, 0) = 0.003965311736544;
+	distCoeff.at<float>(0, 0) = -0.374638326614541;
+    distCoeff.at<float>(1, 0) = 1.589827747269453;
+    distCoeff.at<float>(2, 0) = 0.002701033449065;
+    distCoeff.at<float>(3, 0) = 0.006333313881936;
 
     xi = cv::Mat(1, 1, CV_32F);
     distCoeff.at<float>(0, 0) = 1.277926516360664;
@@ -241,20 +241,22 @@ void RNOmnicameraTask::poseEstimation(){
 		RNMarker &marker = tikiMarkers.at(i);
 		std::vector<cv::Point2f> distortedPoint;
 		std::vector<cv::Point2f> undistortedPoint;
-		cv::Point imageCenter(tiki.cols / 2 + IMAGE_OFFSET_X, tiki.rows / 2 + IMAGE_OFFSET_Y);
-		cv::Point markerCenter = marker.getRotatedRect().center;
+		//cv::Point imageCenter(tiki.cols / 2 + IMAGE_OFFSET_X, tiki.rows / 2 + IMAGE_OFFSET_Y);
+		cv::Point2f imageCenter(camMatrix.at<float>(0, 2), camMatrix.at<float>(1, 2));
+		cv::Point2f markerCenter = marker.getRotatedRect().center;
 
-		cv::Point tikiPoint = imageCenter - markerCenter;
+		cv::Point2f tikiPoint = imageCenter - markerCenter;
 		distortedPoint.push_back(cv::Point2f(marker.getRotatedRect().center.x, marker.getRotatedRect().center.y));
-
+		//RNUtils::printLn("[%d], distortedPoint: {x: %f, y: %f}", marker.getMarkerId(), marker.getRotatedRect().center.x, marker.getRotatedRect().center.y);
 		undistortPoints(distortedPoint, undistortedPoint, camMatrix, distCoeff, xi, cv::Mat::eye(3, 3, CV_32F));
-
+		//RNUtils::printLn("[%d], undistortedPoint: {x: %f, y: %f}", marker.getMarkerId(), undistortedPoint.at(0).x, undistortedPoint.at(0).y);
 		float distanceToCenter = 0;
-		float theta = 0;
-		float realWorldDistance = 0;
+		float px, py, theta;
+		px = undistortedPoint.at(0).x * camMatrix.at<float>(0, 0) + camMatrix.at<float>(0, 2);
+		py = undistortedPoint.at(0).y * camMatrix.at<float>(1, 1) + camMatrix.at<float>(1, 2);
 
-		distanceToCenter = sqrt(pow(abs(undistortedPoint.at(0).x - camMatrix.at<float>(0, 2)),2) + std::pow(abs(undistortedPoint.at(0).y - camMatrix.at<float>(1, 2)),2));
-
+		distanceToCenter = sqrt(pow(px, 2) + std::pow(py, 2));
+		
 		theta = std::atan(distanceToCenter / camMatrix.at<float>(0, 0));
 		marker.setOpticalTheta(theta);
 		//realWorldDistance = MARKER_HEIGHT * std::tan(theta);
@@ -269,6 +271,7 @@ void RNOmnicameraTask::poseEstimation(){
 		} else if(angleInRadians < -M_PI){
 			angleInRadians = angleInRadians + 2 * M_PI;
 		}
+		//RNUtils::printLn("[%d], d: %f, angle: %lf", marker.getMarkerId(), distanceToCenter, angleInRadians);
 		marker.setThRad(angleInRadians);
 		//RNUtils::printLn("Marker (%d) angle: %lf", i, angleInRadians);
 	}

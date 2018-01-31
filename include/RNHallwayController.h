@@ -42,8 +42,10 @@ private:
 
 	bool firstIteration;
 
-	bool isCheckingLeft;
-	bool isCheckingRight;
+	//bool isCheckingLeft;
+	//bool isCheckingRight;
+
+	bool isChecking;
 
 	double setPoint;
 
@@ -71,8 +73,10 @@ private:
 	double hallwayFrontFuzzyInput;
 	double hallwayRightFuzzyInput;
 
-	int counterLeftDoorCheckIterations;
-	int counterRightDoorCheckIterations;
+	int counterDoorCheckIterations;
+
+	//int counterLeftDoorCheckIterations;
+	//int counterRightDoorCheckIterations;
 };
 
 #endif

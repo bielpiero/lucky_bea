@@ -15,7 +15,7 @@ public:
 private:
 	
 	void getObservations(Matrix& observations);
-	void landmarkObservation(const Matrix& xk, s_landmark* landmark, double& distance, double& angle);
+	void landmarkObservation(const Matrix& xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle);
 private:
 	static const double MAX_LASER_DISTANCE_ERROR;
 	static const double MAX_LASER_ANGLE_ERROR;
