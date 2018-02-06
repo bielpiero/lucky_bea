@@ -1,57 +1,51 @@
-#ifndef RN_GESTURES_TASK_H
-#define RN_GESTURES_TASK_H
+#ifndef RN_ARM_TASK_H
+#define RN_ARM_TASK_H
 
 #include "RNRecurrentTask.h"
 #include "GeneralController.h"
 #include "xmldefs.h"
 
-#define XML_GESTURE_FILE_PATH "conf/BeaConSuerte.xml"
+#define XML_ARM_GESTURE_FILE_PATH "conf/BeaArm.xml"
 
-class Motor{
+class ArmMotor{
 private:
     std::string id;
-    std::string cardId;
-    std::string pos;
-    std::string speed;
-    std::string acceleration;
+    std::string device;
+    std::string degrees;
 public:
-    Motor(){
+    ArmMotor(){
         this->id = "";
-        this->cardId = "";
-        this->pos = "";
-        this->speed = "";
-        this->acceleration = "";
+        this->device = "";
+        this->degrees = "";
     }
-    ~Motor(){}
+    ~ArmMotor(){}
 
-    std::string getCardId() { return cardId; }
-    void setCardId(std::string cardId) { this->cardId = cardId; }
     std::string getId() { return id; }
     void setId(std::string id) { this->id = id; }
-    std::string getPos() { return pos ; }
-    void setPos(std::string pos) { this->pos = pos; }
-    std::string getSpeed() { return speed ; }
-    void setSpeed(std::string speed) { this->speed = speed; }
-    std::string getAcceleration() { return acceleration ; }
-    void setAcceleration(std::string acceleration) { this->acceleration = acceleration; }
+
+    std::string getDegrees() { return degrees; }
+    void setDegrees(std::string degrees) { this->degrees = degrees; }
+
+    std::string getDevice() { return device; }
+    void setDevice(std::string device) { this->device = device; }
 };
 
-class Gesture{
+class ArmGesture{
 private:
     std::string name;
     std::string id;
     std::string type;
-    std::vector<Motor*>* motors;
+    std::vector<ArmMotor*>* motors;
 
 public:
-    Gesture(){
+    ArmGesture(){
         this->name = "";
         this->id = "";
         this->type = "";
-        motors = new std::vector<Motor*>();       
+        motors = new std::vector<ArmMotor*>();       
     }
 
-    virtual ~Gesture(){
+    virtual ~ArmGesture(){
         clearMotors();
         delete motors;
     }
@@ -64,14 +58,14 @@ public:
     std::string getType() { return type; }
     void setType(std::string type) { this->type = type; }
 
-    void addMotor(Motor* motor){
+    void addMotor(ArmMotor* motor){
         if(motor != NULL){
             motors->push_back(motor);
         }
     }   
 
-    Motor* motorAt(int index){
-        Motor* result = NULL;
+    ArmMotor* motorAt(int index){
+        ArmMotor* result = NULL;
         if(index > RN_NONE and index < motors->size()){
             result = motors->at(index);
         }
@@ -91,15 +85,15 @@ public:
 
 };
 
-class RNGesturesTask : public RNRecurrentTask{
+class RNArmTask : public RNRecurrentTask{
 private:
     GeneralController* gn;
-    std::vector<Gesture*> *gestures;
+    std::vector<ArmGesture*> *gestures;
     std::string gestureId;
     SerialPort* maestroController;
 public:
-	RNGesturesTask(const GeneralController* gn, SerialPort* maestroController, const char* name = "Gestures Task", const char* description = "Doris Faces");
-	~RNGesturesTask();
+	RNArmTask(const GeneralController* gn, SerialPort* maestroController, const char* name = "Arm Gestures Task", const char* description = "Doris Arm");
+	~RNArmTask();
 	virtual void task();
 	virtual void onKilled();
 

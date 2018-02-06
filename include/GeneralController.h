@@ -64,6 +64,7 @@ class RNCameraTask;
 class RNRecurrentTaskMap;
 class RNRFIdentificationTask;
 class RNGesturesTask;
+class RNArmTask;
 class RNDialogsTask;
 class RNEmotionsTask;
 
@@ -230,8 +231,8 @@ private:
 	void acceptTransferRobotControl(int socketIndex, char* acceptance);
 
 	void getPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value);
-	void getGestures(std::string type, std::string& gestures);
-	void setGesture(std::string id, std::string& servo_positions);
+	//void getGestures(std::string type, std::string& gestures);
+	//void setGesture(std::string id, std::string& servo_positions);
 	void saveGesture(std::string token, int gesture_type);
 	void saveStaticGesture(std::string name, s_motor servos[]);
 	void saveDynamicGesture(std::string name, s_motor servos[]);
@@ -321,6 +322,7 @@ private:
 	RNLaserTask* laserTask;
 	RNEmotionsTask* emotions;
 	RNGesturesTask* gestures;
+	RNArmTask* armGestures;
 	RNDialogsTask* dialogs;
 	RNRecurrentTaskMap* tasks;
 	RNLocalizationTask* localization;

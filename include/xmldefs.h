@@ -1,6 +1,9 @@
 #define XML_STATIC_GESTURES_STR "GestosEstaticos"
 #define XML_DYNAMIC_GESTURES_STR "GestosDinamicos"
 
+#define XML_STATIC_GESTURES_TYPE_ID 0
+#define XML_DYNAMIC_GESTURES_TYPE_ID 1
+
 #define XML_ATTRIBUTE_ID_STR "id"
 #define XML_ATTRIBUTE_CARD_ID_STR "cardId"
 #define XML_ATTRIBUTE_POSITION_STR "pos"
@@ -8,6 +11,8 @@
 #define XML_ATTRIBUTE_ACCELERATION_STR "acceleration"
 #define XML_ATTRIBUTE_TYPE_STR "type"
 #define XML_ATTRIBUTE_NAME_STR "name"
+#define XML_ATTRIBUTE_DEVICE_STR "device"
+#define XML_ATTRIBUTE_DEGREES_STR "degrees"
 
 #define XML_ELEMENT_GESTURE_STR "Gesto"
 #define XML_ELEMENT_MOTOR_STR "Motor"

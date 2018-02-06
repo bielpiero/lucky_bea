@@ -61,9 +61,8 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	    }
     	//RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
     	delete currPose;
-		/*if(rn->isLaserReady() and (deltaThetaLocal > minimumAngle or distanceLocal > minimumDistance)){
+		/*if(rn->isLaserReady() and (distanceLocal > minimumDistance)){
 			LaserScan* laserData = rn->getLaserScan();
-			RNUtils::printLn("Laser size: %d", laserData->size());
 			hallwayController->getSystemInput(laserData, &linearSpeed, &angularSpeed);
 			RNUtils::printLn("{lin-vel: %f, rot-vel: %f}", linearSpeed, angularSpeed*180/M_PI);
 			myDesired->setRotVel(angularSpeed*180/M_PI);

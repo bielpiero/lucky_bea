@@ -12,6 +12,7 @@
 #include "RNEmotionsTask.h"
 #include "RNDialogsTask.h"
 #include "RNGesturesTask.h"
+#include "RNArmTask.h"
 #include "RNGlobalLocalizationTask.h"
 
 const double AntennaData::TX_GAIN = 5.7;
@@ -82,7 +83,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
 	//globalLocalization = new RNGlobalLocalizationTask(this);
 	//dialogs = new RNDialogsTask(this, ttsLipSync);
-	//gestures = new RNGesturesTask(this, this->maestroControllers);
+	gestures = new RNGesturesTask(this, this->maestroControllers);
+	armGestures = new RNArmTask(this, this->maestroControllers);
 	//emotions = new RNEmotionsTask(this);
 	//eyesCameras = new RNCameraTask(this);
 
@@ -98,7 +100,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	tasks->addTask(laserTask);
 	tasks->addTask(omnidirectionalTask);
 	//tasks->addTask(dialogs);
-	//tasks->addTask(gestures);
+	tasks->addTask(armGestures);
+	tasks->addTask(gestures);
 	//tasks->addTask(emotions);
 	tasks->addTask(localization);
 	//tasks->addTask(eyesCameras);
@@ -218,7 +221,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 	cad[length] = 0;
 	unsigned char function = *(cad++);
 	std::string local_buffer_out = "";
-	std::string gestures = "";
+	std::string jsonResponse = "";
 	std::string servo_positions = "";
 	std::string mapsAvailable = "";
 	std::string sectorsAvailable = "";
@@ -248,13 +251,13 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 	switch (function){
 		case 0x00:
 			RNUtils::printLn("Command 0x00. Static Faces Requested");
-			getGestures("0", gestures);
-			sendMsg(socketIndex, 0x00, (char*)gestures.c_str(), (unsigned int)(gestures.length())); 
+			gestures->getGestures(XML_STATIC_GESTURES_TYPE_ID, jsonResponse);
+			sendMsg(socketIndex, 0x00, (char*)jsonResponse.c_str(), (unsigned int)(jsonResponse.length())); 
 			break;
 		case 0x01:
 			RNUtils::printLn("Command 0x01. Dynamic Faces Requested");
-			getGestures("1", gestures);
-			sendMsg(socketIndex, 0x01, (char*)gestures.c_str(), (unsigned int)(gestures.length()));
+			gestures->getGestures(XML_DYNAMIC_GESTURES_TYPE_ID, jsonResponse);
+			sendMsg(socketIndex, 0x01, (char*)jsonResponse.c_str(), (unsigned int)(jsonResponse.length()));
 			break;
 		case 0x02:
 			RNUtils::printLn("Command 0x02. Saving New Static Face");
@@ -294,9 +297,9 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x07:
 			RNUtils::printLn("Command 0x07. Setting Gesture Id: %s", cad);
 			if(granted){
-				gestures = "";
-				setGesture(cad, servo_positions);
-				sendMsg(socketIndex, 0x07, (char*)servo_positions.c_str(), (unsigned int)servo_positions.length());
+				jsonResponse = "";
+				gestures->setGesture(cad);
+				sendMsg(socketIndex, 0x07, (char*)jsonResponse.c_str(), (unsigned int)jsonResponse.length());
 			} else {
 				RNUtils::printLn("Command 0x07. Setting Gesture denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x07, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
@@ -332,6 +335,9 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			}
 			break;
 		case 0x0C:
+			RNUtils::printLn("Command 0x0C. Static Arm Gestures Requested");
+			armGestures->getGestures(XML_STATIC_GESTURES_TYPE_ID, jsonResponse);
+			sendMsg(socketIndex, 0x0C, (char*)jsonResponse.c_str(), (unsigned int)(jsonResponse.length())); 
 			break;
 		case 0x10:
 			if(granted){
@@ -752,7 +758,7 @@ void GeneralController::getVelocities(char* cad, double& lin_vel, double& ang_ve
 	delete current_number;
 }
 
-void GeneralController::getGestures(std::string type, std::string& gestures){
+/*void GeneralController::getGestures(std::string type, std::string& gestures){
     xml_document<> doc;
     xml_node<>* root_node;
 	
@@ -783,7 +789,7 @@ void GeneralController::getGestures(std::string type, std::string& gestures){
 	the_file.close();
 	
 	
-}
+}*/
 
 void GeneralController::saveGesture(std::string token, int type){
     if(type == 0){
@@ -958,7 +964,7 @@ void GeneralController::removeGesture(std::string face_id){
 	
 }
 
-void GeneralController::setGesture(std::string face_id, std::string& servo_positions){
+/*void GeneralController::setGesture(std::string face_id, std::string& servo_positions){
     xml_document<> doc;
     xml_node<>* root_node;
 	
@@ -1038,7 +1044,7 @@ void GeneralController::setGesture(std::string face_id, std::string& servo_posit
 		virtualFace->sendBytes((unsigned char*)servo_positions.c_str(), servo_positions.length());	
 	}
 	
-}
+}*/
 
 void GeneralController::setServoPosition(unsigned char card_id, unsigned char servo_id, int position){
     this->maestroControllers->setTarget(card_id, servo_id, position);

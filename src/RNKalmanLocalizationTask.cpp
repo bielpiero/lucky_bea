@@ -3,7 +3,7 @@
 const double RNKalmanLocalizationTask::MAX_LASER_DISTANCE_ERROR = 0.05;
 const double RNKalmanLocalizationTask::MAX_LASER_ANGLE_ERROR = 0.07;
 const double RNKalmanLocalizationTask::MAX_CAMERA_DISTANCE_ERROR = 0.2;
-const double RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.1;
+const double RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.08;
 
 const double RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.2695;
 const double RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.0109;
@@ -58,6 +58,8 @@ void RNKalmanLocalizationTask::task(){
 		xk_1 = xk;
 		double deltaDistance = 0.0, deltaAngle = 0.0;
 		gn->getIncrementPosition(&deltaDistance, &deltaAngle);
+
+		//RNUtils::printLn("inc: {d: %g, th: %g}", deltaDistance, deltaAngle);
 		
 		Ak(0, 2) = -deltaDistance * std::sin(xk_1(2, 0) + deltaAngle/2.0);
 		Ak(1, 2) = deltaDistance * std::cos(xk_1(2, 0) + deltaAngle/2.0);
@@ -254,8 +256,8 @@ void RNKalmanLocalizationTask::task(){
 				} else { 
 					std::vector<std::pair<int, double> > cameraDistances;
 					for (int j = cameraIndex; j < (cameraIndex + cameraLandmarksCount); j++){
-						double cd = std::sqrt(std::pow(zkl(j, 0), 2.0) + std::pow(lndmrk->getPointsXMean(), 2.0) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
-						
+						//double cd = std::sqrt(std::pow(zkl(j, 0), 2.0) + std::pow(lndmrk->getPointsXMean(), 2.0) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
+						double cd = std::abs(zl(2 * j + 1, 0));
 						cameraDistances.push_back(std::pair<int, double>(j, cd));
 						//RNUtils::printLn("Mahalanobis visual Distance[%d]: %f for %f rad", j, cd, zkl(j, 1));
 					}

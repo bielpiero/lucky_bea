@@ -1,15 +1,15 @@
-#include "RNGesturesTask.h"
+#include "RNArmTask.h"
 
-RNGesturesTask::RNGesturesTask(const GeneralController* gn, SerialPort* maestroController, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
+RNArmTask::RNArmTask(const GeneralController* gn, SerialPort* maestroController, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
 	this->gn = (GeneralController*)gn;
 	this->maestroController = maestroController;
-	gestures = new std::vector<Gesture*>();
+	gestures = new std::vector<ArmGesture*>();
 	
     xml_document<> doc;
     xml_node<> * root_node;
 
     // Read the xml file into a vector
-    ifstream theFile (XML_GESTURE_FILE_PATH);
+    ifstream theFile (XML_ARM_GESTURE_FILE_PATH);
     vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
     buffer.push_back('\0');
 
@@ -20,19 +20,17 @@ RNGesturesTask::RNGesturesTask(const GeneralController* gn, SerialPort* maestroC
     root_node = doc.first_node(XML_STATIC_GESTURES_STR);
 
      for (xml_node<> * Gesto_node = root_node->first_node(XML_ELEMENT_GESTURE_STR); Gesto_node; Gesto_node = Gesto_node->next_sibling()){
-        Gesture* gesture = new Gesture();
+        ArmGesture* gesture = new ArmGesture();
         gesture->setName(std::string(Gesto_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value()));
         gesture->setId(std::string(Gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
         gesture->setType(std::string(Gesto_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value()));
 
 
         for(xml_node<> * Motor_node = Gesto_node -> first_node(XML_ELEMENT_MOTOR_STR); Motor_node; Motor_node = Motor_node->next_sibling()){ //we store all the variables for the motors in a matrix of strings
-       		Motor* motor = new Motor();
-            motor->setCardId(std::string(Motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value()));
+       		ArmMotor* motor = new ArmMotor();
             motor->setId(std::string(Motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
-            motor->setPos(std::string(Motor_node->first_attribute(XML_ATTRIBUTE_POSITION_STR)->value()));
-            motor->setSpeed(std::string(Motor_node->first_attribute(XML_ATTRIBUTE_SPEED_STR)->value()));
-            motor->setAcceleration(std::string(Motor_node->first_attribute(XML_ATTRIBUTE_ACCELERATION_STR)->value()));
+            motor->setDegrees(std::string(Motor_node->first_attribute(XML_ATTRIBUTE_DEGREES_STR)->value()));
+            motor->setDevice(std::string(Motor_node->first_attribute(XML_ATTRIBUTE_DEVICE_STR)->value()));
             gesture->addMotor(motor);
         }
         gestures->push_back(gesture);
@@ -40,7 +38,7 @@ RNGesturesTask::RNGesturesTask(const GeneralController* gn, SerialPort* maestroC
     theFile.close();
 }
 
-RNGesturesTask::~RNGesturesTask(){
+RNArmTask::~RNArmTask(){
 	for (int i = 0; i <  gestures->size(); i++){
         delete  gestures->at(i);
     }
@@ -48,9 +46,9 @@ RNGesturesTask::~RNGesturesTask(){
     delete gestures;
 }
 
-void RNGesturesTask::task(){
+void RNArmTask::task(){
 	// Iterate over the gestures
-	if(this->gestureId != ""){
+	/*if(this->gestureId != ""){
 		std::ostringstream bufferOut_str;
 		for (int i = 0; i < gestures->size(); i++){
 	       if(gestureId == gestures->at(i)->getId()){ //compares if the name of the gesture is the one we are looking for
@@ -94,16 +92,16 @@ void RNGesturesTask::task(){
 	        }
 	    }
 	    this->gestureId = "";
-	}
+	}*/
 	    
 
 }
 
-void RNGesturesTask::setGesture(std::string gestureId){
+void RNArmTask::setGesture(std::string gestureId){
     this->gestureId = gestureId;
 }
 
-void RNGesturesTask::getGestures(int type, std::string& jsonResponse){
+void RNArmTask::getGestures(int type, std::string& jsonResponse){
 
 	std::ostringstream bufferOut_str;
 	bufferOut_str.clear();
@@ -117,6 +115,6 @@ void RNGesturesTask::getGestures(int type, std::string& jsonResponse){
 }
 
 
-void RNGesturesTask::onKilled(){
+void RNArmTask::onKilled(){
 	
 }

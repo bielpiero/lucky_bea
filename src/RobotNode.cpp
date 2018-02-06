@@ -395,11 +395,13 @@ void RobotNode::setIncrementPosition(double deltaDistance, double deltaDegrees){
 
 void RobotNode::getIncrementPosition(double* deltaDistance, double* deltaDegrees){
     if(deltaDistance != NULL and deltaDegrees != NULL){
+        robot->lock();
         double currentDistance = robot->getOdometerDistance();
         double currentRads = RNUtils::deg2Rad(robot->getOdometerDegrees());
 
         double currentVel = robot->getVel();
         double currentRotVel = robot->getRotVel();
+        robot->unlock();
     
         //RNUtils::printLn("odometer: {d: %lf, th: %lf}, vel: {lin: %lf, rot: %lf}", currentDistance, currentRads, robot->getVel(), robot->getRotVel());
 
@@ -419,10 +421,12 @@ void RobotNode::getIncrementPosition(double* deltaDistance, double* deltaDegrees
         }
 
         if(currentRotVel < 0){
-            if(this->deltaDegrees > 0){
-                this->deltaDegrees *= -1.0;    
-            }
+            this->deltaDegrees = -currentRads + prevRads;
+            //if(this->deltaDegrees > 0){
+                //this->deltaDegrees *= -1.0;
+            //}
         }
+        
         prevVel = currentVel;
         prevRotVel = currentRotVel;
         prevDistance = currentDistance;
@@ -432,6 +436,9 @@ void RobotNode::getIncrementPosition(double* deltaDistance, double* deltaDegrees
         *deltaDegrees = this->deltaDegrees;
         *deltaDistance = this->deltaDistance/1.0e3;
         pthread_mutex_unlock(&mutexIncrements);
+        robot->lock();
+        robot->resetTripOdometer();
+        robot->unlock();
     }
 }
 
