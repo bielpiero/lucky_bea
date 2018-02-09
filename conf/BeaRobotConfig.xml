@@ -3,23 +3,23 @@
 		<initial-position>
 			<x-zone x1="-20" x2="-15" x3="15" x4="20"/> <!-- centimeters -->
 			<y-zone x1="-20" x2="-15" x3="15" x4="20"/> <!-- centimeters -->
-			<th-zone x1="-0.0698" x2="-0.05236" x3="0.05236" x4="0.0698"/> <!-- radians -->
+			<th-zone x1="-0.08" x2="-0.05" x3="0.05" x4="0.08"/> <!-- radians -->
 		</initial-position>
 		<process-noise>
-			<d-zone x1="-10" x2="-7" x3="7" x4="10"/> <!-- centimeters -->
+			<d-zone x1="-15" x2="-10" x3="10" x4="17"/> <!-- centimeters -->
 			<th-zone x1="-0.017" x2="-0.014" x3="0.014" x4="0.017"/> <!-- radians -->
 		</process-noise>
 		<sensors>
-			<sensor type="laser" activated="1">
+			<sensor type="laser" activated="0">
 				<observation-noise>
 					<d-zone x1="-15" x2="-10" x3="10" x4="15"/>  <!-- centimeters -->
 					<th-zone x1="-0.02" x2="-0.015" x3="0.015" x4="0.02"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
-			<sensor type="camera" activated="0">
+			<sensor type="camera" activated="1">
 				<observation-noise>
-					<d-zone x1="-25" x2="-20" x3="20" x4="25"/>  <!-- centimeters -->
-					<th-zone x1="-0.005" x2="-0.002" x3="0.002" x4="0.005"/> <!-- radians -->
+					<d-zone x1="-5" x2="-3" x3="3" x4="5"/>  <!-- centimeters -->
+					<th-zone x1="-0.015" x2="-0.012" x3="0.012" x4="0.015"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
 			<sensor type="rfid" activated="0">

@@ -1,5 +1,4 @@
 #include "UDPServer.h"
-#include <iostream>
 
 UDPServer::UDPServer(int port){
 	init(port);
@@ -9,7 +8,7 @@ void UDPServer::init(int port){
 	thread_status=0;
 	socket_server = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (socket_server == INVALID_SOCKET){
-		error("Server: Error Socket");
+		error("Server: Error Socket UDP");
 		return;
 	}
 	int optval = 1;
@@ -20,7 +19,7 @@ void UDPServer::init(int port){
 	socket_local_address.sin_port = htons(port);
 	int err = bind(socket_server, (struct sockaddr*)&socket_local_address, sizeof(socket_local_address));
 	if(err < 0){
-		error("Binding ERROR");
+		error("Binding UDP ERROR");
 		return;
 	}
 	pthread_mutex_init(&clientsMutex, NULL);
@@ -30,13 +29,13 @@ UDPServer::~UDPServer(){
 	pthread_mutex_destroy(&clientsMutex);
 }
 
-int UDPServer::sendData(const unsigned char* buffer, int length){
+int UDPServer::sendData(const unsigned char* buffer, unsigned int length){
 	pthread_mutex_lock(&clientsMutex);
 	for(int i = 0; i < clients.size(); i++){
 		struct sockaddr_in address = clients.at(i);
 		long err = sendto(socket_server, buffer, length, 0, (struct sockaddr*)&address, sizeof(address));
 		if(err < 0){
-			perror("send");
+			perror("sendTo-UDP");
 			//error("Sending Data Error");
 			return -1;
 		}
@@ -45,13 +44,13 @@ int UDPServer::sendData(const unsigned char* buffer, int length){
 	return 0;
 }
 
-int UDPServer::receiveData(unsigned char* buffer, int& size){
+int UDPServer::receiveData(unsigned char* buffer, unsigned int& size){
 	int result = 0;
 	struct sockaddr_in incommingAddress;
 	unsigned int sourceSize = sizeof(incommingAddress);
 	long err = recvfrom(socket_server, buffer, size, 0, (struct sockaddr *) &incommingAddress, &sourceSize);
 	if(err < 0){
-		error("Receiving Data Error");
+		error("recvFrom-UDP");
 		result = -1;
 	}
 	if(memcmp(buffer, "HELLO", size) == 0){
@@ -60,8 +59,6 @@ int UDPServer::receiveData(unsigned char* buffer, int& size){
 		
 	} else if(memcmp(buffer, "BYBYE", size) == 0){
 		processByBye(incommingAddress);
-	} else {
-		result = -1;
 	}
 	size = (int)err;
 	return result;
@@ -113,8 +110,8 @@ void* UDPServer::launchThread(void* p){
 	UDPServer* self = (UDPServer*)p;
 	self->thread_status=1;
 	while(self->thread_status==1){
-		unsigned char* msg = new unsigned char[5];
-		int l = 5;
+		unsigned char* msg = new unsigned char[BUFFER_SIZE];
+		unsigned int l = BUFFER_SIZE;
 		
 		self->receiveData(msg, l);
 		RNUtils::sleep(10);

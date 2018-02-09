@@ -27,7 +27,7 @@ UDPClient::~UDPClient(){
     sendData(bufferOut, 5);
 }
 
-int UDPClient::sendData(const unsigned char* buffer, int length){
+int UDPClient::sendData(const unsigned char* buffer, unsigned int length){
 	long err = sendto(socket_conn, buffer, length, 0, (struct sockaddr*)&socket_dest_address, sizeof(socket_dest_address));
 	if(err < 0){
 		perror("send");
@@ -37,7 +37,7 @@ int UDPClient::sendData(const unsigned char* buffer, int length){
 	return 0;
 }
 
-int UDPClient::receiveData(unsigned char* buffer, int* size){
+int UDPClient::receiveData(unsigned char* buffer, unsigned int* size){
 	struct sockaddr_in source;
 	unsigned int sourceSize = sizeof(source);
 	long err = recvfrom(socket_conn, buffer, *size, 0, (struct sockaddr*)&source, &sourceSize);
@@ -62,7 +62,7 @@ void* UDPClient::launchThread(void* p)
 	while(node->thread_status==1)
 	{
 		unsigned char* msg = new unsigned char[BUFFER_SIZE];
-		int l=BUFFER_SIZE;
+		unsigned int l=BUFFER_SIZE;
 		if(0==node->receiveData(msg, &l))
 		{
 			node->OnMessageReceivedWithData(msg,l);

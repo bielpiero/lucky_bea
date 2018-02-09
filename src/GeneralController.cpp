@@ -553,7 +553,12 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			getMapId(cad, mapId);
 			getMapConnection(mapId, mapInformation);
 			sendMsg(socketIndex, 0x23, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
-			break;	
+			break;
+		case 0x24: //temporal incoming
+			lockVisualLandmarks();
+			visualLandmarks->initializeFromString(cad);
+			unlockVisualLandmarks();
+			break;
 		case 0x30:
 			if(granted){
 				if(localization != NULL){
@@ -963,88 +968,6 @@ void GeneralController::removeGesture(std::string face_id){
 	}
 	
 }
-
-/*void GeneralController::setGesture(std::string face_id, std::string& servo_positions){
-    xml_document<> doc;
-    xml_node<>* root_node;
-	
-	std::string buffer_str = "";
-	std::ostringstream bufferOut_str;
-	
-    std::ifstream the_file(xmlFaceFullPath.c_str());
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);
-	stopDynamicGesture();
-	root_node = doc.first_node(XML_STATIC_GESTURES_STR);
-	if(root_node != NULL){
-		for (xml_node<> * gesto_node = root_node->first_node(XML_ELEMENT_GESTURE_STR); gesto_node; gesto_node = gesto_node->next_sibling()){
-
-			std::string id(gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-
-			std::string tipo(gesto_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value());
-			
-			if (face_id == id){
-				int currentCardId = RN_NONE;
-				std::string nombre(gesto_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-
-				bufferOut_str << "{\"Gesture\":\"" << nombre << "\",\"Id\":\"" << id << "\",\"Cards\":[";
-
-				for(xml_node<> * motor_node = gesto_node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling()){
-					unsigned char card_id = (unsigned char)atoi(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value());
-					unsigned char servo_id = (unsigned char)atoi(motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-					int position = atoi(motor_node->first_attribute(XML_ATTRIBUTE_POSITION_STR)->value());
-					int speed = atoi(motor_node->first_attribute(XML_ATTRIBUTE_SPEED_STR)->value());
-					int acceleration = atoi(motor_node->first_attribute(XML_ATTRIBUTE_ACCELERATION_STR)->value());
-
-					if(currentCardId != RN_NONE){
-						if(currentCardId != card_id){
-							currentCardId = card_id;
-							bufferOut_str << "]},{\"CardId\":\"" << (int)card_id << "\",\"Motors\":[";
-						}
-					} else {
-						if(currentCardId != card_id){
-							currentCardId = card_id;
-							bufferOut_str << "{\"CardId\":\"" << (int)card_id << "\",\"Motors\":[";
-						}
-					}
-					bufferOut_str << "{\"MotorId\":\"" << (int)servo_id << "\",\"Position\":\"" << position << "\"}";
-					if(motor_node->next_sibling() != NULL){
-						unsigned char card_id_next = (unsigned char)atoi(motor_node->next_sibling()->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value());
-						if(card_id_next == card_id){
-							bufferOut_str << ",";	
-						}
-						
-					}
-
-					//setServoPosition(card_id, servo_id, position);
-					//setServoSpeed(card_id, servo_id, speed);
-					//setServoAcceleration(card_id, servo_id, acceleration);
-				}	
-				
-
-				if(tipo == "1"){
-					RNUtils::printLn("This is a dynamic face");
-					dynamic_face_info *data = new dynamic_face_info;
-					data->object = this;
-					data->id_gesto = face_id;
-					
-					pthread_t t1;
-					continue_dynamic_thread = true;
-					
-					pthread_create(&t1, NULL, GeneralController::dynamicFaceThread, (void *)(data));
-				}
-			}
-		}
-	}
-	the_file.close();
-	servo_positions = bufferOut_str.str();
-	if(virtualFace != NULL){
-		virtualFace->sendBytes((unsigned char*)servo_positions.c_str(), servo_positions.length());	
-	}
-	
-}*/
 
 void GeneralController::setServoPosition(unsigned char card_id, unsigned char servo_id, int position){
     this->maestroControllers->setTarget(card_id, servo_id, position);
@@ -2638,12 +2561,9 @@ int GeneralController::initializeKalmanVariables(){
 				
 				this->laserDistanceVariance = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
 				this->laserAngleVariance = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
-				//laserUX = 0.1355e-3;      //forced meanwhile
-				//laserUTh = 0.3206e-3;
 				RNUtils::printLn("Laser {ux: %f m^2, uth:%f rads^2}", this->laserDistanceVariance, this->laserAngleVariance);
 
 			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
-				
 				this->cameraDistanceVariance = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
 				this->cameraAngleVariance = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
 				RNUtils::printLn("Camara {ux: %f m^2, uth:%f rads^2}", this->cameraDistanceVariance, this->cameraAngleVariance);
@@ -2667,8 +2587,33 @@ int GeneralController::initializeKalmanVariables(){
 		if(rfidSensorActivated){
 			totalLandmarks += rfidLandmarksCount;
 		}
+		int sizeR = (laserSensorActivated ? 2 * laserLandmarksCount : 0) + (cameraSensorActivated ? cameraLandmarksCount : 0);
+		R = Matrix(sizeR, sizeR);
+		int laserIndex = 0, cameraIndex = 0;
+
+		if(laserSensorActivated){
+			cameraIndex = 2 * laserLandmarksCount;
+		}
+
+		for(int i = 0; i < currentSector->landmarksSize(); i++){
+			if(laserSensorActivated){
+				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
+					R(2 * laserIndex, 2 * laserIndex) = this->laserDistanceVariance;
+					R(2 * laserIndex + 1, 2 * laserIndex + 1) = this->laserAngleVariance;
+					laserIndex++;
+				}
+			}
+
+			if(cameraSensorActivated){
+				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
+					R(cameraIndex, cameraIndex) = this->cameraAngleVariance;
+					cameraIndex++;
+				}
+			}
+		}
  		
-		R = Matrix(2 * totalLandmarks, 2 * totalLandmarks);
+		/*R = Matrix(2 * totalLandmarks, 2 * totalLandmarks);
+		
 		int laserIndex = 0, cameraIndex = 0, rfidIndex = 0;
 		if(laserSensorActivated){
 			cameraIndex += laserLandmarksCount;
@@ -2702,7 +2647,7 @@ int GeneralController::initializeKalmanVariables(){
 					rfidIndex++;
 				}
 			}
-		}
+		}*/
 		kalmanFuzzy->clear();
 		kalmanFuzzy->push_back(xxKK);
 		kalmanFuzzy->push_back(xyKK);

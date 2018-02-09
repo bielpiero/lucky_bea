@@ -32,6 +32,7 @@
 #include "Matrix.h"
 #include "stats.h"
 #include "Aria.h"
+#include "dynamixel_sdk.h"
 
 #define RN_DEFAULT_PORT "/dev/ttyS0"
 

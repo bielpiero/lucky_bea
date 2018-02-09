@@ -17,12 +17,12 @@ public:
 	RNSocketClient();
 	virtual ~RNSocketClient();
 
-	void init(const char* address, int port);
+	void init(const char* address, int portTCP, int portUDP = RN_NONE);
 
 	void startThread();
 	void handleConnection();
 	int isConnected();
-
+	int sendMsg(const char opr, unsigned char *cad, unsigned long long length);
 	int sendBytes(unsigned char *cad, unsigned long long int length);
 	int receiveBytes(unsigned char* cad, unsigned long long int& length, int timeout);
 	int closeConnection();
@@ -31,9 +31,11 @@ private:
 	unsigned char Buffer_out[RN_BUFFER_SIZE];
 
 	int thread_status;
+    int portTCP;
+    int portUDP;
 	TCPSocketClient* socketConn;
 	pthread_t socketsThread;
-
+    char* ipAddress;
 	struct sockaddr_in socket_address, socket_server_address;
 protected:
 	virtual void onConnection() = 0;//callback for client and server

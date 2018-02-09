@@ -1,5 +1,5 @@
-#ifndef UDP_CLIENT_H
-#define UDP_CLIENT_H
+#ifndef UDP_SERVER_H
+#define UDP_SERVER_H
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -31,8 +31,8 @@ public:
 
 	virtual ~UDPServer();	
 	void closeConnection();
-	int sendData(const unsigned char* cad, int length);
-	int receiveData(unsigned char* cad, int &size);		
+	int sendData(const unsigned char* cad, unsigned int length);
+	int receiveData(unsigned char* cad, unsigned int &size);		
 	
 	void getClientIPAndPort(struct sockaddr_in client, char* ip, unsigned int& port);
 	void startThread();//launch a 10 ms thread loop over the following actions

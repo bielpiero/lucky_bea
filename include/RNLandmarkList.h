@@ -73,6 +73,18 @@ public:
 		landmarks->clear();
 	}
 
+	void initializeFromString(char* landmarksString){
+
+		clear();
+		std::vector<std::string> values = RNUtils::split(landmarksString, "|");
+		for(int i = 0; i < values.size(); i++){
+			RNLandmark* l = RNLandmark::initializeFromString((char*)values.at(i).c_str());
+			if(l != NULL){
+				landmarks->push_back(l);
+			}
+		}
+	}
+
 	const char* toString() const{
 		std::ostringstream print_str;
 		print_str.str("");

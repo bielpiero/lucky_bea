@@ -59,7 +59,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 			distanceLocal = currPose->findDistanceTo(this->goal);
 	    	deltaThetaLocal = ArMath::subAngle(currPose->findAngleTo(this->goal), currPose->getTh());
 	    }
-    	//RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
+    	RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
     	delete currPose;
 		/*if(rn->isLaserReady() and (distanceLocal > minimumDistance)){
 			LaserScan* laserData = rn->getLaserScan();

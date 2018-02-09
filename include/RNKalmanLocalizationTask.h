@@ -2,6 +2,7 @@
 #define RN_KALMAN_LOCALIZATION_TASK_H
 
 #include "RNLocalizationTask.h"
+//#include "UDPServer.h"
 
 #define STATE_VARIABLES 3
 
@@ -35,6 +36,7 @@ private:
 	double rfidTMAngle;
 
 	bool enableLocalization;
+	//UDPServer* receiver;
 
 	std::FILE* test;
 	Matrix xk;		// current position

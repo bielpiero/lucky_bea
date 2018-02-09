@@ -66,6 +66,23 @@ public:
 		return tuple;
 	}
 
+	static RNLandmark* initializeFromString(char* landmarksString){
+		RNLandmark* l = new RNLandmark();
+		std::vector<std::string> values = RNUtils::split(landmarksString, ",");
+		if(values.size() >4){
+			l->mapId = std::atoi(values.at(0).c_str());
+			l->sectorId = std::atoi(values.at(1).c_str());
+			l->markerId = std::atoi(values.at(2).c_str());
+			l->setPointsXMean(std::atof(values.at(3).c_str()));
+			l->setPointsYMean(std::atof(values.at(4).c_str()));
+		} else {
+			delete l;
+			l = NULL;
+		}
+		return l;
+		
+	}
+
 	std::pair<std::string, double>* getExtraParameterAt(int index){
 		return index > RN_NONE and index < extras->size() ? extras->at(index) : NULL;
 	}
