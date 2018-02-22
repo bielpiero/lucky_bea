@@ -22,6 +22,7 @@ private:
 	ArRobotConnector *connector;
     ArArgumentParser *argparser;
     RNActionGoto *gotoPoseAction;
+    ArKeyHandler *keyHandler;
     ArRobot *robot;
     ArPose *myPose;
     ArPose *altPose;
@@ -31,6 +32,11 @@ private:
     ArFunctorC<RobotNode> connFailCB;
     ArFunctorC<RobotNode> disconnectedCB;
     ArFunctorC<RobotNode> connLostCB;
+    ArFunctor2C<RobotNode, double, double> upCB;
+    ArFunctor2C<RobotNode, double, double> downCB;
+    ArFunctor2C<RobotNode, double, double> rightCB;
+    ArFunctor2C<RobotNode, double, double> leftCB;
+    ArFunctor2C<RobotNode, double, double> spaceCB;
 
     double maxTransVel;
     double maxAbsoluteTransVel;

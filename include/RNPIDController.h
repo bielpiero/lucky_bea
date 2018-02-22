@@ -1,50 +1,65 @@
 #ifndef RN_PID_CONTROLLER_H
 #define RN_PID_CONTROLLER_H
 
-#include <string.h>
-#include <limits>
-#include <cmath>
+#include "RNUtils.h"
 
 class RNPIDController{
 public:
-	RNPIDController(const char* name = "", double setPoint = 0, double samplingTime = 100, double kp = 1, double ti = 0, double td = 0);
+	RNPIDController(const char* name = "", float sp = 0, float samplingTime = 100, float kp = 1, float ti = 0, float td = 0, float comp = 1, float lowerSaturation = -std::numeric_limits<float>::infinity(), float upperSaturation = std::numeric_limits<float>::infinity());
 	~RNPIDController();
 
-	double getSystemInput(int measure);
+	int getSystemInput(float measure, float* output);
 
-	double getProportionalGain(void);
-	void setProportionalGain(double kp);
+	float getProportionalGain(void);
+	void setProportionalGain(float kp);
 
-	double getIntegrationTime(void);
-	void setIntegrationTime(double ti);
+	float getIntegrationTime(void);
+	void setIntegrationTime(float ti);
 
-	double getDerivativeTime(void);
-	void setDerivativeTime(double td);
+	float getDerivativeTime(void);
+	void setDerivativeTime(float td);
 
-	double getSamplingTime(void);
-	void setSamplingTime(double time);
+	float getSamplingTime(void);
+	void setSamplingTime(float time);
 
-	double getTarget(void);
-	void setTarget(double target);
+	float getDerivativeFilter(void);
+	void setDerivativeFilter(float comp);
 
-	double getLastInput(void);
+	float getLowerSaturationLimit(void);
+	void setLowerSaturationLimit(float saturation);
+
+	float getUpperSaturationLimit(void);
+	void setUpperSaturationLimit(float saturation);
+
+	float getError(void);
+
+	float getTarget(void);
+	void setTarget(float target);
+
+	float getLastInput(void);
 	void reset(void);
 
 private:
-	char* name;
-	double kp;
-	double ti;
-	double td;
+	std::string name;
+	int iteration;
+	float kp;
+	float ti;
+	float td;
+	float comp;
+
+	float lowerSaturation;
+	float upperSaturation;
 
 	bool firstIteration;
 
-	double setPoint;
+	float sp;
 
-	double samplingTime;
-	double lastInput;
-	double lastError;
-	double pastLastError;
-	double currentError;
+	float ts;
+	float uk_1;
+	float ek_1;
+	float ek_2;
+	float ek;
+
 };
 
 #endif

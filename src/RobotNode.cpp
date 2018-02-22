@@ -38,6 +38,24 @@ RobotNode::RobotNode(const char* port){
     disconnectedCB = ArFunctorC<RobotNode>(this, &RobotNode::disconnected);
     connLostCB = ArFunctorC<RobotNode>(this, &RobotNode::connectionLost);
 
+    keyHandler = Aria::getKeyHandler();
+    if (not keyHandler){
+        keyHandler = new ArKeyHandler;
+        Aria::setKeyHandler(keyHandler);
+        robot->attachKeyHandler(keyHandler);
+    }
+    upCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.10, 0.0);
+    downCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, -0.10, -0.0);
+    leftCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.0, 0.05);
+    rightCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.0, -0.05);
+    spaceCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.0, 0.0);
+
+    keyHandler->addKeyHandler(ArKeyHandler::UP, &upCB);
+    keyHandler->addKeyHandler(ArKeyHandler::DOWN, &downCB);
+    keyHandler->addKeyHandler(ArKeyHandler::RIGHT, &rightCB);
+    keyHandler->addKeyHandler(ArKeyHandler::LEFT, &leftCB);
+    keyHandler->addKeyHandler(ArKeyHandler::SPACE, &spaceCB);
+
     robot->addConnectCB(&connectedCB, ArListPos::FIRST);
     robot->addFailedConnectCB(&connFailCB, ArListPos::FIRST);
     robot->addDisconnectNormallyCB(&disconnectedCB, ArListPos::FIRST);
@@ -73,6 +91,7 @@ RobotNode::RobotNode(const char* port){
 
     printf("Connection Timeout: %d\n", robot->getConnectionTimeoutTime());
     printf("TicksMM: %d, DriftFactor: %d, RevCount: %d\n", getTicksMM(), getDriftFactor(), getRevCount());
+    printf("RotKp: %d, RotKi: %d, RotKd: %d, TransKp: %d, TransKi: %d, TransKd: %d\n", robot->getOrigRobotConfig()->getRotKP(), robot->getOrigRobotConfig()->getRotKI(), robot->getOrigRobotConfig()->getRotKV(), robot->getOrigRobotConfig()->getTransKP(), robot->getOrigRobotConfig()->getTransKI(), robot->getOrigRobotConfig()->getTransKV());
     printf("DiffConvFactor: %f, DistConvFactor: %f, VelocityConvFactor: %f, AngleConvFactor: %f\n", getDiffConvFactor(), getDistConvFactor(), getVelConvFactor(), getAngleConvFactor());
 
 }
@@ -210,7 +229,7 @@ void RobotNode::moveAtSpeed(double linearVelocity, double angularVelocity){
         if(linearVelocity > 0.0){
             goingForward = true;
         }
-        RNUtils::printLn("{LinVel: %f, AngVel: %f}\n", linearVelocity, angularVelocity);
+        RNUtils::printLn("{LinVel: %f, AngVel: %f}", linearVelocity, angularVelocity);
         robot->setVel(linearVelocity*1e3);
 
         robot->setRotVel(angularVelocity*180/M_PI);

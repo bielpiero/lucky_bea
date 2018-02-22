@@ -23,7 +23,7 @@ const double AntennaData::TX_POWER_INDEX_MULTIPLIER = 0.25;
 
 GeneralController::GeneralController(const char* port):RobotNode(port){
 	
-	//this->maestroControllers = new SerialPort();
+	this->maestroControllers = new SerialPort();
 	tokenRequester = RN_NONE;
 	this->setTokenOwner(RN_NONE);
 
@@ -79,7 +79,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	
 	tasks = new RNRecurrentTaskMap(this);
 
-	laserTask = new RNLaserTask(this);
+	//laserTask = new RNLaserTask(this);
 	omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
 	//globalLocalization = new RNGlobalLocalizationTask(this);
 	//dialogs = new RNDialogsTask(this, ttsLipSync);
@@ -97,10 +97,10 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	////Tasks added:
 	//tasks->addTask(globalLocalization);
-	tasks->addTask(laserTask);
+	//tasks->addTask(laserTask);
 	tasks->addTask(omnidirectionalTask);
 	//tasks->addTask(dialogs);
-	tasks->addTask(armGestures);
+	//tasks->addTask(armGestures);
 	tasks->addTask(gestures);
 	//tasks->addTask(emotions);
 	tasks->addTask(localization);
@@ -244,10 +244,13 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 	int videoDevice = 0;
 	int videoTxPort = 0;
 	int indexAssigned = 0;
+	int idArmMotor;
+	int angleArmMotor;
+	std::vector<uint16_t> allMotors;
 	double x, y, theta;
 
 	bool granted = isPermissionNeeded(function) && (socketIndex == getTokenOwner());
-	RNUtils::printLn("Function: 0x%x (%d) executed from: %s", function, function, getClientIPAddress(socketIndex));
+	//RNUtils::printLn("Function: 0x%x (%d) executed from: %s", function, function, getClientIPAddress(socketIndex));
 	switch (function){
 		case 0x00:
 			RNUtils::printLn("Command 0x00. Static Faces Requested");
@@ -577,6 +580,39 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x31:
 			
 			break;
+		//arm functions
+		case 0x40:
+			if(granted){
+				if(armGestures){
+					armGestures->setGesture(cad);
+				}
+			} else {
+				RNUtils::printLn("Command 0x40. Preset arm movement denied to ", getClientIPAddress(socketIndex));
+				sendMsg(socketIndex, 0x40, (char*)jsonSectorNotLoadedError.c_str(), (unsigned int)jsonSectorNotLoadedError.length());
+			}
+			break;
+		case 0x41:
+			if(granted){
+				getArmSingleMotorInfo(cad, idArmMotor, angleArmMotor);
+				if(armGestures){
+					armGestures->moveSingleMotor(idArmMotor, angleArmMotor);
+				}
+			} else {
+				RNUtils::printLn("Command 0x41. Single arm motor movement denied to ", getClientIPAddress(socketIndex));
+				sendMsg(socketIndex, 0x41, (char*)jsonSectorNotLoadedError.c_str(), (unsigned int)jsonSectorNotLoadedError.length());
+			}
+			break;
+		case 0x42:
+			if(granted){
+				getArmAllMotorsInfo(cad, allMotors);
+				if(armGestures){
+					armGestures->moveAllMotors(allMotors);
+				}
+			} else {
+				RNUtils::printLn("Command 0x42. Bulk motor movement denied to ", getClientIPAddress(socketIndex));
+				sendMsg(socketIndex, 0x42, (char*)jsonSectorNotLoadedError.c_str(), (unsigned int)jsonSectorNotLoadedError.length());
+			}
+			break;
 		case 0x7C:
 			requestRobotControl(socketIndex);
 			break;
@@ -711,6 +747,33 @@ void GeneralController::getMapSectorId(char* cad, int& mapId, int& sectorId){
 	}
 	mapId = values[0];
 	sectorId = values[1];
+	delete current_number;
+}
+
+void GeneralController::getArmSingleMotorInfo(char* cad, int& id, int& angle){
+	char* current_number;
+	int values[2] = { -1, -1 };
+	int index = 0;
+	current_number = std::strtok(cad, ",");
+	//
+	while(current_number != NULL){
+		values[index++] = std::atoi(current_number);
+		current_number = std::strtok(NULL, ",");
+	}
+	id = values[0];
+	angle = values[1];
+	delete current_number;
+}
+
+void GeneralController::getArmAllMotorsInfo(char* cad, std::vector<uint16_t>& motors){
+	char* current_number;
+	motors.clear();
+	int index = 0;
+	current_number = std::strtok(cad, ",");
+	while(current_number != NULL){
+		motors.push_back((uint16_t)std::atoi(current_number));
+		current_number = std::strtok(NULL, ",");
+	}
 	delete current_number;
 }
 

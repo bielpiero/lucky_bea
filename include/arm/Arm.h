@@ -178,65 +178,65 @@ public:
 };
 
 class Arm{
-	private:
-		dynamixel::PortHandler *portHandler;
-		dynamixel::PacketHandler *packetHandler;
-		SerialPort* handController;
+private:
+	dynamixel::PortHandler *portHandler;
+	dynamixel::PacketHandler *packetHandler;
+	SerialPort* handController;
 
-        std::vector<DynamixelMotor*>* vect_brazo;
-        Hand* hand;
-        int* goalPositionSteps1;
-        int* goalPositionSteps2;
-        int* goalPositionAngle1;
-        int* goalPositionAngle2;
+    std::vector<DynamixelMotor*>* vect_brazo;
+    Hand* hand;
+    int* goalPositionSteps1;
+    int* goalPositionSteps2;
+    int* goalPositionAngle1;
+    int* goalPositionAngle2;
 
-        int* handGoalPositAngle1;
-        int* handGoalPositAngle2;
-        int* handGoalPositSteps1;
-        int* handGoalPositSteps2;
+    int* handGoalPositAngle1;
+    int* handGoalPositAngle2;
+    int* handGoalPositSteps1;
+    int* handGoalPositSteps2;
 
-        int* speedArray;
+    int* speedArray;
+    bool toInitialPosit;
+	
+private:
+	void setGoalPositionKeyboard(std::vector<uint16_t> positions);
+	bool setGoalPosition(ArmGesture* gesture);
+	void setBasicSpeedArray();
+	void setTorque(int );
+	void setArmToZero();
+	void setToZero();
+	void setSpeedSameTime(int* value);
+	void waitFinishMove();
+	void setArmLimites();
+	bool checkNoChoque(int, int);
+	//bool checkNoChoque(int *);
+	void armEmergencyStop();
+	void emergencyStop();
+	
+	void armRead1Byte(uint16_t address); 
+	void armRead2Bytes(uint16_t address); 
+	void armWrite1Byte(uint16_t address,uint8_t value); 
+	void armWrite2Bytes(uint16_t address,uint16_t value); 
 
-        bool toInitialPosit;
-		
-	public:
-		Arm(SerialPort* handController, std::string deviceName, float protocolVersion);
-		virtual ~Arm();
-		
-		bool openPort(); 
-		bool setPortBaudrate(const unsigned int baud); 
-		void closePort(); 
+	bool armSyncWrite1Byte(uint16_t address, int value); 
+	bool armSyncWrite2Bytes(uint16_t address, int* value); 
+	bool armBulkRead(uint16_t address, uint8_t lenght);
 
-		void init(); 
-		void shutdown(); 
-		void setGoalPositionKeyboard(std::vector<uint16_t> positions);
-		bool setGoalPosition(ArmGesture* gesture);
-		void setBasicSpeedArray();
-		void setTorque(int );
-		void setArmToZero();
-		void setToZero();
-		void setSpeedSameTime(int* value);
-		void waitFinishMove();
-		void setArmLimites();
-		bool checkNoChoque(int, int);
-		//bool checkNoChoque(int *);
-		void armEmergencyStop();
-		void emergencyStop();
-		
-		void armRead1Byte(uint16_t address); 
-		void armRead2Bytes(uint16_t address); 
-		void armWrite1Byte(uint16_t address,uint8_t value); 
-		void armWrite2Bytes(uint16_t address,uint16_t value); 
+public:
+    Arm(SerialPort* handController, std::string deviceName, float protocolVersion);
+    virtual ~Arm();
+    
+    bool openPort(); 
+    bool setPortBaudrate(const unsigned int baud); 
+    void closePort(); 
 
-		bool armSyncWrite1Byte(uint16_t address, int value); 
-		bool armSyncWrite2Bytes(uint16_t address, int* value); 
-		bool armBulkRead(uint16_t address, uint8_t lenght);
-
-		void easyMovPredef(int);
-		void predifinedMovement(ArmGesture* gesture);
-		void bulkControl(std::vector<uint16_t> positions);
-		void singleMotor(int id, uint16_t angle);
-		void moveHand(int*);
-		void PPT();
+    void init(); 
+    void shutdown(); 
+	void easyMovPredef(int);
+	void predifinedMovement(ArmGesture* gesture);
+	void bulkControl(std::vector<uint16_t> positions);
+	void singleMotor(int id, uint16_t angle);
+	void moveHand(int*);
+	void PPT();
 };
 #endif

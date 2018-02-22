@@ -6,8 +6,8 @@
 			<th-zone x1="-0.08" x2="-0.05" x3="0.05" x4="0.08"/> <!-- radians -->
 		</initial-position>
 		<process-noise>
-			<d-zone x1="-15" x2="-10" x3="10" x4="17"/> <!-- centimeters -->
-			<th-zone x1="-0.017" x2="-0.014" x3="0.014" x4="0.017"/> <!-- radians -->
+			<d-zone x1="-5" x2="-3" x3="3" x4="5"/> <!-- centimeters -->
+			<th-zone x1="-0.02" x2="-0.006" x3="0.006" x4="0.02"/> <!-- radians -->
 		</process-noise>
 		<sensors>
 			<sensor type="laser" activated="0">
@@ -19,7 +19,7 @@
 			<sensor type="camera" activated="1">
 				<observation-noise>
 					<d-zone x1="-5" x2="-3" x3="3" x4="5"/>  <!-- centimeters -->
-					<th-zone x1="-0.015" x2="-0.012" x3="0.012" x4="0.015"/> <!-- radians -->
+					<th-zone x1="-0.008" x2="-0.005" x3="0.005" x4="0.008"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
 			<sensor type="rfid" activated="0">
@@ -65,6 +65,9 @@
 		<permission function="0x23" token-required="0"/>
 		<permission function="0x30" token-required="1"/>
 		<permission function="0x31" token-required="0"/>
+		<permission function="0x40" token-required="1"/>
+		<permission function="0x41" token-required="1"/>
+		<permission function="0x42" token-required="1"/>
 		<permission function="0x7C" token-required="0"/>
 		<permission function="0x7D" token-required="1"/>
 		<permission function="0x7E" token-required="1"/>

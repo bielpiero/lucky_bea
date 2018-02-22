@@ -294,4 +294,28 @@
 			<Motor device="hand" id="8" degrees="45"/>
 		</state>
 	</Gesto>
+	<Gesto name="Ven" id="19" type="1">
+		<state id="0">
+			<Motor device="arm" id="0" degrees="20"/>
+			<Motor device="arm" id="1" degrees="30"/>
+			<Motor device="arm" id="2" degrees="80"/>
+			<Motor device="arm" id="3" degrees="130"/>
+			<Motor device="arm" id="4" degrees="150"/>
+			<Motor device="arm" id="5" degrees="150"/>
+			<Motor device="hand" id="6" degrees="70"/>
+			<Motor device="hand" id="7" degrees="70"/>
+			<Motor device="hand" id="8" degrees="70"/>
+		</state>
+		<state id="1">
+			<Motor device="arm" id="0" degrees="20"/>
+			<Motor device="arm" id="1" degrees="30"/>
+			<Motor device="arm" id="2" degrees="80"/>
+			<Motor device="arm" id="3" degrees="130"/>
+			<Motor device="arm" id="4" degrees="290"/>
+			<Motor device="arm" id="5" degrees="290"/>
+			<Motor device="hand" id="6" degrees="70"/>
+			<Motor device="hand" id="7" degrees="70"/>
+			<Motor device="hand" id="8" degrees="70"/>
+		</state>
+	</Gesto>
 </GestosEstaticos>

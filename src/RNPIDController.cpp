@@ -1,108 +1,147 @@
 #include "RNPIDController.h"
 
-RNPIDController::RNPIDController(const char* name, double setPoint, double samplingTime, double kp, double ti, double td){
-	this->name = new char[strlen(name)];
-	strcpy(this->name, name);
-	this->samplingTime = samplingTime;
+RNPIDController::RNPIDController(const char* name, float sp, float samplingTime, float kp, float ti, float td, float comp, float lowerSaturation, float upperSaturation){
+	this->name = std::string(name);
+	this->ts = samplingTime;
 
 	this->kp = kp;
 	this->ti = ti;
 	this->td = td;
-	firstIteration = true;
-	this->setPoint = setPoint;
 
-	this->lastInput = std::numeric_limits<double>::infinity();
-	this->lastError = 0;
-	this->pastLastError = 0;
-	this->currentError = 0;
+	this->comp = comp;
+	this->upperSaturation = upperSaturation;
+	this->lowerSaturation = lowerSaturation;
+
+	firstIteration = true;
+	this->sp = sp;
+	this->iteration = RN_NONE;
+	this->uk_1 = std::numeric_limits<float>::infinity();
+	this->ek = std::numeric_limits<float>::infinity();
+	this->ek_1 = 0;
+	this->ek_2 = 0;
 }
 
 RNPIDController::~RNPIDController(){
 	
 }
 
-double RNPIDController::getSystemInput(int measure){
-	double uk = 0;
-	double q0 = 0, q1 = 0, q2 = 0;
+int RNPIDController::getSystemInput(float measure, float* output){
+	float uk = 0;
+	float ki = 0;
+	float kd = 0;
+
 	if(firstIteration){
-		this->lastInput = 0;
+		this->uk_1 = 0;
+		this->ek = 0;
 		firstIteration = false;
 	}
-	this->pastLastError = this->lastError;
-	this->lastError = this->currentError;
-	this->currentError = this->setPoint - measure;
-	if(this->kp != 0 and this->ti == 0 and this->td == 0){
-		//Proportional Controller
-		uk = this->kp * this->currentError;
-	} else if(this->kp != 0 and this->ti != 0 and this->td == 0){
-		//Proportional-Integral Controller
-		q0 = 1 + (this->samplingTime / this->ti);
-		uk = this->lastInput + (this->kp * q0 * this->currentError) - (this->kp * this->lastError);
-
-	} else if(this->kp != 0 and this->ti == 0 and this->td != 0){
-		//Proportional-Derivative Controller
-		uk = this->kp * this->currentError + this->kp * ((this->td / this->samplingTime) * (this->currentError - this->lastError));
-		
-	} else if(this->kp != 0 and this->ti != 0 and this->td != 0){
-		//Proportional-Integral-Derivative Controller
-		q0 = 1 + (this->samplingTime / this->ti) + (this->td / this->samplingTime);
-		q1 = -1 - 2 * (this->td / this->samplingTime);
-		q2 = this->td / this->samplingTime;
-
-		uk = this->lastInput + (this->kp * q0 * this->currentError) + (this->kp * q1 * this->lastError) + (this->kp * q2 * this->pastLastError);
-	}	
-	this->lastInput = uk;
-	return uk;
+	this->ek_2 = this->ek_1;
+	this->ek_1 = this->ek;
+	this->ek = this->sp - measure;
+	if(kp != 0.0){
+		if(ti == 0.0 and td == 0.0){
+			uk = kp * ek;
+		} else if(ti != 0.0 and td == 0.0){
+			ki = (kp / ti) * ts;
+			uk = this->uk_1 + ((kp + ki) * this->ek) - (kp * this->ek_1);
+		} else if(ti == 0.0 and td != 0.0){
+			kd = (kp * td) / ts;
+			uk = ((kp + kd) * this->ek) - (kd * this->ek_1);
+		} else if(ti != 0.0 and td != 0.0){
+			ki = (kp / ti) * ts;
+			kd = (kp * td) / ts;
+			uk = this->uk_1 + ((kp + ki + kd) * this->ek) - ((kp + 2.0 * kd) * this->ek_1) + ((kd) * this->ek_2);
+		}
+	}
+	if(uk > upperSaturation){
+		uk = upperSaturation;
+	}
+	if(uk < lowerSaturation){
+		uk = lowerSaturation;
+	}
+	this->uk_1 = uk;
+	*output = uk;
+	this->iteration++;
+	return this->iteration;
 }
 
 void RNPIDController::reset(void){
 	firstIteration = true;
-	this->lastInput = std::numeric_limits<double>::infinity();
-	this->lastError = 0;
-	this->pastLastError = 0;
-	this->currentError = 0;
+	this->uk_1 = std::numeric_limits<float>::infinity();
+	this->ek_1 = 0;
+	this->ek_2 = 0;
+	this->ek = std::numeric_limits<float>::infinity();
+	this->iteration = RN_NONE;
 }
 
-double RNPIDController::getProportionalGain(void){
+float RNPIDController::getProportionalGain(void){
 	return this->kp;
 }
 
-void RNPIDController::setProportionalGain(double kp){
+void RNPIDController::setProportionalGain(float kp){
 	this->kp = kp;
 }
 
-double RNPIDController::getIntegrationTime(void){
+float RNPIDController::getIntegrationTime(void){
 	return this->ti;
 }
 
-void RNPIDController::setIntegrationTime(double ti){
+void RNPIDController::setIntegrationTime(float ti){
 	this->ti = ti;
 }
 
-double RNPIDController::getDerivativeTime(void){
+float RNPIDController::getDerivativeTime(void){
 	return this->td;
 }
 
-void RNPIDController::setDerivativeTime(double td){
+void RNPIDController::setDerivativeTime(float td){
 	this->td = td;
 }
 
-double RNPIDController::getSamplingTime(void){
-	return this->samplingTime;
+float RNPIDController::getSamplingTime(void){
+	return this->ts;
 }
 
-void RNPIDController::setSamplingTime(double samplingTime){
-	this->samplingTime = samplingTime;
+void RNPIDController::setSamplingTime(float ts){
+	this->ts = ts;
 }
 
-double RNPIDController::getTarget(void){
-	return this->setPoint;
+float RNPIDController::getDerivativeFilter(void){
+	return this->comp;
 }
 
-void RNPIDController::setTarget(double target){
-	this->setPoint = target;
+void RNPIDController::setDerivativeFilter(float comp){
+	this->comp = comp;
 }
 
-double RNPIDController::getLastInput(void){
-	return this->lastInput;
+float RNPIDController::getLowerSaturationLimit(void){
+	return this->lowerSaturation;
+}
+
+void RNPIDController::setLowerSaturationLimit(float saturation){
+	this->lowerSaturation = saturation;
+}
+
+float RNPIDController::getUpperSaturationLimit(void){
+	return upperSaturation;
+}
+
+void RNPIDController::setUpperSaturationLimit(float saturation){
+	this->upperSaturation = saturation;
+}
+
+float RNPIDController::getTarget(void){
+	return this->sp;
+}
+
+float RNPIDController::getError(void){
+	return this->ek;
+}
+
+void RNPIDController::setTarget(float target){
+	this->sp = target;
+}
+
+float RNPIDController::getLastInput(void){
+	return this->uk_1;
 }

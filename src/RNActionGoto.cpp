@@ -25,17 +25,9 @@ ArAction(name, "BP Implementation for turning and moving to a point"){
 	setNextArgument(ArArg("closest angle", &this->minimumDistance, "Angle that is close enough to point to goal. (degrees)"));
 	this->minimumAngle = minimumAngle;
 
-	linearController = new RNPIDController;
-	angularController = new RNPIDController;
+	linearController = new RNPIDController("Linear Speed", 0, 30, -0.16, 0, 0, 1, -linearSpeed, linearSpeed);
+	angularController = new RNPIDController("Angular Speed", 0, 30, -0.45, 0, 0, 1, -angularSpeed, angularSpeed);
 	hallwayController = new RNHallwayController;
-
-	angularController->setSamplingTime(100);
-	angularController->setProportionalGain(1);
-	angularController->setDerivativeTime(this->minimumAngle / this->actionDegrees);
-
-	linearController->setSamplingTime(100);
-	linearController->setProportionalGain(.16);
-	linearController->setDerivativeTime(this->minimumDistance / this->actionDistance);
 }
 
 RNActionGoto::~RNActionGoto(){
@@ -48,7 +40,8 @@ RNActionGoto::~RNActionGoto(){
 ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	if(this->currentState == STATE_GOING_TO_GOAL){
 
-		double deltaThetaLocal, distanceLocal;
+		float deltaThetaLocal, distanceLocal;
+		//ArPose* currPose = new ArPose(myRobot->getPose());
 		ArPose* currPose = rn->getAltPose();
 		//RNUtils::printLn("{currpose: {x: %f, y: %f, th: %f}}", currPose.getX(), currPose.getY(), currPose.getThRad());
 		//RNUtils::printLn("{goal: {x: %f, y: %f, th: %f}}", goal.getX(), goal.getY(), goal.getThRad());
@@ -59,7 +52,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 			distanceLocal = currPose->findDistanceTo(this->goal);
 	    	deltaThetaLocal = ArMath::subAngle(currPose->findAngleTo(this->goal), currPose->getTh());
 	    }
-    	RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
+    	//RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
     	delete currPose;
 		/*if(rn->isLaserReady() and (distanceLocal > minimumDistance)){
 			LaserScan* laserData = rn->getLaserScan();
@@ -75,35 +68,36 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     		currentState = STATE_ACHIEVED_GOAL;
 		}*/
 
-    	if(std::abs(deltaThetaLocal) > this->minimumAngle){
+    	if(deltaThetaLocal > minimumAngle or deltaThetaLocal < -minimumAngle){
     		//turn to point to goal
     		myDesired->setVel(0);
     		linearController->reset();
-    		double angVel = angularController->getSystemInput(deltaThetaLocal);
-    		if(angVel >= angularSpeed){
-    			angVel = -angularSpeed;
-    		} else if(angVel <= -angularSpeed){
+    		float angVel = 0;
+    		int iter = angularController->getSystemInput(deltaThetaLocal, &angVel);
+    		/*if(angVel >= angularSpeed){
     			angVel = angularSpeed;
+    		} else if(angVel <= -angularSpeed){
+    			angVel = -angularSpeed;
     		} else {
     			angVel *= -1;
-    		}
-    		//printf("{angVel after correction: %f}\n", angVel);
+    		}*/
+    		printf("Angular: %d\t%f\t%f\t%f\n", iter, angVel, deltaThetaLocal, angularController->getError());
 
     		myDesired->setRotVel(angVel);
     		
-    	} else if(distanceLocal > minimumDistance){
+    	} else if(distanceLocal > minimumDistance or distanceLocal < -minimumDistance){
     		myDesired->setRotVel(0);
     		angularController->reset();
-    		double linVel = linearController->getSystemInput(distanceLocal);
-    		
-    		if(linVel >= linearSpeed){
-    			linVel = -linearSpeed;
-    		} else if(linVel <= -linearSpeed){
+    		float linVel = 0;
+    		int iter = linearController->getSystemInput(distanceLocal, &linVel);
+    		/*if(linVel >= linearSpeed){
     			linVel = linearSpeed;
+    		} else if(linVel <= -linearSpeed){
+    			linVel = -linearSpeed;
     		} else {
     			linVel *= -1;
-    		}
-    		//printf("{linVel after correction: %f}\n", linVel);
+    		}*/
+    		printf("Linear: %d\t%f\t%f\t%f\n", iter, linVel, distanceLocal, linearController->getError());
     		myDesired->setVel(linVel);
     	} else {
     		myDesired->setVel(0);

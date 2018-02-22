@@ -402,6 +402,8 @@ private:
 	void getPositions(char* cad, double& x, double& y, double& theta);
 
 	void getMapSectorId(char* cad, int& mapId, int& sectorId);
+	void getArmSingleMotorInfo(char* cad, int& id, int& angle);
+	void getArmAllMotorsInfo(char* cad, std::vector<uint16_t>& motors);
 	void getMapsAvailable(std::string& mapsAvailable);
 	void getMapFilename(int mapId, std::string& filename);
 	void getMapConnection(int mapId, std::string& connections);

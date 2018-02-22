@@ -7,7 +7,7 @@
 
 #include "arm/Arm.h"
 
-#define DEVICENAME          "/dev/ttyUSB0"
+#define DEVICENAME          "/dev/ttyUSB1"
 #define BAUDRATE            1000000
 #define PROTOCOL_VERSION    1.0 
 
@@ -29,6 +29,8 @@ public:
 
 	void setGesture(std::string gestureId);
     void getGestures(int id, std::string& jsonResponse);
+    void moveSingleMotor(int id, int angle);
+    void moveAllMotors(std::vector<uint16_t> motors);
 };
 
 #endif

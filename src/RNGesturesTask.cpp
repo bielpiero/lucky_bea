@@ -83,12 +83,14 @@ void RNGesturesTask::task(){
 							bufferOut_str << ",";	
 						}
 					}
-					unsigned char card_id = (unsigned char)cardId.at(0);
-					unsigned char servo_id = (unsigned char)idMotor.at(0);
-					unsigned char position = (unsigned char)pos.at(0);
-					//this->maestroControllers->setTarget(card_id, servo_id, position);
-					//this->maestroControllers->setSpeed(card_id, servo_id, speed);
-					//this->maestroControllers->setAcceleration(card_id, servo_id, acceleration);
+					uint8_t card_id = atoi(cardId.c_str());
+					uint8_t servo_id = atoi(idMotor.c_str());
+					uint16_t position = atoi(pos.c_str());
+					uint16_t speed_t = atoi(speed.c_str());
+					uint16_t acc_t = atoi(acceleration.c_str());
+					this->maestroController->setTarget(card_id, servo_id, position);
+					this->maestroController->setSpeed(card_id, servo_id, speed_t);
+					this->maestroController->setAcceleration(card_id, servo_id, acc_t);
 	            }
 	            bufferOut_str << "]}]}";
 	        }

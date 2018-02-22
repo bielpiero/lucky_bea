@@ -9,14 +9,14 @@ Hand::Hand(SerialPort* controller){
 	fingers->push_back(new Finger(PORT_INDICE, "Index",openIndex,closeIndex));
 	fingers->push_back(new Finger(PORT_MEDIO, "Anular",openAnular,closeAnular));
 	
-	std::cout<<" mano de tamaño "<< fingers->size() <<std::endl;
+	//std::cout<<" mano de tamaño "<< fingers->size() <<std::endl;
 	this->controller = controller;
 }
 
 //PONER LA MANO EN POSICION INICIAL
 void Hand::setToZero(){
-	for (unsigned int i=0;i<fingers->size();i++){
-		controller->setTarget(0,fingers->at(i)->getPort(), fingers->at(i)->getZero()*4);
+	for (unsigned int i = 0; i < fingers->size(); i++){
+		controller->setTarget(1, fingers->at(i)->getPort(), fingers->at(i)->getZero()*4);
 	}
 }
 
@@ -33,15 +33,15 @@ void Hand::showAngleLimits(){
 }
 //VELOCIDAD DE UN DEDO
 void Hand::setSpeedFinger(int f, int s){
-	controller ->setSpeed(0, fingers->at(f)->getPort(),s);
+	controller ->setSpeed(1, fingers->at(f)->getPort(),s);
 }
 //MUEVE SOLO UN DEDO
 void Hand::moveFinger(int finger, int steps){
-	std::cout<<"move finger"<< steps<< "pasos"<<std::endl;
+	//std::cout<<"move finger "<< steps<< " pasos"<<std::endl;
 	//int steps= fingers->at(finger)->angleToSteps(angle);
 	//mueve el dedo
 
-	controller->setTarget(0, fingers->at(finger)->getPort(), steps*4);
+	controller->setTarget(1, fingers->at(finger)->getPort(), steps*4);
 	//actualiza la posicion
 	fingers->at(finger)->setStepsPosition(steps);
 	fingers->at(finger)->setAnglePosition(fingers->at(finger)->stepsToAngle(steps));
@@ -50,7 +50,7 @@ void Hand::moveFinger(int finger, int steps){
 //GOAL POSITION DE LA MANO
 void Hand::moveHand(int* goalPositHand){
 	for(unsigned int i=0;i<fingers->size();i++){
-		std::cout<<"finger "<<i<<" move to: "<<*goalPositHand<<std::endl;
+		//std::cout<<"finger "<<i<<" move to: "<<*goalPositHand<<std::endl;
 		moveFinger(i,*goalPositHand);
 		goalPositHand++;	
 	}

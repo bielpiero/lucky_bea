@@ -24,7 +24,7 @@ void Finger::setAnglePosition(uint16_t currentPosition){
 //DEVUELVE LA POSICION DEL DEDO EN ANGULO
 uint16_t Finger::getAnglePosition(){
 	//transformar del valor que tenga a angulo entre 90 y 180
-	std::cout<<"dedo "<<getFingerName()<<" posicion: "<<currentPositionAngle<<std::endl;
+	//std::cout<<"dedo "<<getFingerName()<<" posicion: "<<currentPositionAngle<<std::endl;
 	return this->currentPositionAngle;
 }
 //ESCRIBE LA POSICION DEL DEDO EN STEPS
@@ -34,7 +34,7 @@ void Finger::setStepsPosition(uint16_t currentPosition){
 //DEVUELVE LA POSICION DEL DEDO EN STEPS
 uint16_t Finger::getStepsPosition(){
 	//transformar del valor que tenga a angulo entre 90 y 180
-	std::cout<<"dedo "<<getFingerName()<<" posicion: "<<currentPositionSteps<<std::endl;
+	//std::cout<<"dedo "<<getFingerName()<<" posicion: "<<currentPositionSteps<<std::endl;
 	return this->currentPositionSteps;
 }
 //FIJA LA VELOCIDAD DE UN DEDO
@@ -50,7 +50,7 @@ uint16_t Finger::getSpeed(){
 //CONVIERTE ANGULO EN PASOS DEL MOTOR DEL DEDO
 int Finger::angleToSteps(int a){
 	int step=closeDedo - (closeDedo-openDedo)*a/90;
-	std::cout<<"steps AngleToSteps: "<<step<<std::endl;
+	//std::cout<<"steps AngleToSteps: "<<step<<std::endl;
 	return step;
 }
 

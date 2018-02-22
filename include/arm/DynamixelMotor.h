@@ -47,7 +47,7 @@ class DynamixelMotor {
 
 	public:
 		//constructor
-		DynamixelMotor (dynamixel::PacketHandler *packetHandler, dynamixel::PortHandler *portHandler,uint id,uint16_t speed, int arc, int aA);
+		DynamixelMotor (dynamixel::PacketHandler *packetHandler, dynamixel::PortHandler *portHandler, uint id, uint16_t speed, int maxDegrees, int maxSteps);
 		//destructor
 		
 		//get and set

@@ -8,12 +8,12 @@ Arm::Arm(SerialPort* handController, std::string deviceName, float protocolVersi
 
 	vect_brazo = new std::vector<DynamixelMotor*>();
 
-	vect_brazo->push_back(new DynamixelMotor(packetHandler,portHandler,1,speed1,arc1_grados,arcArtic1));
-	vect_brazo->push_back(new DynamixelMotor(packetHandler,portHandler,2,speed2,arc2_grados,arcArtic2));
-	vect_brazo->push_back(new DynamixelMotor(packetHandler,portHandler,3,speed3,arc3_grados,arcArtic3));
-	vect_brazo->push_back(new DynamixelMotor(packetHandler,portHandler,4,speed4,arc4_grados,arcArtic4));
-	vect_brazo->push_back(new DynamixelMotor(packetHandler,portHandler,5,speed5,arc5_grados,arcArtic5));
-	vect_brazo->push_back(new DynamixelMotor(packetHandler,portHandler,6,speed6,arc6_grados,arcArtic6));
+	vect_brazo->push_back(new DynamixelMotor(packetHandler, portHandler, 1, speed1, arc1_grados, arcArtic1));
+	vect_brazo->push_back(new DynamixelMotor(packetHandler, portHandler, 2, speed2, arc2_grados, arcArtic2));
+	vect_brazo->push_back(new DynamixelMotor(packetHandler, portHandler, 3, speed3, arc3_grados, arcArtic3));
+	vect_brazo->push_back(new DynamixelMotor(packetHandler, portHandler, 4, speed4, arc4_grados, arcArtic4));
+	vect_brazo->push_back(new DynamixelMotor(packetHandler, portHandler, 5, speed5, arc5_grados, arcArtic5));
+	vect_brazo->push_back(new DynamixelMotor(packetHandler, portHandler, 6, speed6, arc6_grados, arcArtic6));
 
 	//mano_objeto = new Hand(handController);
 	hand = new Hand(handController);
@@ -39,13 +39,11 @@ Arm::~Arm(){
 bool Arm::openPort(){
 	bool open=false;
   	if (portHandler->openPort()){
-    	printf("Succeeded to open the port!\n");
+    	RNUtils::printLn("Succeeded to open the port!");
     	open=true;
   	}
   	else{
-  		printf("Failed to open the port!\n");
-    	printf("Press any key to terminate...\n");
-    	open=false;
+  		RNUtils::printLn("Failed to open the port!");
   	}
   	return open;
 }
@@ -54,13 +52,11 @@ bool Arm::openPort(){
 bool Arm::setPortBaudrate(const unsigned int baud){
 	bool baudSet=false;
 	if (portHandler->setBaudRate(baud)){
-	    printf("Succeeded to change the baudrate!\n");
+	    RNUtils::printLn("Succeeded to change the baudrate!");
 	    baudSet=true;
 	}
 	else{
-		printf("Failed to change the baudrate!\n");
-		printf("Press any key to terminate...\n");
-		baudSet=false;
+		RNUtils::printLn("Failed to change the baudrate!");
 	}
   return baudSet;
 }
@@ -125,7 +121,7 @@ bool Arm::armSyncWrite1Byte(uint16_t address, int value){
 		}
 	}
 	else{
-        printf(" no puedes cambiar el ID de todos los motores a la vez \n");
+        RNUtils::printLn(" no puedes cambiar el ID de todos los motores a la vez \n");
 	}
 	groupSyncWrite.clearParam();
 	return valid;
@@ -326,7 +322,7 @@ void Arm::waitFinishMove(){
 	}
 	//si ha hecho el mov sin problema
 	else {
-		std::cout<<"MOVIM FINISHED"<<std::endl;
+		//std::cout<<"MOVIM FINISHED"<<std::endl;
 		//si estaba yendo a posic inicial
 		if(toInitialPosit){
 			toInitialPosit=false;
@@ -576,15 +572,16 @@ void Arm::bulkControl(std::vector<uint16_t> positions){
 
 void Arm::singleMotor(int id, uint16_t angle){
 	armSyncWrite2Bytes(addr_MovingSpeed, speedArray);
+	RNUtils::printLn("Arm (singleMotor): {ID: %d, angle: %u}", id, angle);
 	//armShowAngleLimits();
   	int steps_dxl;
   	int steps_hand;
-  	bool mov_valid=false;
-  	bool no_choca=false;
+  	bool mov_valid =false;
+  	bool no_choca = true;
   	
   	
 	//comprueba que es un angulo valido para las articulaciones
-	if(id < 6){
+	if(id < vect_brazo->size()){
 		mov_valid = vect_brazo->at(id)->checkAngle(angle);	
 	} else{ //comprueba que es un angulo valido para los dedos
 		mov_valid = hand->at(id - vect_brazo->size())->checkAngle(angle);
@@ -593,13 +590,13 @@ void Arm::singleMotor(int id, uint16_t angle){
 	if(!mov_valid){
 		vect_brazo->at(id)->showAngleLimits();
 	} else {
-		no_choca = checkNoChoque(id, angle);
+		//no_choca = checkNoChoque(id, angle);
 	}
 				
 	//setMostrarDatos();
 	//convierto los angulos en pasos
 	if(no_choca){
-		if(id < 6){
+		if(id < vect_brazo->size()){
 			steps_dxl = vect_brazo->at(id)->pasosLogicos(angle);
 			vect_brazo->at(id)->write1Byte(addr_Led,ENABLE);
 			vect_brazo->at(id)->write2Bytes(addr_GoalPosition,steps_dxl);
@@ -616,7 +613,7 @@ void Arm::singleMotor(int id, uint16_t angle){
 void Arm::PPT(){
 	
 	/*while(1){
-		printf("Press any key to continue! (or press ESC to quit!)\n");
+		RNUtils::printLn("Press any key to continue! (or press ESC to quit!)\n");
     	if (FuncBasic::getch() == ESC_ASCII_VALUE)
       		break;
 		std::cout<<"juguemos 3 partidas!!!"<<std::endl;
@@ -634,7 +631,7 @@ void Arm::PPT(){
 			srand(time(NULL));	
 			int juego= rand()%3+100;
 			setGoalPositionFile (juego);
-			printf("Press any key to continue! (or press ESC to quit!)\n");
+			RNUtils::printLn("Press any key to continue! (or press ESC to quit!)\n");
     		if (FuncBasic::getch() == ESC_ASCII_VALUE)
       			break;
 			

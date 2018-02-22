@@ -84,15 +84,23 @@ void RNArmTask::setGesture(std::string gestureId){
     this->gestureId = gestureId;
 }
 
+void RNArmTask::moveSingleMotor(int id, int angle){
+    brazo->singleMotor(id, angle);
+}
+
+void RNArmTask::moveAllMotors(std::vector<uint16_t> motors){
+    brazo->bulkControl(motors);
+}
+
 void RNArmTask::getGestures(int type, std::string& jsonResponse){
 
 	std::ostringstream bufferOut_str;
 	bufferOut_str.clear();
     
 	for (int i = 0; i < gestures->size(); i++){
-		if(type == atoi(gestures->at(i)->getType().c_str())){
+		//if(type == atoi(gestures->at(i)->getType().c_str())){
 			bufferOut_str << gestures->at(i)->getId() << "," << gestures->at(i)->getName() << "|";
-		}
+		//}
 	}
 	jsonResponse = bufferOut_str.str();
 }

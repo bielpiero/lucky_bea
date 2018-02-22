@@ -17,7 +17,7 @@
 		<features>
 			<feature id="2" name="charger" width="50" height="25" x="658" y="397" linked-sector-id="7" xcoord="420" ycoord="0"/>
 		</features>
-		<sites cyclic="no" sequence="12,0,1,2,8">
+		<sites cyclic="no" sequence="0">
 			<site id="0" name="doorway" radius="0" tsec="0" x="900" y="300" linked-feature-id="1"/>
 		</sites>
 	</sector>
@@ -38,7 +38,6 @@
 			<landmark id="12" type="laser" x="1925" y="300" z="0"/>
 			<landmark id="13" type="laser" x="1925" y="468" z="0"/>
 			<landmark id="14" type="laser" x="2566" y="300" z="0"/>
-
 			<landmark id="0" type="camera" x="11" y="355" z="250"/>
 			<landmark id="1" type="camera" x="272" y="300" z="250"/>
 			<landmark id="2" type="camera" x="273" y="475" z="250"/>
@@ -63,8 +62,11 @@
 		</landmarks>
 		<features>
 			<feature id="2" name="charger" width="150" height="350" x="2000" y="300" linked-sector-id="7" xcoord="420" ycoord="0"/>
+			<feature id="1" name="R1" width="766" height="300" x="383" y="150"/>
+			<feature id="2" name="R2" width="766" height="300" x="1149" y="150"/>
+			<feature id="3" name="R3" width="766" height="300" x="1915" y="150"/>
 		</features>
-		<sites cyclic="no" sequence="0,13">
+		<sites cyclic="no" sequence="0,18">
 			<site id="0" name="doorway" radius="0" tsec="0" x="141" y="421" linked-feature-id="1"/>
 			<site id="1" name="doorway" radius="0" tsec="0" x="326" y="364"/>
 			<site id="2" name="doorway" radius="0" tsec="0" x="329" y="459"/>
@@ -94,7 +96,7 @@
 	<sector id="2" name="LCOE Receiver" width="897" height="432" reference="2" polygon="m 0 0 l 0 432 l 897 0 l 0 -432 z">
 		<landmarks/>
 		<features>
-			<feature id="2" name="charger" width="50" height="25" x="658" y="397" linked-sector-id="7" xcoord="420" ycoord="0"/>
+			<feature id="0" name="charger" width="50" height="25" x="658" y="397" linked-sector-id="7" xcoord="420" ycoord="0"/>
 		</features>
 		<sites cyclic="no" sequence="12,0,1,2,8">
 			<site id="0" name="doorway" radius="0" tsec="0" x="900" y="300" linked-feature-id="1"/>

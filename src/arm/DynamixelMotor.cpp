@@ -4,13 +4,13 @@
 //FUNCIONES DE LA CLASE DynamixelMotor 
 
 
-DynamixelMotor::DynamixelMotor (dynamixel::PacketHandler *packetHandler, dynamixel::PortHandler *portHandler, uint id,uint16_t s,int a, int aA){
+DynamixelMotor::DynamixelMotor (dynamixel::PacketHandler *packetHandler, dynamixel::PortHandler *portHandler, uint id, uint16_t speed, int maxDegrees, int maxSteps){
     this->portHandler = portHandler;
     this->packetHandler = packetHandler;
     this->ID=id;
-    this->speed=s;
-    this->arcGrados=a;
-    this->arcSteps=aA;
+    this->speed = speed;
+    this->arcGrados = maxDegrees;
+    this->arcSteps = maxSteps;
 }
 
 //get 
@@ -55,7 +55,7 @@ void DynamixelMotor::setLimites(){
         }
         setZero(lim_max_steps);
     }
-    RNUtils::printLn("ID: %d, lim_min_steps: %d, lim_max_steps: %d", this->ID, this->lim_min_steps, this->lim_max_steps);
+    //RNUtils::printLn("ID: %d, lim_min_steps: %d, lim_max_steps: %d", this->ID, this->lim_min_steps, this->lim_max_steps);
     
 }
 
@@ -174,7 +174,7 @@ bool DynamixelMotor::checkSteps(int steps){
 //COMPRUEBA QUE EL DynamixelMotor PUEDA MOVERSE A ESE ANGULO GEOMETRICO
 bool DynamixelMotor::checkAngle(int angle){
     bool valido=false;  
-    if((angle>=0) and (angle<=arcGrados)){
+    if((angle>=0) and (angle <= this->arcGrados)){
         valido=true;      
     }
     return valido;
@@ -194,7 +194,7 @@ void DynamixelMotor::showStepsLimits(){
 int DynamixelMotor::pasosLogicos(int angle){
     int steps_dxl;
     if((ID == 4) or (ID == 2)){
-    //std::cout<<"angle: "<<angle<<" lim_max_steps: "<<lim_max_steps<<"lim_min_steps: "<<lim_min_steps<<std::endl;
+    //std::cout<<".................angle: "<<angle<<" lim_max_steps: "<<lim_max_steps<<" lim_min_steps: "<<lim_min_steps<<std::endl;
         if(lim_max_steps < lim_min_steps){
             steps_dxl=-angle*(lim_max_steps + max10bits-lim_min_steps)/arcGrados + lim_max_steps;
         } else{
@@ -208,7 +208,7 @@ int DynamixelMotor::pasosLogicos(int angle){
             steps_dxl= angle*(lim_max_steps-lim_min_steps)/arcGrados+lim_min_steps; 
         } 
     }
-    std::cout<<"angulo pedido es "<<angle<<" y pasos logicos son "<<steps_dxl<<std::endl;
+    //std::cout<<"angulo pedido es "<<angle<<" y pasos logicos son "<<steps_dxl<<std::endl;
     return steps_dxl;
 }
 
