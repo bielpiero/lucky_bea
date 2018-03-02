@@ -20,7 +20,7 @@
 		<Motor cardId="0" id="14" pos="4966" speed="0" acceleration="0"/>
 		<Motor cardId="0" id="15" pos="6000" speed="0" acceleration="0"/>
 		<Motor cardId="0" id="16" pos="4966" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="17" pos="6000" speed="0" acceleration="0"/>
+		<Motor cardId="0" id="17" pos="3000" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="0" pos="6752" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="6916" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="5564" speed="0" acceleration="0"/>
@@ -43,7 +43,7 @@
 		<Motor cardId="0" id="14" pos="4966" speed="0" acceleration="0"/>
 		<Motor cardId="0" id="15" pos="6000" speed="0" acceleration="0"/>
 		<Motor cardId="0" id="16" pos="4966" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="17" pos="6000" speed="0" acceleration="0"/>
+		<Motor cardId="0" id="17" pos="3000" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="0" pos="6752" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="1" pos="6916" speed="0" acceleration="0"/>
 		<Motor cardId="1" id="2" pos="5564" speed="0" acceleration="0"/>

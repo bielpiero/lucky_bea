@@ -1,25 +1,25 @@
 <robot height="1.425" cameras="2" localization="kalman"> <!--localization: {kalman, particle-filter}-->
 	<navigation alpha="70">
 		<initial-position>
-			<x-zone x1="-20" x2="-15" x3="15" x4="20"/> <!-- centimeters -->
-			<y-zone x1="-20" x2="-15" x3="15" x4="20"/> <!-- centimeters -->
-			<th-zone x1="-0.08" x2="-0.05" x3="0.05" x4="0.08"/> <!-- radians -->
+			<x-zone x1="-10" x2="-7" x3="7" x4="10"/> <!-- centimeters -->
+			<y-zone x1="-10" x2="-8" x3="8" x4="10"/> <!-- centimeters -->
+			<th-zone x1="-0.008" x2="-0.005" x3="0.005" x4="0.008"/> <!-- radians -->
 		</initial-position>
 		<process-noise>
-			<d-zone x1="-5" x2="-3" x3="3" x4="5"/> <!-- centimeters -->
-			<th-zone x1="-0.02" x2="-0.006" x3="0.006" x4="0.02"/> <!-- radians -->
+			<d-zone x1="-8" x2="-6" x3="6" x4="8"/> <!-- centimeters -->
+			<th-zone x1="-0.04" x2="-0.035" x3="0.035" x4="0.04"/> <!-- radians -->
 		</process-noise>
 		<sensors>
-			<sensor type="laser" activated="0">
+			<sensor type="laser" activated="1">
 				<observation-noise>
-					<d-zone x1="-15" x2="-10" x3="10" x4="15"/>  <!-- centimeters -->
-					<th-zone x1="-0.02" x2="-0.015" x3="0.015" x4="0.02"/> <!-- radians -->
+					<d-zone x1="-3" x2="-2" x3="2" x4="3"/>  <!-- centimeters -->
+					<th-zone x1="-0.01" x2="-0.008" x3="0.008" x4="0.01"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
 			<sensor type="camera" activated="1">
 				<observation-noise>
 					<d-zone x1="-5" x2="-3" x3="3" x4="5"/>  <!-- centimeters -->
-					<th-zone x1="-0.008" x2="-0.005" x3="0.005" x4="0.008"/> <!-- radians -->
+					<th-zone x1="-0.02" x2="-0.017" x3="0.017" x4="0.02"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
 			<sensor type="rfid" activated="0">

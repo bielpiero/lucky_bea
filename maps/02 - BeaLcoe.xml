@@ -21,44 +21,45 @@
 			<site id="0" name="doorway" radius="0" tsec="0" x="900" y="300" linked-feature-id="1"/>
 		</sites>
 	</sector>
-	<sector id="1" name="Main Hallway" width="2566" height="521" reference="2" polygon="m 0 300 l 0 168 l 127 0 l 0 53 l 101 0 l 0 -53 l 2252 0 l 0 53 l 115 0 l 0 -53 l 91 0 l 0 -468 l -254 0 l 0 300 z">
+	<sector id="1" name="Main Hallway" width="2566" height="521" reference="2" polygon="m 0 300 l 0 173 l 127 0 l 0 53 l 101 0 l 0 -53 l 2144 0 l 0 53 l 115 0 l 0 -53 l 91 0 l 0 -473 l -254 0 l 0 300 z">
 		<landmarks>
-			<landmark id="0" type="laser" x="275" y="300" z="0"/>
+			<landmark id="0" type="laser" x="275" y="303" z="0"/>
 			<landmark id="1" type="laser" x="275" y="468" z="0"/>
-			<landmark id="2" type="laser" x="550" y="300" z="0"/>
+			<landmark id="2" type="laser" x="550" y="303" z="0"/>
 			<landmark id="3" type="laser" x="550" y="468" z="0"/>
-			<landmark id="4" type="laser" x="825" y="300" z="0"/>
+			<landmark id="4" type="laser" x="825" y="303" z="0"/>
 			<landmark id="5" type="laser" x="825" y="468" z="0"/>
-			<landmark id="6" type="laser" x="1100" y="300" z="0"/>
+			<landmark id="6" type="laser" x="1100" y="303" z="0"/>
 			<landmark id="7" type="laser" x="1100" y="468" z="0"/>
-			<landmark id="8" type="laser" x="1375" y="300" z="0"/>
+			<landmark id="8" type="laser" x="1375" y="303" z="0"/>
 			<landmark id="9" type="laser" x="1375" y="468" z="0"/>
-			<landmark id="10" type="laser" x="1650" y="300" z="0"/>
+			<landmark id="10" type="laser" x="1650" y="303" z="0"/>
 			<landmark id="11" type="laser" x="1650" y="468" z="0"/>
-			<landmark id="12" type="laser" x="1925" y="300" z="0"/>
+			<landmark id="12" type="laser" x="1925" y="303" z="0"/>
 			<landmark id="13" type="laser" x="1925" y="468" z="0"/>
-			<landmark id="14" type="laser" x="2566" y="300" z="0"/>
-			<landmark id="0" type="camera" x="11" y="355" z="250"/>
+			<landmark id="14" type="laser" x="2200" y="468" z="0"/>
+			<landmark id="15" type="laser" x="2566" y="303" z="0"/>
+			<landmark id="0" type="camera" x="11" y="356" z="250"/>
 			<landmark id="1" type="camera" x="272" y="300" z="250"/>
-			<landmark id="2" type="camera" x="273" y="475" z="250"/>
-			<landmark id="3" type="camera" x="551" y="475" z="250"/>
+			<landmark id="2" type="camera" x="273" y="473" z="250"/>
+			<landmark id="3" type="camera" x="551" y="473" z="250"/>
 			<landmark id="4" type="camera" x="552" y="300" z="250"/>
 			<landmark id="5" type="camera" x="825" y="300" z="250"/>
-			<landmark id="6" type="camera" x="824" y="475" z="250"/>
-			<landmark id="7" type="camera" x="1102" y="475" z="250"/>
+			<landmark id="6" type="camera" x="824" y="473" z="250"/>
+			<landmark id="7" type="camera" x="1102" y="473" z="250"/>
 			<landmark id="8" type="camera" x="1098" y="300" z="250"/>
 			<landmark id="9" type="camera" x="1376" y="300" z="250"/>
-			<landmark id="10" type="camera" x="1375" y="475" z="250"/>
-			<landmark id="11" type="camera" x="1650" y="475" z="250"/>
+			<landmark id="10" type="camera" x="1375" y="473" z="250"/>
+			<landmark id="11" type="camera" x="1650" y="473" z="250"/>
 			<landmark id="12" type="camera" x="1651" y="300" z="250"/>
 			<landmark id="13" type="camera" x="1925" y="300" z="250"/>
-			<landmark id="14" type="camera" x="1928" y="475" z="250"/>
-			<landmark id="15" type="camera" x="2206" y="475" z="250"/>
+			<landmark id="14" type="camera" x="1928" y="473" z="250"/>
+			<landmark id="15" type="camera" x="2206" y="473" z="250"/>
 			<landmark id="16" type="camera" x="2200" y="300" z="250"/>
 			<landmark id="17" type="camera" x="2318" y="275" z="250"/>
 			<landmark id="18" type="camera" x="2446" y="0" z="250"/>
 			<landmark id="19" type="camera" x="2566" y="275" z="250"/>
-			<landmark id="20" type="camera" x="2476" y="475" z="250"/>
+			<landmark id="20" type="camera" x="2476" y="473" z="250"/>
 		</landmarks>
 		<features>
 			<feature id="2" name="charger" width="150" height="350" x="2000" y="300" linked-sector-id="7" xcoord="420" ycoord="0"/>

@@ -416,7 +416,9 @@ void RobotNode::getIncrementPosition(double* deltaDistance, double* deltaDegrees
     if(deltaDistance != NULL and deltaDegrees != NULL){
         robot->lock();
         double currentDistance = robot->getOdometerDistance();
-        double currentRads = RNUtils::deg2Rad(robot->getOdometerDegrees());
+        //double currentDistance = RNUtils::distanceTo(robot->getPose().getX(), robot->getPose().getY(), 0, 0);
+        double currentRads = RNUtils::deg2Rad(robot->getPose().getTh());
+        //double currentRads = RNUtils::deg2Rad(robot->getOdometerDegrees());
 
         double currentVel = robot->getVel();
         double currentRotVel = robot->getRotVel();
@@ -432,19 +434,23 @@ void RobotNode::getIncrementPosition(double* deltaDistance, double* deltaDegrees
             isFirstFakeEstimation = false;
         }
 
+
+
         this->deltaDistance = currentDistance - prevDistance;
         this->deltaDegrees = currentRads - prevRads;
+
+
 
         if(robot->getVel() < 0){
             this->deltaDistance *= -1.0;
         }
 
-        if(currentRotVel < 0){
+        /*if(currentRotVel < 0){
             this->deltaDegrees = -currentRads + prevRads;
             //if(this->deltaDegrees > 0){
                 //this->deltaDegrees *= -1.0;
             //}
-        }
+        }*/
         
         prevVel = currentVel;
         prevRotVel = currentRotVel;
