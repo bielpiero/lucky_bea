@@ -1,5 +1,5 @@
 <sectors sequence="0,1,0">
-	<sector id="0" name="R Receiver" width="1288" height="335" reference="2" polygon="m 0 0 l 0 245 l 274 0 l 0 -91 l 573 0 l 0 181 l 198 0 l 0 -181 l 243 0 l 0 -119 l -16 0 l 0 -35 l -200 0 l 0 35 l -798 0 l 0 -35 z">
+	<sector id="0" name="R Receiver" width="1284" height="335" reference="2" polygon="m 8 0 l 0 98 l -8 0 l 0 136 l 270 0 l 0 -99 l 554 0 l 0 169 l 18 0 l 179 0 l 0 -182 l 245 0 l 0 -117 l -15 0 l 0 -38 l -192 0 l 0 35 l -819 0 l 0 -35 z">
 		<landmarks>
 			<landmark id="0" type="laser" x="890" y="35" z="0"/>
 			<landmark id="1" type="laser" x="595" y="154" z="0"/>

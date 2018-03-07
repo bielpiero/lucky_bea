@@ -67,6 +67,7 @@ class RNGesturesTask;
 class RNArmTask;
 class RNDialogsTask;
 class RNEmotionsTask;
+class RNTourTask;
 
 struct s_motor{
 	std::string idMotor;

@@ -50,6 +50,7 @@ void SerialPort::printdev(libusb_device *dev) {
     cout<<"Device Class: "<<(int)desc.bDeviceClass<< endl;
     cout<<"VendorID: "<<desc.idVendor<< endl;
     cout<<"ProductID: "<<desc.idProduct<<endl;
+    //cout<<"extra: " << desc.extra << endl;
     libusb_config_descriptor *config;
     libusb_get_config_descriptor(dev, 0, &config);
     cout<<"Interfaces: "<<(int)config->bNumInterfaces<< endl;

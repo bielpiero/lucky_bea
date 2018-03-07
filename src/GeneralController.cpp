@@ -14,6 +14,7 @@
 #include "RNGesturesTask.h"
 #include "RNArmTask.h"
 #include "RNGlobalLocalizationTask.h"
+#include "RNTourTask.h"
 
 const double AntennaData::TX_GAIN = 5.7;
 const double AntennaData::FREQUENCY = 866.9e6;
@@ -64,7 +65,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	//std::string servo_positions;
 	//setGesture("26", servo_positions);
-	//ttsLipSync = new DorisLipSync(this->maestroControllers, RNUtils::getApplicationPath());
+	ttsLipSync = new DorisLipSync(this->maestroControllers, RNUtils::getApplicationPath());
 	//ttsLipSync->textToViseme("Hola, ya estoy lista para funcionar");
 	this->currentMapId = RN_NONE;
 	this->currentSector = NULL;
@@ -82,9 +83,9 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	laserTask = new RNLaserTask(this);
 	omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
 	//globalLocalization = new RNGlobalLocalizationTask(this);
-	//dialogs = new RNDialogsTask(this, ttsLipSync);
+	dialogs = new RNDialogsTask(this, ttsLipSync);
 	gestures = new RNGesturesTask(this, this->maestroControllers);
-	armGestures = new RNArmTask(this, this->maestroControllers);
+	//armGestures = new RNArmTask(this, this->maestroControllers);
 	//emotions = new RNEmotionsTask(this);
 	//eyesCameras = new RNCameraTask(this);
 
@@ -99,7 +100,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	//tasks->addTask(globalLocalization);
 	tasks->addTask(laserTask);
 	tasks->addTask(omnidirectionalTask);
-	//tasks->addTask(dialogs);
+	tasks->addTask(dialogs);
 	//tasks->addTask(armGestures);
 	tasks->addTask(gestures);
 	//tasks->addTask(emotions);
