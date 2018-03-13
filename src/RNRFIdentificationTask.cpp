@@ -45,7 +45,7 @@ void RNRFIdentificationTask::task(){
 		//if(startROSpec() == 0){
 			if(getDataFromDevice(data) == 0){
 				
-				RFData* detected = new RFData(data);
+				/*RFData* detected = new RFData(data);
 				RFData* found = NULL;
 				if((found = findByKeyAntenna(detected->getTagKey(), detected->getAntenna())) == NULL){
 					if(detected->getTagKey() != ""){
@@ -55,12 +55,12 @@ void RNRFIdentificationTask::task(){
 					found->update(detected->getRSSI(), detected->getPhaseAngle(), detected->getDopplerFrequency());
 					found->setTimestamp(detected->getTimestamp());
 					delete detected;
-				}
+				}*/
 			}
 			
-			//for (int i = 0; i < rfids->size(); ++i){
-				//RNUtils::printLn("[%d]: %s", i, rfids->at(i)->toString());
-			//}
+			for (int i = 0; i < rfids->size(); ++i){
+				RNUtils::printLn("[%d]: %s", i, rfids->at(i)->toString());
+			}
 		//}	
 	} else {
 		init();
@@ -776,7 +776,7 @@ void RNRFIdentificationTask::getOneTagData(LLRP::CTagReportData* tag, std::strin
 	}
 	
 	data = bufferOut.str();
-	//RNUtils::printLn("Final STR: %s, %d", data, length);
+	RNUtils::printLn("Final STR: %s, %d", data.c_str(), data.length());
 	bufferOut.clear();
 }
 

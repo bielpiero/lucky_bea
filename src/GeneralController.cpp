@@ -16,7 +16,7 @@
 #include "RNGlobalLocalizationTask.h"
 #include "RNTourTask.h"
 
-const double AntennaData::TX_GAIN = 5.7;
+const double AntennaData::TX_GAIN = 9.75;
 const double AntennaData::FREQUENCY = 866.9e6;
 const double AntennaData::C = 3e8;
 const double AntennaData::TX_POWER_OFFSET_DBM = -10.0;
@@ -81,7 +81,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	tasks = new RNRecurrentTaskMap(this);
 
 	laserTask = new RNLaserTask(this);
-	omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
+	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
+	//rfidTask = new RNRFIdentificationTask(this);
 	//globalLocalization = new RNGlobalLocalizationTask(this);
 	dialogs = new RNDialogsTask(this, ttsLipSync);
 	gestures = new RNGesturesTask(this, this->maestroControllers);
@@ -93,20 +94,20 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 		localization = new RNKalmanLocalizationTask(this);
 	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PF_STR){
 		localization = new RNPFLocalizationTask(this);
-	}
-	//rfidTask = new RNRFIdentificationTask(this);
-
+	} 
+	
 	////Tasks added:
 	//tasks->addTask(globalLocalization);
 	tasks->addTask(laserTask);
-	tasks->addTask(omnidirectionalTask);
+	//tasks->addTask(omnidirectionalTask);
+	//tasks->addTask(rfidTask);
 	tasks->addTask(dialogs);
 	//tasks->addTask(armGestures);
 	tasks->addTask(gestures);
 	//tasks->addTask(emotions);
 	tasks->addTask(localization);
 	//tasks->addTask(eyesCameras);
-	//tasks->addTask(rfidTask);
+	
 	
 	//Start all tasks;
 	tasks->startAllTasks();
