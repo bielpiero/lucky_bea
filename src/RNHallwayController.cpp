@@ -251,9 +251,9 @@ RNHallwayController::RNHallwayController(const char* name){
 	ruleBlock->addRule(new fl::Rule("if laserLeftZone is VN and laserFrontZone is VN and laserRightZone is VN then linearVelocity is Backwards and angularVelocity is Zero"));
 	ruleBlock->loadRules(engine);
 	engine->addRuleBlock(ruleBlock);
-	fl::fuzzylite::setDebugging(true);
+	fl::fuzzylite::setDebugging(false);
 	
-	RNUtils::printLn("%s has been instantiated...", name);
+	
 }
 
 RNHallwayController::~RNHallwayController(){

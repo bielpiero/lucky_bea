@@ -94,7 +94,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 		localization = new RNKalmanLocalizationTask(this);
 	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PF_STR){
 		localization = new RNPFLocalizationTask(this);
-	} 
+	}
 	
 	////Tasks added:
 	//tasks->addTask(globalLocalization);

@@ -3,6 +3,7 @@
 
 #include "RobotNode.h"
 #include "RNHallwayController.h"
+#include "RNFuzzySpeedController.h"
 #include "RNPIDController.h"
 
 #define SATURATION_DISTANCE_MM 1000
@@ -10,7 +11,7 @@
 
 class RNActionGoto : public ArAction{
 public:
-	RNActionGoto(RobotNode* rn, const char* name = "goto", ArPose goal = ArPose(0.0, 0.0, 0.0), double linearSpeed = 50, double angularSpeed = 5, double minimumDistance = 1, double minimumAngle = 0.9);
+	RNActionGoto(RobotNode* rn, const char* name = "goto", ArPose goal = ArPose(0.0, 0.0, 0.0), double linearSpeed = 50, double angularSpeed = 5, double minimumDistance = 10, double minimumAngle = 0.9);
 	virtual ~RNActionGoto();
 
 	virtual ArActionDesired* fire(ArActionDesired current);
@@ -48,6 +49,7 @@ private:
 	RNPIDController* angularController;
 	RobotNode* rn;
 	RNHallwayController* hallwayController;
+	RNFuzzySpeedController* speedController;
 
 	double linearSpeed;
 	double angularSpeed;

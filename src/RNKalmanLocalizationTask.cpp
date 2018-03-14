@@ -428,17 +428,17 @@ void RNKalmanLocalizationTask::task(){
 		//RNUtils::printLn("Wk");
 		//Wk.print();
 
-		//char bufferpk1[256], bufferpk[256];
-		//sprintf(bufferpk1, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
+		char bufferpk1[256], bufferpk[256];
+		sprintf(bufferpk1, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
-		//sprintf(bufferpk, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
+		sprintf(bufferpk, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
 		xk = xk_1 + Wk * zl;
 		gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
-		//char buffer[1024];
-		//sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize);
-		/*if(test != NULL){
+		char buffer[1024];
+		sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize);
+		if(test != NULL){
 			fprintf(test, "%s", buffer);
-		}*/
+		}
 		
 		
 		//gn->setPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));

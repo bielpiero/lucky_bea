@@ -25,35 +25,39 @@ ArAction(name, "BP Implementation for turning and moving to a point"){
 	setNextArgument(ArArg("closest angle", &this->minimumDistance, "Angle that is close enough to point to goal. (degrees)"));
 	this->minimumAngle = minimumAngle;
 
-	linearController = new RNPIDController("Linear Speed", 0, 30, -0.16, 0, 0, 1, -linearSpeed, linearSpeed);
-	angularController = new RNPIDController("Angular Speed", 0, 30, -0.45, 0, 0, 1, -angularSpeed, angularSpeed);
-	hallwayController = new RNHallwayController;
+	//linearController = new RNPIDController("Linear Speed", 0, 30, -0.16, 0, 0, 1, -linearSpeed, linearSpeed);
+	//angularController = new RNPIDController("Angular Speed", 0, 30, -0.45, 0, 0, 1, -angularSpeed, angularSpeed);
+	speedController = new RNFuzzySpeedController;
+	//hallwayController = new RNHallwayController;
 }
 
 RNActionGoto::~RNActionGoto(){
 	delete myDesired;
-	delete hallwayController;
-	delete linearController;
-	delete angularController;
+	delete speedController;
+	//delete hallwayController;
+	//delete linearController;
+	//delete angularController;
 }
 
 ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	if(this->currentState == STATE_GOING_TO_GOAL){
 
-		float deltaThetaLocal, distanceLocal;
+		float deltaThetaLocal = 0.0, distanceLocal = 0.0;
 		//ArPose* currPose = new ArPose(myRobot->getPose());
 		ArPose* currPose = rn->getAltPose();
 		//RNUtils::printLn("{currpose: {x: %f, y: %f, th: %f}}", currPose.getX(), currPose.getY(), currPose.getThRad());
 		//RNUtils::printLn("{goal: {x: %f, y: %f, th: %f}}", goal.getX(), goal.getY(), goal.getThRad());
-		if(this->goal.getTh() != 0.0){
-			distanceLocal = 0.0;
-			deltaThetaLocal = -currPose->getTh() + this->goal.getTh();
-		} else {
-			distanceLocal = currPose->findDistanceTo(this->goal);
-	    	deltaThetaLocal = ArMath::subAngle(currPose->findAngleTo(this->goal), currPose->getTh());
+		if(currPose){
+			if(this->goal.getTh() != 0.0){
+				distanceLocal = 0.0;
+				deltaThetaLocal = -currPose->getTh() + this->goal.getTh();
+			} else {
+				distanceLocal = currPose->findDistanceTo(this->goal);
+		    	deltaThetaLocal = ArMath::subAngle(currPose->findAngleTo(this->goal), currPose->getTh());
+		    }
+	    	RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
+	    	delete currPose;
 	    }
-    	//RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
-    	delete currPose;
 		/*if(rn->isLaserReady() and (distanceLocal > minimumDistance)){
 			LaserScan* laserData = rn->getLaserScan();
 			hallwayController->getSystemInput(laserData, &linearSpeed, &angularSpeed);
@@ -68,42 +72,20 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     		currentState = STATE_ACHIEVED_GOAL;
 		}*/
 
-    	if(deltaThetaLocal > minimumAngle or deltaThetaLocal < -minimumAngle){
+    	if((deltaThetaLocal > minimumAngle or deltaThetaLocal < -minimumAngle) or (distanceLocal > minimumDistance or distanceLocal < -minimumDistance)){
     		//turn to point to goal
-    		myDesired->setVel(0);
-    		linearController->reset();
-    		float angVel = 0;
-    		int iter = angularController->getSystemInput(deltaThetaLocal, &angVel);
-    		/*if(angVel >= angularSpeed){
-    			angVel = angularSpeed;
-    		} else if(angVel <= -angularSpeed){
-    			angVel = -angularSpeed;
-    		} else {
-    			angVel *= -1;
-    		}*/
-    		printf("Angular: %d\t%f\t%f\t%f\n", iter, angVel, deltaThetaLocal, angularController->getError());
-
-    		myDesired->setRotVel(angVel);
-    		
-    	} else if(distanceLocal > minimumDistance or distanceLocal < -minimumDistance){
-    		myDesired->setRotVel(0);
-    		angularController->reset();
-    		float linVel = 0;
-    		int iter = linearController->getSystemInput(distanceLocal, &linVel);
-    		/*if(linVel >= linearSpeed){
-    			linVel = linearSpeed;
-    		} else if(linVel <= -linearSpeed){
-    			linVel = -linearSpeed;
-    		} else {
-    			linVel *= -1;
-    		}*/
-    		printf("Linear: %d\t%f\t%f\t%f\n", iter, linVel, distanceLocal, linearController->getError());
-    		myDesired->setVel(linVel);
+    		//myDesired->setVel(0);
+    		//linearController->reset();
+    		//int iter = angularController->getSystemInput(deltaThetaLocal, &angVel);
+    		speedController->getSystemInput(distanceLocal/1e3, RNUtils::deg2Rad(deltaThetaLocal), &linearSpeed, &angularSpeed);
+    		RNUtils::printLn("{lin-vel: %f, rot-vel: %f}", linearSpeed, RNUtils::rad2Deg(angularSpeed));
+			myDesired->setRotVel(RNUtils::rad2Deg(angularSpeed));
+    		myDesired->setVel(linearSpeed);
     	} else {
     		myDesired->setVel(0);
     		myDesired->setRotVel(0);
-    		angularController->reset();
-    		linearController->reset();
+    		//angularController->reset();
+    		//linearController->reset();
     		RNUtils::printLn("Doris Stopped by this condition of goal achieved...");
     		currentState = STATE_ACHIEVED_GOAL;
     	}

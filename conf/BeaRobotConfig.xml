@@ -7,7 +7,7 @@
 		</initial-position>
 		<process-noise>
 			<d-zone x1="-8" x2="-6" x3="6" x4="8"/> <!-- centimeters -->
-			<th-zone x1="-0.04" x2="-0.035" x3="0.035" x4="0.04"/> <!-- radians -->
+			<th-zone x1="-0.03" x2="-0.025" x3="0.025" x4="0.03"/> <!-- radians -->
 		</process-noise>
 		<sensors>
 			<sensor type="laser" activated="1">
