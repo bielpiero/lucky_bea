@@ -1310,7 +1310,6 @@ void GeneralController::loadRobotConfig(){
 		robotConfig->localization = std::string(XML_LOCALIZATION_ALGORITHM_KALMAN_STR);
 	}
 	xml_node<>* nav_root_node = root_node->first_node(XML_ELEMENT_NAV_PARAMS_STR);
-	robotConfig->navParams->alpha = (double)atoi(nav_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value()) / 100;
 
 	xml_node<>* initial_pos_root_node = nav_root_node->first_node(XML_ELEMENT_INITIAL_POS_STR);
 	xml_node<>* pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_X_ZONE_STR);
@@ -1367,6 +1366,7 @@ void GeneralController::loadRobotConfig(){
 			xml_node<>* observation_noise_root_node = sensor_node->first_node(XML_ELEMENT_OBSERV_NOISE_STR);
 			pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_D_ZONE_STR);
 			s_trapezoid* d_zone = sensor->observationNoise->dZone;
+			d_zone->alpha = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value());
 			d_zone->x1 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
 			d_zone->x2 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
 			d_zone->x3 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
@@ -1374,6 +1374,7 @@ void GeneralController::loadRobotConfig(){
 
 			pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
 			s_trapezoid* th2_zone = sensor->observationNoise->thZone;
+			th2_zone->alpha = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value());
 			th2_zone->x1 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
 			th2_zone->x2 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
 			th2_zone->x3 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
@@ -2623,12 +2624,15 @@ int GeneralController::initializeKalmanVariables(){
 			thZone = robotConfig->navParams->sensors->at(i)->observationNoise->thZone;
 
 			if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_LASER_STR){
-				
+				this->laserDistanceAlpha = dZone->alpha;
+				this->laserAngleAlpha = thZone->alpha;
 				this->laserDistanceVariance = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
 				this->laserAngleVariance = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
 				RNUtils::printLn("Laser {ux: %f m^2, uth:%f rads^2}", this->laserDistanceVariance, this->laserAngleVariance);
 
 			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
+				this->cameraDistanceAlpha = dZone->alpha;
+				this->cameraAngleAlpha = thZone->alpha;
 				this->cameraDistanceVariance = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
 				this->cameraAngleVariance = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
 				RNUtils::printLn("Camara {ux: %f m^2, uth:%f rads^2}", this->cameraDistanceVariance, this->cameraAngleVariance);
@@ -2748,6 +2752,23 @@ Matrix GeneralController::getQ(){
 
 Matrix GeneralController::getR(){
 	return R;
+}
+
+
+double GeneralController::getLaserDistanceAlpha(){
+	return laserDistanceAlpha;
+}
+
+double GeneralController::getLaserAngleAlpha(){
+	return laserAngleAlpha;
+}
+
+double GeneralController::getCameraDistanceAlpha(){
+	return cameraDistanceAlpha;
+}
+
+double GeneralController::getCameraAngleAlpha(){
+	return cameraAngleAlpha;
 }
 
 double GeneralController::getLaserDistanceVariance(){

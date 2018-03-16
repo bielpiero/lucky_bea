@@ -97,11 +97,13 @@ struct dynamic_face_info{
 
 
 struct s_trapezoid{
+	double alpha;
 	double x1;
 	double x2;
 	double x3;
 	double x4;
 	s_trapezoid(){
+		alpha = 0;
 		x1 = 0;
 		x2 = 0;
 		x3 = 0;
@@ -155,7 +157,6 @@ struct s_sensor{
 };
 
 struct s_navigation_params{
-	double alpha;
 	s_position* initialPosition;
 	s_obs_dth* processNoise;
 	std::vector<s_sensor*>* sensors;
@@ -294,6 +295,11 @@ public:
 	Matrix getQ();
 	Matrix getR();
 
+	double getLaserDistanceAlpha();
+	double getLaserAngleAlpha();
+	double getCameraDistanceAlpha();
+	double getCameraAngleAlpha();
+
 	double getLaserDistanceVariance();
 	double getLaserAngleVariance();
 	double getCameraDistanceVariance();
@@ -346,6 +352,11 @@ private:
 	Matrix P;
 	Matrix Q;
 	Matrix R;
+
+	double laserDistanceAlpha;
+	double laserAngleAlpha;
+	double cameraDistanceAlpha;
+	double cameraAngleAlpha;
 
 	double laserDistanceVariance;
 	double laserAngleVariance;

@@ -19,10 +19,6 @@ private:
 	void landmarkObservation(const Matrix& xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle);
 	Matrix fixFilterGain(const Matrix wk, const Matrix z);
 private:
-	static const double MAX_LASER_DISTANCE_ERROR;
-	static const double MAX_LASER_ANGLE_ERROR;
-	static const double MAX_CAMERA_DISTANCE_ERROR;
-	static const double MAX_CAMERA_ANGLE_ERROR;
 	static const double CAMERA_ERROR_POSITION_X;
 	static const double CAMERA_ERROR_POSITION_Y;
 	int laserLandmarksCount;

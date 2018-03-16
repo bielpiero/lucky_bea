@@ -1,10 +1,5 @@
 #include "RNKalmanLocalizationTask.h"
 
-const double RNKalmanLocalizationTask::MAX_LASER_DISTANCE_ERROR = 0.04;
-const double RNKalmanLocalizationTask::MAX_LASER_ANGLE_ERROR = 0.04;
-const double RNKalmanLocalizationTask::MAX_CAMERA_DISTANCE_ERROR = 0.2;
-const double RNKalmanLocalizationTask::MAX_CAMERA_ANGLE_ERROR = 0.1;
-
 const double RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.25;
 const double RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.014;
 
@@ -30,11 +25,11 @@ void RNKalmanLocalizationTask::init(){
 		cameraLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_CAMERA_STR);
 		rfidLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_RFID_STR);
 
-		laserTMDistance = MAX_LASER_DISTANCE_ERROR / std::sqrt(gn->getLaserDistanceVariance());
-		laserTMAngle = MAX_LASER_ANGLE_ERROR / std::sqrt(gn->getLaserAngleVariance());
-		//cameraTMDistance = MAX_CAMERA_DISTANCE_ERROR / std::sqrt(gn->getCameraDistanceVariance());
+		laserTMDistance = gn->getLaserDistanceAlpha() / std::sqrt(gn->getLaserDistanceVariance());
+		laserTMAngle = gn->getLaserAngleAlpha() / std::sqrt(gn->getLaserAngleVariance());
+		//cameraTMDistance = gn->getCameraDistanceAlpha() / std::sqrt(gn->getCameraDistanceVariance());
 		cameraTMDistance = 0.1;
-		cameraTMAngle = MAX_CAMERA_ANGLE_ERROR / std::sqrt(gn->getCameraAngleVariance());
+		cameraTMAngle = gn->getCameraAngleAlpha() / std::sqrt(gn->getCameraAngleVariance());
 		rfidTMDistance = 0.2;
 		rfidTMAngle = 0.2;
 
