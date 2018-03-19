@@ -1,321 +1,321 @@
-<GestosEstaticos>
-	<Gesto name="Señalar" id="0" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="60"/>
-			<Motor device="arm" id="1" degrees="º0"/>
-			<Motor device="arm" id="2" degrees="65"/>
-			<Motor device="arm" id="3" degrees="75"/>
-			<Motor device="arm" id="4" degrees="190"/>
-			<Motor device="arm" id="5" degrees="140"/>
-			<Motor device="hand" id="6" degrees="6"/>
-			<Motor device="hand" id="7" degrees="88"/>
-			<Motor device="hand" id="8" degrees="6"/>
-		</state>
-	</Gesto>
-	<Gesto name="OK" id="1" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="30"/>
-			<Motor device="arm" id="1" degrees="10"/>
-			<Motor device="arm" id="2" degrees="90"/>
-			<Motor device="arm" id="3" degrees="95"/>
-			<Motor device="arm" id="4" degrees="140"/>
-			<Motor device="arm" id="5" degrees="160"/>
-			<Motor device="hand" id="6" degrees="80"/>
-			<Motor device="hand" id="7" degrees="10"/>
-			<Motor device="hand" id="8" degrees="10"/>
-		</state>
-	</Gesto>
-	<Gesto name="Que te den" id="2" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="30"/>
-			<Motor device="arm" id="1" degrees="10"/>
-			<Motor device="arm" id="2" degrees="90"/>
-			<Motor device="arm" id="3" degrees="95"/>
-			<Motor device="arm" id="4" degrees="190"/>
-			<Motor device="arm" id="5" degrees="120"/>
-			<Motor device="hand" id="6" degrees="10"/>
-			<Motor device="hand" id="7" degrees="10"/>
-			<Motor device="hand" id="8" degrees="10"/>
-		</state>
-	</Gesto>
-	<Gesto name="Reloj" id="3" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="55"/>
-			<Motor device="arm" id="1" degrees="30"/>
-			<Motor device="arm" id="2" degrees="30"/>
-			<Motor device="arm" id="3" degrees="130"/>
-			<Motor device="arm" id="4" degrees="130"/>
-			<Motor device="arm" id="5" degrees="170"/>
-			<Motor device="hand" id="6" degrees="10"/>
-			<Motor device="hand" id="7" degrees="10"/>
-			<Motor device="hand" id="8" degrees="10"/>
-		</state>
-	</Gesto>
-	<Gesto name="Victoria" id="4" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="30"/>
-			<Motor device="arm" id="1" degrees="15"/>
-			<Motor device="arm" id="2" degrees="90"/>
-			<Motor device="arm" id="3" degrees="125"/>
-			<Motor device="arm" id="4" degrees="200"/>
-			<Motor device="arm" id="5" degrees="100"/>
-			<Motor device="hand" id="6" degrees="10"/>
-			<Motor device="hand" id="7" degrees="88"/>
-			<Motor device="hand" id="8" degrees="88"/>
-		</state>
-	</Gesto>
-	<Gesto name="Derrota" id="5" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="0"/>
-			<Motor device="arm" id="1" degrees="0"/>
-			<Motor device="arm" id="2" degrees="90"/>
-			<Motor device="arm" id="3" degrees="20"/>
-			<Motor device="arm" id="4" degrees="130"/>
-			<Motor device="arm" id="5" degrees="130"/>
-			<Motor device="hand" id="6" degrees="60"/>
-			<Motor device="hand" id="7" degrees="60"/>
-			<Motor device="hand" id="8" degrees="60"/>
-		</state>
-	</Gesto>
+<gestures>
+	<gesture name="Señalar" id="0" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="60"/>
+			<motor device="arm" id="1" degrees="º0"/>
+			<motor device="arm" id="2" degrees="65"/>
+			<motor device="arm" id="3" degrees="75"/>
+			<motor device="arm" id="4" degrees="190"/>
+			<motor device="arm" id="5" degrees="140"/>
+			<motor device="hand" id="6" degrees="6"/>
+			<motor device="hand" id="7" degrees="88"/>
+			<motor device="hand" id="8" degrees="6"/>
+		</frame>
+	</gesture>
+	<gesture name="OK" id="1" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="30"/>
+			<motor device="arm" id="1" degrees="10"/>
+			<motor device="arm" id="2" degrees="90"/>
+			<motor device="arm" id="3" degrees="95"/>
+			<motor device="arm" id="4" degrees="140"/>
+			<motor device="arm" id="5" degrees="160"/>
+			<motor device="hand" id="6" degrees="80"/>
+			<motor device="hand" id="7" degrees="10"/>
+			<motor device="hand" id="8" degrees="10"/>
+		</frame>
+	</gesture>
+	<gesture name="Que te den" id="2" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="30"/>
+			<motor device="arm" id="1" degrees="10"/>
+			<motor device="arm" id="2" degrees="90"/>
+			<motor device="arm" id="3" degrees="95"/>
+			<motor device="arm" id="4" degrees="190"/>
+			<motor device="arm" id="5" degrees="120"/>
+			<motor device="hand" id="6" degrees="10"/>
+			<motor device="hand" id="7" degrees="10"/>
+			<motor device="hand" id="8" degrees="10"/>
+		</frame>
+	</gesture>
+	<gesture name="Reloj" id="3" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="55"/>
+			<motor device="arm" id="1" degrees="30"/>
+			<motor device="arm" id="2" degrees="30"/>
+			<motor device="arm" id="3" degrees="130"/>
+			<motor device="arm" id="4" degrees="130"/>
+			<motor device="arm" id="5" degrees="170"/>
+			<motor device="hand" id="6" degrees="10"/>
+			<motor device="hand" id="7" degrees="10"/>
+			<motor device="hand" id="8" degrees="10"/>
+		</frame>
+	</gesture>
+	<gesture name="Victoria" id="4" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="30"/>
+			<motor device="arm" id="1" degrees="15"/>
+			<motor device="arm" id="2" degrees="90"/>
+			<motor device="arm" id="3" degrees="125"/>
+			<motor device="arm" id="4" degrees="200"/>
+			<motor device="arm" id="5" degrees="100"/>
+			<motor device="hand" id="6" degrees="10"/>
+			<motor device="hand" id="7" degrees="88"/>
+			<motor device="hand" id="8" degrees="88"/>
+		</frame>
+	</gesture>
+	<gesture name="Derrota" id="5" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="0"/>
+			<motor device="arm" id="1" degrees="0"/>
+			<motor device="arm" id="2" degrees="90"/>
+			<motor device="arm" id="3" degrees="20"/>
+			<motor device="arm" id="4" degrees="130"/>
+			<motor device="arm" id="5" degrees="130"/>
+			<motor device="hand" id="6" degrees="60"/>
+			<motor device="hand" id="7" degrees="60"/>
+			<motor device="hand" id="8" degrees="60"/>
+		</frame>
+	</gesture>
 	
-	<Gesto name="PPT" id="6" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="37"/>
-			<Motor device="arm" id="1" degrees="35"/>
-			<Motor device="arm" id="2" degrees="105"/>
-			<Motor device="arm" id="3" degrees="105"/>
-			<Motor device="arm" id="4" degrees="150"/>
-			<Motor device="arm" id="5" degrees="150"/>
-			<Motor device="hand" id="6" degrees="20"/>
-			<Motor device="hand" id="7" degrees="20"/>
-			<Motor device="hand" id="8" degrees="20"/>
-		</state>
-	</Gesto>
-	<Gesto name="Piedra" id="7" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="32"/>
-			<Motor device="arm" id="1" degrees="30"/>
-			<Motor device="arm" id="2" degrees="95"/>
-			<Motor device="arm" id="3" degrees="105"/>
-			<Motor device="arm" id="4" degrees="160"/>
-			<Motor device="arm" id="5" degrees="160"/>
-			<Motor device="hand" id="6" degrees="10"/>
-			<Motor device="hand" id="7" degrees="10"/>
-			<Motor device="hand" id="8" degrees="10"/>
-		</state>
-	</Gesto>
-	<Gesto name="Papel" id="8" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="32"/>
-			<Motor device="arm" id="1" degrees="30"/>
-			<Motor device="arm" id="2" degrees="95"/>
-			<Motor device="arm" id="3" degrees="105"/>
-			<Motor device="arm" id="4" degrees="160"/>
-			<Motor device="arm" id="5" degrees="160"/>
-			<Motor device="hand" id="6" degrees="85"/>
-			<Motor device="hand" id="7" degrees="85"/>
-			<Motor device="hand" id="8" degrees="85"/>
-		</state>
-	</Gesto>
-	<Gesto name="Tijera" id="9" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="32"/>
-			<Motor device="arm" id="1" degrees="30"/>
-			<Motor device="arm" id="2" degrees="95"/>
-			<Motor device="arm" id="3" degrees="105"/>
-			<Motor device="arm" id="4" degrees="110"/>
-			<Motor device="arm" id="5" degrees="180"/>
-			<Motor device="hand" id="6" degrees="0"/>
-			<Motor device="hand" id="7" degrees="85"/>
-			<Motor device="hand" id="8" degrees="85"/>
-		</state>
-	</Gesto>
-	<Gesto name="Neutro" id="10" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="0"/>
-			<Motor device="arm" id="1" degrees="0"/>
-			<Motor device="arm" id="2" degrees="90"/>
-			<Motor device="arm" id="3" degrees="0"/>
-			<Motor device="arm" id="4" degrees="150"/>
-			<Motor device="arm" id="5" degrees="150"/>
-			<Motor device="hand" id="6" degrees="20"/>
-			<Motor device="hand" id="7" degrees="20"/>
-			<Motor device="hand" id="8" degrees="20"/>
-		</state>
-	</Gesto>
-	<Gesto name="Medio" id="11" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="30"/>
-			<Motor device="arm" id="1" degrees="30"/>
-			<Motor device="arm" id="2" degrees="60"/>
-			<Motor device="arm" id="3" degrees="65"/>
-			<Motor device="arm" id="4" degrees="170"/>
-			<Motor device="arm" id="5" degrees="170"/>
-			<Motor device="hand" id="6" degrees="45"/>
-			<Motor device="hand" id="7" degrees="45"/>
-			<Motor device="hand" id="8" degrees="45"/>
-		</state>
-	</Gesto>
-	<Gesto name="Max" id="12" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="60"/>
-			<Motor device="arm" id="1" degrees="60"/>
-			<Motor device="arm" id="2" degrees="120"/>
-			<Motor device="arm" id="3" degrees="130"/>
-			<Motor device="arm" id="4" degrees="170"/>
-			<Motor device="arm" id="5" degrees="170"/>
-			<Motor device="hand" id="6" degrees="80"/>
-			<Motor device="hand" id="7" degrees="80"/>
-			<Motor device="hand" id="8" degrees="80"/>
-		</state>
-	</Gesto>
-	<Gesto name="Uno" id="13" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="25"/>
-			<Motor device="arm" id="1" degrees="15"/>
-			<Motor device="arm" id="2" degrees="100"/>
-			<Motor device="arm" id="3" degrees="80"/>
-			<Motor device="arm" id="4" degrees="160"/>
-			<Motor device="arm" id="5" degrees="160"/>
-			<Motor device="hand" id="6" degrees="10"/>
-			<Motor device="hand" id="7" degrees="80"/>
-			<Motor device="hand" id="8" degrees="10"/>
-		</state>
-	</Gesto>
-	<Gesto name="Dos" id="14" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="25"/>
-			<Motor device="arm" id="1" degrees="15"/>
-			<Motor device="arm" id="2" degrees="100"/>
-			<Motor device="arm" id="3" degrees="80"/>
-			<Motor device="arm" id="4" degrees="160"/>
-			<Motor device="arm" id="5" degrees="160"/>
-			<Motor device="hand" id="6" degrees="10"/>
-			<Motor device="hand" id="7" degrees="80"/>
-			<Motor device="hand" id="8" degrees="80"/>
-		</state>
-	</Gesto>
-	<Gesto name="Tres" id="15" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="25"/>
-			<Motor device="arm" id="1" degrees="15"/>
-			<Motor device="arm" id="2" degrees="100"/>
-			<Motor device="arm" id="3" degrees="80"/>
-			<Motor device="arm" id="4" degrees="160"/>
-			<Motor device="arm" id="5" degrees="160"/>
-			<Motor device="hand" id="6" degrees="80"/>
-			<Motor device="hand" id="7" degrees="80"/>
-			<Motor device="hand" id="8" degrees="80"/>
-		</state>
-	</Gesto>
-	<Gesto name="Traquilo" id="16" type="0">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="15"/>
-			<Motor device="arm" id="1" degrees="8"/>
-			<Motor device="arm" id="2" degrees="110"/>
-			<Motor device="arm" id="3" degrees="30"/>
-			<Motor device="arm" id="4" degrees="80"/>
-			<Motor device="arm" id="5" degrees="220"/>
-			<Motor device="hand" id="6" degrees="40"/>
-			<Motor device="hand" id="7" degrees="40"/>
-			<Motor device="hand" id="8" degrees="40"/>
-		</state>
-	</Gesto>
+	<gesture name="PPT" id="6" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="37"/>
+			<motor device="arm" id="1" degrees="35"/>
+			<motor device="arm" id="2" degrees="105"/>
+			<motor device="arm" id="3" degrees="105"/>
+			<motor device="arm" id="4" degrees="150"/>
+			<motor device="arm" id="5" degrees="150"/>
+			<motor device="hand" id="6" degrees="20"/>
+			<motor device="hand" id="7" degrees="20"/>
+			<motor device="hand" id="8" degrees="20"/>
+		</frame>
+	</gesture>
+	<gesture name="Piedra" id="7" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="32"/>
+			<motor device="arm" id="1" degrees="30"/>
+			<motor device="arm" id="2" degrees="95"/>
+			<motor device="arm" id="3" degrees="105"/>
+			<motor device="arm" id="4" degrees="160"/>
+			<motor device="arm" id="5" degrees="160"/>
+			<motor device="hand" id="6" degrees="10"/>
+			<motor device="hand" id="7" degrees="10"/>
+			<motor device="hand" id="8" degrees="10"/>
+		</frame>
+	</gesture>
+	<gesture name="Papel" id="8" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="32"/>
+			<motor device="arm" id="1" degrees="30"/>
+			<motor device="arm" id="2" degrees="95"/>
+			<motor device="arm" id="3" degrees="105"/>
+			<motor device="arm" id="4" degrees="160"/>
+			<motor device="arm" id="5" degrees="160"/>
+			<motor device="hand" id="6" degrees="85"/>
+			<motor device="hand" id="7" degrees="85"/>
+			<motor device="hand" id="8" degrees="85"/>
+		</frame>
+	</gesture>
+	<gesture name="Tijera" id="9" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="32"/>
+			<motor device="arm" id="1" degrees="30"/>
+			<motor device="arm" id="2" degrees="95"/>
+			<motor device="arm" id="3" degrees="105"/>
+			<motor device="arm" id="4" degrees="110"/>
+			<motor device="arm" id="5" degrees="180"/>
+			<motor device="hand" id="6" degrees="0"/>
+			<motor device="hand" id="7" degrees="85"/>
+			<motor device="hand" id="8" degrees="85"/>
+		</frame>
+	</gesture>
+	<gesture name="Neutro" id="10" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="0"/>
+			<motor device="arm" id="1" degrees="0"/>
+			<motor device="arm" id="2" degrees="90"/>
+			<motor device="arm" id="3" degrees="0"/>
+			<motor device="arm" id="4" degrees="150"/>
+			<motor device="arm" id="5" degrees="150"/>
+			<motor device="hand" id="6" degrees="20"/>
+			<motor device="hand" id="7" degrees="20"/>
+			<motor device="hand" id="8" degrees="20"/>
+		</frame>
+	</gesture>
+	<gesture name="Medio" id="11" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="30"/>
+			<motor device="arm" id="1" degrees="30"/>
+			<motor device="arm" id="2" degrees="60"/>
+			<motor device="arm" id="3" degrees="65"/>
+			<motor device="arm" id="4" degrees="170"/>
+			<motor device="arm" id="5" degrees="170"/>
+			<motor device="hand" id="6" degrees="45"/>
+			<motor device="hand" id="7" degrees="45"/>
+			<motor device="hand" id="8" degrees="45"/>
+		</frame>
+	</gesture>
+	<gesture name="Max" id="12" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="60"/>
+			<motor device="arm" id="1" degrees="60"/>
+			<motor device="arm" id="2" degrees="120"/>
+			<motor device="arm" id="3" degrees="130"/>
+			<motor device="arm" id="4" degrees="170"/>
+			<motor device="arm" id="5" degrees="170"/>
+			<motor device="hand" id="6" degrees="80"/>
+			<motor device="hand" id="7" degrees="80"/>
+			<motor device="hand" id="8" degrees="80"/>
+		</frame>
+	</gesture>
+	<gesture name="Uno" id="13" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="25"/>
+			<motor device="arm" id="1" degrees="15"/>
+			<motor device="arm" id="2" degrees="100"/>
+			<motor device="arm" id="3" degrees="80"/>
+			<motor device="arm" id="4" degrees="160"/>
+			<motor device="arm" id="5" degrees="160"/>
+			<motor device="hand" id="6" degrees="10"/>
+			<motor device="hand" id="7" degrees="80"/>
+			<motor device="hand" id="8" degrees="10"/>
+		</frame>
+	</gesture>
+	<gesture name="Dos" id="14" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="25"/>
+			<motor device="arm" id="1" degrees="15"/>
+			<motor device="arm" id="2" degrees="100"/>
+			<motor device="arm" id="3" degrees="80"/>
+			<motor device="arm" id="4" degrees="160"/>
+			<motor device="arm" id="5" degrees="160"/>
+			<motor device="hand" id="6" degrees="10"/>
+			<motor device="hand" id="7" degrees="80"/>
+			<motor device="hand" id="8" degrees="80"/>
+		</frame>
+	</gesture>
+	<gesture name="Tres" id="15" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="25"/>
+			<motor device="arm" id="1" degrees="15"/>
+			<motor device="arm" id="2" degrees="100"/>
+			<motor device="arm" id="3" degrees="80"/>
+			<motor device="arm" id="4" degrees="160"/>
+			<motor device="arm" id="5" degrees="160"/>
+			<motor device="hand" id="6" degrees="80"/>
+			<motor device="hand" id="7" degrees="80"/>
+			<motor device="hand" id="8" degrees="80"/>
+		</frame>
+	</gesture>
+	<gesture name="Traquilo" id="16" type="0">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="15"/>
+			<motor device="arm" id="1" degrees="8"/>
+			<motor device="arm" id="2" degrees="110"/>
+			<motor device="arm" id="3" degrees="30"/>
+			<motor device="arm" id="4" degrees="80"/>
+			<motor device="arm" id="5" degrees="220"/>
+			<motor device="hand" id="6" degrees="40"/>
+			<motor device="hand" id="7" degrees="40"/>
+			<motor device="hand" id="8" degrees="40"/>
+		</frame>
+	</gesture>
 	
-	<Gesto name="Saludar" id="17" type="1">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="30"/>
-			<Motor device="arm" id="1" degrees="20"/>
-			<Motor device="arm" id="2" degrees="85"/>
-			<Motor device="arm" id="3" degrees="130"/>
-			<Motor device="arm" id="4" degrees="160"/>
-			<Motor device="arm" id="5" degrees="140"/>
-			<Motor device="hand" id="6" degrees="80"/>
-			<Motor device="hand" id="7" degrees="80"/>
-			<Motor device="hand" id="8" degrees="80"/>
-		</state>
-		<state id="1">
-			<Motor device="arm" id="0" degrees="30"/>
-			<Motor device="arm" id="1" degrees="20"/>
-			<Motor device="arm" id="2" degrees="100"/>
-			<Motor device="arm" id="3" degrees="130"/>
-			<Motor device="arm" id="4" degrees="160"/>
-			<Motor device="arm" id="5" degrees="140"/>
-			<Motor device="hand" id="6" degrees="80"/>
-			<Motor device="hand" id="7" degrees="80"/>
-			<Motor device="hand" id="8" degrees="80"/>
-		</state>
-	</Gesto>
-	<Gesto name="Caminar" id="18" type="1">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="5"/>
-			<Motor device="arm" id="1" degrees="12"/>
-			<Motor device="arm" id="2" degrees="90"/>
-			<Motor device="arm" id="3" degrees="0"/>
-			<Motor device="arm" id="4" degrees="150"/>
-			<Motor device="arm" id="5" degrees="150"/>
-			<Motor device="hand" id="6" degrees="20"/>
-			<Motor device="hand" id="7" degrees="20"/>
-			<Motor device="hand" id="8" degrees="20"/>
-		</state>
-		<state id="1">
-			<Motor device="arm" id="0" degrees="20"/>
-			<Motor device="arm" id="1" degrees="12"/>
-			<Motor device="arm" id="2" degrees="90"/>
-			<Motor device="arm" id="3" degrees="10"/>
-			<Motor device="arm" id="4" degrees="150"/>
-			<Motor device="arm" id="5" degrees="150"/>
-			<Motor device="hand" id="6" degrees="20"/>
-			<Motor device="hand" id="7" degrees="20"/>
-			<Motor device="hand" id="8" degrees="20"/>
-		</state>
-	</Gesto>
-	<Gesto name="Estrechar Mano" id="19" type="1">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="40"/>
-			<Motor device="arm" id="1" degrees="25"/>
-			<Motor device="arm" id="2" degrees="60"/>
-			<Motor device="arm" id="3" degrees="100"/>
-			<Motor device="arm" id="4" degrees="120"/>
-			<Motor device="arm" id="5" degrees="170"/>
-			<Motor device="hand" id="6" degrees="60"/>
-			<Motor device="hand" id="7" degrees="40"/>
-			<Motor device="hand" id="8" degrees="40"/>
-		</state>
-		<state id="1">
-			<Motor device="arm" id="0" degrees="30"/>
-			<Motor device="arm" id="1" degrees="25"/>
-			<Motor device="arm" id="2" degrees="60"/>
-			<Motor device="arm" id="3" degrees="95"/>
-			<Motor device="arm" id="4" degrees="120"/>
-			<Motor device="arm" id="5" degrees="170"/>
-			<Motor device="hand" id="6" degrees="55"/>
-			<Motor device="hand" id="7" degrees="45"/>
-			<Motor device="hand" id="8" degrees="45"/>
-		</state>
-	</Gesto>
-	<Gesto name="Ven" id="19" type="1">
-		<state id="0">
-			<Motor device="arm" id="0" degrees="20"/>
-			<Motor device="arm" id="1" degrees="30"/>
-			<Motor device="arm" id="2" degrees="80"/>
-			<Motor device="arm" id="3" degrees="130"/>
-			<Motor device="arm" id="4" degrees="150"/>
-			<Motor device="arm" id="5" degrees="150"/>
-			<Motor device="hand" id="6" degrees="70"/>
-			<Motor device="hand" id="7" degrees="70"/>
-			<Motor device="hand" id="8" degrees="70"/>
-		</state>
-		<state id="1">
-			<Motor device="arm" id="0" degrees="20"/>
-			<Motor device="arm" id="1" degrees="30"/>
-			<Motor device="arm" id="2" degrees="80"/>
-			<Motor device="arm" id="3" degrees="130"/>
-			<Motor device="arm" id="4" degrees="290"/>
-			<Motor device="arm" id="5" degrees="290"/>
-			<Motor device="hand" id="6" degrees="70"/>
-			<Motor device="hand" id="7" degrees="70"/>
-			<Motor device="hand" id="8" degrees="70"/>
-		</state>
-	</Gesto>
-</GestosEstaticos>
+	<gesture name="Saludar" id="17" type="1">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="30"/>
+			<motor device="arm" id="1" degrees="20"/>
+			<motor device="arm" id="2" degrees="85"/>
+			<motor device="arm" id="3" degrees="130"/>
+			<motor device="arm" id="4" degrees="160"/>
+			<motor device="arm" id="5" degrees="140"/>
+			<motor device="hand" id="6" degrees="80"/>
+			<motor device="hand" id="7" degrees="80"/>
+			<motor device="hand" id="8" degrees="80"/>
+		</frame>
+		<frame id="1">
+			<motor device="arm" id="0" degrees="30"/>
+			<motor device="arm" id="1" degrees="20"/>
+			<motor device="arm" id="2" degrees="100"/>
+			<motor device="arm" id="3" degrees="130"/>
+			<motor device="arm" id="4" degrees="160"/>
+			<motor device="arm" id="5" degrees="140"/>
+			<motor device="hand" id="6" degrees="80"/>
+			<motor device="hand" id="7" degrees="80"/>
+			<motor device="hand" id="8" degrees="80"/>
+		</frame>
+	</gesture>
+	<gesture name="Caminar" id="18" type="1">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="5"/>
+			<motor device="arm" id="1" degrees="12"/>
+			<motor device="arm" id="2" degrees="90"/>
+			<motor device="arm" id="3" degrees="0"/>
+			<motor device="arm" id="4" degrees="150"/>
+			<motor device="arm" id="5" degrees="150"/>
+			<motor device="hand" id="6" degrees="20"/>
+			<motor device="hand" id="7" degrees="20"/>
+			<motor device="hand" id="8" degrees="20"/>
+		</frame>
+		<frame id="1">
+			<motor device="arm" id="0" degrees="20"/>
+			<motor device="arm" id="1" degrees="12"/>
+			<motor device="arm" id="2" degrees="90"/>
+			<motor device="arm" id="3" degrees="10"/>
+			<motor device="arm" id="4" degrees="150"/>
+			<motor device="arm" id="5" degrees="150"/>
+			<motor device="hand" id="6" degrees="20"/>
+			<motor device="hand" id="7" degrees="20"/>
+			<motor device="hand" id="8" degrees="20"/>
+		</frame>
+	</gesture>
+	<gesture name="Estrechar Mano" id="19" type="1">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="40"/>
+			<motor device="arm" id="1" degrees="25"/>
+			<motor device="arm" id="2" degrees="60"/>
+			<motor device="arm" id="3" degrees="100"/>
+			<motor device="arm" id="4" degrees="120"/>
+			<motor device="arm" id="5" degrees="170"/>
+			<motor device="hand" id="6" degrees="60"/>
+			<motor device="hand" id="7" degrees="40"/>
+			<motor device="hand" id="8" degrees="40"/>
+		</frame>
+		<frame id="1">
+			<motor device="arm" id="0" degrees="30"/>
+			<motor device="arm" id="1" degrees="25"/>
+			<motor device="arm" id="2" degrees="60"/>
+			<motor device="arm" id="3" degrees="95"/>
+			<motor device="arm" id="4" degrees="120"/>
+			<motor device="arm" id="5" degrees="170"/>
+			<motor device="hand" id="6" degrees="55"/>
+			<motor device="hand" id="7" degrees="45"/>
+			<motor device="hand" id="8" degrees="45"/>
+		</frame>
+	</gesture>
+	<gesture name="Ven" id="19" type="1">
+		<frame id="0">
+			<motor device="arm" id="0" degrees="20"/>
+			<motor device="arm" id="1" degrees="30"/>
+			<motor device="arm" id="2" degrees="80"/>
+			<motor device="arm" id="3" degrees="130"/>
+			<motor device="arm" id="4" degrees="150"/>
+			<motor device="arm" id="5" degrees="150"/>
+			<motor device="hand" id="6" degrees="70"/>
+			<motor device="hand" id="7" degrees="70"/>
+			<motor device="hand" id="8" degrees="70"/>
+		</frame>
+		<frame id="1">
+			<motor device="arm" id="0" degrees="20"/>
+			<motor device="arm" id="1" degrees="30"/>
+			<motor device="arm" id="2" degrees="80"/>
+			<motor device="arm" id="3" degrees="130"/>
+			<motor device="arm" id="4" degrees="290"/>
+			<motor device="arm" id="5" degrees="290"/>
+			<motor device="hand" id="6" degrees="70"/>
+			<motor device="hand" id="7" degrees="70"/>
+			<motor device="hand" id="8" degrees="70"/>
+		</frame>
+	</gesture>
+</gestures>

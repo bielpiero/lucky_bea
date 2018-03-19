@@ -256,44 +256,35 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 	switch (function){
 		case 0x00:
 			RNUtils::printLn("Command 0x00. Static Faces Requested");
-			gestures->getGestures(XML_STATIC_GESTURES_TYPE_ID, jsonResponse);
+			gestures->getGestures(jsonResponse);
 			sendMsg(socketIndex, 0x00, (char*)jsonResponse.c_str(), (unsigned int)(jsonResponse.length())); 
 			break;
 		case 0x01:
-			RNUtils::printLn("Command 0x01. Dynamic Faces Requested");
-			gestures->getGestures(XML_DYNAMIC_GESTURES_TYPE_ID, jsonResponse);
-			sendMsg(socketIndex, 0x01, (char*)jsonResponse.c_str(), (unsigned int)(jsonResponse.length()));
+
 			break;
 		case 0x02:
-			RNUtils::printLn("Command 0x02. Saving New Static Face");
-			saveGesture(cad, 0);
+			RNUtils::printLn("Command 0x02. Saving New Face Frame");
+			gestures->saveGesture(cad);
 			break;
 		case 0x03:
-			RNUtils::printLn("Command 0x03. Saving New Dynamic Face");
-			saveGesture(cad, 1);
+
 			break;
 		case 0x04:
-			RNUtils::printLn("Command 0x04. Modifying Static Face");
+			RNUtils::printLn("Command 0x04. Modifying Face frame");
 			if(granted){
-				modifyGesture(cad, 0);
+				gestures->modifyGesture(cad);
 			} else {
-				RNUtils::printLn("Command 0x04. Modifying Static Face denied to %s", getClientIPAddress(socketIndex));
+				RNUtils::printLn("Command 0x04. Modifying Face denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x04, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
 			}
 			break;
 		case 0x05:
-			RNUtils::printLn("Command 0x05. Modifying Dynamic Face");
-			if(granted){
-				modifyGesture(cad, 1);
-			} else {
-				RNUtils::printLn("Command 0x05. Modifying Dynamic Face denied to %s", getClientIPAddress(socketIndex));
-				sendMsg(socketIndex, 0x05, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
-			}
+			
 			break;
 		case 0x06:
 			RNUtils::printLn("Command 0x06. Removing Face");
 			if(granted){
-				removeGesture(cad);
+				gestures->removeGesture(cad);
 			} else {
 				RNUtils::printLn("Command 0x06. Removing Face denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x06, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
@@ -320,13 +311,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			//SendMsg(socketIndex, 0x09, (char*)servo_positions.c_str(), (int)(servo_positions.length()));
 			break;
 		case 0x0A:
-			RNUtils::printLn("Command 0x0A. Stopping any Dynamic Face");
-			if(granted){
-				stopDynamicGesture();
-			} else {
-				RNUtils::printLn("Command 0x0A. Stopping any Dynamic Face denied to %s", getClientIPAddress(socketIndex));
-				sendMsg(socketIndex, 0x0A, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
-			}
+			
 			break;
 		case 0x0B:
 			RNUtils::printLn("Command 0x0B. Text to speech message");
@@ -828,212 +813,6 @@ void GeneralController::getVelocities(char* cad, double& lin_vel, double& ang_ve
 	delete current_number;
 }
 
-/*void GeneralController::getGestures(std::string type, std::string& gestures){
-    xml_document<> doc;
-    xml_node<>* root_node;
-	
-	std::string buffer_str = "";
-	
-    std::ifstream the_file(xmlFaceFullPath.c_str());
-	
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);
-	root_node = doc.first_node(XML_STATIC_GESTURES_STR);
-	if(root_node != NULL){
-		for (xml_node<> * gesto_node = root_node->first_node(XML_ELEMENT_GESTURE_STR); gesto_node; gesto_node = gesto_node->next_sibling()){	
-			std::string nombre(gesto_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-			
-			std::string id(gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-
-			std::string tipo(gesto_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value());
-
-			if (tipo == type){
-				
-				buffer_str += id + "," + nombre + "|";
-			}
-		}
-	}
-	gestures = buffer_str;
-	the_file.close();
-	
-	
-}*/
-
-void GeneralController::saveGesture(std::string token, int type){
-    if(type == 0){
-		s_motor motor_positions[SERVOS_COUNT];
-		int i = 0;
-		std::string gesture_name(strtok((char*)token.c_str(), "|"));
-		std::string gesture_positions(strtok(NULL, "|"));
-				
-		char* positions = strtok((char*)gesture_positions.c_str(), ",");
-		while (positions != 0){
-			std::ostringstream convert;
-			convert << i;
-			motor_positions[i].idMotor = convert.str();
-			motor_positions[i++].pos = std::string(positions);
-			positions = strtok(NULL, ",");
-		}
-		delete positions;
-		saveStaticGesture(gesture_name, motor_positions);
-    }
-}
-
-void GeneralController::modifyGesture(std::string token, int type){
-    if(type == 0){
-		s_motor motor_positions[SERVOS_COUNT];
-		int i = 0;
-		std::string gesture_id(strtok((char*)token.c_str(), "|"));
-		std::string gesture_name(strtok(NULL, "|"));
-		std::string gesture_positions(strtok(NULL, "|"));
-		        
-		char* positions = strtok((char*)gesture_positions.c_str(), ",");
-		while (positions != 0){
-	            std::ostringstream convert;
-	            convert << i;
-	                motor_positions[i].idMotor = convert.str();
-			motor_positions[i++].pos = std::string(positions);
-			positions = strtok(NULL, ",");
-		}
-		delete positions;
-		modifyStaticGesture(gesture_id, gesture_name, motor_positions);
-    }
-}
-
-void GeneralController::modifyStaticGesture(std::string gesture_id, std::string name, s_motor servos[]){
-	xml_document<> doc;
-    xml_node<>* root_node;
-	
-	std::string assigned_id;
-	std::ostringstream convert;
-        
-	
-    std::ifstream the_file(xmlFaceFullPath.c_str());
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);
-	
-	root_node = doc.first_node(XML_STATIC_GESTURES_STR);
-	if(root_node != NULL){
-		xml_node<> * gesto_node = root_node->last_node(XML_ELEMENT_GESTURE_STR);
-			
-		std::string id(gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-
-		convert << (atoi(id.c_str()) + 1);
-		assigned_id = convert.str();
-			
-        xml_node<>* new_node_gesture = doc.allocate_node(node_element, XML_ELEMENT_GESTURE_STR);
-        new_node_gesture->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, assigned_id.c_str()));
-        new_node_gesture->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_NAME_STR, name.c_str()));
-        new_node_gesture->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_TYPE_STR, "0"));
-        int id_;
-        for(id_ = 0; id_ < SERVOS_COUNT; id_++){
-            xml_node<>* new_node_motor = doc.allocate_node(node_element, XML_ELEMENT_MOTOR_STR);
-
-            new_node_motor->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, servos[id_].idMotor.c_str()));
-            
-            new_node_motor->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_POSITION_STR, servos[id_].pos.c_str()));
-            new_node_gesture->append_node(new_node_motor);
-        }
-        
-        root_node->append_node(new_node_gesture);
-        the_file.close();
-        
-        std::ofstream the_new_file(xmlFaceFullPath.c_str());
-        the_new_file << doc;
-        the_new_file.close(); 
-	}  
-	     
-}
-
-void GeneralController::saveStaticGesture(std::string name, s_motor servos[]){
-	xml_document<> doc;
-    xml_node<>* root_node;
-	
-	std::string assigned_id;
-	std::ostringstream convert;
-        
-	
-    std::ifstream the_file(xmlFaceFullPath.c_str());
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);
-	
-	root_node = doc.first_node(XML_STATIC_GESTURES_STR);
-	if(root_node != NULL){
-		xml_node<> * gesto_node = root_node->last_node(XML_ELEMENT_GESTURE_STR);
-			
-		std::string id(gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-
-		convert << (atoi(id.c_str()) + 1);
-		assigned_id = convert.str();
-        
-        xml_node<>* new_node_gesture = doc.allocate_node(node_element, XML_ELEMENT_GESTURE_STR);
-        new_node_gesture->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, assigned_id.c_str()));
-        new_node_gesture->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_NAME_STR, name.c_str()));
-        new_node_gesture->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_TYPE_STR, "0"));
-        int id_;
-        for(id_ = 0; id_ < SERVOS_COUNT; id_++){
-            xml_node<>* new_node_motor = doc.allocate_node(node_element, XML_ELEMENT_MOTOR_STR);
-
-            new_node_motor->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, servos[id_].idMotor.c_str()));
-            
-            new_node_motor->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_POSITION_STR, servos[id_].pos.c_str()));
-            new_node_gesture->append_node(new_node_motor);
-        }
-        
-        root_node->append_node(new_node_gesture);
-        the_file.close();
-        
-        std::ofstream the_new_file(xmlFaceFullPath.c_str());
-        the_new_file << doc;
-        the_new_file.close();    
-	}
-	
-}
-
-void GeneralController::saveDynamicGesture(std::string name, s_motor servos[]){
-
-}
-
-void GeneralController::removeGesture(std::string face_id){
-    xml_document<> doc;
-    xml_node<>* root_node;
-	
-	std::string buffer_str = "";
-	
-    std::ifstream the_file(xmlFaceFullPath.c_str());
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);
-	
-	root_node = doc.first_node(XML_STATIC_GESTURES_STR);
-	if(root_node != NULL){
-        xml_node<>* node_to_find;
-        bool found = false;
-		for (xml_node<> * gesto_node = root_node->first_node(XML_ELEMENT_GESTURE_STR); gesto_node && !found; gesto_node = gesto_node->next_sibling()){	
-
-			std::string id(gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-			if(id == face_id){
-				node_to_find = gesto_node;
-				found = true;
-			}
-		}
-			root_node->remove_node(node_to_find);
-		the_file.close();
-        
-        std::ofstream the_new_file(xmlFaceFullPath.c_str());
-        the_new_file << doc;
-        the_new_file.close();
-	}
-	
-}
-
 void GeneralController::setServoPosition(unsigned char card_id, unsigned char servo_id, int position){
     this->maestroControllers->setTarget(card_id, servo_id, position);
 }
@@ -1046,90 +825,6 @@ void GeneralController::setServoAcceleration(unsigned char card_id, unsigned cha
     this->maestroControllers->setAcceleration(card_id, servo_id, acceleration);
 }
 
-void GeneralController::stopDynamicGesture(){
-	continue_dynamic_thread = false;
-}
-
-void* GeneralController::dynamicFaceThread(void* object){
-    dynamic_face_info* node = (dynamic_face_info*)object;
-	s_movement selected_dynamic_face;
-	xml_document<> doc;
-    xml_node<>* root_node;
-	
-	std::string buffer_str = "";
-	
-    std::ifstream the_file(node->object->xmlFaceFullPath.c_str());
-    std::vector<char> buffer((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);	
-	root_node = doc.first_node(XML_DYNAMIC_GESTURES_STR);
-	if(root_node != NULL){
-		for (xml_node<> * repetir_node = root_node->first_node("Repetir"); repetir_node; repetir_node = repetir_node->next_sibling()){
-
-			std::string idGesture(repetir_node->first_attribute("idGesto")->value());
-			if(idGesture == node->id_gesto){
-				selected_dynamic_face.idGesture = idGesture;
-				
-				std::string ts(repetir_node->first_attribute("ts")->value());
-				selected_dynamic_face.ts = ts;
-
-				for(xml_node<>* secuencia_node = repetir_node->first_node("Secuencia"); secuencia_node; secuencia_node = secuencia_node->next_sibling()){	    
-					s_secuence secuence;   		
-					
-					std::string idSecuencia(secuencia_node->first_attribute("idSecuencia")->value());	
-					secuence.idSecuence = idSecuencia;
-
-					std::string tsec(secuencia_node->first_attribute("tsec")->value());
-					secuence.tsec = tsec;
-					
-					for(xml_node<>* motor_node = secuencia_node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling()){
-						s_motor motor;
-						std::string cardId(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value());
-						motor.cardId = cardId;
-											
-						std::string idMotor(motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-						motor.idMotor = idMotor; //el indice j no se corresponde con el numero de motor, ya que podria estar modificando el motor 3 y 4 y se guardarian en los indices 0 y 1 respectivamente
-						
-						std::string pos(motor_node->first_attribute(XML_ATTRIBUTE_POSITION_STR)->value());
-						std::string speed(motor_node->first_attribute(XML_ATTRIBUTE_SPEED_STR)->value());
-						std::string acceleration(motor_node->first_attribute(XML_ATTRIBUTE_ACCELERATION_STR)->value());
-						motor.pos = pos; //el indice j no se corresponde con el numero de motor, ya que podria estar modificando el motor 3 y 4 y se guardarian en los indices 0 y 1 respectivamente
-						motor.speed = speed;
-						motor.acceleration = acceleration;
-						secuence.motors.push_back(motor);
-					}
-
-					selected_dynamic_face.secuences.push_back(secuence);
-				}
-			}
-		}
-	}
-
-	the_file.close();
-	
-
-	RNUtils::sleep(atoi(selected_dynamic_face.ts.c_str()));
-
-	while(node->object->continue_dynamic_thread){
-		for(int i=0; i<selected_dynamic_face.secuences.size(); i++){
-			for(int j=0; j<selected_dynamic_face.secuences[i].motors.size(); j++){
-                unsigned char card_id = (unsigned char)atoi(selected_dynamic_face.secuences[i].motors[j].cardId.c_str());
-				unsigned char servo_id = (unsigned char)atoi(selected_dynamic_face.secuences[i].motors[j].idMotor.c_str());
-				int position = atoi(selected_dynamic_face.secuences[i].motors[j].pos.c_str());
-				int speed = atoi(selected_dynamic_face.secuences[i].motors[j].speed.c_str());
-				int acceleration = atoi(selected_dynamic_face.secuences[i].motors[j].acceleration.c_str());
-				
-				node->object->setServoPosition(card_id, servo_id, position);
-				node->object->setServoSpeed(card_id, servo_id, speed);
-				node->object->setServoAcceleration(card_id, servo_id, acceleration);
-			}
-			
-			RNUtils::sleep(atoi(selected_dynamic_face.secuences[i].tsec.c_str()));
-		}
-	}
-	return NULL;
-}
 
 void GeneralController::getMapId(char* cad, int& mapId){
 	mapId = atoi(cad);

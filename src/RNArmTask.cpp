@@ -25,8 +25,8 @@ RNArmTask::RNArmTask(const GeneralController* gn, SerialPort* maestroController,
         gesture->setId(std::string(Gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
         gesture->setType(std::string(Gesto_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value()));
         
-        for(xml_node<> * state_node = Gesto_node->first_node(XML_ELEMENT_STATE_STR); state_node; state_node = state_node->next_sibling()){
-        	ArmState* state = new ArmState();
+        for(xml_node<> * state_node = Gesto_node->first_node(XML_ELEMENT_FRAME_STR); state_node; state_node = state_node->next_sibling()){
+        	ArmFrame* state = new ArmFrame();
         	state->setId(std::string(state_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
 
 	        for(xml_node<> * Motor_node = state_node->first_node(XML_ELEMENT_MOTOR_STR); Motor_node; Motor_node = Motor_node->next_sibling()){ //we store all the variables for the motors in a matrix of strings

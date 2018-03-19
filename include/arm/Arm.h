@@ -1,13 +1,10 @@
-#ifndef ARM_H
-#define ARM_H
+#ifndef RN_ARM_H
+#define RN_ARM_H
 
-//#include "FuncBasic.h"
+
 #include "DynamixelMotor.h"
 #include "Hand.h"
-//#include "SerialPort.h"
-//#include "Finger.h"
 
-//#include "quaternions.h"
 
 #define ENABLE              1
 #define DISABLE             0
@@ -50,10 +47,6 @@
 #define arcArtic5 1023
 #define arcArtic6 1023
 
-class DynamixelMotor;
-class Finger;
-class SerialPort;
-class Hand;
 
 class ArmMotor{
 private:
@@ -78,18 +71,18 @@ public:
     void setDevice(std::string device) { this->device = device; }
 };
 
-class ArmState{
+class ArmFrame{
 private:
 	std::string id;
 	std::vector<ArmMotor*>* motors;
 public:
 
-	ArmState(){
+	ArmFrame(){
         this->id = "";
         motors = new std::vector<ArmMotor*>();       
     }
 
-    virtual ~ArmState(){
+    virtual ~ArmFrame(){
         clearMotors();
         delete motors;
     }
@@ -128,14 +121,14 @@ private:
     std::string name;
     std::string id;
     std::string type;
-    std::vector<ArmState*>* gestureStates;
+    std::vector<ArmFrame*>* gestureStates;
 
 public:
     ArmGesture(){
         this->name = "";
         this->id = "";
         this->type = "";
-        gestureStates = new std::vector<ArmState*>();       
+        gestureStates = new std::vector<ArmFrame*>();       
     }
 
     virtual ~ArmGesture(){
@@ -150,14 +143,14 @@ public:
     std::string getType() { return type; }
     void setType(std::string type) { this->type = type; }
 
-    void addState(ArmState* state){
+    void addState(ArmFrame* state){
         if(state != NULL){
             gestureStates->push_back(state);
         }
     }
 
-    ArmState* stateAt(int index){
-        ArmState* result = NULL;
+    ArmFrame* stateAt(int index){
+        ArmFrame* result = NULL;
         if(index > RN_NONE and index < gestureStates->size()){
             result = gestureStates->at(index);
         }

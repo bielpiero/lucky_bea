@@ -1,4 +1,4 @@
-#define XML_STATIC_GESTURES_STR "GestosEstaticos"
+#define XML_STATIC_GESTURES_STR "gestures"
 #define XML_DYNAMIC_GESTURES_STR "GestosDinamicos"
 
 #define XML_STATIC_GESTURES_TYPE_ID 0
@@ -14,9 +14,9 @@
 #define XML_ATTRIBUTE_DEVICE_STR "device"
 #define XML_ATTRIBUTE_DEGREES_STR "degrees"
 
-#define XML_ELEMENT_GESTURE_STR "Gesto"
-#define XML_ELEMENT_MOTOR_STR "Motor"
-#define XML_ELEMENT_STATE_STR "state"
+#define XML_ELEMENT_GESTURE_STR "gesture"
+#define XML_ELEMENT_MOTOR_STR "motor"
+#define XML_ELEMENT_FRAME_STR "frame"
 #define XML_ELEMENT_MAPS_STR "maps"
 #define XML_ELEMENT_MAP_STR "map"
 
