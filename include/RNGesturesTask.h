@@ -97,7 +97,7 @@ public:
     }
 
     virtual ~FaceGesture(){
-        clearMotors();
+        clearFrames();
         delete frames;
     }
     

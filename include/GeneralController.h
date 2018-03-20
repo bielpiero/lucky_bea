@@ -223,7 +223,6 @@ public: // emotions functions
 	virtual void onConnection(int socketIndex);//callback for client and server
 	virtual void onMsg(int socketIndex, char* cad, unsigned long long int length);//callback for client and server
 	virtual const char* getClassName() const;
-	void stopDynamicGesture();
 private:
 
 	bool isPermissionNeeded(char function);
@@ -247,8 +246,6 @@ private:
 	void setServoPosition(unsigned char card_id, unsigned char servo_id, int position);
 	void setServoSpeed(unsigned char card_id, unsigned char servo_id, int speed);
 	void setServoAcceleration(unsigned char card_id, unsigned char servo_id, int speed);
-	
-	static void* dynamicFaceThread(void*);
 
 public:
 	void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear);

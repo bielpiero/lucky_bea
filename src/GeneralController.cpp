@@ -141,7 +141,6 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 GeneralController::~GeneralController(void){
 	
 	disconnect();
-	stopDynamicGesture();	
 	delete tasks;
 	RNUtils::printLn("Deleted tasks...");
 	for (int i = 0; i < kalmanFuzzy->size(); i++){
