@@ -62,7 +62,7 @@ void RNGesturesTask::task(){
 	            // Iterate over the motors
 	       		std::string currentCardId = "";
 		       		//bufferOut_str << "{\"Gesture\":\"" << gestures->at(i)->getName() << "\",\"Id\":\"" << gestures->at(i)->getId() << "\",\"Cards\":[";
-	       		for (int j = 0; i < gestures->at(i)->framesSize(); ++i){
+	       		for (int j = 0; j < gestures->at(i)->framesSize(); j++){
 		           	for(int k = 0; k < gestures->at(i)->frameAt(j)->motorsSize(); k++){ //we store all the variables for the motors in a string matrix
 		                //////////esto es lo que hay que enviar
 		                std::string cardId = gestures->at(i)->frameAt(j)->motorAt(k)->getCardId();

@@ -35,7 +35,6 @@ RNDialogsTask::RNDialogsTask(const GeneralController* gn, DorisLipSync* tts, con
         msg->setType(std::string(message_node->first_attribute("type")->value()));
         msg->setState(std::string(message_node->first_attribute("est")->value()));
         msg->setLang(std::string(message_node->first_attribute("lang")->value()));
-        msg->setTimesUsed(std::string(message_node->first_attribute("used")->value()));
         msg->setText(std::string(message_node->first_attribute("response")->value()));
         outputMessages->push_back(msg);
     }

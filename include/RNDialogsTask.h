@@ -53,18 +53,16 @@ public:
 
 class OutputMessage : public Message{
 private:
-    std::string used;
     std::string state;
 public:
     OutputMessage(){
-        this->used = "0";
         this->state = "-1";
     }
     ~OutputMessage(){
 
     }
-    std::string getTimesUsed() { return used; }
-    void setTimesUsed(std::string used) { this->used = used; }
+    //std::string getTimesUsed() { return used; }
+    //void setTimesUsed(std::string used) { this->used = used; }
     std::string getState() { return state; }
     void setState(std::string state) { this->state = state; }
 };

@@ -182,82 +182,74 @@ float  DorisLipSync::timeSync(int numOfLetters, int actualspeakingRate){
 	return timetoSync;
 }
 
-char* DorisLipSync::speakingRate(const char *emotion){
+int DorisLipSync::speakingRate(const double& emotion){
 
-	int selectVel;
-	std::string wx;
+	int selectVel = -1;
 
-
-	selectVel= strcmp(emotion, "Felicidad");
-	if (selectVel==0) {
-		wx="W200";
+	if (emotion==0) { // Felicidad
+		selectVel = 200;
 	}
-	selectVel= strcmp(emotion, "Tristeza");
-	if (selectVel==0) {
-		wx="W60";
+
+	if (emotion==0) {// Tristeza
+		selectVel = 60;
     //75
 	}
-	selectVel= strcmp(emotion, "Sorpresa");
-	if (selectVel==0) {
-		wx="W200";
-	}
-	selectVel= strcmp(emotion, "Furia");
-	if (selectVel==0) {
-		wx="W250";
-	}
-	selectVel= strcmp(emotion, "Disgusto");
-	if (selectVel==0) {
-		wx="W250";
+
+	if (emotion==0) {// Sorpresa
+		selectVel = 200;
 	}
 
-	selectVel= strcmp(emotion, "Miedo");
-	if (selectVel==0) {
-		wx="W220";
+	if (emotion==0) {// Furia
+		selectVel = 250;
 	}
 
-	selectVel= strcmp(emotion, "Neutro");
-	if (selectVel==0) {
-		wx="W200";
+	if (emotion==0) {// Disgusto
+		selectVel = 250;
 	}
 
-	return ((char*)wx.c_str());
+	if (emotion==0) {// Miedo
+		selectVel = 220;
+	}
+
+	if (emotion==0) {// Neutro
+		selectVel = 200;
+	}
+
+	return selectVel;
 }
 
-char*  DorisLipSync::amplitudeWave(const char *emotion){
+int DorisLipSync::amplitudeWave(const double& emotion){
 
-	int selectVol;
-	std::string vx;
+	int selectVol = -1;
 
-
-	selectVol= strcmp(emotion,"Felicidad");
-	if (selectVol==0) {
-		vx="V16";
-	}
-	selectVol= strcmp(emotion,"Tristeza");
-	if (selectVol==0) {
-		vx="V10 ";
-	}
-	selectVol= strcmp(emotion,"Sorpresa");
-	if (selectVol==0) {
-		vx="V16";
-	}
-	selectVol= strcmp(emotion,"Furia");
-	if (selectVol==0) {
-		vx="V16";
-	}
-	selectVol= strcmp(emotion,"Disgusto");
-	if (selectVol==0) {
-		vx="V16";
-	}
-	selectVol= strcmp(emotion,"Miedo");
-	if (selectVol==0) {
-		vx="V12";
+	if (emotion==0) {// Felicidad
+		selectVol = 16;
 	}
 
-	return ((char*)vx.c_str());
+	if (emotion==0) {// Tristeza
+		selectVol = 10;
+	}
+
+	if (emotion==0) {// Sorpresa
+		selectVol= 16;
+	}
+
+	if (emotion==0) {// Furia
+		selectVol= 16;
+	}
+
+	if (emotion==0) {// Disgusto
+		selectVol= 16;
+	}
+
+	if (emotion==0) {// Miedo
+		selectVol = 12;
+	}
+
+	return selectVol;
 }
 
-int DorisLipSync::configureEmicTwo(const char *emotion, const char *language){
+int DorisLipSync::configureEmicTwo(const double& emotion, const char *language){
 
 	std::string lx;
 	int selectLanguage;
@@ -265,8 +257,8 @@ int DorisLipSync::configureEmicTwo(const char *emotion, const char *language){
 	char setVoice[]=     "N2";                /*Beautiful Betty*/
 	char setParser[]=    "P1";                /*P0 (DECtalk), P1 (Epson)*/
 
-	char *setspeakingRate = speakingRate(emotion);
-	char *setAudioVolumen = amplitudeWave(emotion);
+	int speaking = speakingRate(emotion);
+	int audioVolume = amplitudeWave(emotion);
 
 
 	selectLanguage= strcmp(language,"English");
@@ -274,12 +266,13 @@ int DorisLipSync::configureEmicTwo(const char *emotion, const char *language){
 		lx="L0";
 	}
 	
-	selectLanguage= strcmp(language,"Español");     /*L1 para español castellano*/
+	selectLanguage= strcmp(language, "Spanish");     /*L1 para español castellano*/
 	if (selectLanguage == 0) {
 		lx="L2";
 	}
 
-
+	tts->setSpeakingRate(speaking);
+	tts->setVolume(audioVolume);
 
 	//std::cout << "<---Config EMIC 2----------->\n"<<std::endl;
 	//std::cout << "Parser =  " << setParser << std::endl;
