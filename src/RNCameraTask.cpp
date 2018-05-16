@@ -4,11 +4,11 @@
 RNCameraTask::RNCameraTask(const GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
 	leftEye = cv::VideoCapture(LEFT_EYE_CAMERA);
 	rightEye = cv::VideoCapture(RIGHT_EYE_CAMERA);
-	leftEye.set(CV_CAP_PROP_FOURCC, CV_FOURCC('M', 'J', 'P', 'G'));
-	leftEye.set(CV_CAP_PROP_FRAME_WIDTH ,1280);
-	leftEye.set(CV_CAP_PROP_FRAME_HEIGHT ,720);
+	//leftEye.set(cv::CAP_PROP_FOURCC, cv::FOURCC('M', 'J', 'P', 'G'));
+	leftEye.set(cv::CAP_PROP_FRAME_WIDTH ,1280);
+	leftEye.set(cv::CAP_PROP_FRAME_HEIGHT ,720);
 
-	std::cout << "left: " << static_cast<int>(leftEye.get(CV_CAP_PROP_FOURCC)) << std::endl;
+	std::cout << "left: " << static_cast<int>(leftEye.get(cv::CAP_PROP_FOURCC)) << std::endl;
 
 	//rightEye.set(CV_CAP_PROP_FOURCC, CV_FOURCC('M', 'J', 'P', 'G'));
 	//rightEye.set(CV_CAP_PROP_FRAME_WIDTH, 1280);

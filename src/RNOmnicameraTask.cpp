@@ -99,7 +99,7 @@ int RNOmnicameraTask::getFrameFromCamera(cv::Mat &frame){
 }
 
 void RNOmnicameraTask::rgbToGrayscale(const cv::Mat& input, cv::Mat& output){
-	cv::cvtColor(input, output, CV_BGR2GRAY);
+	cv::cvtColor(input, output, cv::COLOR_BGR2GRAY);
 }
 
 void RNOmnicameraTask::thresholding(const cv::Mat& inputGrayscale, cv::Mat& output){
@@ -108,7 +108,7 @@ void RNOmnicameraTask::thresholding(const cv::Mat& inputGrayscale, cv::Mat& outp
   	//RNUtils::printLn("[Brightness avg: %d, Index: %f]", avgBrightness, index);
 	//int thresholdValue = 100;
 	//cv::threshold(inputGrayscale, output, thresholdValue, 255, cv::THRESH_BINARY_INV);
-	cv::adaptiveThreshold(inputGrayscale, output, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV, BLOCK_SIZE_FOR_ADAPTIVE_THRESHOLD, (int)index);
+	cv::adaptiveThreshold(inputGrayscale, output, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, BLOCK_SIZE_FOR_ADAPTIVE_THRESHOLD, (int)index);
 	//cv::imwrite("threshold.jpg", output);
 }
 
@@ -126,7 +126,7 @@ void RNOmnicameraTask::findContours(int minContourPointsAllowed){
 
 	cv::Canny(tikiThreshold, edges, 100, 180, 5);
 	try{
-		cv::findContours(edges, allContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);	
+		cv::findContours(edges, allContours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);	
 	} catch (const std::bad_alloc& e){
 		RNUtils::printLn("Allocation failed: %s", e.what());
 	}
