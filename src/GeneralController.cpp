@@ -63,10 +63,10 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	xmlSectorsPath = RNUtils::getApplicationPath() + XML_FILE_SECTORS_PATH;
 	xmlRobotConfigFullPath = RNUtils::getApplicationPath() + XML_FILE_ROBOT_CONFIG_PATH;
 
-	//std::string servo_positions;
-	//setGesture("26", servo_positions);
+	
+	
 	ttsLipSync = new DorisLipSync(this->maestroControllers, RNUtils::getApplicationPath());
-	//ttsLipSync->textToViseme("Hola, ya estoy lista para funcionar");
+	
 	this->currentMapId = RN_NONE;
 	this->currentSector = NULL;
 	this->nextSectorId = RN_NONE;
@@ -81,13 +81,13 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	tasks = new RNRecurrentTaskMap(this);
 
 	laserTask = new RNLaserTask(this);
-	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
-	//rfidTask = new RNRFIdentificationTask(this);
+	omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
+	rfidTask = new RNRFIdentificationTask(this);
 	//globalLocalization = new RNGlobalLocalizationTask(this);
 	dialogs = new RNDialogsTask(this, ttsLipSync);
 	gestures = new RNGesturesTask(this, this->maestroControllers);
 	//armGestures = new RNArmTask(this, this->maestroControllers);
-	//emotions = new RNEmotionsTask(this);
+	emotions = new RNEmotionsTask(this);
 	//eyesCameras = new RNCameraTask(this);
 
 	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
@@ -99,12 +99,12 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	////Tasks added:
 	//tasks->addTask(globalLocalization);
 	tasks->addTask(laserTask);
-	//tasks->addTask(omnidirectionalTask);
-	//tasks->addTask(rfidTask);
+	tasks->addTask(omnidirectionalTask);
+	tasks->addTask(rfidTask);
 	tasks->addTask(dialogs);
 	//tasks->addTask(armGestures);
 	tasks->addTask(gestures);
-	//tasks->addTask(emotions);
+	tasks->addTask(emotions);
 	tasks->addTask(localization);
 	//tasks->addTask(eyesCameras);
 	

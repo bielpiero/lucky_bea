@@ -40,8 +40,6 @@ class CDISABLE_ACCESSSPEC;
 class CDISABLE_ACCESSSPEC_RESPONSE;
 class CGET_ACCESSSPECS;
 class CGET_ACCESSSPECS_RESPONSE;
-class CCLIENT_REQUEST_OP;
-class CCLIENT_REQUEST_OP_RESPONSE;
 class CGET_READER_CONFIG;
 class CGET_READER_CONFIG_RESPONSE;
 class CSET_READER_CONFIG;
@@ -93,8 +91,6 @@ class CRFSurveySpecStopTrigger;
 class CAccessSpec;
 class CAccessSpecStopTrigger;
 class CAccessCommand;
-class CClientRequestOpSpec;
-class CClientRequestResponse;
 class CLLRPConfigurationStateValue;
 class CIdentification;
 class CGPOWriteData;
@@ -122,7 +118,6 @@ class CFirstSeenTimestampUptime;
 class CLastSeenTimestampUTC;
 class CLastSeenTimestampUptime;
 class CTagSeenCount;
-class CClientRequestOpSpecResult;
 class CAccessSpecID;
 class CRFSurveyReportData;
 class CFrequencyRSSILevelEntry;
@@ -1856,7 +1851,7 @@ class CCUSTOM_MESSAGE : public CMessage
     inline llrp_u32_t
     getVendorIdentifier (void)
     {
-        return m_VendorIdentifier;
+        return  m_VendorIdentifier;
     }
 
     /** @brief Set accessor functions for the LLRP VendorIdentifier field */
@@ -1864,7 +1859,7 @@ class CCUSTOM_MESSAGE : public CMessage
     setVendorIdentifier (
       llrp_u32_t value)
     {
-        m_VendorIdentifier = value;
+         m_VendorIdentifier = value;
     }
 
 
@@ -1882,7 +1877,7 @@ class CCUSTOM_MESSAGE : public CMessage
     inline llrp_u8_t
     getMessageSubtype (void)
     {
-        return m_MessageSubtype;
+        return  m_MessageSubtype;
     }
 
     /** @brief Set accessor functions for the LLRP MessageSubtype field */
@@ -1890,7 +1885,7 @@ class CCUSTOM_MESSAGE : public CMessage
     setMessageSubtype (
       llrp_u8_t value)
     {
-        m_MessageSubtype = value;
+         m_MessageSubtype = value;
     }
 
 
@@ -1908,7 +1903,7 @@ class CCUSTOM_MESSAGE : public CMessage
     inline llrp_bytesToEnd_t
     getData (void)
     {
-        return m_Data;
+        return  m_Data;
     }
 
     /** @brief Set accessor functions for the LLRP Data field */
@@ -1916,7 +1911,7 @@ class CCUSTOM_MESSAGE : public CMessage
     setData (
       llrp_bytesToEnd_t value)
     {
-        m_Data = value;
+         m_Data = value;
     }
 
 
@@ -2007,7 +2002,7 @@ class CGET_READER_CAPABILITIES : public CMessage
     inline EGetReaderCapabilitiesRequestedData
     getRequestedData (void)
     {
-        return m_eRequestedData;
+        return  m_eRequestedData;
     }
 
     /** @brief Set accessor functions for the LLRP RequestedData field */
@@ -2015,7 +2010,7 @@ class CGET_READER_CAPABILITIES : public CMessage
     setRequestedData (
       EGetReaderCapabilitiesRequestedData value)
     {
-        m_eRequestedData = value;
+         m_eRequestedData = value;
     }
 
 
@@ -2533,7 +2528,7 @@ class CDELETE_ROSPEC : public CMessage
     inline llrp_u32_t
     getROSpecID (void)
     {
-        return m_ROSpecID;
+        return  m_ROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecID field */
@@ -2541,7 +2536,7 @@ class CDELETE_ROSPEC : public CMessage
     setROSpecID (
       llrp_u32_t value)
     {
-        m_ROSpecID = value;
+         m_ROSpecID = value;
     }
 
 
@@ -2723,7 +2718,7 @@ class CSTART_ROSPEC : public CMessage
     inline llrp_u32_t
     getROSpecID (void)
     {
-        return m_ROSpecID;
+        return  m_ROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecID field */
@@ -2731,7 +2726,7 @@ class CSTART_ROSPEC : public CMessage
     setROSpecID (
       llrp_u32_t value)
     {
-        m_ROSpecID = value;
+         m_ROSpecID = value;
     }
 
 
@@ -2913,7 +2908,7 @@ class CSTOP_ROSPEC : public CMessage
     inline llrp_u32_t
     getROSpecID (void)
     {
-        return m_ROSpecID;
+        return  m_ROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecID field */
@@ -2921,7 +2916,7 @@ class CSTOP_ROSPEC : public CMessage
     setROSpecID (
       llrp_u32_t value)
     {
-        m_ROSpecID = value;
+         m_ROSpecID = value;
     }
 
 
@@ -3103,7 +3098,7 @@ class CENABLE_ROSPEC : public CMessage
     inline llrp_u32_t
     getROSpecID (void)
     {
-        return m_ROSpecID;
+        return  m_ROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecID field */
@@ -3111,7 +3106,7 @@ class CENABLE_ROSPEC : public CMessage
     setROSpecID (
       llrp_u32_t value)
     {
-        m_ROSpecID = value;
+         m_ROSpecID = value;
     }
 
 
@@ -3293,7 +3288,7 @@ class CDISABLE_ROSPEC : public CMessage
     inline llrp_u32_t
     getROSpecID (void)
     {
-        return m_ROSpecID;
+        return  m_ROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecID field */
@@ -3301,7 +3296,7 @@ class CDISABLE_ROSPEC : public CMessage
     setROSpecID (
       llrp_u32_t value)
     {
-        m_ROSpecID = value;
+         m_ROSpecID = value;
     }
 
 
@@ -3869,7 +3864,7 @@ class CDELETE_ACCESSSPEC : public CMessage
     inline llrp_u32_t
     getAccessSpecID (void)
     {
-        return m_AccessSpecID;
+        return  m_AccessSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP AccessSpecID field */
@@ -3877,7 +3872,7 @@ class CDELETE_ACCESSSPEC : public CMessage
     setAccessSpecID (
       llrp_u32_t value)
     {
-        m_AccessSpecID = value;
+         m_AccessSpecID = value;
     }
 
 
@@ -4059,7 +4054,7 @@ class CENABLE_ACCESSSPEC : public CMessage
     inline llrp_u32_t
     getAccessSpecID (void)
     {
-        return m_AccessSpecID;
+        return  m_AccessSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP AccessSpecID field */
@@ -4067,7 +4062,7 @@ class CENABLE_ACCESSSPEC : public CMessage
     setAccessSpecID (
       llrp_u32_t value)
     {
-        m_AccessSpecID = value;
+         m_AccessSpecID = value;
     }
 
 
@@ -4249,7 +4244,7 @@ class CDISABLE_ACCESSSPEC : public CMessage
     inline llrp_u32_t
     getAccessSpecID (void)
     {
-        return m_AccessSpecID;
+        return  m_AccessSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP AccessSpecID field */
@@ -4257,7 +4252,7 @@ class CDISABLE_ACCESSSPEC : public CMessage
     setAccessSpecID (
       llrp_u32_t value)
     {
-        m_AccessSpecID = value;
+         m_AccessSpecID = value;
     }
 
 
@@ -4553,184 +4548,6 @@ class CGET_ACCESSSPECS_RESPONSE : public CMessage
 
 
 /**
- ** @brief  Class Definition CCLIENT_REQUEST_OP for LLRP message CLIENT_REQUEST_OP
- **
- 
-    
-      
-<ul>
-    
-    <li><b>Document Reference</b>  
-   <a href=http://www.epcglobalinc.org/standards/llrp/llrp_1_0_1-standard-20070813.pdf#page=63&view=fit>LLRP Specification Section 11.1.11</a>
-  </li>
-    
-    <li><b>Document Reference</b>  
-   <a href=http://www.epcglobalinc.org/standards/llrp/llrp_1_0_1-standard-20070813.pdf#page=124&view=fit>LLRP Specification Section 16.1.27</a>
-  </li>
-  
-</ul>  
-
-      
-          
-    <p>This message is sent by the Reader to the Client upon executing a ClientRequestOpSpec OpSpec (section 11.2.1.2.1). This message carries the TagReportData (section 13.2.3) that contains information collected for the tag which includes singulation results and the results of OpSpecs executed till that point.</p> 
- 
-      <SMALL><i>Copyright 2006, 2007, EPCglobal Inc. The proprietary text of EPCglobal Inc. included here is in not a Contribution to the LLRP toolkit, under Apache License, Version 2.0. The right to use the proprietary text is limited to reproduction and display thereof within the work.</i></SMALL> 
-  <HR>
-
-    
-    
-  
- **/
-
-class CCLIENT_REQUEST_OP : public CMessage
-{
-  public:
-    CCLIENT_REQUEST_OP (void);
-    ~CCLIENT_REQUEST_OP (void);
-
-/** @name Internal Framework Functions */
-//@{
-
-    static const CFieldDescriptor * const
-    s_apFieldDescriptorTable[];
-
-    static const CTypeDescriptor
-    s_typeDescriptor;
-
-    void
-    decodeFields (
-      CDecoderStream *          pDecoderStream);
-
-    void
-    assimilateSubParameters (
-      CErrorDetails *           pError);
-
-    void
-    encode (
-      CEncoderStream *          pEncoderStream) const;
-
-  
-
-    static CElement *
-    s_construct (void);
-
-    static void
-    s_decodeFields (
-      CDecoderStream *          pDecoderStream,
-      CElement *                pElement);
-//@}
-
-  
-  protected:
-    CTagReportData * m_pTagReportData;
-
-  public:
-    /** @brief Get accessor functions for the LLRP TagReportData sub-parameter */  
-    inline CTagReportData *
-    getTagReportData (void)
-    {
-        return m_pTagReportData;
-    }
-
-    /** @brief Set accessor functions for the LLRP TagReportData sub-parameter */  
-    EResultCode
-    setTagReportData (
-      CTagReportData * pValue);
-
-
-};
-
-
-/**
- ** @brief  Class Definition CCLIENT_REQUEST_OP_RESPONSE for LLRP message CLIENT_REQUEST_OP_RESPONSE
- **
- 
-    
-      
-<ul>
-    
-    <li><b>Document Reference</b>  
-   <a href=http://www.epcglobalinc.org/standards/llrp/llrp_1_0_1-standard-20070813.pdf#page=64&view=fit>LLRP Specification Section 11.1.12</a>
-  </li>
-    
-    <li><b>Document Reference</b>  
-   <a href=http://www.epcglobalinc.org/standards/llrp/llrp_1_0_1-standard-20070813.pdf#page=124&view=fit>LLRP Specification Section 16.1.28</a>
-  </li>
-  
-</ul>  
-
-      
-          
-    <p>This is the response by the Client to the Reader. This is in response to the CLIENT_REQUEST_OP sent by the Reader due to the execution of a ClientRequestOpSpec. This is a response to the CLIENT_REQUEST_OP message; thus, the messageID in this message is the messageID of the CLIENT_REQUEST_OP.</p> 
- 
-      <SMALL><i>Copyright 2006, 2007, EPCglobal Inc. The proprietary text of EPCglobal Inc. included here is in not a Contribution to the LLRP toolkit, under Apache License, Version 2.0. The right to use the proprietary text is limited to reproduction and display thereof within the work.</i></SMALL> 
-  <HR>
-
-    
-    
-  
- **/
-
-class CCLIENT_REQUEST_OP_RESPONSE : public CMessage
-{
-  public:
-    CCLIENT_REQUEST_OP_RESPONSE (void);
-    ~CCLIENT_REQUEST_OP_RESPONSE (void);
-
-/** @name Internal Framework Functions */
-//@{
-
-    static const CFieldDescriptor * const
-    s_apFieldDescriptorTable[];
-
-    static const CTypeDescriptor
-    s_typeDescriptor;
-
-    void
-    decodeFields (
-      CDecoderStream *          pDecoderStream);
-
-    void
-    assimilateSubParameters (
-      CErrorDetails *           pError);
-
-    void
-    encode (
-      CEncoderStream *          pEncoderStream) const;
-
-  
-
-    static CElement *
-    s_construct (void);
-
-    static void
-    s_decodeFields (
-      CDecoderStream *          pDecoderStream,
-      CElement *                pElement);
-//@}
-
-  
-  protected:
-    CClientRequestResponse * m_pClientRequestResponse;
-
-  public:
-    /** @brief Get accessor functions for the LLRP ClientRequestResponse sub-parameter */  
-    inline CClientRequestResponse *
-    getClientRequestResponse (void)
-    {
-        return m_pClientRequestResponse;
-    }
-
-    /** @brief Set accessor functions for the LLRP ClientRequestResponse sub-parameter */  
-    EResultCode
-    setClientRequestResponse (
-      CClientRequestResponse * pValue);
-
-
-};
-
-
-/**
  ** @brief  Class Definition CGET_READER_CONFIG for LLRP message GET_READER_CONFIG
  **
  
@@ -4817,7 +4634,7 @@ class CGET_READER_CONFIG : public CMessage
     inline llrp_u16_t
     getAntennaID (void)
     {
-        return m_AntennaID;
+        return  m_AntennaID;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaID field */
@@ -4825,7 +4642,7 @@ class CGET_READER_CONFIG : public CMessage
     setAntennaID (
       llrp_u16_t value)
     {
-        m_AntennaID = value;
+         m_AntennaID = value;
     }
 
 
@@ -4843,7 +4660,7 @@ class CGET_READER_CONFIG : public CMessage
     inline EGetReaderConfigRequestedData
     getRequestedData (void)
     {
-        return m_eRequestedData;
+        return  m_eRequestedData;
     }
 
     /** @brief Set accessor functions for the LLRP RequestedData field */
@@ -4851,7 +4668,7 @@ class CGET_READER_CONFIG : public CMessage
     setRequestedData (
       EGetReaderConfigRequestedData value)
     {
-        m_eRequestedData = value;
+         m_eRequestedData = value;
     }
 
 
@@ -4869,7 +4686,7 @@ class CGET_READER_CONFIG : public CMessage
     inline llrp_u16_t
     getGPIPortNum (void)
     {
-        return m_GPIPortNum;
+        return  m_GPIPortNum;
     }
 
     /** @brief Set accessor functions for the LLRP GPIPortNum field */
@@ -4877,7 +4694,7 @@ class CGET_READER_CONFIG : public CMessage
     setGPIPortNum (
       llrp_u16_t value)
     {
-        m_GPIPortNum = value;
+         m_GPIPortNum = value;
     }
 
 
@@ -4895,7 +4712,7 @@ class CGET_READER_CONFIG : public CMessage
     inline llrp_u16_t
     getGPOPortNum (void)
     {
-        return m_GPOPortNum;
+        return  m_GPOPortNum;
     }
 
     /** @brief Set accessor functions for the LLRP GPOPortNum field */
@@ -4903,7 +4720,7 @@ class CGET_READER_CONFIG : public CMessage
     setGPOPortNum (
       llrp_u16_t value)
     {
-        m_GPOPortNum = value;
+         m_GPOPortNum = value;
     }
 
 
@@ -5478,7 +5295,7 @@ class CSET_READER_CONFIG : public CMessage
     inline llrp_u1_t
     getResetToFactoryDefault (void)
     {
-        return m_ResetToFactoryDefault;
+        return  m_ResetToFactoryDefault;
     }
 
     /** @brief Set accessor functions for the LLRP ResetToFactoryDefault field */
@@ -5486,7 +5303,7 @@ class CSET_READER_CONFIG : public CMessage
     setResetToFactoryDefault (
       llrp_u1_t value)
     {
-        m_ResetToFactoryDefault = value;
+         m_ResetToFactoryDefault = value;
     }
 
 
@@ -6810,7 +6627,7 @@ class CUTCTimestamp : public CParameter
     inline llrp_u64_t
     getMicroseconds (void)
     {
-        return m_Microseconds;
+        return  m_Microseconds;
     }
 
     /** @brief Set accessor functions for the LLRP Microseconds field */
@@ -6818,7 +6635,7 @@ class CUTCTimestamp : public CParameter
     setMicroseconds (
       llrp_u64_t value)
     {
-        m_Microseconds = value;
+         m_Microseconds = value;
     }
 
 
@@ -6912,7 +6729,7 @@ class CUptime : public CParameter
     inline llrp_u64_t
     getMicroseconds (void)
     {
-        return m_Microseconds;
+        return  m_Microseconds;
     }
 
     /** @brief Set accessor functions for the LLRP Microseconds field */
@@ -6920,7 +6737,7 @@ class CUptime : public CParameter
     setMicroseconds (
       llrp_u64_t value)
     {
-        m_Microseconds = value;
+         m_Microseconds = value;
     }
 
 
@@ -7023,7 +6840,7 @@ class CCustom : public CParameter
     inline llrp_u32_t
     getVendorIdentifier (void)
     {
-        return m_VendorIdentifier;
+        return  m_VendorIdentifier;
     }
 
     /** @brief Set accessor functions for the LLRP VendorIdentifier field */
@@ -7031,7 +6848,7 @@ class CCustom : public CParameter
     setVendorIdentifier (
       llrp_u32_t value)
     {
-        m_VendorIdentifier = value;
+         m_VendorIdentifier = value;
     }
 
 
@@ -7049,7 +6866,7 @@ class CCustom : public CParameter
     inline llrp_u32_t
     getParameterSubtype (void)
     {
-        return m_ParameterSubtype;
+        return  m_ParameterSubtype;
     }
 
     /** @brief Set accessor functions for the LLRP ParameterSubtype field */
@@ -7057,7 +6874,7 @@ class CCustom : public CParameter
     setParameterSubtype (
       llrp_u32_t value)
     {
-        m_ParameterSubtype = value;
+         m_ParameterSubtype = value;
     }
 
 
@@ -7075,7 +6892,7 @@ class CCustom : public CParameter
     inline llrp_bytesToEnd_t
     getData (void)
     {
-        return m_Data;
+        return  m_Data;
     }
 
     /** @brief Set accessor functions for the LLRP Data field */
@@ -7083,7 +6900,7 @@ class CCustom : public CParameter
     setData (
       llrp_bytesToEnd_t value)
     {
-        m_Data = value;
+         m_Data = value;
     }
 
 
@@ -7183,7 +7000,7 @@ class CGeneralDeviceCapabilities : public CParameter
     inline llrp_u16_t
     getMaxNumberOfAntennaSupported (void)
     {
-        return m_MaxNumberOfAntennaSupported;
+        return  m_MaxNumberOfAntennaSupported;
     }
 
     /** @brief Set accessor functions for the LLRP MaxNumberOfAntennaSupported field */
@@ -7191,7 +7008,7 @@ class CGeneralDeviceCapabilities : public CParameter
     setMaxNumberOfAntennaSupported (
       llrp_u16_t value)
     {
-        m_MaxNumberOfAntennaSupported = value;
+         m_MaxNumberOfAntennaSupported = value;
     }
 
 
@@ -7209,7 +7026,7 @@ class CGeneralDeviceCapabilities : public CParameter
     inline llrp_u1_t
     getCanSetAntennaProperties (void)
     {
-        return m_CanSetAntennaProperties;
+        return  m_CanSetAntennaProperties;
     }
 
     /** @brief Set accessor functions for the LLRP CanSetAntennaProperties field */
@@ -7217,7 +7034,7 @@ class CGeneralDeviceCapabilities : public CParameter
     setCanSetAntennaProperties (
       llrp_u1_t value)
     {
-        m_CanSetAntennaProperties = value;
+         m_CanSetAntennaProperties = value;
     }
 
 
@@ -7235,7 +7052,7 @@ class CGeneralDeviceCapabilities : public CParameter
     inline llrp_u1_t
     getHasUTCClockCapability (void)
     {
-        return m_HasUTCClockCapability;
+        return  m_HasUTCClockCapability;
     }
 
     /** @brief Set accessor functions for the LLRP HasUTCClockCapability field */
@@ -7243,7 +7060,7 @@ class CGeneralDeviceCapabilities : public CParameter
     setHasUTCClockCapability (
       llrp_u1_t value)
     {
-        m_HasUTCClockCapability = value;
+         m_HasUTCClockCapability = value;
     }
 
 
@@ -7261,7 +7078,7 @@ class CGeneralDeviceCapabilities : public CParameter
     inline llrp_u32_t
     getDeviceManufacturerName (void)
     {
-        return m_DeviceManufacturerName;
+        return  m_DeviceManufacturerName;
     }
 
     /** @brief Set accessor functions for the LLRP DeviceManufacturerName field */
@@ -7269,7 +7086,7 @@ class CGeneralDeviceCapabilities : public CParameter
     setDeviceManufacturerName (
       llrp_u32_t value)
     {
-        m_DeviceManufacturerName = value;
+         m_DeviceManufacturerName = value;
     }
 
 
@@ -7287,7 +7104,7 @@ class CGeneralDeviceCapabilities : public CParameter
     inline llrp_u32_t
     getModelName (void)
     {
-        return m_ModelName;
+        return  m_ModelName;
     }
 
     /** @brief Set accessor functions for the LLRP ModelName field */
@@ -7295,7 +7112,7 @@ class CGeneralDeviceCapabilities : public CParameter
     setModelName (
       llrp_u32_t value)
     {
-        m_ModelName = value;
+         m_ModelName = value;
     }
 
 
@@ -7313,7 +7130,7 @@ class CGeneralDeviceCapabilities : public CParameter
     inline llrp_utf8v_t
     getReaderFirmwareVersion (void)
     {
-        return m_ReaderFirmwareVersion;
+        return  m_ReaderFirmwareVersion;
     }
 
     /** @brief Set accessor functions for the LLRP ReaderFirmwareVersion field */
@@ -7321,7 +7138,7 @@ class CGeneralDeviceCapabilities : public CParameter
     setReaderFirmwareVersion (
       llrp_utf8v_t value)
     {
-        m_ReaderFirmwareVersion = value;
+         m_ReaderFirmwareVersion = value;
     }
 
 
@@ -7546,7 +7363,7 @@ class CReceiveSensitivityTableEntry : public CParameter
     inline llrp_u16_t
     getIndex (void)
     {
-        return m_Index;
+        return  m_Index;
     }
 
     /** @brief Set accessor functions for the LLRP Index field */
@@ -7554,7 +7371,7 @@ class CReceiveSensitivityTableEntry : public CParameter
     setIndex (
       llrp_u16_t value)
     {
-        m_Index = value;
+         m_Index = value;
     }
 
 
@@ -7572,7 +7389,7 @@ class CReceiveSensitivityTableEntry : public CParameter
     inline llrp_s16_t
     getReceiveSensitivityValue (void)
     {
-        return m_ReceiveSensitivityValue;
+        return  m_ReceiveSensitivityValue;
     }
 
     /** @brief Set accessor functions for the LLRP ReceiveSensitivityValue field */
@@ -7580,7 +7397,7 @@ class CReceiveSensitivityTableEntry : public CParameter
     setReceiveSensitivityValue (
       llrp_s16_t value)
     {
-        m_ReceiveSensitivityValue = value;
+         m_ReceiveSensitivityValue = value;
     }
 
 
@@ -7677,7 +7494,7 @@ class CPerAntennaReceiveSensitivityRange : public CParameter
     inline llrp_u16_t
     getAntennaID (void)
     {
-        return m_AntennaID;
+        return  m_AntennaID;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaID field */
@@ -7685,7 +7502,7 @@ class CPerAntennaReceiveSensitivityRange : public CParameter
     setAntennaID (
       llrp_u16_t value)
     {
-        m_AntennaID = value;
+         m_AntennaID = value;
     }
 
 
@@ -7703,7 +7520,7 @@ class CPerAntennaReceiveSensitivityRange : public CParameter
     inline llrp_u16_t
     getReceiveSensitivityIndexMin (void)
     {
-        return m_ReceiveSensitivityIndexMin;
+        return  m_ReceiveSensitivityIndexMin;
     }
 
     /** @brief Set accessor functions for the LLRP ReceiveSensitivityIndexMin field */
@@ -7711,7 +7528,7 @@ class CPerAntennaReceiveSensitivityRange : public CParameter
     setReceiveSensitivityIndexMin (
       llrp_u16_t value)
     {
-        m_ReceiveSensitivityIndexMin = value;
+         m_ReceiveSensitivityIndexMin = value;
     }
 
 
@@ -7729,7 +7546,7 @@ class CPerAntennaReceiveSensitivityRange : public CParameter
     inline llrp_u16_t
     getReceiveSensitivityIndexMax (void)
     {
-        return m_ReceiveSensitivityIndexMax;
+        return  m_ReceiveSensitivityIndexMax;
     }
 
     /** @brief Set accessor functions for the LLRP ReceiveSensitivityIndexMax field */
@@ -7737,7 +7554,7 @@ class CPerAntennaReceiveSensitivityRange : public CParameter
     setReceiveSensitivityIndexMax (
       llrp_u16_t value)
     {
-        m_ReceiveSensitivityIndexMax = value;
+         m_ReceiveSensitivityIndexMax = value;
     }
 
 
@@ -7828,7 +7645,7 @@ class CPerAntennaAirProtocol : public CParameter
     inline llrp_u16_t
     getAntennaID (void)
     {
-        return m_AntennaID;
+        return  m_AntennaID;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaID field */
@@ -7836,7 +7653,7 @@ class CPerAntennaAirProtocol : public CParameter
     setAntennaID (
       llrp_u16_t value)
     {
-        m_AntennaID = value;
+         m_AntennaID = value;
     }
 
 
@@ -7854,7 +7671,7 @@ class CPerAntennaAirProtocol : public CParameter
     inline llrp_u8v_t
     getProtocolID (void)
     {
-        return m_ProtocolID;
+        return  m_ProtocolID;
     }
 
     /** @brief Set accessor functions for the LLRP ProtocolID field */
@@ -7862,7 +7679,7 @@ class CPerAntennaAirProtocol : public CParameter
     setProtocolID (
       llrp_u8v_t value)
     {
-        m_ProtocolID = value;
+         m_ProtocolID = value;
     }
 
 
@@ -7953,7 +7770,7 @@ class CGPIOCapabilities : public CParameter
     inline llrp_u16_t
     getNumGPIs (void)
     {
-        return m_NumGPIs;
+        return  m_NumGPIs;
     }
 
     /** @brief Set accessor functions for the LLRP NumGPIs field */
@@ -7961,7 +7778,7 @@ class CGPIOCapabilities : public CParameter
     setNumGPIs (
       llrp_u16_t value)
     {
-        m_NumGPIs = value;
+         m_NumGPIs = value;
     }
 
 
@@ -7979,7 +7796,7 @@ class CGPIOCapabilities : public CParameter
     inline llrp_u16_t
     getNumGPOs (void)
     {
-        return m_NumGPOs;
+        return  m_NumGPOs;
     }
 
     /** @brief Set accessor functions for the LLRP NumGPOs field */
@@ -7987,7 +7804,7 @@ class CGPIOCapabilities : public CParameter
     setNumGPOs (
       llrp_u16_t value)
     {
-        m_NumGPOs = value;
+         m_NumGPOs = value;
     }
 
 
@@ -8106,7 +7923,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u1_t
     getCanDoRFSurvey (void)
     {
-        return m_CanDoRFSurvey;
+        return  m_CanDoRFSurvey;
     }
 
     /** @brief Set accessor functions for the LLRP CanDoRFSurvey field */
@@ -8114,7 +7931,7 @@ class CLLRPCapabilities : public CParameter
     setCanDoRFSurvey (
       llrp_u1_t value)
     {
-        m_CanDoRFSurvey = value;
+         m_CanDoRFSurvey = value;
     }
 
 
@@ -8132,7 +7949,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u1_t
     getCanReportBufferFillWarning (void)
     {
-        return m_CanReportBufferFillWarning;
+        return  m_CanReportBufferFillWarning;
     }
 
     /** @brief Set accessor functions for the LLRP CanReportBufferFillWarning field */
@@ -8140,7 +7957,7 @@ class CLLRPCapabilities : public CParameter
     setCanReportBufferFillWarning (
       llrp_u1_t value)
     {
-        m_CanReportBufferFillWarning = value;
+         m_CanReportBufferFillWarning = value;
     }
 
 
@@ -8158,7 +7975,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u1_t
     getSupportsClientRequestOpSpec (void)
     {
-        return m_SupportsClientRequestOpSpec;
+        return  m_SupportsClientRequestOpSpec;
     }
 
     /** @brief Set accessor functions for the LLRP SupportsClientRequestOpSpec field */
@@ -8166,7 +7983,7 @@ class CLLRPCapabilities : public CParameter
     setSupportsClientRequestOpSpec (
       llrp_u1_t value)
     {
-        m_SupportsClientRequestOpSpec = value;
+         m_SupportsClientRequestOpSpec = value;
     }
 
 
@@ -8184,7 +8001,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u1_t
     getCanDoTagInventoryStateAwareSingulation (void)
     {
-        return m_CanDoTagInventoryStateAwareSingulation;
+        return  m_CanDoTagInventoryStateAwareSingulation;
     }
 
     /** @brief Set accessor functions for the LLRP CanDoTagInventoryStateAwareSingulation field */
@@ -8192,7 +8009,7 @@ class CLLRPCapabilities : public CParameter
     setCanDoTagInventoryStateAwareSingulation (
       llrp_u1_t value)
     {
-        m_CanDoTagInventoryStateAwareSingulation = value;
+         m_CanDoTagInventoryStateAwareSingulation = value;
     }
 
 
@@ -8210,7 +8027,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u1_t
     getSupportsEventAndReportHolding (void)
     {
-        return m_SupportsEventAndReportHolding;
+        return  m_SupportsEventAndReportHolding;
     }
 
     /** @brief Set accessor functions for the LLRP SupportsEventAndReportHolding field */
@@ -8218,7 +8035,7 @@ class CLLRPCapabilities : public CParameter
     setSupportsEventAndReportHolding (
       llrp_u1_t value)
     {
-        m_SupportsEventAndReportHolding = value;
+         m_SupportsEventAndReportHolding = value;
     }
 
 
@@ -8236,7 +8053,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u8_t
     getMaxNumPriorityLevelsSupported (void)
     {
-        return m_MaxNumPriorityLevelsSupported;
+        return  m_MaxNumPriorityLevelsSupported;
     }
 
     /** @brief Set accessor functions for the LLRP MaxNumPriorityLevelsSupported field */
@@ -8244,7 +8061,7 @@ class CLLRPCapabilities : public CParameter
     setMaxNumPriorityLevelsSupported (
       llrp_u8_t value)
     {
-        m_MaxNumPriorityLevelsSupported = value;
+         m_MaxNumPriorityLevelsSupported = value;
     }
 
 
@@ -8262,7 +8079,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u16_t
     getClientRequestOpSpecTimeout (void)
     {
-        return m_ClientRequestOpSpecTimeout;
+        return  m_ClientRequestOpSpecTimeout;
     }
 
     /** @brief Set accessor functions for the LLRP ClientRequestOpSpecTimeout field */
@@ -8270,7 +8087,7 @@ class CLLRPCapabilities : public CParameter
     setClientRequestOpSpecTimeout (
       llrp_u16_t value)
     {
-        m_ClientRequestOpSpecTimeout = value;
+         m_ClientRequestOpSpecTimeout = value;
     }
 
 
@@ -8288,7 +8105,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u32_t
     getMaxNumROSpecs (void)
     {
-        return m_MaxNumROSpecs;
+        return  m_MaxNumROSpecs;
     }
 
     /** @brief Set accessor functions for the LLRP MaxNumROSpecs field */
@@ -8296,7 +8113,7 @@ class CLLRPCapabilities : public CParameter
     setMaxNumROSpecs (
       llrp_u32_t value)
     {
-        m_MaxNumROSpecs = value;
+         m_MaxNumROSpecs = value;
     }
 
 
@@ -8314,7 +8131,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u32_t
     getMaxNumSpecsPerROSpec (void)
     {
-        return m_MaxNumSpecsPerROSpec;
+        return  m_MaxNumSpecsPerROSpec;
     }
 
     /** @brief Set accessor functions for the LLRP MaxNumSpecsPerROSpec field */
@@ -8322,7 +8139,7 @@ class CLLRPCapabilities : public CParameter
     setMaxNumSpecsPerROSpec (
       llrp_u32_t value)
     {
-        m_MaxNumSpecsPerROSpec = value;
+         m_MaxNumSpecsPerROSpec = value;
     }
 
 
@@ -8340,7 +8157,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u32_t
     getMaxNumInventoryParameterSpecsPerAISpec (void)
     {
-        return m_MaxNumInventoryParameterSpecsPerAISpec;
+        return  m_MaxNumInventoryParameterSpecsPerAISpec;
     }
 
     /** @brief Set accessor functions for the LLRP MaxNumInventoryParameterSpecsPerAISpec field */
@@ -8348,7 +8165,7 @@ class CLLRPCapabilities : public CParameter
     setMaxNumInventoryParameterSpecsPerAISpec (
       llrp_u32_t value)
     {
-        m_MaxNumInventoryParameterSpecsPerAISpec = value;
+         m_MaxNumInventoryParameterSpecsPerAISpec = value;
     }
 
 
@@ -8366,7 +8183,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u32_t
     getMaxNumAccessSpecs (void)
     {
-        return m_MaxNumAccessSpecs;
+        return  m_MaxNumAccessSpecs;
     }
 
     /** @brief Set accessor functions for the LLRP MaxNumAccessSpecs field */
@@ -8374,7 +8191,7 @@ class CLLRPCapabilities : public CParameter
     setMaxNumAccessSpecs (
       llrp_u32_t value)
     {
-        m_MaxNumAccessSpecs = value;
+         m_MaxNumAccessSpecs = value;
     }
 
 
@@ -8392,7 +8209,7 @@ class CLLRPCapabilities : public CParameter
     inline llrp_u32_t
     getMaxNumOpSpecsPerAccessSpec (void)
     {
-        return m_MaxNumOpSpecsPerAccessSpec;
+        return  m_MaxNumOpSpecsPerAccessSpec;
     }
 
     /** @brief Set accessor functions for the LLRP MaxNumOpSpecsPerAccessSpec field */
@@ -8400,7 +8217,7 @@ class CLLRPCapabilities : public CParameter
     setMaxNumOpSpecsPerAccessSpec (
       llrp_u32_t value)
     {
-        m_MaxNumOpSpecsPerAccessSpec = value;
+         m_MaxNumOpSpecsPerAccessSpec = value;
     }
 
 
@@ -8496,7 +8313,7 @@ class CRegulatoryCapabilities : public CParameter
     inline llrp_u16_t
     getCountryCode (void)
     {
-        return m_CountryCode;
+        return  m_CountryCode;
     }
 
     /** @brief Set accessor functions for the LLRP CountryCode field */
@@ -8504,7 +8321,7 @@ class CRegulatoryCapabilities : public CParameter
     setCountryCode (
       llrp_u16_t value)
     {
-        m_CountryCode = value;
+         m_CountryCode = value;
     }
 
 
@@ -8522,7 +8339,7 @@ class CRegulatoryCapabilities : public CParameter
     inline ECommunicationsStandard
     getCommunicationsStandard (void)
     {
-        return m_eCommunicationsStandard;
+        return  m_eCommunicationsStandard;
     }
 
     /** @brief Set accessor functions for the LLRP CommunicationsStandard field */
@@ -8530,7 +8347,7 @@ class CRegulatoryCapabilities : public CParameter
     setCommunicationsStandard (
       ECommunicationsStandard value)
     {
-        m_eCommunicationsStandard = value;
+         m_eCommunicationsStandard = value;
     }
 
 
@@ -8843,7 +8660,7 @@ class CTransmitPowerLevelTableEntry : public CParameter
     inline llrp_u16_t
     getIndex (void)
     {
-        return m_Index;
+        return  m_Index;
     }
 
     /** @brief Set accessor functions for the LLRP Index field */
@@ -8851,7 +8668,7 @@ class CTransmitPowerLevelTableEntry : public CParameter
     setIndex (
       llrp_u16_t value)
     {
-        m_Index = value;
+         m_Index = value;
     }
 
 
@@ -8869,7 +8686,7 @@ class CTransmitPowerLevelTableEntry : public CParameter
     inline llrp_s16_t
     getTransmitPowerValue (void)
     {
-        return m_TransmitPowerValue;
+        return  m_TransmitPowerValue;
     }
 
     /** @brief Set accessor functions for the LLRP TransmitPowerValue field */
@@ -8877,7 +8694,7 @@ class CTransmitPowerLevelTableEntry : public CParameter
     setTransmitPowerValue (
       llrp_s16_t value)
     {
-        m_TransmitPowerValue = value;
+         m_TransmitPowerValue = value;
     }
 
 
@@ -8970,7 +8787,7 @@ class CFrequencyInformation : public CParameter
     inline llrp_u1_t
     getHopping (void)
     {
-        return m_Hopping;
+        return  m_Hopping;
     }
 
     /** @brief Set accessor functions for the LLRP Hopping field */
@@ -8978,7 +8795,7 @@ class CFrequencyInformation : public CParameter
     setHopping (
       llrp_u1_t value)
     {
-        m_Hopping = value;
+         m_Hopping = value;
     }
 
 
@@ -9139,7 +8956,7 @@ class CFrequencyHopTable : public CParameter
     inline llrp_u8_t
     getHopTableID (void)
     {
-        return m_HopTableID;
+        return  m_HopTableID;
     }
 
     /** @brief Set accessor functions for the LLRP HopTableID field */
@@ -9147,7 +8964,7 @@ class CFrequencyHopTable : public CParameter
     setHopTableID (
       llrp_u8_t value)
     {
-        m_HopTableID = value;
+         m_HopTableID = value;
     }
 
 
@@ -9165,7 +8982,7 @@ class CFrequencyHopTable : public CParameter
     inline llrp_u32v_t
     getFrequency (void)
     {
-        return m_Frequency;
+        return  m_Frequency;
     }
 
     /** @brief Set accessor functions for the LLRP Frequency field */
@@ -9173,7 +8990,7 @@ class CFrequencyHopTable : public CParameter
     setFrequency (
       llrp_u32v_t value)
     {
-        m_Frequency = value;
+         m_Frequency = value;
     }
 
 
@@ -9263,7 +9080,7 @@ class CFixedFrequencyTable : public CParameter
     inline llrp_u32v_t
     getFrequency (void)
     {
-        return m_Frequency;
+        return  m_Frequency;
     }
 
     /** @brief Set accessor functions for the LLRP Frequency field */
@@ -9271,7 +9088,7 @@ class CFixedFrequencyTable : public CParameter
     setFrequency (
       llrp_u32v_t value)
     {
-        m_Frequency = value;
+         m_Frequency = value;
     }
 
 
@@ -9366,7 +9183,7 @@ class CROSpec : public CParameter
     inline llrp_u32_t
     getROSpecID (void)
     {
-        return m_ROSpecID;
+        return  m_ROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecID field */
@@ -9374,7 +9191,7 @@ class CROSpec : public CParameter
     setROSpecID (
       llrp_u32_t value)
     {
-        m_ROSpecID = value;
+         m_ROSpecID = value;
     }
 
 
@@ -9392,7 +9209,7 @@ class CROSpec : public CParameter
     inline llrp_u8_t
     getPriority (void)
     {
-        return m_Priority;
+        return  m_Priority;
     }
 
     /** @brief Set accessor functions for the LLRP Priority field */
@@ -9400,7 +9217,7 @@ class CROSpec : public CParameter
     setPriority (
       llrp_u8_t value)
     {
-        m_Priority = value;
+         m_Priority = value;
     }
 
 
@@ -9418,7 +9235,7 @@ class CROSpec : public CParameter
     inline EROSpecState
     getCurrentState (void)
     {
-        return m_eCurrentState;
+        return  m_eCurrentState;
     }
 
     /** @brief Set accessor functions for the LLRP CurrentState field */
@@ -9426,7 +9243,7 @@ class CROSpec : public CParameter
     setCurrentState (
       EROSpecState value)
     {
-        m_eCurrentState = value;
+         m_eCurrentState = value;
     }
 
 
@@ -9697,7 +9514,7 @@ class CROSpecStartTrigger : public CParameter
     inline EROSpecStartTriggerType
     getROSpecStartTriggerType (void)
     {
-        return m_eROSpecStartTriggerType;
+        return  m_eROSpecStartTriggerType;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecStartTriggerType field */
@@ -9705,7 +9522,7 @@ class CROSpecStartTrigger : public CParameter
     setROSpecStartTriggerType (
       EROSpecStartTriggerType value)
     {
-        m_eROSpecStartTriggerType = value;
+         m_eROSpecStartTriggerType = value;
     }
 
 
@@ -9842,7 +9659,7 @@ class CPeriodicTriggerValue : public CParameter
     inline llrp_u32_t
     getOffset (void)
     {
-        return m_Offset;
+        return  m_Offset;
     }
 
     /** @brief Set accessor functions for the LLRP Offset field */
@@ -9850,7 +9667,7 @@ class CPeriodicTriggerValue : public CParameter
     setOffset (
       llrp_u32_t value)
     {
-        m_Offset = value;
+         m_Offset = value;
     }
 
 
@@ -9868,7 +9685,7 @@ class CPeriodicTriggerValue : public CParameter
     inline llrp_u32_t
     getPeriod (void)
     {
-        return m_Period;
+        return  m_Period;
     }
 
     /** @brief Set accessor functions for the LLRP Period field */
@@ -9876,7 +9693,7 @@ class CPeriodicTriggerValue : public CParameter
     setPeriod (
       llrp_u32_t value)
     {
-        m_Period = value;
+         m_Period = value;
     }
 
 
@@ -9998,7 +9815,7 @@ class CGPITriggerValue : public CParameter
     inline llrp_u16_t
     getGPIPortNum (void)
     {
-        return m_GPIPortNum;
+        return  m_GPIPortNum;
     }
 
     /** @brief Set accessor functions for the LLRP GPIPortNum field */
@@ -10006,7 +9823,7 @@ class CGPITriggerValue : public CParameter
     setGPIPortNum (
       llrp_u16_t value)
     {
-        m_GPIPortNum = value;
+         m_GPIPortNum = value;
     }
 
 
@@ -10024,7 +9841,7 @@ class CGPITriggerValue : public CParameter
     inline llrp_u1_t
     getGPIEvent (void)
     {
-        return m_GPIEvent;
+        return  m_GPIEvent;
     }
 
     /** @brief Set accessor functions for the LLRP GPIEvent field */
@@ -10032,7 +9849,7 @@ class CGPITriggerValue : public CParameter
     setGPIEvent (
       llrp_u1_t value)
     {
-        m_GPIEvent = value;
+         m_GPIEvent = value;
     }
 
 
@@ -10050,7 +9867,7 @@ class CGPITriggerValue : public CParameter
     inline llrp_u32_t
     getTimeout (void)
     {
-        return m_Timeout;
+        return  m_Timeout;
     }
 
     /** @brief Set accessor functions for the LLRP Timeout field */
@@ -10058,7 +9875,7 @@ class CGPITriggerValue : public CParameter
     setTimeout (
       llrp_u32_t value)
     {
-        m_Timeout = value;
+         m_Timeout = value;
     }
 
 
@@ -10150,7 +9967,7 @@ class CROSpecStopTrigger : public CParameter
     inline EROSpecStopTriggerType
     getROSpecStopTriggerType (void)
     {
-        return m_eROSpecStopTriggerType;
+        return  m_eROSpecStopTriggerType;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecStopTriggerType field */
@@ -10158,7 +9975,7 @@ class CROSpecStopTrigger : public CParameter
     setROSpecStopTriggerType (
       EROSpecStopTriggerType value)
     {
-        m_eROSpecStopTriggerType = value;
+         m_eROSpecStopTriggerType = value;
     }
 
 
@@ -10176,7 +9993,7 @@ class CROSpecStopTrigger : public CParameter
     inline llrp_u32_t
     getDurationTriggerValue (void)
     {
-        return m_DurationTriggerValue;
+        return  m_DurationTriggerValue;
     }
 
     /** @brief Set accessor functions for the LLRP DurationTriggerValue field */
@@ -10184,7 +10001,7 @@ class CROSpecStopTrigger : public CParameter
     setDurationTriggerValue (
       llrp_u32_t value)
     {
-        m_DurationTriggerValue = value;
+         m_DurationTriggerValue = value;
     }
 
 
@@ -10294,7 +10111,7 @@ class CAISpec : public CParameter
     inline llrp_u16v_t
     getAntennaIDs (void)
     {
-        return m_AntennaIDs;
+        return  m_AntennaIDs;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaIDs field */
@@ -10302,7 +10119,7 @@ class CAISpec : public CParameter
     setAntennaIDs (
       llrp_u16v_t value)
     {
-        m_AntennaIDs = value;
+         m_AntennaIDs = value;
     }
 
 
@@ -10488,7 +10305,7 @@ class CAISpecStopTrigger : public CParameter
     inline EAISpecStopTriggerType
     getAISpecStopTriggerType (void)
     {
-        return m_eAISpecStopTriggerType;
+        return  m_eAISpecStopTriggerType;
     }
 
     /** @brief Set accessor functions for the LLRP AISpecStopTriggerType field */
@@ -10496,7 +10313,7 @@ class CAISpecStopTrigger : public CParameter
     setAISpecStopTriggerType (
       EAISpecStopTriggerType value)
     {
-        m_eAISpecStopTriggerType = value;
+         m_eAISpecStopTriggerType = value;
     }
 
 
@@ -10514,7 +10331,7 @@ class CAISpecStopTrigger : public CParameter
     inline llrp_u32_t
     getDurationTrigger (void)
     {
-        return m_DurationTrigger;
+        return  m_DurationTrigger;
     }
 
     /** @brief Set accessor functions for the LLRP DurationTrigger field */
@@ -10522,7 +10339,7 @@ class CAISpecStopTrigger : public CParameter
     setDurationTrigger (
       llrp_u32_t value)
     {
-        m_DurationTrigger = value;
+         m_DurationTrigger = value;
     }
 
 
@@ -10651,7 +10468,7 @@ class CTagObservationTrigger : public CParameter
     inline ETagObservationTriggerType
     getTriggerType (void)
     {
-        return m_eTriggerType;
+        return  m_eTriggerType;
     }
 
     /** @brief Set accessor functions for the LLRP TriggerType field */
@@ -10659,7 +10476,7 @@ class CTagObservationTrigger : public CParameter
     setTriggerType (
       ETagObservationTriggerType value)
     {
-        m_eTriggerType = value;
+         m_eTriggerType = value;
     }
 
 
@@ -10677,7 +10494,7 @@ class CTagObservationTrigger : public CParameter
     inline llrp_u16_t
     getNumberOfTags (void)
     {
-        return m_NumberOfTags;
+        return  m_NumberOfTags;
     }
 
     /** @brief Set accessor functions for the LLRP NumberOfTags field */
@@ -10685,7 +10502,7 @@ class CTagObservationTrigger : public CParameter
     setNumberOfTags (
       llrp_u16_t value)
     {
-        m_NumberOfTags = value;
+         m_NumberOfTags = value;
     }
 
 
@@ -10703,7 +10520,7 @@ class CTagObservationTrigger : public CParameter
     inline llrp_u16_t
     getNumberOfAttempts (void)
     {
-        return m_NumberOfAttempts;
+        return  m_NumberOfAttempts;
     }
 
     /** @brief Set accessor functions for the LLRP NumberOfAttempts field */
@@ -10711,7 +10528,7 @@ class CTagObservationTrigger : public CParameter
     setNumberOfAttempts (
       llrp_u16_t value)
     {
-        m_NumberOfAttempts = value;
+         m_NumberOfAttempts = value;
     }
 
 
@@ -10729,7 +10546,7 @@ class CTagObservationTrigger : public CParameter
     inline llrp_u16_t
     getT (void)
     {
-        return m_T;
+        return  m_T;
     }
 
     /** @brief Set accessor functions for the LLRP T field */
@@ -10737,7 +10554,7 @@ class CTagObservationTrigger : public CParameter
     setT (
       llrp_u16_t value)
     {
-        m_T = value;
+         m_T = value;
     }
 
 
@@ -10755,7 +10572,7 @@ class CTagObservationTrigger : public CParameter
     inline llrp_u32_t
     getTimeout (void)
     {
-        return m_Timeout;
+        return  m_Timeout;
     }
 
     /** @brief Set accessor functions for the LLRP Timeout field */
@@ -10763,7 +10580,7 @@ class CTagObservationTrigger : public CParameter
     setTimeout (
       llrp_u32_t value)
     {
-        m_Timeout = value;
+         m_Timeout = value;
     }
 
 
@@ -10856,7 +10673,7 @@ class CInventoryParameterSpec : public CParameter
     inline llrp_u16_t
     getInventoryParameterSpecID (void)
     {
-        return m_InventoryParameterSpecID;
+        return  m_InventoryParameterSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP InventoryParameterSpecID field */
@@ -10864,7 +10681,7 @@ class CInventoryParameterSpec : public CParameter
     setInventoryParameterSpecID (
       llrp_u16_t value)
     {
-        m_InventoryParameterSpecID = value;
+         m_InventoryParameterSpecID = value;
     }
 
 
@@ -10882,7 +10699,7 @@ class CInventoryParameterSpec : public CParameter
     inline EAirProtocols
     getProtocolID (void)
     {
-        return m_eProtocolID;
+        return  m_eProtocolID;
     }
 
     /** @brief Set accessor functions for the LLRP ProtocolID field */
@@ -10890,7 +10707,7 @@ class CInventoryParameterSpec : public CParameter
     setProtocolID (
       EAirProtocols value)
     {
-        m_eProtocolID = value;
+         m_eProtocolID = value;
     }
 
 
@@ -11060,7 +10877,7 @@ class CRFSurveySpec : public CParameter
     inline llrp_u16_t
     getAntennaID (void)
     {
-        return m_AntennaID;
+        return  m_AntennaID;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaID field */
@@ -11068,7 +10885,7 @@ class CRFSurveySpec : public CParameter
     setAntennaID (
       llrp_u16_t value)
     {
-        m_AntennaID = value;
+         m_AntennaID = value;
     }
 
 
@@ -11086,7 +10903,7 @@ class CRFSurveySpec : public CParameter
     inline llrp_u32_t
     getStartFrequency (void)
     {
-        return m_StartFrequency;
+        return  m_StartFrequency;
     }
 
     /** @brief Set accessor functions for the LLRP StartFrequency field */
@@ -11094,7 +10911,7 @@ class CRFSurveySpec : public CParameter
     setStartFrequency (
       llrp_u32_t value)
     {
-        m_StartFrequency = value;
+         m_StartFrequency = value;
     }
 
 
@@ -11112,7 +10929,7 @@ class CRFSurveySpec : public CParameter
     inline llrp_u32_t
     getEndFrequency (void)
     {
-        return m_EndFrequency;
+        return  m_EndFrequency;
     }
 
     /** @brief Set accessor functions for the LLRP EndFrequency field */
@@ -11120,7 +10937,7 @@ class CRFSurveySpec : public CParameter
     setEndFrequency (
       llrp_u32_t value)
     {
-        m_EndFrequency = value;
+         m_EndFrequency = value;
     }
 
 
@@ -11267,7 +11084,7 @@ class CRFSurveySpecStopTrigger : public CParameter
     inline ERFSurveySpecStopTriggerType
     getStopTriggerType (void)
     {
-        return m_eStopTriggerType;
+        return  m_eStopTriggerType;
     }
 
     /** @brief Set accessor functions for the LLRP StopTriggerType field */
@@ -11275,7 +11092,7 @@ class CRFSurveySpecStopTrigger : public CParameter
     setStopTriggerType (
       ERFSurveySpecStopTriggerType value)
     {
-        m_eStopTriggerType = value;
+         m_eStopTriggerType = value;
     }
 
 
@@ -11293,7 +11110,7 @@ class CRFSurveySpecStopTrigger : public CParameter
     inline llrp_u32_t
     getDurationPeriod (void)
     {
-        return m_DurationPeriod;
+        return  m_DurationPeriod;
     }
 
     /** @brief Set accessor functions for the LLRP DurationPeriod field */
@@ -11301,7 +11118,7 @@ class CRFSurveySpecStopTrigger : public CParameter
     setDurationPeriod (
       llrp_u32_t value)
     {
-        m_DurationPeriod = value;
+         m_DurationPeriod = value;
     }
 
 
@@ -11319,7 +11136,7 @@ class CRFSurveySpecStopTrigger : public CParameter
     inline llrp_u32_t
     getN (void)
     {
-        return m_N;
+        return  m_N;
     }
 
     /** @brief Set accessor functions for the LLRP N field */
@@ -11327,7 +11144,7 @@ class CRFSurveySpecStopTrigger : public CParameter
     setN (
       llrp_u32_t value)
     {
-        m_N = value;
+         m_N = value;
     }
 
 
@@ -11426,7 +11243,7 @@ class CAccessSpec : public CParameter
     inline llrp_u32_t
     getAccessSpecID (void)
     {
-        return m_AccessSpecID;
+        return  m_AccessSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP AccessSpecID field */
@@ -11434,7 +11251,7 @@ class CAccessSpec : public CParameter
     setAccessSpecID (
       llrp_u32_t value)
     {
-        m_AccessSpecID = value;
+         m_AccessSpecID = value;
     }
 
 
@@ -11452,7 +11269,7 @@ class CAccessSpec : public CParameter
     inline llrp_u16_t
     getAntennaID (void)
     {
-        return m_AntennaID;
+        return  m_AntennaID;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaID field */
@@ -11460,7 +11277,7 @@ class CAccessSpec : public CParameter
     setAntennaID (
       llrp_u16_t value)
     {
-        m_AntennaID = value;
+         m_AntennaID = value;
     }
 
 
@@ -11478,7 +11295,7 @@ class CAccessSpec : public CParameter
     inline EAirProtocols
     getProtocolID (void)
     {
-        return m_eProtocolID;
+        return  m_eProtocolID;
     }
 
     /** @brief Set accessor functions for the LLRP ProtocolID field */
@@ -11486,7 +11303,7 @@ class CAccessSpec : public CParameter
     setProtocolID (
       EAirProtocols value)
     {
-        m_eProtocolID = value;
+         m_eProtocolID = value;
     }
 
 
@@ -11504,7 +11321,7 @@ class CAccessSpec : public CParameter
     inline EAccessSpecState
     getCurrentState (void)
     {
-        return m_eCurrentState;
+        return  m_eCurrentState;
     }
 
     /** @brief Set accessor functions for the LLRP CurrentState field */
@@ -11512,7 +11329,7 @@ class CAccessSpec : public CParameter
     setCurrentState (
       EAccessSpecState value)
     {
-        m_eCurrentState = value;
+         m_eCurrentState = value;
     }
 
 
@@ -11530,7 +11347,7 @@ class CAccessSpec : public CParameter
     inline llrp_u32_t
     getROSpecID (void)
     {
-        return m_ROSpecID;
+        return  m_ROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecID field */
@@ -11538,7 +11355,7 @@ class CAccessSpec : public CParameter
     setROSpecID (
       llrp_u32_t value)
     {
-        m_ROSpecID = value;
+         m_ROSpecID = value;
     }
 
 
@@ -11721,7 +11538,7 @@ class CAccessSpecStopTrigger : public CParameter
     inline EAccessSpecStopTriggerType
     getAccessSpecStopTrigger (void)
     {
-        return m_eAccessSpecStopTrigger;
+        return  m_eAccessSpecStopTrigger;
     }
 
     /** @brief Set accessor functions for the LLRP AccessSpecStopTrigger field */
@@ -11729,7 +11546,7 @@ class CAccessSpecStopTrigger : public CParameter
     setAccessSpecStopTrigger (
       EAccessSpecStopTriggerType value)
     {
-        m_eAccessSpecStopTrigger = value;
+         m_eAccessSpecStopTrigger = value;
     }
 
 
@@ -11747,7 +11564,7 @@ class CAccessSpecStopTrigger : public CParameter
     inline llrp_u16_t
     getOperationCountValue (void)
     {
-        return m_OperationCountValue;
+        return  m_OperationCountValue;
     }
 
     /** @brief Set accessor functions for the LLRP OperationCountValue field */
@@ -11755,7 +11572,7 @@ class CAccessSpecStopTrigger : public CParameter
     setOperationCountValue (
       llrp_u16_t value)
     {
-        m_OperationCountValue = value;
+         m_OperationCountValue = value;
     }
 
 
@@ -11940,262 +11757,6 @@ class CAccessCommand : public CParameter
 
 
 /**
- ** @brief  Class Definition CClientRequestOpSpec for LLRP parameter ClientRequestOpSpec
- **
- 
-    
-      
-<ul>
-    
-    <li><b>Document Reference</b>  
-   <a href=http://www.epcglobalinc.org/standards/llrp/llrp_1_0_1-standard-20070813.pdf#page=66&view=fit>LLRP Specification Section 11.2.1.2.1</a>
-  </li>
-    
-    <li><b>Document Reference</b>  
-   <a href=http://www.epcglobalinc.org/standards/llrp/llrp_1_0_1-standard-20070813.pdf#page=139&view=fit>LLRP Specification Section 16.2.5.1.3</a>
-  </li>
-  
-</ul>  
-
-      
-          
-    <p>This parameter is sent as part of the possible values for the AccessSpec OpSpec list. One or more ClientRequestOpSpec operations may be performed on a tag in succession. Upon executing a ClientRequestOpSpec Parameter, a Reader will immediately send the CLIENT_REQUEST_OP message to the Client. This CLIENT_REQUEST_OP message carries the TagReportData (section 13.2.3) that contains information collected for the tag which includes singulation results and the results of OpSpecs executed till that point.</p> 
- 
-          
-    <p>A global timeout is associated with this request. If the Client does not return a ClientRequestResponse within the ClientRequestOpSpecTimeout (LLRP Capabilities) period, or the AirProtocolOpSpec List is empty in the ClientRequestResponse, the execution of the AccessSpec is cancelled.</p> 
- 
-      <SMALL><i>Copyright 2006, 2007, EPCglobal Inc. The proprietary text of EPCglobal Inc. included here is in not a Contribution to the LLRP toolkit, under Apache License, Version 2.0. The right to use the proprietary text is limited to reproduction and display thereof within the work.</i></SMALL> 
-  <HR>
-
-    
-    
-  
- **/
-
-class CClientRequestOpSpec : public CParameter
-{
-  public:
-    CClientRequestOpSpec (void);
-    ~CClientRequestOpSpec (void);
-
-/** @name Internal Framework Functions */
-//@{
-
-    static const CFieldDescriptor * const
-    s_apFieldDescriptorTable[];
-
-    static const CTypeDescriptor
-    s_typeDescriptor;
-
-    void
-    decodeFields (
-      CDecoderStream *          pDecoderStream);
-
-    void
-    assimilateSubParameters (
-      CErrorDetails *           pError);
-
-    void
-    encode (
-      CEncoderStream *          pEncoderStream) const;
-
-  
-
-    static CElement *
-    s_construct (void);
-
-    static void
-    s_decodeFields (
-      CDecoderStream *          pDecoderStream,
-      CElement *                pElement);
-//@}
-
-  
-  protected:
-    llrp_u16_t m_OpSpecID;
-
-/** @name Internal Framework Functions */
-//@{
-  public:
-    static const CFieldDescriptor
-    s_fdOpSpecID;
-//@}
-
-    /** @brief Get accessor functions for the LLRP OpSpecID field */
-    inline llrp_u16_t
-    getOpSpecID (void)
-    {
-        return m_OpSpecID;
-    }
-
-    /** @brief Set accessor functions for the LLRP OpSpecID field */
-    inline void
-    setOpSpecID (
-      llrp_u16_t value)
-    {
-        m_OpSpecID = value;
-    }
-
-
-};
-
-
-/**
- ** @brief  Class Definition CClientRequestResponse for LLRP parameter ClientRequestResponse
- **
- 
-    
-      
-<ul>
-    
-    <li><b>Document Reference</b>  
-   <a href=http://www.epcglobalinc.org/standards/llrp/llrp_1_0_1-standard-20070813.pdf#page=66&view=fit>LLRP Specification Section 11.2.2</a>
-  </li>
-    
-    <li><b>Document Reference</b>  
-   <a href=http://www.epcglobalinc.org/standards/llrp/llrp_1_0_1-standard-20070813.pdf#page=139&view=fit>LLRP Specification Section 16.2.5.1.3.1</a>
-  </li>
-  
-</ul>  
-
-      
-          
-    <p>This parameter describes the list of OpSpecs that the Reader has to execute on the tag for which a Client request was initiated. The AccessSpecID is the identifier of the AccessSpec that had the Client request; the EPC data is the singulated data of the tag for which this Client request was initiated. The AirProtocolOpSpec list contained in the ClientRequestResponse SHALL be processed as the next OpSpecs sent over the air interface. If the AirProtocolOpSpec List is empty, then the execution of the AccessSpec specified by AccessSpecID is cancelled.</p> 
- 
-      <SMALL><i>Copyright 2006, 2007, EPCglobal Inc. The proprietary text of EPCglobal Inc. included here is in not a Contribution to the LLRP toolkit, under Apache License, Version 2.0. The right to use the proprietary text is limited to reproduction and display thereof within the work.</i></SMALL> 
-  <HR>
-
-    
-    
-    
-    
-  
- **/
-
-class CClientRequestResponse : public CParameter
-{
-  public:
-    CClientRequestResponse (void);
-    ~CClientRequestResponse (void);
-
-/** @name Internal Framework Functions */
-//@{
-
-    static const CFieldDescriptor * const
-    s_apFieldDescriptorTable[];
-
-    static const CTypeDescriptor
-    s_typeDescriptor;
-
-    void
-    decodeFields (
-      CDecoderStream *          pDecoderStream);
-
-    void
-    assimilateSubParameters (
-      CErrorDetails *           pError);
-
-    void
-    encode (
-      CEncoderStream *          pEncoderStream) const;
-
-  
-
-    static CElement *
-    s_construct (void);
-
-    static void
-    s_decodeFields (
-      CDecoderStream *          pDecoderStream,
-      CElement *                pElement);
-//@}
-
-  
-  protected:
-    llrp_u32_t m_AccessSpecID;
-
-/** @name Internal Framework Functions */
-//@{
-  public:
-    static const CFieldDescriptor
-    s_fdAccessSpecID;
-//@}
-
-    /** @brief Get accessor functions for the LLRP AccessSpecID field */
-    inline llrp_u32_t
-    getAccessSpecID (void)
-    {
-        return m_AccessSpecID;
-    }
-
-    /** @brief Set accessor functions for the LLRP AccessSpecID field */
-    inline void
-    setAccessSpecID (
-      llrp_u32_t value)
-    {
-        m_AccessSpecID = value;
-    }
-
-
-  protected:
-    CEPCData * m_pEPCData;
-
-  public:
-    /** @brief Get accessor functions for the LLRP EPCData sub-parameter */  
-    inline CEPCData *
-    getEPCData (void)
-    {
-        return m_pEPCData;
-    }
-
-    /** @brief Set accessor functions for the LLRP EPCData sub-parameter */  
-    EResultCode
-    setEPCData (
-      CEPCData * pValue);
-
-
-  protected:
-    std::list<CParameter *> m_listAirProtocolOpSpec;
-
-  public:
-     /** @brief  Returns the first element of the AirProtocolOpSpec sub-parameter list*/  
-    inline std::list<CParameter *>::iterator
-    beginAirProtocolOpSpec (void)
-    {
-        return m_listAirProtocolOpSpec.begin();
-    }
-
-     /** @brief  Returns the last element of the AirProtocolOpSpec sub-parameter list*/  
-    inline std::list<CParameter *>::iterator
-    endAirProtocolOpSpec (void)
-    {
-        return m_listAirProtocolOpSpec.end();
-    }
-
-     /** @brief  Clears the LLRP AirProtocolOpSpec sub-parameter list*/  
-    inline void
-    clearAirProtocolOpSpec (void)
-    {
-        clearSubParameterList ((tListOfParameters *) &m_listAirProtocolOpSpec);
-    }
-
-     /** @brief  Count of the LLRP AirProtocolOpSpec sub-parameter list*/  
-    inline int
-    countAirProtocolOpSpec (void)
-    {
-        return (int) (m_listAirProtocolOpSpec.size());
-    }
-
-    EResultCode
-     /** @brief  Add a AirProtocolOpSpec to the LLRP sub-parameter list*/  
-    addAirProtocolOpSpec (
-      CParameter * pValue);
-
-
-};
-
-
-/**
  ** @brief  Class Definition CLLRPConfigurationStateValue for LLRP parameter LLRPConfigurationStateValue
  **
  
@@ -12312,7 +11873,7 @@ class CLLRPConfigurationStateValue : public CParameter
     inline llrp_u32_t
     getLLRPConfigurationStateValue (void)
     {
-        return m_LLRPConfigurationStateValue;
+        return  m_LLRPConfigurationStateValue;
     }
 
     /** @brief Set accessor functions for the LLRP LLRPConfigurationStateValue field */
@@ -12320,7 +11881,7 @@ class CLLRPConfigurationStateValue : public CParameter
     setLLRPConfigurationStateValue (
       llrp_u32_t value)
     {
-        m_LLRPConfigurationStateValue = value;
+         m_LLRPConfigurationStateValue = value;
     }
 
 
@@ -12416,7 +11977,7 @@ class CIdentification : public CParameter
     inline EIdentificationType
     getIDType (void)
     {
-        return m_eIDType;
+        return  m_eIDType;
     }
 
     /** @brief Set accessor functions for the LLRP IDType field */
@@ -12424,7 +11985,7 @@ class CIdentification : public CParameter
     setIDType (
       EIdentificationType value)
     {
-        m_eIDType = value;
+         m_eIDType = value;
     }
 
 
@@ -12442,7 +12003,7 @@ class CIdentification : public CParameter
     inline llrp_u8v_t
     getReaderID (void)
     {
-        return m_ReaderID;
+        return  m_ReaderID;
     }
 
     /** @brief Set accessor functions for the LLRP ReaderID field */
@@ -12450,7 +12011,7 @@ class CIdentification : public CParameter
     setReaderID (
       llrp_u8v_t value)
     {
-        m_ReaderID = value;
+         m_ReaderID = value;
     }
 
 
@@ -12549,7 +12110,7 @@ class CGPOWriteData : public CParameter
     inline llrp_u16_t
     getGPOPortNumber (void)
     {
-        return m_GPOPortNumber;
+        return  m_GPOPortNumber;
     }
 
     /** @brief Set accessor functions for the LLRP GPOPortNumber field */
@@ -12557,7 +12118,7 @@ class CGPOWriteData : public CParameter
     setGPOPortNumber (
       llrp_u16_t value)
     {
-        m_GPOPortNumber = value;
+         m_GPOPortNumber = value;
     }
 
 
@@ -12575,7 +12136,7 @@ class CGPOWriteData : public CParameter
     inline llrp_u1_t
     getGPOData (void)
     {
-        return m_GPOData;
+        return  m_GPOData;
     }
 
     /** @brief Set accessor functions for the LLRP GPOData field */
@@ -12583,7 +12144,7 @@ class CGPOWriteData : public CParameter
     setGPOData (
       llrp_u1_t value)
     {
-        m_GPOData = value;
+         m_GPOData = value;
     }
 
 
@@ -12674,7 +12235,7 @@ class CKeepaliveSpec : public CParameter
     inline EKeepaliveTriggerType
     getKeepaliveTriggerType (void)
     {
-        return m_eKeepaliveTriggerType;
+        return  m_eKeepaliveTriggerType;
     }
 
     /** @brief Set accessor functions for the LLRP KeepaliveTriggerType field */
@@ -12682,7 +12243,7 @@ class CKeepaliveSpec : public CParameter
     setKeepaliveTriggerType (
       EKeepaliveTriggerType value)
     {
-        m_eKeepaliveTriggerType = value;
+         m_eKeepaliveTriggerType = value;
     }
 
 
@@ -12700,7 +12261,7 @@ class CKeepaliveSpec : public CParameter
     inline llrp_u32_t
     getPeriodicTriggerValue (void)
     {
-        return m_PeriodicTriggerValue;
+        return  m_PeriodicTriggerValue;
     }
 
     /** @brief Set accessor functions for the LLRP PeriodicTriggerValue field */
@@ -12708,7 +12269,7 @@ class CKeepaliveSpec : public CParameter
     setPeriodicTriggerValue (
       llrp_u32_t value)
     {
-        m_PeriodicTriggerValue = value;
+         m_PeriodicTriggerValue = value;
     }
 
 
@@ -12801,7 +12362,7 @@ class CAntennaProperties : public CParameter
     inline llrp_u1_t
     getAntennaConnected (void)
     {
-        return m_AntennaConnected;
+        return  m_AntennaConnected;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaConnected field */
@@ -12809,7 +12370,7 @@ class CAntennaProperties : public CParameter
     setAntennaConnected (
       llrp_u1_t value)
     {
-        m_AntennaConnected = value;
+         m_AntennaConnected = value;
     }
 
 
@@ -12827,7 +12388,7 @@ class CAntennaProperties : public CParameter
     inline llrp_u16_t
     getAntennaID (void)
     {
-        return m_AntennaID;
+        return  m_AntennaID;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaID field */
@@ -12835,7 +12396,7 @@ class CAntennaProperties : public CParameter
     setAntennaID (
       llrp_u16_t value)
     {
-        m_AntennaID = value;
+         m_AntennaID = value;
     }
 
 
@@ -12853,7 +12414,7 @@ class CAntennaProperties : public CParameter
     inline llrp_s16_t
     getAntennaGain (void)
     {
-        return m_AntennaGain;
+        return  m_AntennaGain;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaGain field */
@@ -12861,7 +12422,7 @@ class CAntennaProperties : public CParameter
     setAntennaGain (
       llrp_s16_t value)
     {
-        m_AntennaGain = value;
+         m_AntennaGain = value;
     }
 
 
@@ -12954,7 +12515,7 @@ class CAntennaConfiguration : public CParameter
     inline llrp_u16_t
     getAntennaID (void)
     {
-        return m_AntennaID;
+        return  m_AntennaID;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaID field */
@@ -12962,7 +12523,7 @@ class CAntennaConfiguration : public CParameter
     setAntennaID (
       llrp_u16_t value)
     {
-        m_AntennaID = value;
+         m_AntennaID = value;
     }
 
 
@@ -13124,7 +12685,7 @@ class CRFReceiver : public CParameter
     inline llrp_u16_t
     getReceiverSensitivity (void)
     {
-        return m_ReceiverSensitivity;
+        return  m_ReceiverSensitivity;
     }
 
     /** @brief Set accessor functions for the LLRP ReceiverSensitivity field */
@@ -13132,7 +12693,7 @@ class CRFReceiver : public CParameter
     setReceiverSensitivity (
       llrp_u16_t value)
     {
-        m_ReceiverSensitivity = value;
+         m_ReceiverSensitivity = value;
     }
 
 
@@ -13224,7 +12785,7 @@ class CRFTransmitter : public CParameter
     inline llrp_u16_t
     getHopTableID (void)
     {
-        return m_HopTableID;
+        return  m_HopTableID;
     }
 
     /** @brief Set accessor functions for the LLRP HopTableID field */
@@ -13232,7 +12793,7 @@ class CRFTransmitter : public CParameter
     setHopTableID (
       llrp_u16_t value)
     {
-        m_HopTableID = value;
+         m_HopTableID = value;
     }
 
 
@@ -13250,7 +12811,7 @@ class CRFTransmitter : public CParameter
     inline llrp_u16_t
     getChannelIndex (void)
     {
-        return m_ChannelIndex;
+        return  m_ChannelIndex;
     }
 
     /** @brief Set accessor functions for the LLRP ChannelIndex field */
@@ -13258,7 +12819,7 @@ class CRFTransmitter : public CParameter
     setChannelIndex (
       llrp_u16_t value)
     {
-        m_ChannelIndex = value;
+         m_ChannelIndex = value;
     }
 
 
@@ -13276,7 +12837,7 @@ class CRFTransmitter : public CParameter
     inline llrp_u16_t
     getTransmitPower (void)
     {
-        return m_TransmitPower;
+        return  m_TransmitPower;
     }
 
     /** @brief Set accessor functions for the LLRP TransmitPower field */
@@ -13284,7 +12845,7 @@ class CRFTransmitter : public CParameter
     setTransmitPower (
       llrp_u16_t value)
     {
-        m_TransmitPower = value;
+         m_TransmitPower = value;
     }
 
 
@@ -13387,7 +12948,7 @@ class CGPIPortCurrentState : public CParameter
     inline llrp_u16_t
     getGPIPortNum (void)
     {
-        return m_GPIPortNum;
+        return  m_GPIPortNum;
     }
 
     /** @brief Set accessor functions for the LLRP GPIPortNum field */
@@ -13395,7 +12956,7 @@ class CGPIPortCurrentState : public CParameter
     setGPIPortNum (
       llrp_u16_t value)
     {
-        m_GPIPortNum = value;
+         m_GPIPortNum = value;
     }
 
 
@@ -13413,7 +12974,7 @@ class CGPIPortCurrentState : public CParameter
     inline llrp_u1_t
     getConfig (void)
     {
-        return m_Config;
+        return  m_Config;
     }
 
     /** @brief Set accessor functions for the LLRP Config field */
@@ -13421,7 +12982,7 @@ class CGPIPortCurrentState : public CParameter
     setConfig (
       llrp_u1_t value)
     {
-        m_Config = value;
+         m_Config = value;
     }
 
 
@@ -13439,7 +13000,7 @@ class CGPIPortCurrentState : public CParameter
     inline EGPIPortState
     getState (void)
     {
-        return m_eState;
+        return  m_eState;
     }
 
     /** @brief Set accessor functions for the LLRP State field */
@@ -13447,7 +13008,7 @@ class CGPIPortCurrentState : public CParameter
     setState (
       EGPIPortState value)
     {
-        m_eState = value;
+         m_eState = value;
     }
 
 
@@ -13538,7 +13099,7 @@ class CEventsAndReports : public CParameter
     inline llrp_u1_t
     getHoldEventsAndReportsUponReconnect (void)
     {
-        return m_HoldEventsAndReportsUponReconnect;
+        return  m_HoldEventsAndReportsUponReconnect;
     }
 
     /** @brief Set accessor functions for the LLRP HoldEventsAndReportsUponReconnect field */
@@ -13546,7 +13107,7 @@ class CEventsAndReports : public CParameter
     setHoldEventsAndReportsUponReconnect (
       llrp_u1_t value)
     {
-        m_HoldEventsAndReportsUponReconnect = value;
+         m_HoldEventsAndReportsUponReconnect = value;
     }
 
 
@@ -13648,7 +13209,7 @@ class CROReportSpec : public CParameter
     inline EROReportTriggerType
     getROReportTrigger (void)
     {
-        return m_eROReportTrigger;
+        return  m_eROReportTrigger;
     }
 
     /** @brief Set accessor functions for the LLRP ROReportTrigger field */
@@ -13656,7 +13217,7 @@ class CROReportSpec : public CParameter
     setROReportTrigger (
       EROReportTriggerType value)
     {
-        m_eROReportTrigger = value;
+         m_eROReportTrigger = value;
     }
 
 
@@ -13674,7 +13235,7 @@ class CROReportSpec : public CParameter
     inline llrp_u16_t
     getN (void)
     {
-        return m_N;
+        return  m_N;
     }
 
     /** @brief Set accessor functions for the LLRP N field */
@@ -13682,7 +13243,7 @@ class CROReportSpec : public CParameter
     setN (
       llrp_u16_t value)
     {
-        m_N = value;
+         m_N = value;
     }
 
 
@@ -13838,7 +13399,7 @@ class CTagReportContentSelector : public CParameter
     inline llrp_u1_t
     getEnableROSpecID (void)
     {
-        return m_EnableROSpecID;
+        return  m_EnableROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP EnableROSpecID field */
@@ -13846,7 +13407,7 @@ class CTagReportContentSelector : public CParameter
     setEnableROSpecID (
       llrp_u1_t value)
     {
-        m_EnableROSpecID = value;
+         m_EnableROSpecID = value;
     }
 
 
@@ -13864,7 +13425,7 @@ class CTagReportContentSelector : public CParameter
     inline llrp_u1_t
     getEnableSpecIndex (void)
     {
-        return m_EnableSpecIndex;
+        return  m_EnableSpecIndex;
     }
 
     /** @brief Set accessor functions for the LLRP EnableSpecIndex field */
@@ -13872,7 +13433,7 @@ class CTagReportContentSelector : public CParameter
     setEnableSpecIndex (
       llrp_u1_t value)
     {
-        m_EnableSpecIndex = value;
+         m_EnableSpecIndex = value;
     }
 
 
@@ -13890,7 +13451,7 @@ class CTagReportContentSelector : public CParameter
     inline llrp_u1_t
     getEnableInventoryParameterSpecID (void)
     {
-        return m_EnableInventoryParameterSpecID;
+        return  m_EnableInventoryParameterSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP EnableInventoryParameterSpecID field */
@@ -13898,7 +13459,7 @@ class CTagReportContentSelector : public CParameter
     setEnableInventoryParameterSpecID (
       llrp_u1_t value)
     {
-        m_EnableInventoryParameterSpecID = value;
+         m_EnableInventoryParameterSpecID = value;
     }
 
 
@@ -13916,7 +13477,7 @@ class CTagReportContentSelector : public CParameter
     inline llrp_u1_t
     getEnableAntennaID (void)
     {
-        return m_EnableAntennaID;
+        return  m_EnableAntennaID;
     }
 
     /** @brief Set accessor functions for the LLRP EnableAntennaID field */
@@ -13924,7 +13485,7 @@ class CTagReportContentSelector : public CParameter
     setEnableAntennaID (
       llrp_u1_t value)
     {
-        m_EnableAntennaID = value;
+         m_EnableAntennaID = value;
     }
 
 
@@ -13942,7 +13503,7 @@ class CTagReportContentSelector : public CParameter
     inline llrp_u1_t
     getEnableChannelIndex (void)
     {
-        return m_EnableChannelIndex;
+        return  m_EnableChannelIndex;
     }
 
     /** @brief Set accessor functions for the LLRP EnableChannelIndex field */
@@ -13950,7 +13511,7 @@ class CTagReportContentSelector : public CParameter
     setEnableChannelIndex (
       llrp_u1_t value)
     {
-        m_EnableChannelIndex = value;
+         m_EnableChannelIndex = value;
     }
 
 
@@ -13968,7 +13529,7 @@ class CTagReportContentSelector : public CParameter
     inline llrp_u1_t
     getEnablePeakRSSI (void)
     {
-        return m_EnablePeakRSSI;
+        return  m_EnablePeakRSSI;
     }
 
     /** @brief Set accessor functions for the LLRP EnablePeakRSSI field */
@@ -13976,7 +13537,7 @@ class CTagReportContentSelector : public CParameter
     setEnablePeakRSSI (
       llrp_u1_t value)
     {
-        m_EnablePeakRSSI = value;
+         m_EnablePeakRSSI = value;
     }
 
 
@@ -13994,7 +13555,7 @@ class CTagReportContentSelector : public CParameter
     inline llrp_u1_t
     getEnableFirstSeenTimestamp (void)
     {
-        return m_EnableFirstSeenTimestamp;
+        return  m_EnableFirstSeenTimestamp;
     }
 
     /** @brief Set accessor functions for the LLRP EnableFirstSeenTimestamp field */
@@ -14002,7 +13563,7 @@ class CTagReportContentSelector : public CParameter
     setEnableFirstSeenTimestamp (
       llrp_u1_t value)
     {
-        m_EnableFirstSeenTimestamp = value;
+         m_EnableFirstSeenTimestamp = value;
     }
 
 
@@ -14020,7 +13581,7 @@ class CTagReportContentSelector : public CParameter
     inline llrp_u1_t
     getEnableLastSeenTimestamp (void)
     {
-        return m_EnableLastSeenTimestamp;
+        return  m_EnableLastSeenTimestamp;
     }
 
     /** @brief Set accessor functions for the LLRP EnableLastSeenTimestamp field */
@@ -14028,7 +13589,7 @@ class CTagReportContentSelector : public CParameter
     setEnableLastSeenTimestamp (
       llrp_u1_t value)
     {
-        m_EnableLastSeenTimestamp = value;
+         m_EnableLastSeenTimestamp = value;
     }
 
 
@@ -14046,7 +13607,7 @@ class CTagReportContentSelector : public CParameter
     inline llrp_u1_t
     getEnableTagSeenCount (void)
     {
-        return m_EnableTagSeenCount;
+        return  m_EnableTagSeenCount;
     }
 
     /** @brief Set accessor functions for the LLRP EnableTagSeenCount field */
@@ -14054,7 +13615,7 @@ class CTagReportContentSelector : public CParameter
     setEnableTagSeenCount (
       llrp_u1_t value)
     {
-        m_EnableTagSeenCount = value;
+         m_EnableTagSeenCount = value;
     }
 
 
@@ -14072,7 +13633,7 @@ class CTagReportContentSelector : public CParameter
     inline llrp_u1_t
     getEnableAccessSpecID (void)
     {
-        return m_EnableAccessSpecID;
+        return  m_EnableAccessSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP EnableAccessSpecID field */
@@ -14080,7 +13641,7 @@ class CTagReportContentSelector : public CParameter
     setEnableAccessSpecID (
       llrp_u1_t value)
     {
-        m_EnableAccessSpecID = value;
+         m_EnableAccessSpecID = value;
     }
 
 
@@ -14208,7 +13769,7 @@ class CAccessReportSpec : public CParameter
     inline EAccessReportTriggerType
     getAccessReportTrigger (void)
     {
-        return m_eAccessReportTrigger;
+        return  m_eAccessReportTrigger;
     }
 
     /** @brief Set accessor functions for the LLRP AccessReportTrigger field */
@@ -14216,7 +13777,7 @@ class CAccessReportSpec : public CParameter
     setAccessReportTrigger (
       EAccessReportTriggerType value)
     {
-        m_eAccessReportTrigger = value;
+         m_eAccessReportTrigger = value;
     }
 
 
@@ -14852,7 +14413,7 @@ class CEPCData : public CParameter
     inline llrp_u1v_t
     getEPC (void)
     {
-        return m_EPC;
+        return  m_EPC;
     }
 
     /** @brief Set accessor functions for the LLRP EPC field */
@@ -14860,7 +14421,7 @@ class CEPCData : public CParameter
     setEPC (
       llrp_u1v_t value)
     {
-        m_EPC = value;
+         m_EPC = value;
     }
 
 
@@ -14950,7 +14511,7 @@ class CEPC_96 : public CParameter
     inline llrp_u96_t
     getEPC (void)
     {
-        return m_EPC;
+        return  m_EPC;
     }
 
     /** @brief Set accessor functions for the LLRP EPC field */
@@ -14958,7 +14519,7 @@ class CEPC_96 : public CParameter
     setEPC (
       llrp_u96_t value)
     {
-        m_EPC = value;
+         m_EPC = value;
     }
 
 
@@ -15048,7 +14609,7 @@ class CROSpecID : public CParameter
     inline llrp_u32_t
     getROSpecID (void)
     {
-        return m_ROSpecID;
+        return  m_ROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecID field */
@@ -15056,7 +14617,7 @@ class CROSpecID : public CParameter
     setROSpecID (
       llrp_u32_t value)
     {
-        m_ROSpecID = value;
+         m_ROSpecID = value;
     }
 
 
@@ -15146,7 +14707,7 @@ class CSpecIndex : public CParameter
     inline llrp_u16_t
     getSpecIndex (void)
     {
-        return m_SpecIndex;
+        return  m_SpecIndex;
     }
 
     /** @brief Set accessor functions for the LLRP SpecIndex field */
@@ -15154,7 +14715,7 @@ class CSpecIndex : public CParameter
     setSpecIndex (
       llrp_u16_t value)
     {
-        m_SpecIndex = value;
+         m_SpecIndex = value;
     }
 
 
@@ -15244,7 +14805,7 @@ class CInventoryParameterSpecID : public CParameter
     inline llrp_u16_t
     getInventoryParameterSpecID (void)
     {
-        return m_InventoryParameterSpecID;
+        return  m_InventoryParameterSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP InventoryParameterSpecID field */
@@ -15252,7 +14813,7 @@ class CInventoryParameterSpecID : public CParameter
     setInventoryParameterSpecID (
       llrp_u16_t value)
     {
-        m_InventoryParameterSpecID = value;
+         m_InventoryParameterSpecID = value;
     }
 
 
@@ -15342,7 +14903,7 @@ class CAntennaID : public CParameter
     inline llrp_u16_t
     getAntennaID (void)
     {
-        return m_AntennaID;
+        return  m_AntennaID;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaID field */
@@ -15350,7 +14911,7 @@ class CAntennaID : public CParameter
     setAntennaID (
       llrp_u16_t value)
     {
-        m_AntennaID = value;
+         m_AntennaID = value;
     }
 
 
@@ -15443,7 +15004,7 @@ class CPeakRSSI : public CParameter
     inline llrp_s8_t
     getPeakRSSI (void)
     {
-        return m_PeakRSSI;
+        return  m_PeakRSSI;
     }
 
     /** @brief Set accessor functions for the LLRP PeakRSSI field */
@@ -15451,7 +15012,7 @@ class CPeakRSSI : public CParameter
     setPeakRSSI (
       llrp_s8_t value)
     {
-        m_PeakRSSI = value;
+         m_PeakRSSI = value;
     }
 
 
@@ -15541,7 +15102,7 @@ class CChannelIndex : public CParameter
     inline llrp_u16_t
     getChannelIndex (void)
     {
-        return m_ChannelIndex;
+        return  m_ChannelIndex;
     }
 
     /** @brief Set accessor functions for the LLRP ChannelIndex field */
@@ -15549,7 +15110,7 @@ class CChannelIndex : public CParameter
     setChannelIndex (
       llrp_u16_t value)
     {
-        m_ChannelIndex = value;
+         m_ChannelIndex = value;
     }
 
 
@@ -15647,7 +15208,7 @@ class CFirstSeenTimestampUTC : public CParameter
     inline llrp_u64_t
     getMicroseconds (void)
     {
-        return m_Microseconds;
+        return  m_Microseconds;
     }
 
     /** @brief Set accessor functions for the LLRP Microseconds field */
@@ -15655,7 +15216,7 @@ class CFirstSeenTimestampUTC : public CParameter
     setMicroseconds (
       llrp_u64_t value)
     {
-        m_Microseconds = value;
+         m_Microseconds = value;
     }
 
 
@@ -15752,7 +15313,7 @@ class CFirstSeenTimestampUptime : public CParameter
     inline llrp_u64_t
     getMicroseconds (void)
     {
-        return m_Microseconds;
+        return  m_Microseconds;
     }
 
     /** @brief Set accessor functions for the LLRP Microseconds field */
@@ -15760,7 +15321,7 @@ class CFirstSeenTimestampUptime : public CParameter
     setMicroseconds (
       llrp_u64_t value)
     {
-        m_Microseconds = value;
+         m_Microseconds = value;
     }
 
 
@@ -15853,7 +15414,7 @@ class CLastSeenTimestampUTC : public CParameter
     inline llrp_u64_t
     getMicroseconds (void)
     {
-        return m_Microseconds;
+        return  m_Microseconds;
     }
 
     /** @brief Set accessor functions for the LLRP Microseconds field */
@@ -15861,7 +15422,7 @@ class CLastSeenTimestampUTC : public CParameter
     setMicroseconds (
       llrp_u64_t value)
     {
-        m_Microseconds = value;
+         m_Microseconds = value;
     }
 
 
@@ -15954,7 +15515,7 @@ class CLastSeenTimestampUptime : public CParameter
     inline llrp_u64_t
     getMicroseconds (void)
     {
-        return m_Microseconds;
+        return  m_Microseconds;
     }
 
     /** @brief Set accessor functions for the LLRP Microseconds field */
@@ -15962,7 +15523,7 @@ class CLastSeenTimestampUptime : public CParameter
     setMicroseconds (
       llrp_u64_t value)
     {
-        m_Microseconds = value;
+         m_Microseconds = value;
     }
 
 
@@ -16054,7 +15615,7 @@ class CTagSeenCount : public CParameter
     inline llrp_u16_t
     getTagCount (void)
     {
-        return m_TagCount;
+        return  m_TagCount;
     }
 
     /** @brief Set accessor functions for the LLRP TagCount field */
@@ -16062,102 +15623,7 @@ class CTagSeenCount : public CParameter
     setTagCount (
       llrp_u16_t value)
     {
-        m_TagCount = value;
-    }
-
-
-};
-
-
-/**
- ** @brief  Class Definition CClientRequestOpSpecResult for LLRP parameter ClientRequestOpSpecResult
- **
- 
-    
-      
-<ul>
-    
-    <li><b>Document Reference</b>  
-   <a href=http://www.epcglobalinc.org/standards/llrp/llrp_1_0_1-standard-20070813.pdf#page=84&view=fit>LLRP Specification Section 13.2.3.14</a>
-  </li>
-    
-    <li><b>Document Reference</b>  
-   <a href=http://www.epcglobalinc.org/standards/llrp/llrp_1_0_1-standard-20070813.pdf#page=146&view=fit>LLRP Specification Section 16.2.7.3.14</a>
-  </li>
-  
-</ul>  
-
-      
-      <SMALL><i>Copyright 2006, 2007, EPCglobal Inc. The proprietary text of EPCglobal Inc. included here is in not a Contribution to the LLRP toolkit, under Apache License, Version 2.0. The right to use the proprietary text is limited to reproduction and display thereof within the work.</i></SMALL> 
-  <HR>
-
-    
-    
-  
- **/
-
-class CClientRequestOpSpecResult : public CParameter
-{
-  public:
-    CClientRequestOpSpecResult (void);
-    ~CClientRequestOpSpecResult (void);
-
-/** @name Internal Framework Functions */
-//@{
-
-    static const CFieldDescriptor * const
-    s_apFieldDescriptorTable[];
-
-    static const CTypeDescriptor
-    s_typeDescriptor;
-
-    void
-    decodeFields (
-      CDecoderStream *          pDecoderStream);
-
-    void
-    assimilateSubParameters (
-      CErrorDetails *           pError);
-
-    void
-    encode (
-      CEncoderStream *          pEncoderStream) const;
-
-  
-
-    static CElement *
-    s_construct (void);
-
-    static void
-    s_decodeFields (
-      CDecoderStream *          pDecoderStream,
-      CElement *                pElement);
-//@}
-
-  
-  protected:
-    llrp_u16_t m_OpSpecID;
-
-/** @name Internal Framework Functions */
-//@{
-  public:
-    static const CFieldDescriptor
-    s_fdOpSpecID;
-//@}
-
-    /** @brief Get accessor functions for the LLRP OpSpecID field */
-    inline llrp_u16_t
-    getOpSpecID (void)
-    {
-        return m_OpSpecID;
-    }
-
-    /** @brief Set accessor functions for the LLRP OpSpecID field */
-    inline void
-    setOpSpecID (
-      llrp_u16_t value)
-    {
-        m_OpSpecID = value;
+         m_TagCount = value;
     }
 
 
@@ -16247,7 +15713,7 @@ class CAccessSpecID : public CParameter
     inline llrp_u32_t
     getAccessSpecID (void)
     {
-        return m_AccessSpecID;
+        return  m_AccessSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP AccessSpecID field */
@@ -16255,7 +15721,7 @@ class CAccessSpecID : public CParameter
     setAccessSpecID (
       llrp_u32_t value)
     {
-        m_AccessSpecID = value;
+         m_AccessSpecID = value;
     }
 
 
@@ -16558,7 +16024,7 @@ class CFrequencyRSSILevelEntry : public CParameter
     inline llrp_u32_t
     getFrequency (void)
     {
-        return m_Frequency;
+        return  m_Frequency;
     }
 
     /** @brief Set accessor functions for the LLRP Frequency field */
@@ -16566,7 +16032,7 @@ class CFrequencyRSSILevelEntry : public CParameter
     setFrequency (
       llrp_u32_t value)
     {
-        m_Frequency = value;
+         m_Frequency = value;
     }
 
 
@@ -16584,7 +16050,7 @@ class CFrequencyRSSILevelEntry : public CParameter
     inline llrp_u32_t
     getBandwidth (void)
     {
-        return m_Bandwidth;
+        return  m_Bandwidth;
     }
 
     /** @brief Set accessor functions for the LLRP Bandwidth field */
@@ -16592,7 +16058,7 @@ class CFrequencyRSSILevelEntry : public CParameter
     setBandwidth (
       llrp_u32_t value)
     {
-        m_Bandwidth = value;
+         m_Bandwidth = value;
     }
 
 
@@ -16610,7 +16076,7 @@ class CFrequencyRSSILevelEntry : public CParameter
     inline llrp_s8_t
     getAverageRSSI (void)
     {
-        return m_AverageRSSI;
+        return  m_AverageRSSI;
     }
 
     /** @brief Set accessor functions for the LLRP AverageRSSI field */
@@ -16618,7 +16084,7 @@ class CFrequencyRSSILevelEntry : public CParameter
     setAverageRSSI (
       llrp_s8_t value)
     {
-        m_AverageRSSI = value;
+         m_AverageRSSI = value;
     }
 
 
@@ -16636,7 +16102,7 @@ class CFrequencyRSSILevelEntry : public CParameter
     inline llrp_s8_t
     getPeakRSSI (void)
     {
-        return m_PeakRSSI;
+        return  m_PeakRSSI;
     }
 
     /** @brief Set accessor functions for the LLRP PeakRSSI field */
@@ -16644,7 +16110,7 @@ class CFrequencyRSSILevelEntry : public CParameter
     setPeakRSSI (
       llrp_s8_t value)
     {
-        m_PeakRSSI = value;
+         m_PeakRSSI = value;
     }
 
 
@@ -16863,7 +16329,7 @@ class CEventNotificationState : public CParameter
     inline ENotificationEventType
     getEventType (void)
     {
-        return m_eEventType;
+        return  m_eEventType;
     }
 
     /** @brief Set accessor functions for the LLRP EventType field */
@@ -16871,7 +16337,7 @@ class CEventNotificationState : public CParameter
     setEventType (
       ENotificationEventType value)
     {
-        m_eEventType = value;
+         m_eEventType = value;
     }
 
 
@@ -16889,7 +16355,7 @@ class CEventNotificationState : public CParameter
     inline llrp_u1_t
     getNotificationState (void)
     {
-        return m_NotificationState;
+        return  m_NotificationState;
     }
 
     /** @brief Set accessor functions for the LLRP NotificationState field */
@@ -16897,7 +16363,7 @@ class CEventNotificationState : public CParameter
     setNotificationState (
       llrp_u1_t value)
     {
-        m_NotificationState = value;
+         m_NotificationState = value;
     }
 
 
@@ -17384,7 +16850,7 @@ class CHoppingEvent : public CParameter
     inline llrp_u16_t
     getHopTableID (void)
     {
-        return m_HopTableID;
+        return  m_HopTableID;
     }
 
     /** @brief Set accessor functions for the LLRP HopTableID field */
@@ -17392,7 +16858,7 @@ class CHoppingEvent : public CParameter
     setHopTableID (
       llrp_u16_t value)
     {
-        m_HopTableID = value;
+         m_HopTableID = value;
     }
 
 
@@ -17410,7 +16876,7 @@ class CHoppingEvent : public CParameter
     inline llrp_u16_t
     getNextChannelIndex (void)
     {
-        return m_NextChannelIndex;
+        return  m_NextChannelIndex;
     }
 
     /** @brief Set accessor functions for the LLRP NextChannelIndex field */
@@ -17418,7 +16884,7 @@ class CHoppingEvent : public CParameter
     setNextChannelIndex (
       llrp_u16_t value)
     {
-        m_NextChannelIndex = value;
+         m_NextChannelIndex = value;
     }
 
 
@@ -17510,7 +16976,7 @@ class CGPIEvent : public CParameter
     inline llrp_u16_t
     getGPIPortNumber (void)
     {
-        return m_GPIPortNumber;
+        return  m_GPIPortNumber;
     }
 
     /** @brief Set accessor functions for the LLRP GPIPortNumber field */
@@ -17518,7 +16984,7 @@ class CGPIEvent : public CParameter
     setGPIPortNumber (
       llrp_u16_t value)
     {
-        m_GPIPortNumber = value;
+         m_GPIPortNumber = value;
     }
 
 
@@ -17536,7 +17002,7 @@ class CGPIEvent : public CParameter
     inline llrp_u1_t
     getGPIEvent (void)
     {
-        return m_GPIEvent;
+        return  m_GPIEvent;
     }
 
     /** @brief Set accessor functions for the LLRP GPIEvent field */
@@ -17544,7 +17010,7 @@ class CGPIEvent : public CParameter
     setGPIEvent (
       llrp_u1_t value)
     {
-        m_GPIEvent = value;
+         m_GPIEvent = value;
     }
 
 
@@ -17639,7 +17105,7 @@ class CROSpecEvent : public CParameter
     inline EROSpecEventType
     getEventType (void)
     {
-        return m_eEventType;
+        return  m_eEventType;
     }
 
     /** @brief Set accessor functions for the LLRP EventType field */
@@ -17647,7 +17113,7 @@ class CROSpecEvent : public CParameter
     setEventType (
       EROSpecEventType value)
     {
-        m_eEventType = value;
+         m_eEventType = value;
     }
 
 
@@ -17665,7 +17131,7 @@ class CROSpecEvent : public CParameter
     inline llrp_u32_t
     getROSpecID (void)
     {
-        return m_ROSpecID;
+        return  m_ROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecID field */
@@ -17673,7 +17139,7 @@ class CROSpecEvent : public CParameter
     setROSpecID (
       llrp_u32_t value)
     {
-        m_ROSpecID = value;
+         m_ROSpecID = value;
     }
 
 
@@ -17691,7 +17157,7 @@ class CROSpecEvent : public CParameter
     inline llrp_u32_t
     getPreemptingROSpecID (void)
     {
-        return m_PreemptingROSpecID;
+        return  m_PreemptingROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP PreemptingROSpecID field */
@@ -17699,7 +17165,7 @@ class CROSpecEvent : public CParameter
     setPreemptingROSpecID (
       llrp_u32_t value)
     {
-        m_PreemptingROSpecID = value;
+         m_PreemptingROSpecID = value;
     }
 
 
@@ -17796,7 +17262,7 @@ class CReportBufferLevelWarningEvent : public CParameter
     inline llrp_u8_t
     getReportBufferPercentageFull (void)
     {
-        return m_ReportBufferPercentageFull;
+        return  m_ReportBufferPercentageFull;
     }
 
     /** @brief Set accessor functions for the LLRP ReportBufferPercentageFull field */
@@ -17804,7 +17270,7 @@ class CReportBufferLevelWarningEvent : public CParameter
     setReportBufferPercentageFull (
       llrp_u8_t value)
     {
-        m_ReportBufferPercentageFull = value;
+         m_ReportBufferPercentageFull = value;
     }
 
 
@@ -17977,7 +17443,7 @@ class CReaderExceptionEvent : public CParameter
     inline llrp_utf8v_t
     getMessage (void)
     {
-        return m_Message;
+        return  m_Message;
     }
 
     /** @brief Set accessor functions for the LLRP Message field */
@@ -17985,7 +17451,7 @@ class CReaderExceptionEvent : public CParameter
     setMessage (
       llrp_utf8v_t value)
     {
-        m_Message = value;
+         m_Message = value;
     }
 
 
@@ -18215,7 +17681,7 @@ class COpSpecID : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -18223,7 +17689,7 @@ class COpSpecID : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -18315,7 +17781,7 @@ class CRFSurveyEvent : public CParameter
     inline ERFSurveyEventType
     getEventType (void)
     {
-        return m_eEventType;
+        return  m_eEventType;
     }
 
     /** @brief Set accessor functions for the LLRP EventType field */
@@ -18323,7 +17789,7 @@ class CRFSurveyEvent : public CParameter
     setEventType (
       ERFSurveyEventType value)
     {
-        m_eEventType = value;
+         m_eEventType = value;
     }
 
 
@@ -18341,7 +17807,7 @@ class CRFSurveyEvent : public CParameter
     inline llrp_u32_t
     getROSpecID (void)
     {
-        return m_ROSpecID;
+        return  m_ROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecID field */
@@ -18349,7 +17815,7 @@ class CRFSurveyEvent : public CParameter
     setROSpecID (
       llrp_u32_t value)
     {
-        m_ROSpecID = value;
+         m_ROSpecID = value;
     }
 
 
@@ -18367,7 +17833,7 @@ class CRFSurveyEvent : public CParameter
     inline llrp_u16_t
     getSpecIndex (void)
     {
-        return m_SpecIndex;
+        return  m_SpecIndex;
     }
 
     /** @brief Set accessor functions for the LLRP SpecIndex field */
@@ -18375,7 +17841,7 @@ class CRFSurveyEvent : public CParameter
     setSpecIndex (
       llrp_u16_t value)
     {
-        m_SpecIndex = value;
+         m_SpecIndex = value;
     }
 
 
@@ -18470,7 +17936,7 @@ class CAISpecEvent : public CParameter
     inline EAISpecEventType
     getEventType (void)
     {
-        return m_eEventType;
+        return  m_eEventType;
     }
 
     /** @brief Set accessor functions for the LLRP EventType field */
@@ -18478,7 +17944,7 @@ class CAISpecEvent : public CParameter
     setEventType (
       EAISpecEventType value)
     {
-        m_eEventType = value;
+         m_eEventType = value;
     }
 
 
@@ -18496,7 +17962,7 @@ class CAISpecEvent : public CParameter
     inline llrp_u32_t
     getROSpecID (void)
     {
-        return m_ROSpecID;
+        return  m_ROSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP ROSpecID field */
@@ -18504,7 +17970,7 @@ class CAISpecEvent : public CParameter
     setROSpecID (
       llrp_u32_t value)
     {
-        m_ROSpecID = value;
+         m_ROSpecID = value;
     }
 
 
@@ -18522,7 +17988,7 @@ class CAISpecEvent : public CParameter
     inline llrp_u16_t
     getSpecIndex (void)
     {
-        return m_SpecIndex;
+        return  m_SpecIndex;
     }
 
     /** @brief Set accessor functions for the LLRP SpecIndex field */
@@ -18530,7 +17996,7 @@ class CAISpecEvent : public CParameter
     setSpecIndex (
       llrp_u16_t value)
     {
-        m_SpecIndex = value;
+         m_SpecIndex = value;
     }
 
 
@@ -18638,7 +18104,7 @@ class CAntennaEvent : public CParameter
     inline EAntennaEventType
     getEventType (void)
     {
-        return m_eEventType;
+        return  m_eEventType;
     }
 
     /** @brief Set accessor functions for the LLRP EventType field */
@@ -18646,7 +18112,7 @@ class CAntennaEvent : public CParameter
     setEventType (
       EAntennaEventType value)
     {
-        m_eEventType = value;
+         m_eEventType = value;
     }
 
 
@@ -18664,7 +18130,7 @@ class CAntennaEvent : public CParameter
     inline llrp_u16_t
     getAntennaID (void)
     {
-        return m_AntennaID;
+        return  m_AntennaID;
     }
 
     /** @brief Set accessor functions for the LLRP AntennaID field */
@@ -18672,7 +18138,7 @@ class CAntennaEvent : public CParameter
     setAntennaID (
       llrp_u16_t value)
     {
-        m_AntennaID = value;
+         m_AntennaID = value;
     }
 
 
@@ -18762,7 +18228,7 @@ class CConnectionAttemptEvent : public CParameter
     inline EConnectionAttemptStatusType
     getStatus (void)
     {
-        return m_eStatus;
+        return  m_eStatus;
     }
 
     /** @brief Set accessor functions for the LLRP Status field */
@@ -18770,7 +18236,7 @@ class CConnectionAttemptEvent : public CParameter
     setStatus (
       EConnectionAttemptStatusType value)
     {
-        m_eStatus = value;
+         m_eStatus = value;
     }
 
 
@@ -18938,7 +18404,7 @@ class CLLRPStatus : public CParameter
     inline EStatusCode
     getStatusCode (void)
     {
-        return m_eStatusCode;
+        return  m_eStatusCode;
     }
 
     /** @brief Set accessor functions for the LLRP StatusCode field */
@@ -18946,7 +18412,7 @@ class CLLRPStatus : public CParameter
     setStatusCode (
       EStatusCode value)
     {
-        m_eStatusCode = value;
+         m_eStatusCode = value;
     }
 
 
@@ -18964,7 +18430,7 @@ class CLLRPStatus : public CParameter
     inline llrp_utf8v_t
     getErrorDescription (void)
     {
-        return m_ErrorDescription;
+        return  m_ErrorDescription;
     }
 
     /** @brief Set accessor functions for the LLRP ErrorDescription field */
@@ -18972,7 +18438,7 @@ class CLLRPStatus : public CParameter
     setErrorDescription (
       llrp_utf8v_t value)
     {
-        m_ErrorDescription = value;
+         m_ErrorDescription = value;
     }
 
 
@@ -19097,7 +18563,7 @@ class CFieldError : public CParameter
     inline llrp_u16_t
     getFieldNum (void)
     {
-        return m_FieldNum;
+        return  m_FieldNum;
     }
 
     /** @brief Set accessor functions for the LLRP FieldNum field */
@@ -19105,7 +18571,7 @@ class CFieldError : public CParameter
     setFieldNum (
       llrp_u16_t value)
     {
-        m_FieldNum = value;
+         m_FieldNum = value;
     }
 
 
@@ -19123,7 +18589,7 @@ class CFieldError : public CParameter
     inline EStatusCode
     getErrorCode (void)
     {
-        return m_eErrorCode;
+        return  m_eErrorCode;
     }
 
     /** @brief Set accessor functions for the LLRP ErrorCode field */
@@ -19131,7 +18597,7 @@ class CFieldError : public CParameter
     setErrorCode (
       EStatusCode value)
     {
-        m_eErrorCode = value;
+         m_eErrorCode = value;
     }
 
 
@@ -19224,7 +18690,7 @@ class CParameterError : public CParameter
     inline llrp_u16_t
     getParameterType (void)
     {
-        return m_ParameterType;
+        return  m_ParameterType;
     }
 
     /** @brief Set accessor functions for the LLRP ParameterType field */
@@ -19232,7 +18698,7 @@ class CParameterError : public CParameter
     setParameterType (
       llrp_u16_t value)
     {
-        m_ParameterType = value;
+         m_ParameterType = value;
     }
 
 
@@ -19250,7 +18716,7 @@ class CParameterError : public CParameter
     inline EStatusCode
     getErrorCode (void)
     {
-        return m_eErrorCode;
+        return  m_eErrorCode;
     }
 
     /** @brief Set accessor functions for the LLRP ErrorCode field */
@@ -19258,7 +18724,7 @@ class CParameterError : public CParameter
     setErrorCode (
       EStatusCode value)
     {
-        m_eErrorCode = value;
+         m_eErrorCode = value;
     }
 
 
@@ -19391,7 +18857,7 @@ class CC1G2LLRPCapabilities : public CParameter
     inline llrp_u1_t
     getCanSupportBlockErase (void)
     {
-        return m_CanSupportBlockErase;
+        return  m_CanSupportBlockErase;
     }
 
     /** @brief Set accessor functions for the LLRP CanSupportBlockErase field */
@@ -19399,7 +18865,7 @@ class CC1G2LLRPCapabilities : public CParameter
     setCanSupportBlockErase (
       llrp_u1_t value)
     {
-        m_CanSupportBlockErase = value;
+         m_CanSupportBlockErase = value;
     }
 
 
@@ -19417,7 +18883,7 @@ class CC1G2LLRPCapabilities : public CParameter
     inline llrp_u1_t
     getCanSupportBlockWrite (void)
     {
-        return m_CanSupportBlockWrite;
+        return  m_CanSupportBlockWrite;
     }
 
     /** @brief Set accessor functions for the LLRP CanSupportBlockWrite field */
@@ -19425,7 +18891,7 @@ class CC1G2LLRPCapabilities : public CParameter
     setCanSupportBlockWrite (
       llrp_u1_t value)
     {
-        m_CanSupportBlockWrite = value;
+         m_CanSupportBlockWrite = value;
     }
 
 
@@ -19443,7 +18909,7 @@ class CC1G2LLRPCapabilities : public CParameter
     inline llrp_u16_t
     getMaxNumSelectFiltersPerQuery (void)
     {
-        return m_MaxNumSelectFiltersPerQuery;
+        return  m_MaxNumSelectFiltersPerQuery;
     }
 
     /** @brief Set accessor functions for the LLRP MaxNumSelectFiltersPerQuery field */
@@ -19451,7 +18917,7 @@ class CC1G2LLRPCapabilities : public CParameter
     setMaxNumSelectFiltersPerQuery (
       llrp_u16_t value)
     {
-        m_MaxNumSelectFiltersPerQuery = value;
+         m_MaxNumSelectFiltersPerQuery = value;
     }
 
 
@@ -19662,7 +19128,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     inline llrp_u32_t
     getModeIdentifier (void)
     {
-        return m_ModeIdentifier;
+        return  m_ModeIdentifier;
     }
 
     /** @brief Set accessor functions for the LLRP ModeIdentifier field */
@@ -19670,7 +19136,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     setModeIdentifier (
       llrp_u32_t value)
     {
-        m_ModeIdentifier = value;
+         m_ModeIdentifier = value;
     }
 
 
@@ -19688,7 +19154,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     inline EC1G2DRValue
     getDRValue (void)
     {
-        return m_eDRValue;
+        return  m_eDRValue;
     }
 
     /** @brief Set accessor functions for the LLRP DRValue field */
@@ -19696,7 +19162,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     setDRValue (
       EC1G2DRValue value)
     {
-        m_eDRValue = value;
+         m_eDRValue = value;
     }
 
 
@@ -19714,7 +19180,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     inline llrp_u1_t
     getEPCHAGTCConformance (void)
     {
-        return m_EPCHAGTCConformance;
+        return  m_EPCHAGTCConformance;
     }
 
     /** @brief Set accessor functions for the LLRP EPCHAGTCConformance field */
@@ -19722,7 +19188,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     setEPCHAGTCConformance (
       llrp_u1_t value)
     {
-        m_EPCHAGTCConformance = value;
+         m_EPCHAGTCConformance = value;
     }
 
 
@@ -19740,7 +19206,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     inline EC1G2MValue
     getMValue (void)
     {
-        return m_eMValue;
+        return  m_eMValue;
     }
 
     /** @brief Set accessor functions for the LLRP MValue field */
@@ -19748,7 +19214,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     setMValue (
       EC1G2MValue value)
     {
-        m_eMValue = value;
+         m_eMValue = value;
     }
 
 
@@ -19766,7 +19232,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     inline EC1G2ForwardLinkModulation
     getForwardLinkModulation (void)
     {
-        return m_eForwardLinkModulation;
+        return  m_eForwardLinkModulation;
     }
 
     /** @brief Set accessor functions for the LLRP ForwardLinkModulation field */
@@ -19774,7 +19240,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     setForwardLinkModulation (
       EC1G2ForwardLinkModulation value)
     {
-        m_eForwardLinkModulation = value;
+         m_eForwardLinkModulation = value;
     }
 
 
@@ -19792,7 +19258,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     inline EC1G2SpectralMaskIndicator
     getSpectralMaskIndicator (void)
     {
-        return m_eSpectralMaskIndicator;
+        return  m_eSpectralMaskIndicator;
     }
 
     /** @brief Set accessor functions for the LLRP SpectralMaskIndicator field */
@@ -19800,7 +19266,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     setSpectralMaskIndicator (
       EC1G2SpectralMaskIndicator value)
     {
-        m_eSpectralMaskIndicator = value;
+         m_eSpectralMaskIndicator = value;
     }
 
 
@@ -19818,7 +19284,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     inline llrp_u32_t
     getBDRValue (void)
     {
-        return m_BDRValue;
+        return  m_BDRValue;
     }
 
     /** @brief Set accessor functions for the LLRP BDRValue field */
@@ -19826,7 +19292,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     setBDRValue (
       llrp_u32_t value)
     {
-        m_BDRValue = value;
+         m_BDRValue = value;
     }
 
 
@@ -19844,7 +19310,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     inline llrp_u32_t
     getPIEValue (void)
     {
-        return m_PIEValue;
+        return  m_PIEValue;
     }
 
     /** @brief Set accessor functions for the LLRP PIEValue field */
@@ -19852,7 +19318,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     setPIEValue (
       llrp_u32_t value)
     {
-        m_PIEValue = value;
+         m_PIEValue = value;
     }
 
 
@@ -19870,7 +19336,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     inline llrp_u32_t
     getMinTariValue (void)
     {
-        return m_MinTariValue;
+        return  m_MinTariValue;
     }
 
     /** @brief Set accessor functions for the LLRP MinTariValue field */
@@ -19878,7 +19344,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     setMinTariValue (
       llrp_u32_t value)
     {
-        m_MinTariValue = value;
+         m_MinTariValue = value;
     }
 
 
@@ -19896,7 +19362,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     inline llrp_u32_t
     getMaxTariValue (void)
     {
-        return m_MaxTariValue;
+        return  m_MaxTariValue;
     }
 
     /** @brief Set accessor functions for the LLRP MaxTariValue field */
@@ -19904,7 +19370,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     setMaxTariValue (
       llrp_u32_t value)
     {
-        m_MaxTariValue = value;
+         m_MaxTariValue = value;
     }
 
 
@@ -19922,7 +19388,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     inline llrp_u32_t
     getStepTariValue (void)
     {
-        return m_StepTariValue;
+        return  m_StepTariValue;
     }
 
     /** @brief Set accessor functions for the LLRP StepTariValue field */
@@ -19930,7 +19396,7 @@ class CC1G2UHFRFModeTableEntry : public CParameter
     setStepTariValue (
       llrp_u32_t value)
     {
-        m_StepTariValue = value;
+         m_StepTariValue = value;
     }
 
 
@@ -20030,7 +19496,7 @@ class CC1G2InventoryCommand : public CParameter
     inline llrp_u1_t
     getTagInventoryStateAware (void)
     {
-        return m_TagInventoryStateAware;
+        return  m_TagInventoryStateAware;
     }
 
     /** @brief Set accessor functions for the LLRP TagInventoryStateAware field */
@@ -20038,7 +19504,7 @@ class CC1G2InventoryCommand : public CParameter
     setTagInventoryStateAware (
       llrp_u1_t value)
     {
-        m_TagInventoryStateAware = value;
+         m_TagInventoryStateAware = value;
     }
 
 
@@ -20266,7 +19732,7 @@ class CC1G2Filter : public CParameter
     inline EC1G2TruncateAction
     getT (void)
     {
-        return m_eT;
+        return  m_eT;
     }
 
     /** @brief Set accessor functions for the LLRP T field */
@@ -20274,7 +19740,7 @@ class CC1G2Filter : public CParameter
     setT (
       EC1G2TruncateAction value)
     {
-        m_eT = value;
+         m_eT = value;
     }
 
 
@@ -20411,7 +19877,7 @@ class CC1G2TagInventoryMask : public CParameter
     inline llrp_u2_t
     getMB (void)
     {
-        return m_MB;
+        return  m_MB;
     }
 
     /** @brief Set accessor functions for the LLRP MB field */
@@ -20419,7 +19885,7 @@ class CC1G2TagInventoryMask : public CParameter
     setMB (
       llrp_u2_t value)
     {
-        m_MB = value;
+         m_MB = value;
     }
 
 
@@ -20437,7 +19903,7 @@ class CC1G2TagInventoryMask : public CParameter
     inline llrp_u16_t
     getPointer (void)
     {
-        return m_Pointer;
+        return  m_Pointer;
     }
 
     /** @brief Set accessor functions for the LLRP Pointer field */
@@ -20445,7 +19911,7 @@ class CC1G2TagInventoryMask : public CParameter
     setPointer (
       llrp_u16_t value)
     {
-        m_Pointer = value;
+         m_Pointer = value;
     }
 
 
@@ -20463,7 +19929,7 @@ class CC1G2TagInventoryMask : public CParameter
     inline llrp_u1v_t
     getTagMask (void)
     {
-        return m_TagMask;
+        return  m_TagMask;
     }
 
     /** @brief Set accessor functions for the LLRP TagMask field */
@@ -20471,7 +19937,7 @@ class CC1G2TagInventoryMask : public CParameter
     setTagMask (
       llrp_u1v_t value)
     {
-        m_TagMask = value;
+         m_TagMask = value;
     }
 
 
@@ -20581,7 +20047,7 @@ class CC1G2TagInventoryStateAwareFilterAction : public CParameter
     inline EC1G2StateAwareTarget
     getTarget (void)
     {
-        return m_eTarget;
+        return  m_eTarget;
     }
 
     /** @brief Set accessor functions for the LLRP Target field */
@@ -20589,7 +20055,7 @@ class CC1G2TagInventoryStateAwareFilterAction : public CParameter
     setTarget (
       EC1G2StateAwareTarget value)
     {
-        m_eTarget = value;
+         m_eTarget = value;
     }
 
 
@@ -20607,7 +20073,7 @@ class CC1G2TagInventoryStateAwareFilterAction : public CParameter
     inline EC1G2StateAwareAction
     getAction (void)
     {
-        return m_eAction;
+        return  m_eAction;
     }
 
     /** @brief Set accessor functions for the LLRP Action field */
@@ -20615,7 +20081,7 @@ class CC1G2TagInventoryStateAwareFilterAction : public CParameter
     setAction (
       EC1G2StateAwareAction value)
     {
-        m_eAction = value;
+         m_eAction = value;
     }
 
 
@@ -20717,7 +20183,7 @@ class CC1G2TagInventoryStateUnawareFilterAction : public CParameter
     inline EC1G2StateUnawareAction
     getAction (void)
     {
-        return m_eAction;
+        return  m_eAction;
     }
 
     /** @brief Set accessor functions for the LLRP Action field */
@@ -20725,7 +20191,7 @@ class CC1G2TagInventoryStateUnawareFilterAction : public CParameter
     setAction (
       EC1G2StateUnawareAction value)
     {
-        m_eAction = value;
+         m_eAction = value;
     }
 
 
@@ -20819,7 +20285,7 @@ class CC1G2RFControl : public CParameter
     inline llrp_u16_t
     getModeIndex (void)
     {
-        return m_ModeIndex;
+        return  m_ModeIndex;
     }
 
     /** @brief Set accessor functions for the LLRP ModeIndex field */
@@ -20827,7 +20293,7 @@ class CC1G2RFControl : public CParameter
     setModeIndex (
       llrp_u16_t value)
     {
-        m_ModeIndex = value;
+         m_ModeIndex = value;
     }
 
 
@@ -20845,7 +20311,7 @@ class CC1G2RFControl : public CParameter
     inline llrp_u16_t
     getTari (void)
     {
-        return m_Tari;
+        return  m_Tari;
     }
 
     /** @brief Set accessor functions for the LLRP Tari field */
@@ -20853,7 +20319,7 @@ class CC1G2RFControl : public CParameter
     setTari (
       llrp_u16_t value)
     {
-        m_Tari = value;
+         m_Tari = value;
     }
 
 
@@ -20997,7 +20463,7 @@ class CC1G2SingulationControl : public CParameter
     inline llrp_u2_t
     getSession (void)
     {
-        return m_Session;
+        return  m_Session;
     }
 
     /** @brief Set accessor functions for the LLRP Session field */
@@ -21005,7 +20471,7 @@ class CC1G2SingulationControl : public CParameter
     setSession (
       llrp_u2_t value)
     {
-        m_Session = value;
+         m_Session = value;
     }
 
 
@@ -21023,7 +20489,7 @@ class CC1G2SingulationControl : public CParameter
     inline llrp_u16_t
     getTagPopulation (void)
     {
-        return m_TagPopulation;
+        return  m_TagPopulation;
     }
 
     /** @brief Set accessor functions for the LLRP TagPopulation field */
@@ -21031,7 +20497,7 @@ class CC1G2SingulationControl : public CParameter
     setTagPopulation (
       llrp_u16_t value)
     {
-        m_TagPopulation = value;
+         m_TagPopulation = value;
     }
 
 
@@ -21049,7 +20515,7 @@ class CC1G2SingulationControl : public CParameter
     inline llrp_u32_t
     getTagTransitTime (void)
     {
-        return m_TagTransitTime;
+        return  m_TagTransitTime;
     }
 
     /** @brief Set accessor functions for the LLRP TagTransitTime field */
@@ -21057,7 +20523,7 @@ class CC1G2SingulationControl : public CParameter
     setTagTransitTime (
       llrp_u32_t value)
     {
-        m_TagTransitTime = value;
+         m_TagTransitTime = value;
     }
 
 
@@ -21166,7 +20632,7 @@ class CC1G2TagInventoryStateAwareSingulationAction : public CParameter
     inline EC1G2TagInventoryStateAwareI
     getI (void)
     {
-        return m_eI;
+        return  m_eI;
     }
 
     /** @brief Set accessor functions for the LLRP I field */
@@ -21174,7 +20640,7 @@ class CC1G2TagInventoryStateAwareSingulationAction : public CParameter
     setI (
       EC1G2TagInventoryStateAwareI value)
     {
-        m_eI = value;
+         m_eI = value;
     }
 
 
@@ -21192,7 +20658,7 @@ class CC1G2TagInventoryStateAwareSingulationAction : public CParameter
     inline EC1G2TagInventoryStateAwareS
     getS (void)
     {
-        return m_eS;
+        return  m_eS;
     }
 
     /** @brief Set accessor functions for the LLRP S field */
@@ -21200,7 +20666,7 @@ class CC1G2TagInventoryStateAwareSingulationAction : public CParameter
     setS (
       EC1G2TagInventoryStateAwareS value)
     {
-        m_eS = value;
+         m_eS = value;
     }
 
 
@@ -21411,7 +20877,7 @@ class CC1G2TargetTag : public CParameter
     inline llrp_u2_t
     getMB (void)
     {
-        return m_MB;
+        return  m_MB;
     }
 
     /** @brief Set accessor functions for the LLRP MB field */
@@ -21419,7 +20885,7 @@ class CC1G2TargetTag : public CParameter
     setMB (
       llrp_u2_t value)
     {
-        m_MB = value;
+         m_MB = value;
     }
 
 
@@ -21437,7 +20903,7 @@ class CC1G2TargetTag : public CParameter
     inline llrp_u1_t
     getMatch (void)
     {
-        return m_Match;
+        return  m_Match;
     }
 
     /** @brief Set accessor functions for the LLRP Match field */
@@ -21445,7 +20911,7 @@ class CC1G2TargetTag : public CParameter
     setMatch (
       llrp_u1_t value)
     {
-        m_Match = value;
+         m_Match = value;
     }
 
 
@@ -21463,7 +20929,7 @@ class CC1G2TargetTag : public CParameter
     inline llrp_u16_t
     getPointer (void)
     {
-        return m_Pointer;
+        return  m_Pointer;
     }
 
     /** @brief Set accessor functions for the LLRP Pointer field */
@@ -21471,7 +20937,7 @@ class CC1G2TargetTag : public CParameter
     setPointer (
       llrp_u16_t value)
     {
-        m_Pointer = value;
+         m_Pointer = value;
     }
 
 
@@ -21489,7 +20955,7 @@ class CC1G2TargetTag : public CParameter
     inline llrp_u1v_t
     getTagMask (void)
     {
-        return m_TagMask;
+        return  m_TagMask;
     }
 
     /** @brief Set accessor functions for the LLRP TagMask field */
@@ -21497,7 +20963,7 @@ class CC1G2TargetTag : public CParameter
     setTagMask (
       llrp_u1v_t value)
     {
-        m_TagMask = value;
+         m_TagMask = value;
     }
 
 
@@ -21515,7 +20981,7 @@ class CC1G2TargetTag : public CParameter
     inline llrp_u1v_t
     getTagData (void)
     {
-        return m_TagData;
+        return  m_TagData;
     }
 
     /** @brief Set accessor functions for the LLRP TagData field */
@@ -21523,7 +20989,7 @@ class CC1G2TargetTag : public CParameter
     setTagData (
       llrp_u1v_t value)
     {
-        m_TagData = value;
+         m_TagData = value;
     }
 
 
@@ -21621,7 +21087,7 @@ class CC1G2Read : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -21629,7 +21095,7 @@ class CC1G2Read : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -21647,7 +21113,7 @@ class CC1G2Read : public CParameter
     inline llrp_u32_t
     getAccessPassword (void)
     {
-        return m_AccessPassword;
+        return  m_AccessPassword;
     }
 
     /** @brief Set accessor functions for the LLRP AccessPassword field */
@@ -21655,7 +21121,7 @@ class CC1G2Read : public CParameter
     setAccessPassword (
       llrp_u32_t value)
     {
-        m_AccessPassword = value;
+         m_AccessPassword = value;
     }
 
 
@@ -21673,7 +21139,7 @@ class CC1G2Read : public CParameter
     inline llrp_u2_t
     getMB (void)
     {
-        return m_MB;
+        return  m_MB;
     }
 
     /** @brief Set accessor functions for the LLRP MB field */
@@ -21681,7 +21147,7 @@ class CC1G2Read : public CParameter
     setMB (
       llrp_u2_t value)
     {
-        m_MB = value;
+         m_MB = value;
     }
 
 
@@ -21699,7 +21165,7 @@ class CC1G2Read : public CParameter
     inline llrp_u16_t
     getWordPointer (void)
     {
-        return m_WordPointer;
+        return  m_WordPointer;
     }
 
     /** @brief Set accessor functions for the LLRP WordPointer field */
@@ -21707,7 +21173,7 @@ class CC1G2Read : public CParameter
     setWordPointer (
       llrp_u16_t value)
     {
-        m_WordPointer = value;
+         m_WordPointer = value;
     }
 
 
@@ -21725,7 +21191,7 @@ class CC1G2Read : public CParameter
     inline llrp_u16_t
     getWordCount (void)
     {
-        return m_WordCount;
+        return  m_WordCount;
     }
 
     /** @brief Set accessor functions for the LLRP WordCount field */
@@ -21733,7 +21199,7 @@ class CC1G2Read : public CParameter
     setWordCount (
       llrp_u16_t value)
     {
-        m_WordCount = value;
+         m_WordCount = value;
     }
 
 
@@ -21828,7 +21294,7 @@ class CC1G2Write : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -21836,7 +21302,7 @@ class CC1G2Write : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -21854,7 +21320,7 @@ class CC1G2Write : public CParameter
     inline llrp_u32_t
     getAccessPassword (void)
     {
-        return m_AccessPassword;
+        return  m_AccessPassword;
     }
 
     /** @brief Set accessor functions for the LLRP AccessPassword field */
@@ -21862,7 +21328,7 @@ class CC1G2Write : public CParameter
     setAccessPassword (
       llrp_u32_t value)
     {
-        m_AccessPassword = value;
+         m_AccessPassword = value;
     }
 
 
@@ -21880,7 +21346,7 @@ class CC1G2Write : public CParameter
     inline llrp_u2_t
     getMB (void)
     {
-        return m_MB;
+        return  m_MB;
     }
 
     /** @brief Set accessor functions for the LLRP MB field */
@@ -21888,7 +21354,7 @@ class CC1G2Write : public CParameter
     setMB (
       llrp_u2_t value)
     {
-        m_MB = value;
+         m_MB = value;
     }
 
 
@@ -21906,7 +21372,7 @@ class CC1G2Write : public CParameter
     inline llrp_u16_t
     getWordPointer (void)
     {
-        return m_WordPointer;
+        return  m_WordPointer;
     }
 
     /** @brief Set accessor functions for the LLRP WordPointer field */
@@ -21914,7 +21380,7 @@ class CC1G2Write : public CParameter
     setWordPointer (
       llrp_u16_t value)
     {
-        m_WordPointer = value;
+         m_WordPointer = value;
     }
 
 
@@ -21932,7 +21398,7 @@ class CC1G2Write : public CParameter
     inline llrp_u16v_t
     getWriteData (void)
     {
-        return m_WriteData;
+        return  m_WriteData;
     }
 
     /** @brief Set accessor functions for the LLRP WriteData field */
@@ -21940,7 +21406,7 @@ class CC1G2Write : public CParameter
     setWriteData (
       llrp_u16v_t value)
     {
-        m_WriteData = value;
+         m_WriteData = value;
     }
 
 
@@ -22031,7 +21497,7 @@ class CC1G2Kill : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -22039,7 +21505,7 @@ class CC1G2Kill : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -22057,7 +21523,7 @@ class CC1G2Kill : public CParameter
     inline llrp_u32_t
     getKillPassword (void)
     {
-        return m_KillPassword;
+        return  m_KillPassword;
     }
 
     /** @brief Set accessor functions for the LLRP KillPassword field */
@@ -22065,7 +21531,7 @@ class CC1G2Kill : public CParameter
     setKillPassword (
       llrp_u32_t value)
     {
-        m_KillPassword = value;
+         m_KillPassword = value;
     }
 
 
@@ -22160,7 +21626,7 @@ class CC1G2Lock : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -22168,7 +21634,7 @@ class CC1G2Lock : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -22186,7 +21652,7 @@ class CC1G2Lock : public CParameter
     inline llrp_u32_t
     getAccessPassword (void)
     {
-        return m_AccessPassword;
+        return  m_AccessPassword;
     }
 
     /** @brief Set accessor functions for the LLRP AccessPassword field */
@@ -22194,7 +21660,7 @@ class CC1G2Lock : public CParameter
     setAccessPassword (
       llrp_u32_t value)
     {
-        m_AccessPassword = value;
+         m_AccessPassword = value;
     }
 
 
@@ -22323,7 +21789,7 @@ class CC1G2LockPayload : public CParameter
     inline EC1G2LockPrivilege
     getPrivilege (void)
     {
-        return m_ePrivilege;
+        return  m_ePrivilege;
     }
 
     /** @brief Set accessor functions for the LLRP Privilege field */
@@ -22331,7 +21797,7 @@ class CC1G2LockPayload : public CParameter
     setPrivilege (
       EC1G2LockPrivilege value)
     {
-        m_ePrivilege = value;
+         m_ePrivilege = value;
     }
 
 
@@ -22349,7 +21815,7 @@ class CC1G2LockPayload : public CParameter
     inline EC1G2LockDataField
     getDataField (void)
     {
-        return m_eDataField;
+        return  m_eDataField;
     }
 
     /** @brief Set accessor functions for the LLRP DataField field */
@@ -22357,7 +21823,7 @@ class CC1G2LockPayload : public CParameter
     setDataField (
       EC1G2LockDataField value)
     {
-        m_eDataField = value;
+         m_eDataField = value;
     }
 
 
@@ -22459,7 +21925,7 @@ class CC1G2BlockErase : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -22467,7 +21933,7 @@ class CC1G2BlockErase : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -22485,7 +21951,7 @@ class CC1G2BlockErase : public CParameter
     inline llrp_u32_t
     getAccessPassword (void)
     {
-        return m_AccessPassword;
+        return  m_AccessPassword;
     }
 
     /** @brief Set accessor functions for the LLRP AccessPassword field */
@@ -22493,7 +21959,7 @@ class CC1G2BlockErase : public CParameter
     setAccessPassword (
       llrp_u32_t value)
     {
-        m_AccessPassword = value;
+         m_AccessPassword = value;
     }
 
 
@@ -22511,7 +21977,7 @@ class CC1G2BlockErase : public CParameter
     inline llrp_u2_t
     getMB (void)
     {
-        return m_MB;
+        return  m_MB;
     }
 
     /** @brief Set accessor functions for the LLRP MB field */
@@ -22519,7 +21985,7 @@ class CC1G2BlockErase : public CParameter
     setMB (
       llrp_u2_t value)
     {
-        m_MB = value;
+         m_MB = value;
     }
 
 
@@ -22537,7 +22003,7 @@ class CC1G2BlockErase : public CParameter
     inline llrp_u16_t
     getWordPointer (void)
     {
-        return m_WordPointer;
+        return  m_WordPointer;
     }
 
     /** @brief Set accessor functions for the LLRP WordPointer field */
@@ -22545,7 +22011,7 @@ class CC1G2BlockErase : public CParameter
     setWordPointer (
       llrp_u16_t value)
     {
-        m_WordPointer = value;
+         m_WordPointer = value;
     }
 
 
@@ -22563,7 +22029,7 @@ class CC1G2BlockErase : public CParameter
     inline llrp_u16_t
     getWordCount (void)
     {
-        return m_WordCount;
+        return  m_WordCount;
     }
 
     /** @brief Set accessor functions for the LLRP WordCount field */
@@ -22571,7 +22037,7 @@ class CC1G2BlockErase : public CParameter
     setWordCount (
       llrp_u16_t value)
     {
-        m_WordCount = value;
+         m_WordCount = value;
     }
 
 
@@ -22673,7 +22139,7 @@ class CC1G2BlockWrite : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -22681,7 +22147,7 @@ class CC1G2BlockWrite : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -22699,7 +22165,7 @@ class CC1G2BlockWrite : public CParameter
     inline llrp_u32_t
     getAccessPassword (void)
     {
-        return m_AccessPassword;
+        return  m_AccessPassword;
     }
 
     /** @brief Set accessor functions for the LLRP AccessPassword field */
@@ -22707,7 +22173,7 @@ class CC1G2BlockWrite : public CParameter
     setAccessPassword (
       llrp_u32_t value)
     {
-        m_AccessPassword = value;
+         m_AccessPassword = value;
     }
 
 
@@ -22725,7 +22191,7 @@ class CC1G2BlockWrite : public CParameter
     inline llrp_u2_t
     getMB (void)
     {
-        return m_MB;
+        return  m_MB;
     }
 
     /** @brief Set accessor functions for the LLRP MB field */
@@ -22733,7 +22199,7 @@ class CC1G2BlockWrite : public CParameter
     setMB (
       llrp_u2_t value)
     {
-        m_MB = value;
+         m_MB = value;
     }
 
 
@@ -22751,7 +22217,7 @@ class CC1G2BlockWrite : public CParameter
     inline llrp_u16_t
     getWordPointer (void)
     {
-        return m_WordPointer;
+        return  m_WordPointer;
     }
 
     /** @brief Set accessor functions for the LLRP WordPointer field */
@@ -22759,7 +22225,7 @@ class CC1G2BlockWrite : public CParameter
     setWordPointer (
       llrp_u16_t value)
     {
-        m_WordPointer = value;
+         m_WordPointer = value;
     }
 
 
@@ -22777,7 +22243,7 @@ class CC1G2BlockWrite : public CParameter
     inline llrp_u16v_t
     getWriteData (void)
     {
-        return m_WriteData;
+        return  m_WriteData;
     }
 
     /** @brief Set accessor functions for the LLRP WriteData field */
@@ -22785,7 +22251,7 @@ class CC1G2BlockWrite : public CParameter
     setWriteData (
       llrp_u16v_t value)
     {
-        m_WriteData = value;
+         m_WriteData = value;
     }
 
 
@@ -22877,7 +22343,7 @@ class CC1G2EPCMemorySelector : public CParameter
     inline llrp_u1_t
     getEnableCRC (void)
     {
-        return m_EnableCRC;
+        return  m_EnableCRC;
     }
 
     /** @brief Set accessor functions for the LLRP EnableCRC field */
@@ -22885,7 +22351,7 @@ class CC1G2EPCMemorySelector : public CParameter
     setEnableCRC (
       llrp_u1_t value)
     {
-        m_EnableCRC = value;
+         m_EnableCRC = value;
     }
 
 
@@ -22903,7 +22369,7 @@ class CC1G2EPCMemorySelector : public CParameter
     inline llrp_u1_t
     getEnablePCBits (void)
     {
-        return m_EnablePCBits;
+        return  m_EnablePCBits;
     }
 
     /** @brief Set accessor functions for the LLRP EnablePCBits field */
@@ -22911,7 +22377,7 @@ class CC1G2EPCMemorySelector : public CParameter
     setEnablePCBits (
       llrp_u1_t value)
     {
-        m_EnablePCBits = value;
+         m_EnablePCBits = value;
     }
 
 
@@ -23001,7 +22467,7 @@ class CC1G2_PC : public CParameter
     inline llrp_u16_t
     getPC_Bits (void)
     {
-        return m_PC_Bits;
+        return  m_PC_Bits;
     }
 
     /** @brief Set accessor functions for the LLRP PC_Bits field */
@@ -23009,7 +22475,7 @@ class CC1G2_PC : public CParameter
     setPC_Bits (
       llrp_u16_t value)
     {
-        m_PC_Bits = value;
+         m_PC_Bits = value;
     }
 
 
@@ -23099,7 +22565,7 @@ class CC1G2_CRC : public CParameter
     inline llrp_u16_t
     getCRC (void)
     {
-        return m_CRC;
+        return  m_CRC;
     }
 
     /** @brief Set accessor functions for the LLRP CRC field */
@@ -23107,7 +22573,7 @@ class CC1G2_CRC : public CParameter
     setCRC (
       llrp_u16_t value)
     {
-        m_CRC = value;
+         m_CRC = value;
     }
 
 
@@ -23191,7 +22657,7 @@ class CC1G2SingulationDetails : public CParameter
     inline llrp_u16_t
     getNumCollisionSlots (void)
     {
-        return m_NumCollisionSlots;
+        return  m_NumCollisionSlots;
     }
 
     /** @brief Set accessor functions for the LLRP NumCollisionSlots field */
@@ -23199,7 +22665,7 @@ class CC1G2SingulationDetails : public CParameter
     setNumCollisionSlots (
       llrp_u16_t value)
     {
-        m_NumCollisionSlots = value;
+         m_NumCollisionSlots = value;
     }
 
 
@@ -23217,7 +22683,7 @@ class CC1G2SingulationDetails : public CParameter
     inline llrp_u16_t
     getNumEmptySlots (void)
     {
-        return m_NumEmptySlots;
+        return  m_NumEmptySlots;
     }
 
     /** @brief Set accessor functions for the LLRP NumEmptySlots field */
@@ -23225,7 +22691,7 @@ class CC1G2SingulationDetails : public CParameter
     setNumEmptySlots (
       llrp_u16_t value)
     {
-        m_NumEmptySlots = value;
+         m_NumEmptySlots = value;
     }
 
 
@@ -23317,7 +22783,7 @@ class CC1G2ReadOpSpecResult : public CParameter
     inline EC1G2ReadResultType
     getResult (void)
     {
-        return m_eResult;
+        return  m_eResult;
     }
 
     /** @brief Set accessor functions for the LLRP Result field */
@@ -23325,7 +22791,7 @@ class CC1G2ReadOpSpecResult : public CParameter
     setResult (
       EC1G2ReadResultType value)
     {
-        m_eResult = value;
+         m_eResult = value;
     }
 
 
@@ -23343,7 +22809,7 @@ class CC1G2ReadOpSpecResult : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -23351,7 +22817,7 @@ class CC1G2ReadOpSpecResult : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -23369,7 +22835,7 @@ class CC1G2ReadOpSpecResult : public CParameter
     inline llrp_u16v_t
     getReadData (void)
     {
-        return m_ReadData;
+        return  m_ReadData;
     }
 
     /** @brief Set accessor functions for the LLRP ReadData field */
@@ -23377,7 +22843,7 @@ class CC1G2ReadOpSpecResult : public CParameter
     setReadData (
       llrp_u16v_t value)
     {
-        m_ReadData = value;
+         m_ReadData = value;
     }
 
 
@@ -23474,7 +22940,7 @@ class CC1G2WriteOpSpecResult : public CParameter
     inline EC1G2WriteResultType
     getResult (void)
     {
-        return m_eResult;
+        return  m_eResult;
     }
 
     /** @brief Set accessor functions for the LLRP Result field */
@@ -23482,7 +22948,7 @@ class CC1G2WriteOpSpecResult : public CParameter
     setResult (
       EC1G2WriteResultType value)
     {
-        m_eResult = value;
+         m_eResult = value;
     }
 
 
@@ -23500,7 +22966,7 @@ class CC1G2WriteOpSpecResult : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -23508,7 +22974,7 @@ class CC1G2WriteOpSpecResult : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -23526,7 +22992,7 @@ class CC1G2WriteOpSpecResult : public CParameter
     inline llrp_u16_t
     getNumWordsWritten (void)
     {
-        return m_NumWordsWritten;
+        return  m_NumWordsWritten;
     }
 
     /** @brief Set accessor functions for the LLRP NumWordsWritten field */
@@ -23534,7 +23000,7 @@ class CC1G2WriteOpSpecResult : public CParameter
     setNumWordsWritten (
       llrp_u16_t value)
     {
-        m_NumWordsWritten = value;
+         m_NumWordsWritten = value;
     }
 
 
@@ -23623,7 +23089,7 @@ class CC1G2KillOpSpecResult : public CParameter
     inline EC1G2KillResultType
     getResult (void)
     {
-        return m_eResult;
+        return  m_eResult;
     }
 
     /** @brief Set accessor functions for the LLRP Result field */
@@ -23631,7 +23097,7 @@ class CC1G2KillOpSpecResult : public CParameter
     setResult (
       EC1G2KillResultType value)
     {
-        m_eResult = value;
+         m_eResult = value;
     }
 
 
@@ -23649,7 +23115,7 @@ class CC1G2KillOpSpecResult : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -23657,7 +23123,7 @@ class CC1G2KillOpSpecResult : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -23748,7 +23214,7 @@ class CC1G2LockOpSpecResult : public CParameter
     inline EC1G2LockResultType
     getResult (void)
     {
-        return m_eResult;
+        return  m_eResult;
     }
 
     /** @brief Set accessor functions for the LLRP Result field */
@@ -23756,7 +23222,7 @@ class CC1G2LockOpSpecResult : public CParameter
     setResult (
       EC1G2LockResultType value)
     {
-        m_eResult = value;
+         m_eResult = value;
     }
 
 
@@ -23774,7 +23240,7 @@ class CC1G2LockOpSpecResult : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -23782,7 +23248,7 @@ class CC1G2LockOpSpecResult : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -23880,7 +23346,7 @@ class CC1G2BlockEraseOpSpecResult : public CParameter
     inline EC1G2BlockEraseResultType
     getResult (void)
     {
-        return m_eResult;
+        return  m_eResult;
     }
 
     /** @brief Set accessor functions for the LLRP Result field */
@@ -23888,7 +23354,7 @@ class CC1G2BlockEraseOpSpecResult : public CParameter
     setResult (
       EC1G2BlockEraseResultType value)
     {
-        m_eResult = value;
+         m_eResult = value;
     }
 
 
@@ -23906,7 +23372,7 @@ class CC1G2BlockEraseOpSpecResult : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -23914,7 +23380,7 @@ class CC1G2BlockEraseOpSpecResult : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -24013,7 +23479,7 @@ class CC1G2BlockWriteOpSpecResult : public CParameter
     inline EC1G2BlockWriteResultType
     getResult (void)
     {
-        return m_eResult;
+        return  m_eResult;
     }
 
     /** @brief Set accessor functions for the LLRP Result field */
@@ -24021,7 +23487,7 @@ class CC1G2BlockWriteOpSpecResult : public CParameter
     setResult (
       EC1G2BlockWriteResultType value)
     {
-        m_eResult = value;
+         m_eResult = value;
     }
 
 
@@ -24039,7 +23505,7 @@ class CC1G2BlockWriteOpSpecResult : public CParameter
     inline llrp_u16_t
     getOpSpecID (void)
     {
-        return m_OpSpecID;
+        return  m_OpSpecID;
     }
 
     /** @brief Set accessor functions for the LLRP OpSpecID field */
@@ -24047,7 +23513,7 @@ class CC1G2BlockWriteOpSpecResult : public CParameter
     setOpSpecID (
       llrp_u16_t value)
     {
-        m_OpSpecID = value;
+         m_OpSpecID = value;
     }
 
 
@@ -24065,7 +23531,7 @@ class CC1G2BlockWriteOpSpecResult : public CParameter
     inline llrp_u16_t
     getNumWordsWritten (void)
     {
-        return m_NumWordsWritten;
+        return  m_NumWordsWritten;
     }
 
     /** @brief Set accessor functions for the LLRP NumWordsWritten field */
@@ -24073,7 +23539,7 @@ class CC1G2BlockWriteOpSpecResult : public CParameter
     setNumWordsWritten (
       llrp_u16_t value)
     {
-        m_NumWordsWritten = value;
+         m_NumWordsWritten = value;
     }
 
 
@@ -24157,21 +23623,6 @@ class CTimestamp
 
 };
 
-class CC1G2OpSpec
-{
-/** @name Internal Framework Functions */
-//@{
-  public:
-    static const CTypeDescriptor
-    s_typeDescriptor;
-
-    static llrp_bool_t
-    isMember (
-      CParameter *              pParameter);
-//@}
-
-};
-
 class CAirProtocolLLRPCapabilities
 {
 /** @name Internal Framework Functions */
@@ -24218,21 +23669,6 @@ class CAirProtocolInventoryCommandSettings
 };
 
 class CAirProtocolTagSpec
-{
-/** @name Internal Framework Functions */
-//@{
-  public:
-    static const CTypeDescriptor
-    s_typeDescriptor;
-
-    static llrp_bool_t
-    isMember (
-      CParameter *              pParameter);
-//@}
-
-};
-
-class CAirProtocolOpSpec
 {
 /** @name Internal Framework Functions */
 //@{

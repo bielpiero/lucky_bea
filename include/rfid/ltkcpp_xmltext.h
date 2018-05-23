@@ -1,16 +1,22 @@
 
 /*
- *****************************************************************************
- *                                                                           *
- *                 IMPINJ CONFIDENTIAL AND PROPRIETARY                       *
- *                                                                           *
- * This source code is the sole property of Impinj, Inc.  Reproduction or    *
- * utilization of this source code in whole or in part is forbidden without  *
- * the prior written consent of Impinj, Inc.                                 *
- *                                                                           *
- * (c) Copyright Impinj, Inc. 2007,2010. All rights reserved.                *
- *                                                                           *
- *****************************************************************************/
+ ***************************************************************************
+ *  Copyright 2007,2008 Impinj, Inc.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ***************************************************************************
+ */
 
 
 /**
@@ -93,36 +99,6 @@ class CXMLTextDecoder : public CDecoder
 
     CMessage *
     decodeMessage (void);
-    
-        /**
-     * This function can be used by the application to clear some spare
-     * context from the XML parser that is used and not freed during the 
-     * program.  This is NOT memory associated with a specific xml packet
-     * encode or decode.  That is, this can only be called once by the 
-     * application before exiting.  Its main purpose it to ensure that 
-     * when the program is run with valigrind or other memory checker
-     * that it does not report lost blocks....  
-     * * Here is the original comment from the underlying libxml
-     * ...
-     * This function name is somewhat misleading. It does not clean 
-     * up parser state, it cleans up memory allocated by the library 
-     * itself. It is a cleanup function for the XML library. It tries 
-     * to reclaim all related global memory allocated for the library
-     *  processing. It doesn't deallocate any document related memory.
-     *  One should call xmlCleanupParser() only when the process has 
-     * finished using the library and all XML/HTML documents built 
-     * with it. See also xmlInitParser() which has the opposite 
-     * function of preparing the library for operations. WARNING: 
-     * if your application is multithreaded or has plugin support 
-     * calling this may crash the application if another thread or
-     *  a plugin is still using libxml2. It's sometimes very hard 
-     * to guess if libxml2 is in use in the application, some libraries
-     *  or plugins may use it without notice. In case of doubt abstain 
-     * from calling this function or do it just before calling exit() 
-     * to avoid leak reports from valgrind !
-     */
-    static void 
-    cleanupParser(void);
 
 };
 
@@ -361,9 +337,9 @@ class CXMLTextEncoderStream : public CEncoderStream
 
     void
     appendFormat (
-      char *                    pFmtStr,
+      const char *                    pFmtStr,
                                 ...);
-    
+
 };
 
 class CXMLTextDecoderStream : public CDecoderStream

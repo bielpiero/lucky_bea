@@ -10,7 +10,7 @@ RNRecurrentTask::RNRecurrentTask(const RobotNode* rn, const char* name, const ch
 }
 
 RNRecurrentTask::~RNRecurrentTask(){
-    kill();
+    //kill();
 }
 
 void RNRecurrentTask::setController(RobotNode* rn){
@@ -48,18 +48,15 @@ void RNRecurrentTask::reset(){
 
 void RNRecurrentTask::kill(){
     //if(isRunning){
-        
+        lock();
+        goRequested = false;
+        running = false;
+        killed = true;
+        unlock();
         if(isThreadRunning()){
             RNUtils::printLn("Thread %s will be killed...", this->getTaskName().c_str());
-            lock();
-            goRequested = false;
-            running = false;
-            killed = true;
-            unlock();
-            cancel();
             onKilled();
         }
-        
     //}
 }
 
@@ -90,8 +87,9 @@ void* RNRecurrentTask::runThread(void* object){
         }
         RNUtils::sleep(20);
     }
-    threadFinished();
+    printf("Stopped RT\n");
     stop();
+    threadFinished();
     return NULL;
 }
 

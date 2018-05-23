@@ -1,6 +1,6 @@
 #include "RNRFIdentificationTask.h"
 
-const unsigned int RNRFIdentificationTask::RF_BUFFER_SIZE = 32768;
+const unsigned int RNRFIdentificationTask::RF_BUFFER_SIZE = 10240;
 const unsigned int RNRFIdentificationTask::RO_SPEC_ID = 1111;
 const char* RNRFIdentificationTask::DEVICE_NAME = "192.168.0.20";
 //const char* RNRFIdentificationTask::DEVICE_NAME = "speedwayr-11-94-a3.local";
@@ -68,7 +68,10 @@ void RNRFIdentificationTask::task(){
 }
 
 void RNRFIdentificationTask::onKilled(){
-	this->deviceInitialized = false;
+	if(this){
+		this->deviceInitialized = false;	
+	}
+	
 }
 
 int RNRFIdentificationTask::init(void){
@@ -76,7 +79,7 @@ int RNRFIdentificationTask::init(void){
 	if(connectTo(DEVICE_NAME) == 0){
 		if(checkConnectionStatus() == 0){
 			RNUtils::printLn("Success: Connection OK...", DEVICE_NAME);
-			if(enableImpinjExtensions() == 0){
+			if(/*enableImpinjExtensions()*/0 == 0){
 				RNUtils::printLn("Success: Enable Impinj Extensions on %s OK...", DEVICE_NAME);
 				//if(0 == 0){
 				if(resetToDefaultConfiguration() == 0){
@@ -123,7 +126,7 @@ int RNRFIdentificationTask::connectTo(const char* reader){
 		if(conn != NULL){
 			delete conn;
 		}
-		LLRP::enrollImpinjTypesIntoRegistry(typeRegistry);
+		//LLRP::enrollImpinjTypesIntoRegistry(typeRegistry);
 		conn = new LLRP::CConnection(typeRegistry, RF_BUFFER_SIZE);
 		if(conn != NULL){
 			readerDescriptor = conn->openConnectionToReader(reader);
@@ -393,14 +396,14 @@ int RNRFIdentificationTask::addROSpec(void){
         pC1G2SingulationControl->setTagPopulation(32);
 
         // Inventory search mode
-        LLRP::CImpinjInventorySearchMode *pImpIsm = new LLRP::CImpinjInventorySearchMode();
-        pImpIsm->setInventorySearchMode(LLRP::ImpinjInventorySearchType_Dual_Target);
+        //LLRP::CImpinjInventorySearchMode *pImpIsm = new LLRP::CImpinjInventorySearchMode();
+        //pImpIsm->setInventorySearchMode(LLRP::ImpinjInventorySearchType_Dual_Target);
 
         // C1G2InventoryCommand
         LLRP::CC1G2InventoryCommand* pC1G2InventoryCommand = new LLRP::CC1G2InventoryCommand();
         pC1G2InventoryCommand->setC1G2RFControl(pC1G2RFControl);
         pC1G2InventoryCommand->setC1G2SingulationControl(pC1G2SingulationControl);
-        pC1G2InventoryCommand->addCustom(pImpIsm);
+        //pC1G2InventoryCommand->addCustom(pImpIsm);
         
         // Transmitter
         LLRP::CRFTransmitter* pRFTransmitter = new LLRP::CRFTransmitter();
@@ -444,7 +447,7 @@ int RNRFIdentificationTask::addROSpec(void){
     aiSpec->addInventoryParameterSpec(inventoryParameterSpec);
    
    
-    LLRP::CImpinjTagReportContentSelector* impinjTagCnt = new LLRP::CImpinjTagReportContentSelector();
+    /*LLRP::CImpinjTagReportContentSelector* impinjTagCnt = new LLRP::CImpinjTagReportContentSelector();
     
     LLRP::CImpinjEnableRFPhaseAngle* impinjPhaseAngle = new LLRP::CImpinjEnableRFPhaseAngle();
     impinjPhaseAngle->setRFPhaseAngleMode(LLRP::ImpinjRFPhaseAngleMode_Enabled);
@@ -464,7 +467,7 @@ int RNRFIdentificationTask::addROSpec(void){
     impinjTagCnt->setImpinjEnableRFDopplerFrequency(impinjDopplerFreq);
     impinjTagCnt->setImpinjEnableSerializedTID(impinjSerializedTID);
 
-    roReportSpec->addCustom(impinjTagCnt);
+    roReportSpec->addCustom(impinjTagCnt);*/
 
     LLRP::CROSpec* rospec = new LLRP::CROSpec();
     rospec->setROSpecID(RO_SPEC_ID);
@@ -481,7 +484,7 @@ int RNRFIdentificationTask::addROSpec(void){
 	cmd = new LLRP::CADD_ROSPEC();
 	cmd->setMessageID(messageId++);
 	cmd->setROSpec(rospec);
-
+	
 	message = transact(cmd);
 
 	delete cmd;
@@ -546,11 +549,11 @@ int RNRFIdentificationTask::enableImpinjExtensions(){
 
 	cmd = new LLRP::CIMPINJ_ENABLE_EXTENSIONS();
 	cmd->setMessageID(messageId++);
-
+	
 	message = transact(cmd);
-
+	RNUtils::printLn("\nqui to ta bien");
 	delete cmd;
-
+	
 	if(message != NULL){
 		response = (LLRP::CIMPINJ_ENABLE_EXTENSIONS_RESPONSE*)message;
 		if(checkLLRPStatus(response->getLLRPStatus(), "enableImpinjExtensions") != 0){
@@ -714,7 +717,7 @@ void RNRFIdentificationTask::getOneTagData(LLRP::CTagReportData* tag, std::strin
         }
         bufferOut << ",";
         int phaseAngleValue = 0, rssiValue = 0, dopplerFrequencyValue = 0;
-        for(std::list<LLRP::CParameter *>::iterator customIt = tag->beginCustom(); customIt != tag->endCustom(); customIt++){
+        /*for(std::list<LLRP::CParameter *>::iterator customIt = tag->beginCustom(); customIt != tag->endCustom(); customIt++){
         	if((*customIt)->m_pType == &LLRP::CImpinjRFPhaseAngle::s_typeDescriptor){
         		LLRP::CImpinjRFPhaseAngle* phaseAngle = (LLRP::CImpinjRFPhaseAngle*)(*customIt);
         		phaseAngleValue = phaseAngle->getPhaseAngle();
@@ -728,7 +731,7 @@ void RNRFIdentificationTask::getOneTagData(LLRP::CTagReportData* tag, std::strin
         		dopplerFrequencyValue = dopplerFrequency->getDopplerFrequency();
         		//RNUtils::printLn("rssi: %d", rssiValue);
         	} 
-        }
+        }*/
 
         //std::fprintf(file, "%d,%f,%f,%d\n", tag->getAntennaID()->getAntennaID(), (((float)rssiValue) / 100.0), (((float)phaseAngleValue) * 2 * M_PI / 4096.0), dopplerFrequencyValue);
 
@@ -872,16 +875,20 @@ int RNRFIdentificationTask::checkConnectionStatus(void){
     if(message != NULL){
     	if(&LLRP::CREADER_EVENT_NOTIFICATION::s_typeDescriptor == message->m_pType){
     		ntf = (LLRP::CREADER_EVENT_NOTIFICATION*)message;
-    		ntfData = ntf->getReaderEventNotificationData();
-    		if(ntfData != NULL){
-    			event = ntfData->getConnectionAttemptEvent();
-    			if(event != NULL){
-    				if(LLRP::ConnectionAttemptStatusType_Success != event->getStatus()){
-    					result = RN_NONE;
-    				}
-    			} else {
-    				result == RN_NONE;
-    			}
+    		if(ntf){
+    			ntfData = ntf->getReaderEventNotificationData();
+	    		if(ntfData != NULL){
+	    			event = ntfData->getConnectionAttemptEvent();
+	    			if(event != NULL){
+	    				if(LLRP::ConnectionAttemptStatusType_Success != event->getStatus()){
+	    					result = RN_NONE;
+	    				}
+	    			} else {
+	    				result == RN_NONE;
+	    			}
+	    		} else {
+	    			result = RN_NONE;
+	    		}	
     		} else {
     			result = RN_NONE;
     		}

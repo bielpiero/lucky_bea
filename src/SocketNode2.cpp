@@ -43,7 +43,7 @@ CSocketNode::CSocketNode()
 }
 
 CSocketNode::~CSocketNode(){
-	pingTimerThreadStatus = 0;
+	//pingTimerThreadStatus = 0;
 	//pthread_cancel(pingThread);
 }
 

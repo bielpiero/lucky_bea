@@ -80,8 +80,8 @@ RobotNode::RobotNode(const char* port){
     gotoPoseAction = new RNActionGoto(this);
     robot->addAction(gotoPoseAction, 89);
     
-    sensors = new RNFactorySensorsTask(this);
-    sensors->go();
+    //sensors = new RNFactorySensorsTask(this);
+    //sensors->go();
 
     //distanceTimer = new RNDistanceTimerTask(this);
     //distanceTimer->go();
@@ -97,8 +97,10 @@ RobotNode::RobotNode(const char* port){
 }
 
 RobotNode::~RobotNode(){
-    sensors->kill();
-    delete sensors;
+    if(sensors){
+        sensors->kill();
+        delete sensors;
+    }
 
     if(distanceTimer){
         distanceTimer->kill();
@@ -170,7 +172,8 @@ void RobotNode::disconnect(){
     RNUtils::printLn("Starting disconnection process...");
     //robot->unlock();
     robot->disableMotors();
-    robot->stopRunning();
+    //robot->stopRunning();
+    //robot->waitForRunExit();
     //connector->disconnectAll();
     //finishThreads();    
 }

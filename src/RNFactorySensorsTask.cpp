@@ -10,18 +10,16 @@ RNFactorySensorsTask::~RNFactorySensorsTask(){
 }
 
 void RNFactorySensorsTask::task(){
-	getRawRobotPosition();
+	
     if(rn){
-        rn->getBatterChargeStatus();
+        //getRawRobotPosition();
+        //rn->getBatterChargeStatus();
+        //getBumpersStatus();
+        //rn->getRobotPosition();
+        //getSonarsScan();
+        //rn->onSensorsScanCompleted();
     }
-    getBumpersStatus();
-    if(rn){
-        rn->getRobotPosition();
-    }
-    getSonarsScan();
-    if(rn){
-        rn->onSensorsScanCompleted();
-    }
+    
 }
 
 void RNFactorySensorsTask::getRawRobotPosition(){

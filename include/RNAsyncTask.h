@@ -15,7 +15,7 @@ public:
 
 	virtual int create(bool joinable = true, bool lowerPriority = true);
 private:
-	RNRetFunPointerClass1<void*, RNAsyncTask, void*> func;
+	RNRetFunPointerClass1<void*, RNAsyncTask, void*>* func;
 };
 
 #endif

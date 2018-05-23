@@ -1,58 +1,58 @@
-<GestosEstaticos>
-	<Gesto name="AA" id="0" type="0">
-		<Motor cardId="0" id="0" pos="6100" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="1" pos="5844" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="2" pos="5984" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="3" pos="5844" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="4" pos="6256" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="5" pos="6028" speed="0" acceleration="0"/>
-	</Gesto>
-	<Gesto name="EH" id="1" type="0">
-		<Motor cardId="0" id="0" pos="6656" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="1" pos="5844" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="2" pos="5984" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="3" pos="5844" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="4" pos="6260" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="5" pos="6028" speed="0" acceleration="0"/>
-	</Gesto>
-	<Gesto name="IY" id="2" type="1">
-		<Motor cardId="0" id="0" pos="6656" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="1" pos="5844" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="2" pos="5984" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="3" pos="5844" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="4" pos="6260" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="5" pos="5400" speed="0" acceleration="0"/>
-	</Gesto>
-	<Gesto name="OH" id="3" type="0">
-		<Motor cardId="0" id="0" pos="6240" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="1" pos="3584" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="2" pos="5984" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="3" pos="3584" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="4" pos="6260" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="5" pos="5520" speed="0" acceleration="0"/>
-	</Gesto>
-	<Gesto name="UW" id="4" type="0">
-		<Motor cardId="0" id="0" pos="6240" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="1" pos="3584" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="2" pos="5984" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="3" pos="3584" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="4" pos="6260" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="5" pos="5284" speed="0" acceleration="0"/>
-	</Gesto>
-	<Gesto name="BPMV" id="5" type="0">
-		<Motor cardId="0" id="0" pos="7940" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="1" pos="6100" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="2" pos="6028" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="3" pos="5352" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="4" pos="6028" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="5" pos="5516" speed="0" acceleration="0"/>
-	</Gesto>
-	<Gesto name="NEUTRO" id="6" type="0">
-		<Motor cardId="0" id="0" pos="7350" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="1" pos="3584" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="2" pos="5984" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="3" pos="3584" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="4" pos="6260" speed="0" acceleration="0"/>
-		<Motor cardId="0" id="5" pos="5004" speed="0" acceleration="0"/>
-	</Gesto>
-</GestosEstaticos>
+<gestures>
+	<gesture name="AA" id="0" type="0">
+		<motor cardId="1" id="0" pos="6100" speed="0" acceleration="0"/>
+		<motor cardId="1" id="1" pos="5844" speed="0" acceleration="0"/>
+		<motor cardId="1" id="2" pos="5984" speed="0" acceleration="0"/>
+		<motor cardId="1" id="3" pos="5844" speed="0" acceleration="0"/>
+		<motor cardId="1" id="4" pos="6256" speed="0" acceleration="0"/>
+		<motor cardId="1" id="5" pos="6028" speed="0" acceleration="0"/>
+	</gesture>
+	<gesture name="EH" id="1" type="0">
+		<motor cardId="1" id="0" pos="6656" speed="0" acceleration="0"/>
+		<motor cardId="1" id="1" pos="5844" speed="0" acceleration="0"/>
+		<motor cardId="1" id="2" pos="5984" speed="0" acceleration="0"/>
+		<motor cardId="1" id="3" pos="5844" speed="0" acceleration="0"/>
+		<motor cardId="1" id="4" pos="6260" speed="0" acceleration="0"/>
+		<motor cardId="1" id="5" pos="6028" speed="0" acceleration="0"/>
+	</gesture>
+	<gesture name="IY" id="2" type="1">
+		<motor cardId="1" id="0" pos="6656" speed="0" acceleration="0"/>
+		<motor cardId="1" id="1" pos="5844" speed="0" acceleration="0"/>
+		<motor cardId="1" id="2" pos="5984" speed="0" acceleration="0"/>
+		<motor cardId="1" id="3" pos="5844" speed="0" acceleration="0"/>
+		<motor cardId="1" id="4" pos="6260" speed="0" acceleration="0"/>
+		<motor cardId="1" id="5" pos="5400" speed="0" acceleration="0"/>
+	</gesture>
+	<gesture name="OH" id="3" type="0">
+		<motor cardId="1" id="0" pos="6240" speed="0" acceleration="0"/>
+		<motor cardId="1" id="1" pos="3584" speed="0" acceleration="0"/>
+		<motor cardId="1" id="2" pos="5984" speed="0" acceleration="0"/>
+		<motor cardId="1" id="3" pos="3584" speed="0" acceleration="0"/>
+		<motor cardId="1" id="4" pos="6260" speed="0" acceleration="0"/>
+		<motor cardId="1" id="5" pos="5520" speed="0" acceleration="0"/>
+	</gesture>
+	<gesture name="UW" id="4" type="0">
+		<motor cardId="1" id="0" pos="6240" speed="0" acceleration="0"/>
+		<motor cardId="1" id="1" pos="3584" speed="0" acceleration="0"/>
+		<motor cardId="1" id="2" pos="5984" speed="0" acceleration="0"/>
+		<motor cardId="1" id="3" pos="3584" speed="0" acceleration="0"/>
+		<motor cardId="1" id="4" pos="6260" speed="0" acceleration="0"/>
+		<motor cardId="1" id="5" pos="5284" speed="0" acceleration="0"/>
+	</gesture>
+	<gesture name="BPmV" id="5" type="0">
+		<motor cardId="1" id="0" pos="7940" speed="0" acceleration="0"/>
+		<motor cardId="1" id="1" pos="6100" speed="0" acceleration="0"/>
+		<motor cardId="1" id="2" pos="6028" speed="0" acceleration="0"/>
+		<motor cardId="1" id="3" pos="5352" speed="0" acceleration="0"/>
+		<motor cardId="1" id="4" pos="6028" speed="0" acceleration="0"/>
+		<motor cardId="1" id="5" pos="5516" speed="0" acceleration="0"/>
+	</gesture>
+	<gesture name="NEUTRO" id="6" type="0">
+		<motor cardId="1" id="0" pos="7350" speed="0" acceleration="0"/>
+		<motor cardId="1" id="1" pos="3584" speed="0" acceleration="0"/>
+		<motor cardId="1" id="2" pos="5984" speed="0" acceleration="0"/>
+		<motor cardId="1" id="3" pos="3584" speed="0" acceleration="0"/>
+		<motor cardId="1" id="4" pos="6260" speed="0" acceleration="0"/>
+		<motor cardId="1" id="5" pos="5004" speed="0" acceleration="0"/>
+	</gesture>
+</gestures>

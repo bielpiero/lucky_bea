@@ -72,15 +72,15 @@ int RNThread::create(RNFunPointer* func, bool joinable, bool lowerPriority){
 }
 
 RNThread::~RNThread(){
+	
 	unlock();
-	//pthread_mutex_destroy(&mutexLocker);
-	//delete func;
+
+	pthread_mutex_destroy(&mutexLocker);
 }
 
 void* RNThread::run(void* arg){
 	RNThread *self = (RNThread*)arg;
 	void* result = NULL;
-
 	if(dynamic_cast<RNRetFunPointer<void*>*>(self->getFunctionPointer())){
 		result = ((RNRetFunPointer<void*>*)self->getFunctionPointer())->invokeR();
 	} else {

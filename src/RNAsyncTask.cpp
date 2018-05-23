@@ -1,11 +1,11 @@
 #include "RNAsyncTask.h"
 
 RNAsyncTask::RNAsyncTask(){
-	func = RNRetFunPointerClass1<void* ,RNAsyncTask, void*>(this, &RNAsyncTask::runThread, NULL);
+	func = new RNRetFunPointerClass1<void* ,RNAsyncTask, void*>(this, &RNAsyncTask::runThread, NULL);
 }
 
 RNAsyncTask::~RNAsyncTask(){
-
+	
 }
 
 void* RNAsyncTask::runInThisThread(void* arg){
@@ -21,7 +21,7 @@ void* RNAsyncTask::runInThisThread(void* arg){
 }
 
 int RNAsyncTask::create(bool joinable, bool lowerPriority){
-	return RNThread::create(&func, joinable, lowerPriority);
+	return RNThread::create(func, joinable, lowerPriority);
 }
 
 void RNAsyncTask::run(void){ 

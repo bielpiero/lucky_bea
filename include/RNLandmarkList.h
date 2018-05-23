@@ -85,19 +85,24 @@ public:
 		}
 	}
 
-	const char* toString() const{
+	const std::string toString() const{
 		std::ostringstream print_str;
 		print_str.str("");
 		print_str.clear();
-		print_str << "\"Landmarks\": {\"Landmark\": [";
+		//print_str << "\"Landmarks\": {\"Landmark\": [";
 		for(int i = 0; i < landmarks->size(); i++){
-			print_str << "{";
+			/*print_str << "{";
 			print_str << "\"Map-Id\": \"" << landmarks->at(i)->getMapId() << "\",";
 			print_str << "\"Sector-Id\": \"" << landmarks->at(i)->getSectorId() << "\",";
 			print_str << "\"Landmark-Id\": \"" << landmarks->at(i)->getMarkerId() << "\",";
 			print_str << "\"distance\": \"" << landmarks->at(i)->getPointsXMean() << "\",";
-			print_str << "\"angle\": \"" << landmarks->at(i)->getPointsYMean() << "\"";
-			if(landmarks->at(i)->extraParametersSize() > 0){
+			print_str << "\"angle\": \"" << landmarks->at(i)->getPointsYMean() << "\"";*/
+            print_str << landmarks->at(i)->getMapId() << ",";
+            print_str << landmarks->at(i)->getSectorId() << ",";
+            print_str << landmarks->at(i)->getMarkerId() << ",";
+            print_str << landmarks->at(i)->getPointsXMean() << ",";
+            print_str << landmarks->at(i)->getPointsYMean();
+			/*if(landmarks->at(i)->extraParametersSize() > 0){
 				print_str << ",";
 			}
 			for(int j = 0; j < landmarks->at(i)->extraParametersSize(); j++){
@@ -107,15 +112,15 @@ public:
 					print_str << ",";
 				}
 			}
-			print_str << "}";
+			print_str << "}";*/
 
 			if(i < landmarks->size() - 1){
-				print_str << ",";
+				print_str << "|";
 			}
 		}
-		print_str << "]}";
+		//print_str << "]}";
 		std::string strprint = print_str.str();
-		return strprint.c_str();
+		return strprint;
 	}
 };
 

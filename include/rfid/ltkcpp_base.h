@@ -1,17 +1,22 @@
 
 /*
- *****************************************************************************
- *                                                                           *
- *                 IMPINJ CONFIDENTIAL AND PROPRIETARY                       *
- *                                                                           *
- * This source code is the sole property of Impinj, Inc.  Reproduction or    *
- * utilization of this source code in whole or in part is forbidden without  *
- * the prior written consent of Impinj, Inc.                                 *
- *                                                                           *
- * (c) Copyright Impinj, Inc. 2007,2008. All rights reserved.                *
- *                                                                           *
- *****************************************************************************/
-
+ ***************************************************************************
+ *  Copyright 2007,2008 Impinj, Inc.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ***************************************************************************
+ */
 /**
  *****************************************************************************
  **
@@ -28,6 +33,8 @@
  ** @defgroup LTKCoreElement Core LTK Library classes and functions
  **
  **/
+
+#define BOOL int
 
 /**
  ** @\brief The namespace for the LTKCPP library
@@ -759,7 +766,7 @@ class CTypeDescriptor
     llrp_bool_t                 m_bIsMessage;
 
     /** @brief String name of parameter/message type (e.g. "ROSpec") */
-    char *                      m_pName;
+    const char *                      m_pName;
 
     /** @brief NULL=>standard LLRP, !NULL=>Vendor (PEN) of custom
      * message or parameter */
@@ -837,7 +844,7 @@ class CFieldDescriptor
     /** @brief A code for how the field should be formatted */
     FieldFormat                 m_eFieldFormat;
     /** @brief String name of field (e.g. "ROSpecID") */
-    char *                      m_pName;
+    const char *                      m_pName;
     /** @brief NULL or ptr to table base for enumerated fields */
     const SEnumTableEntry *     m_pEnumTable;
 };
@@ -866,7 +873,7 @@ extern CFieldDescriptor     g_fdParameterHeader_Subtype;
 struct SEnumTableEntry
 {
     /* String name, (e.g. "Immediate") */
-    char *                      pName;
+    const char *                      pName;
     int                         Value;
 };
 
