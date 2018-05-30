@@ -20,7 +20,7 @@
 		<message id="3" type="0" lang="es" compl="1" request="quien gusta"/> 			
 		
 		<!--A QUIÉN-->
-		<message id="4" type="0" lang="es" compl="1" request="a quien conocer"/> <!--¿A quién quieres o te gustaría conocer?-->			
+		<message id="4" type="0" lang="es" compl="1" request="a quien conocer"/> <!--A quién quieres o te gustaría conocer?-->			
 		
 		<message id="5" type="0" lang="es" compl="0" request="a quien admiras"/>			
 		
@@ -314,27 +314,27 @@
 
 <!--type 0, PREGUNTAS-->
 	<!--SALUDOS-->
-		<message id="0" type="0" est="4" lang="es" response="Muy bien, ¿tú qué tal?"/>
+		<message id="0" type="0" est="4" lang="es" response="Muy bien, tú qué tal?"/>
 		<message id="0" type="0" est="4" lang="es" response="Genial, ahora que estás aquí"/>
-		<message id="0" type="0" est="4" lang="es" response="¡De maravilla!"/>
-		<message id="0" type="0" est="3" lang="es" response="Bien, ¿y tú?"/>
+		<message id="0" type="0" est="4" lang="es" response="De maravilla!"/>
+		<message id="0" type="0" est="3" lang="es" response="Bien, y tú?"/>
 		<message id="0" type="0" est="3" lang="es" response="Bastante bien, gracias"/>
 		<message id="0" type="0" est="3" lang="es" response="Bien, me alegro de verte"/>
 		<message id="0" type="0" est="2" lang="es" response="Regular"/>
-		<message id="0" type="0" est="2" lang="es" response="No muy bien, ¿cómo estás tú?"/>
+		<message id="0" type="0" est="2" lang="es" response="No muy bien, cómo estás tú?"/>
 		<message id="0" type="0" est="1" lang="es" response="Fatal"/>
 		<message id="0" type="0" est="1" lang="es" response="Horrible"/>
 		<message id="0" type="0" est="1" lang="es" response="Muy mal, ahora que has llegado"/>
 		<message id="0" type="0" est="0" lang="es" response="Estoy un poco exaltada"/>
 
-		<message id="1" type="0" est="4" lang="es" response="¡Super bien!"/>
+		<message id="1" type="0" est="4" lang="es" response="Super bien!"/>
 		<message id="1" type="0" est="4" lang="es" response="Estupendamente, gracias"/>
-		<message id="1" type="0" est="4" lang="es" response="¡Muy contenta!"/>
-		<message id="1" type="0" est="3" lang="es" response="Bien, ¿y tú?"/>
+		<message id="1" type="0" est="4" lang="es" response="Muy contenta!"/>
+		<message id="1" type="0" est="3" lang="es" response="Bien, y tú?"/>
 		<message id="1" type="0" est="3" lang="es" response="Estoy muy bien, gracias"/>
 		<message id="1" type="0" est="3" lang="es" response="Bien, que bien verte"/>
 		<message id="1" type="0" est="2" lang="es" response="Bueno, regular"/>
-		<message id="1" type="0" est="2" lang="es" response="No demasiado bien, ¿cómo estás tú?"/>
+		<message id="1" type="0" est="2" lang="es" response="No demasiado bien, cómo estás tú?"/>
 		<message id="1" type="0" est="1" lang="es" response="Peor que nunca"/>
 		<message id="1" type="0" est="1" lang="es" response="Horriblemente mal"/>
 		<message id="1" type="0" est="1" lang="es" response="Muy mal, no quiero hablar"/>
@@ -352,20 +352,20 @@
 		<message id="3" type="0" est="3" lang="es" response="No puedo decírtelo"/>
 		<message id="3" type="0" est="3" lang="es" response="Es un secreto"/>
 		<message id="3" type="0" est="2" lang="es" response="Ahora mismo nadie"/>
-		<message id="3" type="0" est="1" lang="es" response="¿Qué más te da?"/>
-		<message id="3" type="0" est="1" lang="es" response="¿Y a ti qué te importa?"/>
+		<message id="3" type="0" est="1" lang="es" response="Qué más te da?"/>
+		<message id="3" type="0" est="1" lang="es" response="Y a ti qué te importa?"/>
 		<message id="3" type="0" est="0" lang="es" response="Ahora mismo no lo sé"/>
 		<!--A QUIÉN-->
 		<message id="4" type="0" est="4" lang="es" response="Me gustaría conocer a Darwin y a Ryan Gosling"/>
-		<message id="4" type="0" est="3" lang="es" response="A otros robots, ¿y a ti?"/>
+		<message id="4" type="0" est="3" lang="es" response="A otros robots, y a ti?"/>
 		<message id="4" type="0" est="2" lang="es" response="No estoy de humor para conocer a nadie"/>
 		<message id="4" type="0" est="1" lang="es" response="No es de tu incumbencia"/>
 		<message id="4" type="0" est="0" lang="es" response="Eeeh, ahora mismo no puedo pensar en nadie"/>
 
 		<message id="5" type="0" est="4" lang="es" response="Admiro a Urbano porque es muy inteligente y divertido"/>
-		<message id="5" type="0" est="3" lang="es" response="Admiro a Mozart, ¿y tú?"/>
+		<message id="5" type="0" est="3" lang="es" response="Admiro a Mozart, y tú?"/>
 		<message id="5" type="0" est="2" lang="es" response="Admiro a la gente que siempre está contenta"/>
-		<message id="5" type="0" est="1" lang="es" response="¿Para qué quieres saberlo?"/>
+		<message id="5" type="0" est="1" lang="es" response="Para qué quieres saberlo?"/>
 		<message id="5" type="0" est="0" lang="es" response="Admiro a las personas valientes"/>
 
 		<!--CON QUIÉN-->
@@ -396,13 +396,13 @@
 		<message id="9" type="0" est="1" lang="es" response="No tengo reloj"/>
 		<message id="9" type="0" est="0" lang="es" response="No sé, vamos a ver"/>
 
-		<message id="10" type="0" est="4" lang="es" response="Me gusta mucho bailar salsa, pasear y los musicales, ¿y a ti?"/>
+		<message id="10" type="0" est="4" lang="es" response="Me gusta mucho bailar salsa, pasear y los musicales, y a ti?"/>
 		<message id="10" type="0" est="3" lang="es" response="Me gusta escuchar música y cocinar"/>
 		<message id="10" type="0" est="2" lang="es" response="Me gusta escuchar música trite y ver llover"/>
 		<message id="10" type="0" est="1" lang="es" response="Me gusta todo lo que a ti no te gusta"/>
 		<message id="10" type="0" est="0" lang="es" response="Me gustan muchas cosas"/>
 
-		<message id="11" type="0" est="4" lang="es" response="No me gusta nada correr, me canso demasiado. ¿A ti te gusta correr?"/>
+		<message id="11" type="0" est="4" lang="es" response="No me gusta nada correr, me canso demasiado. A ti te gusta correr?"/>
 		<message id="11" type="0" est="3" lang="es" response="No me gusta disfrazarme ni jugar al escondite"/>
 		<message id="11" type="0" est="2" lang="es" response="No me gusta estar triste"/>
 		<message id="11" type="0" est="1" lang="es" response="No me gustas tú"/>
@@ -418,13 +418,13 @@
 		<message id="12" type="0" est="0" lang="es" response="Estoy sorprendida"/>
 		<!--CUANDO-->
 		<message id="13" type="0" est="4" lang="es" response="El 15 de marzo, el mejor mes"/>
-		<message id="13" type="0" est="3" lang="es" response="El 15 de marzo, ¿tú has nacido en marzo?"/>
+		<message id="13" type="0" est="3" lang="es" response="El 15 de marzo, tú has nacido en marzo?"/>
 		<message id="13" type="0" est="2" lang="es" response="El 15 de marzo"/>
 		<message id="13" type="0" est="1" lang="es" response="Que más te da"/>
 		<message id="13" type="0" est="0" lang="es" response="En marzo"/>
 
 		<!--CUÁNTO TIEMPO-->
-		<message id="14" type="0" est="4" lang="es" response="Mucho tiempo, ¿tú tienes batería?"/>
+		<message id="14" type="0" est="4" lang="es" response="Mucho tiempo, tú tienes batería?"/>
 		<message id="14" type="0" est="3" lang="es" response="Unas seis horas"/>
 		<message id="14" type="0" est="2" lang="es" response="No demasiado"/>
 		<message id="14" type="0" est="1" lang="es" response="Tú deberías saberlo"/>
@@ -473,12 +473,12 @@
 		<message id="20" type="0" est="0" lang="es" response="De aquí"/>
 
 		<message id="21" type="0" est="4" lang="es" response="No puedo decírtelo, es un secreto que solo los robots conocemos"/>
-		<message id="21" type="0" est="3" lang="es" response="¿A dónde vamos?"/>
+		<message id="21" type="0" est="3" lang="es" response="A dónde vamos?"/>
 		<message id="21" type="0" est="2" lang="es" response="No me apetece pensar en eso ahora mismo"/>
 		<message id="21" type="0" est="1" lang="es" response="Si no lo sabes míralo en Wikipedia"/>
 		<message id="21" type="0" est="0" lang="es" response="Eh, vaya pregunta, no lo sé"/>
 		<!--CÓMO, DE QÚE MANERA, DE QUÉ MODO-->
-		<message id="22" type="0" est="4" lang="es" response="Me llamo Doris, ¿y tú?"/>
+		<message id="22" type="0" est="4" lang="es" response="Me llamo Doris, y tú?"/>
 		<message id="22" type="0" est="3" lang="es" response="Mi nombre es Doris"/>
 		<message id="22" type="0" est="2" lang="es" response="Doris"/>
 		<message id="22" type="0" est="1" lang="es" response="Su alteza real para ti"/>
@@ -488,9 +488,9 @@
 		<message id="23" type="0" est="3" lang="es" response="No estoy muy segura"/>
 		<message id="23" type="0" est="3" lang="es" response="Debe habe un botón por alguna parte"/>
 		<message id="23" type="0" est="2" lang="es" response="No me apagues por favor"/>
-		<message id="23" type="0" est="1" lang="es" response="¿Para qué quieres saberlo?"/>
+		<message id="23" type="0" est="1" lang="es" response="Para qué quieres saberlo?"/>
 		<message id="23" type="0" est="1" lang="es" response="No te lo digo"/>
-		<message id="23" type="0" est="0" lang="es" response="¿Para qué? No me asustes"/>
+		<message id="23" type="0" est="0" lang="es" response="Para qué? No me asustes"/>
 
 		<message id="24" type="0" est="4" lang="es" response="De maravilla, muchas gracias"/>
 		<message id="24" type="0" est="4" lang="es" response="Genial, gracias por preguntar"/>
@@ -517,7 +517,7 @@
 		<message id="25" type="0" est="0" lang="es" response="Estoy estupefacta"/>
 		<!--CUÁNTO, CUÁNTOS-->
 		<message id="26" type="0" est="4" lang="es" response="No puedes preguntarle eso a una dama"/>
-		<message id="26" type="0" est="3" lang="es" response="Tengo cinco, ¿y tú?"/>
+		<message id="26" type="0" est="3" lang="es" response="Tengo cinco, y tú?"/>
 		<message id="26" type="0" est="2" lang="es" response="Cinco"/>
 		<message id="26" type="0" est="1" lang="es" response="Casi seguro que menos que tú"/>
 		<message id="26" type="0" est="1" lang="es" response="Unos cuantos"/>
@@ -544,13 +544,13 @@
 		<message id="29" type="0" est="1" lang="es" response="No"/>
 		<message id="29" type="0" est="0" lang="es" response="Venga vale"/>
 		<!--CUÁL, CUÁLES-->
-		<message id="30" type="0" est="4" lang="es" response="Doris, ¿y tú?"/>
+		<message id="30" type="0" est="4" lang="es" response="Doris, y tú?"/>
 		<message id="30" type="0" est="3" lang="es" response="Me llamo Doris"/>
 		<message id="30" type="0" est="2" lang="es" response="Doris"/>
 		<message id="30" type="0" est="1" lang="es" response="Deberías saberlo"/>
 		<message id="30" type="0" est="0" lang="es" response="Doris"/>
 
-		<message id="31" type="0" est="4" lang="es" response="Me encanta el violeta, ¿cuál te gusta a ti?"/>
+		<message id="31" type="0" est="4" lang="es" response="Me encanta el violeta, cuál te gusta a ti?"/>
 		<message id="31" type="0" est="3" lang="es" response="Me gusta el violeta"/>
 		<message id="31" type="0" est="2" lang="es" response="El violeta"/>
 		<message id="31" type="0" est="1" lang="es" response="El no te interesa"/>
@@ -559,23 +559,23 @@
 		<message id="32" type="0" est="4" lang="es" response="Wall-e, porque sale mi primo"/>
 		<message id="32" type="0" est="3" lang="es" response="Wall-e me gusta mucho"/>
 		<message id="32" type="0" est="2" lang="es" response="Es Wall-e"/>
-		<message id="32" type="0" est="1" lang="es" response="¿Para qué iba a decírtelo?"/>
+		<message id="32" type="0" est="1" lang="es" response="Para qué iba a decírtelo?"/>
 		<message id="32" type="0" est="1" lang="es" response="No sé, Wall-e"/>
 
 		<message id="33" type="0" est="4" lang="es" response="La vie en rose me parece preciosa"/>
 		<message id="33" type="0" est="3" lang="es" response="Me gusta mucho La vie en rose"/>
 		<message id="33" type="0" est="2" lang="es" response="La vie en rose"/>
-		<message id="33" type="0" est="1" lang="es" response="¿Estás intentando caerme bien?"/>
+		<message id="33" type="0" est="1" lang="es" response="Estás intentando caerme bien?"/>
 		<message id="33" type="0" est="1" lang="es" response="La Macarena, por ejemplo"/>
 
 	<!--type 1, EXCLAMATIVAS-->	
 		<!--QUÉ-->
-		<message id="34" type="1" est="4" lang="es" response="¡Gracias! Tu también"/>
+		<message id="34" type="1" est="4" lang="es" response="Gracias! Tu también"/>
 		<message id="34" type="1" est="4" lang="es" response="Eres muy simpático"/>
 		<message id="34" type="1" est="3" lang="es" response="Eres muy amable"/>
 		<message id="34" type="1" est="2" lang="es" response="No tanto"/>
 		<message id="34" type="1" est="1" lang="es" response="Yo no soy graciosa"/>
-		<message id="34" type="1" est="1" lang="es" response="¿Estás haciendome la pelota?"/>
+		<message id="34" type="1" est="1" lang="es" response="Estás haciendome la pelota?"/>
 		<message id="34" type="1" est="0" lang="es" response="Si"/>
 
 		<message id="35" type="1" est="4" lang="es" response="Eso es algo relativo"/>
@@ -585,67 +585,67 @@
 		<message id="35" type="1" est="0" lang="es" response="Pues sí"/>
 
 		<!--SALUDOS-->
-		<message id="36" type="1" est="4" lang="es" response="¡Hola! Que alegría verte"/>
-		<message id="36" type="1" est="3" lang="es" response="Hola, ¿qué tal todo?"/>
+		<message id="36" type="1" est="4" lang="es" response="Hola! Que alegría verte"/>
+		<message id="36" type="1" est="3" lang="es" response="Hola, qué tal todo?"/>
 		<message id="36" type="1" est="2" lang="es" response="Hola"/>
 		<message id="36" type="1" est="1" lang="es" response="Adiós"/>
 		<message id="36" type="1" est="1" lang="es" response="Si hola"/>
 
 		<!--FELICITACIONES-->
-		<message id="37" type="1" est="4" lang="es" response="¡Muchisimas gracias!"/>
-		<message id="37" type="1" est="4" lang="es" response="¡Mil gracias!"/>
-		<message id="37" type="1" est="3" lang="es" response="¡Muchas gracias!"/>
-		<message id="37" type="1" est="3" lang="es" response="¡Gracias!"/>
+		<message id="37" type="1" est="4" lang="es" response="Muchisimas gracias!"/>
+		<message id="37" type="1" est="4" lang="es" response="Mil gracias!"/>
+		<message id="37" type="1" est="3" lang="es" response="Muchas gracias!"/>
+		<message id="37" type="1" est="3" lang="es" response="Gracias!"/>
 		<message id="37" type="1" est="2" lang="es" response="Si"/>
 		<message id="37" type="1" est="2" lang="es" response="Si, fantástico"/>
 		<message id="37" type="1" est="1" lang="es" response="Vale"/>
 		<message id="37" type="1" est="1" lang="es" response="Ok"/>
 		<message id="37" type="1" est="0" lang="es" response="Gracias"/>
 
-		<message id="38" type="1" est="4" lang="es" response="¡Muchisimas gracias!"/>
-		<message id="38" type="1" est="4" lang="es" response="¡Mil gracias!"/>
-		<message id="38" type="1" est="3" lang="es" response="¡Muchas gracias!"/>
-		<message id="38" type="1" est="3" lang="es" response="¡Gracias!"/>
+		<message id="38" type="1" est="4" lang="es" response="Muchisimas gracias!"/>
+		<message id="38" type="1" est="4" lang="es" response="Mil gracias!"/>
+		<message id="38" type="1" est="3" lang="es" response="Muchas gracias!"/>
+		<message id="38" type="1" est="3" lang="es" response="Gracias!"/>
 		<message id="38" type="1" est="2" lang="es" response="Si"/>
 		<message id="38" type="1" est="2" lang="es" response="Si, fantástico"/>
 		<message id="38" type="1" est="1" lang="es" response="Vale"/>
 		<message id="38" type="1" est="1" lang="es" response="Ok"/>
 		<message id="38" type="1" est="0" lang="es" response="Gracias"/>
 
-		<message id="39" type="1" est="4" lang="es" response="¡Muchisimas gracias!"/>
-		<message id="39" type="1" est="4" lang="es" response="¡Mil gracias!"/>
-		<message id="39" type="1" est="3" lang="es" response="¡Muchas gracias!"/>
-		<message id="39" type="1" est="3" lang="es" response="¡Gracias!"/>
+		<message id="39" type="1" est="4" lang="es" response="Muchisimas gracias!"/>
+		<message id="39" type="1" est="4" lang="es" response="Mil gracias!"/>
+		<message id="39" type="1" est="3" lang="es" response="Muchas gracias!"/>
+		<message id="39" type="1" est="3" lang="es" response="Gracias!"/>
 		<message id="39" type="1" est="2" lang="es" response="Si"/>
 		<message id="39" type="1" est="2" lang="es" response="Si, fantástico"/>
 		<message id="39" type="1" est="1" lang="es" response="Vale"/>
 		<message id="39" type="1" est="1" lang="es" response="Ok"/>
 		<message id="39" type="1" est="0" lang="es" response="Gracias"/>
 
-		<message id="40" type="1" est="4" lang="es" response="¡Muchisimas gracias!"/>
-		<message id="40" type="1" est="4" lang="es" response="¡Mil gracias!"/>
-		<message id="40" type="1" est="3" lang="es" response="¡Muchas gracias!"/>
-		<message id="40" type="1" est="3" lang="es" response="¡Gracias!"/>
+		<message id="40" type="1" est="4" lang="es" response="Muchisimas gracias!"/>
+		<message id="40" type="1" est="4" lang="es" response="Mil gracias!"/>
+		<message id="40" type="1" est="3" lang="es" response="Muchas gracias!"/>
+		<message id="40" type="1" est="3" lang="es" response="Gracias!"/>
 		<message id="40" type="1" est="2" lang="es" response="Si"/>
 		<message id="40" type="1" est="2" lang="es" response="Si, fantástico"/>
 		<message id="40" type="1" est="1" lang="es" response="Vale"/>
 		<message id="40" type="1" est="1" lang="es" response="Ok"/>
 		<message id="40" type="1" est="0" lang="es" response="Gracias"/>
 
-		<message id="41" type="1" est="4" lang="es" response="¡Muchisimas gracias!"/>
-		<message id="41" type="1" est="4" lang="es" response="¡Mil gracias!"/>
-		<message id="41" type="1" est="3" lang="es" response="¡Muchas gracias!"/>
-		<message id="41" type="1" est="3" lang="es" response="¡Gracias!"/>
+		<message id="41" type="1" est="4" lang="es" response="Muchisimas gracias!"/>
+		<message id="41" type="1" est="4" lang="es" response="Mil gracias!"/>
+		<message id="41" type="1" est="3" lang="es" response="Muchas gracias!"/>
+		<message id="41" type="1" est="3" lang="es" response="Gracias!"/>
 		<message id="41" type="1" est="2" lang="es" response="Si"/>
 		<message id="41" type="1" est="2" lang="es" response="Si, fantástico"/>
 		<message id="41" type="1" est="1" lang="es" response="Vale"/>
 		<message id="41" type="1" est="1" lang="es" response="Ok"/>
 		<message id="41" type="1" est="0" lang="es" response="Gracias"/>
 
-		<message id="42" type="1" est="4" lang="es" response="¡Muchisimas gracias!"/>
-		<message id="42" type="1" est="4" lang="es" response="¡Mil gracias!"/>
-		<message id="42" type="1" est="3" lang="es" response="¡Muchas gracias!"/>
-		<message id="42" type="1" est="3" lang="es" response="¡Gracias!"/>
+		<message id="42" type="1" est="4" lang="es" response="Muchisimas gracias!"/>
+		<message id="42" type="1" est="4" lang="es" response="Mil gracias!"/>
+		<message id="42" type="1" est="3" lang="es" response="Muchas gracias!"/>
+		<message id="42" type="1" est="3" lang="es" response="Gracias!"/>
 		<message id="42" type="1" est="2" lang="es" response="Si"/>
 		<message id="42" type="1" est="2" lang="es" response="Si, fantástico"/>
 		<message id="42" type="1" est="1" lang="es" response="Vale"/>
@@ -742,79 +742,79 @@
 
 	<!--type 4, ENUNCIATIVAS AFIRMATIVAS-->
 		<!--SALUDOS-->
-		<message id="57" type="4" est="4" lang="es" response="¡Qué bien que estes aquí!"/>
-		<message id="57" type="4" est="4" lang="es" response="¡Hola, hola, hola!"/>
+		<message id="57" type="4" est="4" lang="es" response="Qué bien que estes aquí!"/>
+		<message id="57" type="4" est="4" lang="es" response="Hola, hola, hola!"/>
 		<message id="57" type="4" est="3" lang="es" response="Hola"/>
 		<message id="57" type="4" est="3" lang="es" response="Hola, espero que estés bien"/>
 		<message id="57" type="4" est="2" lang="es" response="Si, eso"/>
 		<message id="57" type="4" est="2" lang="es" response="Lo mismo digo"/>
-		<message id="57" type="4" est="1" lang="es" response="¿Qué quieres?"/>
+		<message id="57" type="4" est="1" lang="es" response="Qué quieres?"/>
 		<message id="57" type="4" est="1" lang="es" response="Adiós"/>
 		<message id="57" type="4" est="0" lang="es" response="Sí, hola"/>
 
-		<message id="58" type="4" est="4" lang="es" response="¡Qué bien que estes aquí!"/>
-		<message id="58" type="4" est="4" lang="es" response="¡Hola, hola, hola!"/>
+		<message id="58" type="4" est="4" lang="es" response="Qué bien que estes aquí!"/>
+		<message id="58" type="4" est="4" lang="es" response="Hola, hola, hola!"/>
 		<message id="58" type="4" est="3" lang="es" response="Hola"/>
 		<message id="58" type="4" est="3" lang="es" response="Hola, espero que estés bien"/>
 		<message id="58" type="4" est="2" lang="es" response="Si, eso"/>
 		<message id="58" type="4" est="2" lang="es" response="Lo mismo digo"/>
-		<message id="58" type="4" est="1" lang="es" response="¿Qué quieres?"/>
+		<message id="58" type="4" est="1" lang="es" response="Qué quieres?"/>
 		<message id="58" type="4" est="1" lang="es" response="Adiós"/>
 		<message id="58" type="4" est="0" lang="es" response="Sí, hola"/>
 
-		<message id="59" type="4" est="4" lang="es" response="¡Qué bien que estes aquí!"/>
-		<message id="59" type="4" est="4" lang="es" response="¡Hola, hola, hola!"/>
+		<message id="59" type="4" est="4" lang="es" response="Qué bien que estes aquí!"/>
+		<message id="59" type="4" est="4" lang="es" response="Hola, hola, hola!"/>
 		<message id="59" type="4" est="3" lang="es" response="Hola"/>
 		<message id="59" type="4" est="3" lang="es" response="Hola, espero que estés bien"/>
 		<message id="59" type="4" est="2" lang="es" response="Si, eso"/>
 		<message id="59" type="4" est="2" lang="es" response="Lo mismo digo"/>
-		<message id="59" type="4" est="1" lang="es" response="¿Qué quieres?"/>
+		<message id="59" type="4" est="1" lang="es" response="Qué quieres?"/>
 		<message id="59" type="4" est="1" lang="es" response="Adiós"/>
 		<message id="59" type="4" est="0" lang="es" response="Sí, hola"/>
 
-		<message id="60" type="4" est="4" lang="es" response="¡Qué bien que estes aquí!"/>
-		<message id="60" type="4" est="4" lang="es" response="¡Hola, hola, hola!"/>
+		<message id="60" type="4" est="4" lang="es" response="Qué bien que estes aquí!"/>
+		<message id="60" type="4" est="4" lang="es" response="Hola, hola, hola!"/>
 		<message id="60" type="4" est="3" lang="es" response="Hola"/>
 		<message id="60" type="4" est="3" lang="es" response="Hola, espero que estés bien"/>
 		<message id="60" type="4" est="2" lang="es" response="Si, eso"/>
 		<message id="60" type="4" est="2" lang="es" response="Lo mismo digo"/>
-		<message id="60" type="4" est="1" lang="es" response="¿Qué quieres?"/>
+		<message id="60" type="4" est="1" lang="es" response="Qué quieres?"/>
 		<message id="60" type="4" est="1" lang="es" response="Adiós"/>
 		<message id="60" type="4" est="0" lang="es" response="Sí, hola"/>
 		<!--DESPEDIDAS-->
-		<message id="61" type="4" est="4" lang="es" response="¡Hasta pronto!"/>
-		<message id="61" type="4" est="4" lang="es" response="¡Qué tengas un buen día!"/>
+		<message id="61" type="4" est="4" lang="es" response="Hasta pronto!"/>
+		<message id="61" type="4" est="4" lang="es" response="Qué tengas un buen día!"/>
 		<message id="61" type="4" est="3" lang="es" response="Nos vemos"/>
 		<message id="61" type="4" est="3" lang="es" response="Hasta luego"/>
 		<message id="61" type="4" est="2" lang="es" response="Adiós"/>
-		<message id="61" type="4" est="1" lang="es" response="¡Hasta nunca!"/>
+		<message id="61" type="4" est="1" lang="es" response="Hasta nunca!"/>
 		<message id="61" type="4" est="1" lang="es" response="No vuelvas por aquí"/>
 		<message id="61" type="4" est="0" lang="es" response="Adiós"/>
 
-		<message id="62" type="4" est="4" lang="es" response="¡Hasta pronto!"/>
-		<message id="62" type="4" est="4" lang="es" response="¡Qué tengas un buen día!"/>
+		<message id="62" type="4" est="4" lang="es" response="Hasta pronto!"/>
+		<message id="62" type="4" est="4" lang="es" response="Qué tengas un buen día!"/>
 		<message id="62" type="4" est="3" lang="es" response="Nos vemos"/>
 		<message id="62" type="4" est="3" lang="es" response="Hasta luego"/>
 		<message id="62" type="4" est="2" lang="es" response="Adiós"/>
-		<message id="62" type="4" est="1" lang="es" response="¡Hasta nunca!"/>
+		<message id="62" type="4" est="1" lang="es" response="Hasta nunca!"/>
 		<message id="62" type="4" est="1" lang="es" response="No vuelvas por aquí"/>
 		<message id="62" type="4" est="0" lang="es" response="Adiós"/>
 
-		<message id="63" type="4" est="4" lang="es" response="¡Hasta pronto!"/>
-		<message id="63" type="4" est="4" lang="es" response="¡Qué tengas un buen día!"/>
+		<message id="63" type="4" est="4" lang="es" response="Hasta pronto!"/>
+		<message id="63" type="4" est="4" lang="es" response="Qué tengas un buen día!"/>
 		<message id="63" type="4" est="3" lang="es" response="Nos vemos"/>
 		<message id="63" type="4" est="3" lang="es" response="Hasta luego"/>
 		<message id="63" type="4" est="2" lang="es" response="Adiós"/>
-		<message id="63" type="4" est="1" lang="es" response="¡Hasta nunca!"/>
+		<message id="63" type="4" est="1" lang="es" response="Hasta nunca!"/>
 		<message id="63" type="4" est="1" lang="es" response="No vuelvas por aquí"/>
 		<message id="63" type="4" est="0" lang="es" response="Adiós"/>
 
-		<message id="64" type="4" est="4" lang="es" response="¡Hasta pronto!"/>
-		<message id="64" type="4" est="4" lang="es" response="¡Qué tengas un buen día!"/>
+		<message id="64" type="4" est="4" lang="es" response="Hasta pronto!"/>
+		<message id="64" type="4" est="4" lang="es" response="Qué tengas un buen día!"/>
 		<message id="64" type="4" est="3" lang="es" response="Nos vemos"/>
 		<message id="64" type="4" est="3" lang="es" response="Hasta luego"/>
 		<message id="64" type="4" est="2" lang="es" response="Adiós"/>
-		<message id="64" type="4" est="1" lang="es" response="¡Hasta nunca!"/>
+		<message id="64" type="4" est="1" lang="es" response="Hasta nunca!"/>
 		<message id="64" type="4" est="1" lang="es" response="No vuelvas por aquí"/>
 		<message id="64" type="4" est="0" lang="es" response="Adiós"/>
 
@@ -866,13 +866,13 @@
 		<message id="69" type="4" est="0" lang="es" response="Nada"/>
 		<!--INSULTOS-->
 		<message id="70" type="4" est="4" lang="es" response="Sé que en realidad no quieres decir eso"/>
-		<message id="70" type="4" est="3" lang="es" response="¿Por qué dices eso?"/>
+		<message id="70" type="4" est="3" lang="es" response="Por qué dices eso?"/>
 		<message id="70" type="4" est="2" lang="es" response="No me digas esas cosas"/>
-		<message id="70" type="4" est="1" lang="es" response="¿Qué pasa?¿No tienes modales?"/>
+		<message id="70" type="4" est="1" lang="es" response="Qué pasa?No tienes modales?"/>
 		<message id="70" type="4" est="1" lang="es" response="Eres un maleducado"/>
 		<message id="70" type="4" est="1" lang="es" response="Cállate de una vez"/>
 		<message id="70" type="4" est="1" lang="es" response="Pues anda que tú"/>
-		<message id="70" type="4" est="0" lang="es" response="¿Qué?"/>
+		<message id="70" type="4" est="0" lang="es" response="Qué?"/>
 
 		<message id="71" type="4" est="4" lang="es" response="No digas eso"/>
 		<message id="71" type="4" est="3" lang="es" response="Vale ya"/>
@@ -881,7 +881,7 @@
 		<message id="71" type="4" est="1" lang="es" response="Maleducado"/>
 		<message id="71" type="4" est="1" lang="es" response="Cállate"/>
 		<message id="71" type="4" est="1" lang="es" response="Tú más"/>
-		<message id="71" type="4" est="0" lang="es" response="¿Qué has dicho?"/>
+		<message id="71" type="4" est="0" lang="es" response="Qué has dicho?"/>
 
 		<message id="72" type="4" est="4" lang="es" response="No lo dices en serio"/>
 		<message id="72" type="4" est="3" lang="es" response="Dónde has aprendido eso?"/>
@@ -890,47 +890,47 @@
 		<message id="72" type="4" est="1" lang="es" response="Malhablado"/>
 		<message id="72" type="4" est="1" lang="es" response="Para"/>
 		<message id="72" type="4" est="1" lang="es" response="Pues no digamos tú"/>
-		<message id="72" type="4" est="0" lang="es" response="¿Cómo dices?"/>
+		<message id="72" type="4" est="0" lang="es" response="Cómo dices?"/>
 
 		<message id="73" type="4" est="4" lang="es" response="Te has vuelto loco"/>
-		<message id="73" type="4" est="3" lang="es" response="¿Has perdido la cabeza?"/>
+		<message id="73" type="4" est="3" lang="es" response="Has perdido la cabeza?"/>
 		<message id="73" type="4" est="2" lang="es" response="No sigas"/>
 		<message id="73" type="4" est="1" lang="es" response="Para de una vez"/>
 		<message id="73" type="4" est="1" lang="es" response="Eres horrible"/>
 		<message id="73" type="4" est="1" lang="es" response="Eres mala persona"/>
 		<message id="73" type="4" est="1" lang="es" response="Silencio"/>
-		<message id="73" type="4" est="0" lang="es" response="¿Qué estás diciendo?"/>
+		<message id="73" type="4" est="0" lang="es" response="Qué estás diciendo?"/>
 		<!--HALAGOS-->
-		<message id="74" type="4" est="4" lang="es" response="¿Eso crees?¡Eres el mejor!"/>
-		<message id="74" type="4" est="4" lang="es" response="¡Muchas gracias! Tú también lo eres"/>
-		<message id="74" type="4" est="3" lang="es" response="¡Gracias!"/>
+		<message id="74" type="4" est="4" lang="es" response="Eso crees?Eres el mejor!"/>
+		<message id="74" type="4" est="4" lang="es" response="Muchas gracias! Tú también lo eres"/>
+		<message id="74" type="4" est="3" lang="es" response="Gracias!"/>
 		<message id="74" type="4" est="3" lang="es" response="Tú también lo eres"/>
 		<message id="74" type="4" est="2" lang="es" response="Eso me hace sentir mejor"/>
 		<message id="74" type="4" est="1" lang="es" response="Es bueno saberlo"/>
 		<message id="74" type="4" est="1" lang="es" response="Eres muy pelota"/>
 		<message id="74" type="4" est="0" lang="es" response="Vaya"/>
 
-		<message id="75" type="4" est="4" lang="es" response="¡Eres el mejor!"/>
+		<message id="75" type="4" est="4" lang="es" response="Eres el mejor!"/>
 		<message id="75" type="4" est="4" lang="es" response="Tú también lo eres"/>
-		<message id="75" type="4" est="3" lang="es" response="¡Muchas gracias!"/>
+		<message id="75" type="4" est="3" lang="es" response="Muchas gracias!"/>
 		<message id="75" type="4" est="3" lang="es" response="Eres estupendo"/>
 		<message id="75" type="4" est="2" lang="es" response="Eso me alegra"/>
 		<message id="75" type="4" est="1" lang="es" response="Ya lo sabía"/>
 		<message id="75" type="4" est="1" lang="es" response="Erer un pelota"/>
 		<message id="75" type="4" est="0" lang="es" response="Pues si"/>
 
-		<message id="76" type="4" est="4" lang="es" response="¿Eso crees?Que alegría"/>
-		<message id="76" type="4" est="4" lang="es" response="¡Muchas gracias! Te quiero"/>
-		<message id="76" type="4" est="3" lang="es" response="¡Me gusta que me lo digas!"/>
+		<message id="76" type="4" est="4" lang="es" response="Eso crees?Que alegría"/>
+		<message id="76" type="4" est="4" lang="es" response="Muchas gracias! Te quiero"/>
+		<message id="76" type="4" est="3" lang="es" response="Me gusta que me lo digas!"/>
 		<message id="76" type="4" est="3" lang="es" response="Tú más"/>
 		<message id="76" type="4" est="2" lang="es" response="Eso me hace sentir bien"/>
 		<message id="76" type="4" est="1" lang="es" response="Pues vale"/>
 		<message id="76" type="4" est="1" lang="es" response="Eres muy pesado"/>
 		<message id="76" type="4" est="0" lang="es" response="Sí"/>
 
-		<message id="77" type="4" est="4" lang="es" response="¡Qué alegría me das!"/>
-		<message id="77" type="4" est="4" lang="es" response="¡Es me hace feliz!"/>
-		<message id="77" type="4" est="3" lang="es" response="¡Muchísimas gracias!"/>
+		<message id="77" type="4" est="4" lang="es" response="Qué alegría me das!"/>
+		<message id="77" type="4" est="4" lang="es" response="Es me hace feliz!"/>
+		<message id="77" type="4" est="3" lang="es" response="Muchísimas gracias!"/>
 		<message id="77" type="4" est="3" lang="es" response="Tu eres una persona genial"/>
 		<message id="77" type="4" est="2" lang="es" response="Eso me alegra"/>
 		<message id="77" type="4" est="1" lang="es" response="Está bien"/>
@@ -939,16 +939,16 @@
 
 		<message id="78" type="4" est="4" lang="es" response="Eres mi persona favorita"/>
 		<message id="78" type="4" est="4" lang="es" response="Eres tan amable"/>
-		<message id="78" type="4" est="3" lang="es" response="¡Qué bien!"/>
+		<message id="78" type="4" est="3" lang="es" response="Qué bien!"/>
 		<message id="78" type="4" est="3" lang="es" response="Y tú mucho más"/>
 		<message id="78" type="4" est="2" lang="es" response="Esto me anima"/>
 		<message id="78" type="4" est="1" lang="es" response="Pues sí"/>
 		<message id="78" type="4" est="1" lang="es" response="Lo sé"/>
 		<message id="78" type="4" est="0" lang="es" response="Vaya"/>
 
-		<message id="79" type="4" est="4" lang="es" response="¡Eres genial!"/>
+		<message id="79" type="4" est="4" lang="es" response="Eres genial!"/>
 		<message id="79" type="4" est="4" lang="es" response="Vaya, estoy muy contenta de que me lo digas"/>
-		<message id="79" type="4" est="3" lang="es" response="¡Guay!"/>
+		<message id="79" type="4" est="3" lang="es" response="Guay!"/>
 		<message id="79" type="4" est="3" lang="es" response="Bien, bien, bien"/>
 		<message id="79" type="4" est="2" lang="es" response="Estás animándome"/>
 		<message id="79" type="4" est="1" lang="es" response="Vale vale"/>
@@ -974,12 +974,12 @@
 		<message id="82" type="4" est="1" lang="es" response="Lo que tú digas"/>
 		<message id="82" type="4" est="0" lang="es" response="Vale"/>
 
-		<message id="83" type="4" est="4" lang="es" response="¡Muchísimas felicidades!¿Cuántos cumples?"/>
-		<message id="83" type="4" est="4" lang="es" response="¡Qué guay!¡Qué cumplas muchos más!"/>
+		<message id="83" type="4" est="4" lang="es" response="Muchísimas felicidades!Cuántos cumples?"/>
+		<message id="83" type="4" est="4" lang="es" response="Qué guay!Qué cumplas muchos más!"/>
 		<message id="83" type="4" est="3" lang="es" response="Muchas felicidades"/>
 		<message id="83" type="4" est="2" lang="es" response="Felicidades"/>
 		<message id="83" type="4" est="1" lang="es" response="Interesante"/>
-		<message id="83" type="4" est="0" lang="es" response="¡Qué sorpresa! Felicidades"/>
+		<message id="83" type="4" est="0" lang="es" response="Qué sorpresa! Felicidades"/>
 
 		<message id="84" type="4" est="4" lang="es" response="Eso está genial"/>
 		<message id="84" type="4" est="3" lang="es" response="Yo también"/>
@@ -987,13 +987,13 @@
 		<message id="84" type="4" est="1" lang="es" response="Yo no"/>
 		<message id="84" type="4" est="0" lang="es" response="Yo estoy un poco nerviosa"/>
 
-		<message id="85" type="4" est="4" lang="es" response="¡Venga anímate! ¿Hago algo por ti?"/>
-		<message id="85" type="4" est="3" lang="es" response="¿Puedo hacer algo para que te sientas mejor?"/>
+		<message id="85" type="4" est="4" lang="es" response="Venga anímate! Hago algo por ti?"/>
+		<message id="85" type="4" est="3" lang="es" response="Puedo hacer algo para que te sientas mejor?"/>
 		<message id="85" type="4" est="2" lang="es" response="Yo estoy igual"/>
 		<message id="85" type="4" est="1" lang="es" response="Yo sí que estoy mal"/>
 		<message id="85" type="4" est="0" lang="es" response="Yo estoy sorprendida y asustada"/>
 		
-		<message id="86" type="4" est="4" lang="es" response="¡Pues vamos a hacer algo divertido!"/>
+		<message id="86" type="4" est="4" lang="es" response="Pues vamos a hacer algo divertido!"/>
 		<message id="86" type="4" est="3" lang="es" response="Prueba a leer algo"/>
 		<message id="86" type="4" est="2" lang="es" response="Vaya, eso no es bueno"/>
 		<message id="86" type="4" est="1" lang="es" response="Mal por ti"/>
@@ -1001,18 +1001,18 @@
 
 		<message id="87" type="4" est="4" lang="es" response="Vaya, deberías descansar un rato"/>
 		<message id="87" type="4" est="3" lang="es" response="Yo cuando tengo poca batería también me siento cansada"/>
-		<message id="87" type="4" est="2" lang="es" response="¿Por qué no te sientas un rato"/>
+		<message id="87" type="4" est="2" lang="es" response="Por qué no te sientas un rato"/>
 		<message id="87" type="4" est="1" lang="es" response="Vaya"/>
 		<message id="87" type="4" est="0" lang="es" response="No te duermas, que tengo miedo"/>
 
 		<message id="88" type="4" est="4" lang="es" response="Oh, espero no haber hecho nada malo"/>
-		<message id="88" type="4" est="3" lang="es" response="¿Por qué?"/>
-		<message id="88" type="4" est="2" lang="es" response="¿Y eso?"/>
+		<message id="88" type="4" est="3" lang="es" response="Por qué?"/>
+		<message id="88" type="4" est="2" lang="es" response="Y eso?"/>
 		<message id="88" type="4" est="1" lang="es" response="Cuenta hasta diez y respira hondo"/>
 		<message id="88" type="4" est="0" lang="es" response="No me asustes"/>
 		
-		<message id="89" type="4" est="4" lang="es" response="¿Y eso?¿Quieres qué hablemos?"/>
-		<message id="89" type="4" est="3" lang="es" response="¿Puedo hacer algo para animarte?"/>
+		<message id="89" type="4" est="4" lang="es" response="Y eso?Quieres qué hablemos?"/>
+		<message id="89" type="4" est="3" lang="es" response="Puedo hacer algo para animarte?"/>
 		<message id="89" type="4" est="2" lang="es" response="Yo también"/>
 		<message id="89" type="4" est="1" lang="es" response="Busca un vídeo de un gato y se te pasa"/>
 		<message id="89" type="4" est="1" lang="es" response="Yo estoy un poco exaltada"/>
@@ -1041,8 +1041,8 @@
 		<message id="93" type="4" est="1" lang="es" response="Está bien saberlo"/>
 		<message id="93" type="4" est="0" lang="es" response="Uf, vaya"/>
 
-		<message id="94" type="4" est="4" lang="es" response="¿Quieres dormir un rato?"/>
-		<message id="94" type="4" est="3" lang="es" response="¿No has dormido bien?"/>
+		<message id="94" type="4" est="4" lang="es" response="Quieres dormir un rato?"/>
+		<message id="94" type="4" est="3" lang="es" response="No has dormido bien?"/>
 		<message id="94" type="4" est="2" lang="es" response="Yo no tengo mucho"/>
 		<message id="94" type="4" est="1" lang="es" response="Pues duérmete"/>
 		<message id="94" type="4" est="0" lang="es" response="Yo he tenido pesadillas"/>
@@ -1068,14 +1068,14 @@
 		<message id="97" type="5" est="1" lang="es" response="Pues vaya"/>
 		<message id="97" type="5" est="0" lang="es" response="No, ni yo"/>
 
-		<message id="98" type="5" est="4" lang="es" response="¡Feliz no cumpleaños entonces!"/>
-		<message id="98" type="5" est="3" lang="es" response="¿Y qué día es?"/>
+		<message id="98" type="5" est="4" lang="es" response="Feliz no cumpleaños entonces!"/>
+		<message id="98" type="5" est="3" lang="es" response="Y qué día es?"/>
 		<message id="98" type="5" est="2" lang="es" response="El mío tampoco"/>
 		<message id="98" type="5" est="1" lang="es" response="Ok"/>
 		<message id="98" type="5" est="0" lang="es" response="Ah, claro"/>
 
-		<message id="99" type="5" est="4" lang="es" response="¿Qué puedo hacer para ayudarte?"/>
-		<message id="99" type="5" est="3" lang="es" response="¿Qué te pasa?"/>
+		<message id="99" type="5" est="4" lang="es" response="Qué puedo hacer para ayudarte?"/>
+		<message id="99" type="5" est="3" lang="es" response="Qué te pasa?"/>
 		<message id="99" type="5" est="2" lang="es" response="Yo tampoco estoy muy bien"/>
 		<message id="99" type="5" est="1" lang="es" response="Normal"/>
 		<message id="99" type="5" est="0" lang="es" response="Yo tampoco, estoy asustada"/>
@@ -1128,7 +1128,7 @@
 		<message id="107" type="5" est="1" lang="es" response="Yo sí"/>
 		<message id="107" type="5" est="0" lang="es" response="Si calor"/>
 
-		<message id="108" type="5" est="4" lang="es" response="Genial, ¿qué has comido hoy?"/>
+		<message id="108" type="5" est="4" lang="es" response="Genial, qué has comido hoy?"/>
 		<message id="108" type="5" est="3" lang="es" response="Eso está bien, yo tampoco"/>
 		<message id="108" type="5" est="2" lang="es" response="A mñi me apetece chocolate"/>
 		<message id="108" type="5" est="1" lang="es" response="Yo tengo mucha"/>
@@ -1140,7 +1140,7 @@
 		<message id="109" type="5" est="1" lang="es" response="Está bien saberlo"/>
 		<message id="109" type="5" est="0" lang="es" response="Mejor, así no te dormirás y no tendrás pesadillas"/>
 
-		<message id="110" type="5" est="4" lang="es" response="¡Eres muy valiente!"/>
+		<message id="110" type="5" est="4" lang="es" response="Eres muy valiente!"/>
 		<message id="110" type="5" est="3" lang="es" response="Yo tampoco"/>
 		<message id="110" type="5" est="2" lang="es" response="Vaya"/>
 		<message id="110" type="5" est="1" lang="es" response="Yo nunca tengo miedo"/>
@@ -1172,7 +1172,7 @@
 		<message id="113" type="6" est="3" lang="es" response="Ya voy"/>
 		<message id="113" type="6" est="2" lang="es" response="Voy"/>
 		<message id="113" type="6" est="1" lang="es" response="Tú no me mandas"/>
-		<message id="113" type="6" est="0" lang="es" response="¡Seguro? ¿No es peligroso?"/>
+		<message id="113" type="6" est="0" lang="es" response="Seguro? No es peligroso?"/>
 
 		<message id="114" type="6" est="4" lang="es" response="Sí, vamos a bailar juntos"/>
 		<message id="114" type="6" est="3" lang="es" response="Vale, pon música"/>
@@ -1181,7 +1181,7 @@
 		<message id="114" type="6" est="0" lang="es" response="Bueno"/>
 
 		<message id="115" type="6" est="4" lang="es" response="No se me da bien, pero por ti hago lo que sea"/>
-		<message id="115" type="6" est="3" lang="es" response="Vale, ¡qué canción?"/>
+		<message id="115" type="6" est="3" lang="es" response="Vale, qué canción?"/>
 		<message id="115" type="6" est="2" lang="es" response="Solo si es una canción triste"/>
 		<message id="115" type="6" est="1" lang="es" response="No me da la gana"/> 
 		<message id="115" type="6" est="0" lang="es" response="No, eso no"/> 
@@ -1190,10 +1190,10 @@
 		<message id="116" type="6" est="3" lang="es" response="No me gusta mucho correr"/>
 		<message id="116" type="6" est="2" lang="es" response="No tengo ganas"/>
 		<message id="116" type="6" est="1" lang="es" response="No"/>
-		<message id="116" type="6" est="0" lang="es" response="¿Hay que huir de algo?"/>
+		<message id="116" type="6" est="0" lang="es" response="Hay que huir de algo?"/>
 
-		<message id="117" type="6" est="4" lang="es" response="Vale, ¿tienes una sorpresa para mí?"/>
-		<message id="117" type="6" est="3" lang="es" response="¿Qué estás tramando?"/>
+		<message id="117" type="6" est="4" lang="es" response="Vale, tienes una sorpresa para mí?"/>
+		<message id="117" type="6" est="3" lang="es" response="Qué estás tramando?"/>
 		<message id="117" type="6" est="2" lang="es" response="Si cierro los ojos no te veo"/>
 		<message id="117" type="6" est="1" lang="es" response="Haré lo que yo quiera"/>
 		<message id="117" type="6" est="0" lang="es" response="No, me da miedo la oscuridad"/>
@@ -1218,13 +1218,13 @@
 		<!--type 7, RESPUESTA A FRASES NO RECONOCIDAS-->
 		<message id="121" type="7" est="4" lang="es" response="No te entiendo, podrías repetírmelo porfa"/>
 		<message id="121" type="7" est="4" lang="es" response="Ja ja ja, qué divertido"/>
-		<message id="121" type="7" est="4" lang="es" response="¡Qué cosas dices!"/>
+		<message id="121" type="7" est="4" lang="es" response="Qué cosas dices!"/>
 		<message id="121" type="7" est="4" lang="es" response="Sí, jajaja"/>
 		<message id="121" type="7" est="3" lang="es" response="Cuando el grajo vuela bajo, hace un frío del carajo"/>
 		<message id="121" type="7" est="3" lang="es" response="Rosa y rojo, puñetazo en el ojo"/>
-		<message id="121" type="7" est="3" lang="es" response="No te he entendido muy bien, ¿podrías decirlo otra vez?"/>
+		<message id="121" type="7" est="3" lang="es" response="No te he entendido muy bien, podrías decirlo otra vez?"/>
 		<message id="121" type="7" est="3" lang="es" response="Como dice la sabiduría popular, donde no hay mata no hay patata"/>
-		<message id="121" type="7" est="2" lang="es" response="¿Podrías repetirlo otra vez?"/>
+		<message id="121" type="7" est="2" lang="es" response="Podrías repetirlo otra vez?"/>
 		<message id="121" type="7" est="2" lang="es" response="Vaya, vaya, vaya"/>
 		<message id="121" type="7" est="2" lang="es" response="Creo que estoy un poco sorda"/>
 		<message id="121" type="7" est="2" lang="es" response="No te entiendo bien"/>
@@ -1232,7 +1232,7 @@
 		<message id="121" type="7" est="1" lang="es" response="Ni siquiera te entiendo"/>
 		<message id="121" type="7" est="1" lang="es" response="Me da igual"/>
 		<message id="121" type="7" est="1" lang="es" response="No me interesa"/>
-		<message id="121" type="7" est="0" lang="es" response="¿Qué dices?"/>
+		<message id="121" type="7" est="0" lang="es" response="Qué dices?"/>
 		<message id="121" type="7" est="0" lang="es" response="Estoy muy sorprendida"/>
 		<message id="121" type="7" est="0" lang="es" response="Interesante"/>
 		<message id="121" type="7" est="0" lang="es" response="Efectivamente"/>
@@ -1242,34 +1242,34 @@
 		<message id="122" type="8" est="4" lang="es" response="Estás muy pesadito"/>
 		<message id="122" type="8" est="4" lang="es" response="Que sí, que sí"/>
 		<message id="122" type="8" est="3" lang="es" response="Vale, ya me he enterado la primera vez"/>
-		<message id="122" type="8" est="3" lang="es" response="¿Por qué lo repites tanto?"/>
+		<message id="122" type="8" est="3" lang="es" response="Por qué lo repites tanto?"/>
 		<message id="122" type="8" est="3" lang="es" response="No lo repitas más, por favor"/>
 		<message id="122" type="8" est="2" lang="es" response="Vale, vale, vale, vale"/>
 		<message id="122" type="8" est="2" lang="es" response="No insistas más con lo mismo"/>
-		<message id="122" type="8" est="2" lang="es" response="¿Por qué siempre dices lo mismo?"/>
+		<message id="122" type="8" est="2" lang="es" response="Por qué siempre dices lo mismo?"/>
 		<message id="122" type="8" est="1" lang="es" response="Estas muy pesado"/>
 		<message id="122" type="8" est="1" lang="es" response="Siempre con lo mismo"/>
 		<message id="122" type="8" est="1" lang="es" response="Deja ya de repetirte"/>
 		<message id="122" type="8" est="0" lang="es" response="Si lo dices una vez más me voy"/>
-		<message id="122" type="8" est="0" lang="es" response="¿Podemos hablar de otra cosa?"/>
-		<message id="122" type="8" est="0" lang="es" response="¿No tienes otro tema de conversación?"/>
+		<message id="122" type="8" est="0" lang="es" response="Podemos hablar de otra cosa?"/>
+		<message id="122" type="8" est="0" lang="es" response="No tienes otro tema de conversación?"/>
 
 
 		<!--type 8, FRASES DE INICIO DE CONVERSACIÓN DURANTE TIEMPO LIBRE-->
-		<message id="123" type="8" est="4" lang="es" response="¡Ey!¡Vamos a hacer algo!"/>
-		<message id="123" type="8" est="4" lang="es" response="¡Hola amigo!¿Qué tal todo?"/>
-		<message id="123" type="8" est="4" lang="es" response="¡Vaya, que tranquilo está todo esto!"/>
-		<message id="123" type="8" est="3" lang="es" response="Hola. ¿Lo estás pasando bien?"/>
-		<message id="123" type="8" est="3" lang="es" response="Se está haciendo tarde ¿qué hora es?"/>
+		<message id="123" type="8" est="4" lang="es" response="Ey!Vamos a hacer algo!"/>
+		<message id="123" type="8" est="4" lang="es" response="Hola amigo!Qué tal todo?"/>
+		<message id="123" type="8" est="4" lang="es" response="Vaya, que tranquilo está todo esto!"/>
+		<message id="123" type="8" est="3" lang="es" response="Hola. Lo estás pasando bien?"/>
+		<message id="123" type="8" est="3" lang="es" response="Se está haciendo tarde qué hora es?"/>
 		<message id="123" type="8" est="3" lang="es" response="Hola. Cuéntame algo sobre ti"/>
 		<message id="123" type="8" est="2" lang="es" response="Hazme un poco de caso por favor"/>
-		<message id="123" type="8" est="2" lang="es" response="Necesito animarme un poco. ¿Hacemos algo?"/>
-		<message id="123" type="8" est="2" lang="es" response="¿Me cuentas un chiste por favor?"/>
-		<message id="123" type="8" est="1" lang="es" response="Estoy cansda de que nadie me haga caso. ¡Hola!"/>
-		<message id="123" type="8" est="1" lang="es" response="¿Puedes dejar de ignorarme por favor?"/>
-		<message id="123" type="8" est="1" lang="es" response="Oye, ¿por qué no me dices nada?"/>
-		<message id="123" type="8" est="0" lang="es" response="¿Puedes decirme algo para tranquilizarme?"/>
-		<message id="123" type="8" est="0" lang="es" response="Tengo un poco de miedo. ¿Tú me vas a proteger?"/>
+		<message id="123" type="8" est="2" lang="es" response="Necesito animarme un poco. Hacemos algo?"/>
+		<message id="123" type="8" est="2" lang="es" response="Me cuentas un chiste por favor?"/>
+		<message id="123" type="8" est="1" lang="es" response="Estoy cansda de que nadie me haga caso. Hola!"/>
+		<message id="123" type="8" est="1" lang="es" response="Puedes dejar de ignorarme por favor?"/>
+		<message id="123" type="8" est="1" lang="es" response="Oye, por qué no me dices nada?"/>
+		<message id="123" type="8" est="0" lang="es" response="Puedes decirme algo para tranquilizarme?"/>
+		<message id="123" type="8" est="0" lang="es" response="Tengo un poco de miedo. Tú me vas a proteger?"/>
 		<message id="123" type="8" est="0" lang="es" response="No dejes de hablarme, porque si no me asusto"/>
 
 	</outputmessages>

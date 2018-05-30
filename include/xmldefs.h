@@ -55,6 +55,8 @@
 
 #define XML_ATTRIBUTE_ROBOT_HEIGHT_STR "height"
 #define XML_ATTRIBUTE_LOCALIZATION_STR "localization"
+#define XML_ATTRIBUTE_ROBOT_FACE_ID_STR "face"
+#define XML_ATTRIBUTE_ROBOT_NECK_ID_STR "neck"
 #define XML_ATTRIBUTE_CYCLIC_STR "cyclic"
 #define XML_ATTRIBUTE_ACTIVATED_STR "activated"
 #define XML_ATTRIBUTE_SEQUENCE_STR "sequence"

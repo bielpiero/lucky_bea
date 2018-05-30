@@ -62,10 +62,6 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	xmlMapsFullPath = RNUtils::getApplicationPath() + XML_FILE_MAPS_PATH;
 	xmlSectorsPath = RNUtils::getApplicationPath() + XML_FILE_SECTORS_PATH;
 	xmlRobotConfigFullPath = RNUtils::getApplicationPath() + XML_FILE_ROBOT_CONFIG_PATH;
-
-	
-	
-	ttsLipSync = new DorisLipSync(this->maestroControllers, RNUtils::getApplicationPath());
 	
 	this->currentMapId = RN_NONE;
 	this->currentSector = NULL;
@@ -78,34 +74,36 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	pthread_mutex_init(&rawDeltaEncoderLocker, NULL);
 	pthread_mutex_init(&rawPositionLocker, NULL);
 	
+	this->tts = new DorisLipSync(this->maestroControllers, this->getFaceId());
+
 	tasks = new RNRecurrentTaskMap(this);
 
-	laserTask = new RNLaserTask(this);
-	omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
-	rfidTask = new RNRFIdentificationTask(this);
+	//laserTask = new RNLaserTask(this);
+	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
+	//rfidTask = new RNRFIdentificationTask(this);
 	//globalLocalization = new RNGlobalLocalizationTask(this);
-	dialogs = new RNDialogsTask(this, ttsLipSync);
-	gestures = new RNGesturesTask(this, this->maestroControllers);
-	//armGestures = new RNArmTask(this, this->maestroControllers);
+	dialogs = new RNDialogsTask(this, this->tts);
+	gestures = new RNGesturesTask(this);
+	//armGestures = new RNArmTask(this);
 	emotions = new RNEmotionsTask(this);
 	//eyesCameras = new RNCameraTask(this);
 
-	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
+	/*if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
 		localization = new RNKalmanLocalizationTask(this);
 	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PF_STR){
 		localization = new RNPFLocalizationTask(this);
-	}
+	}*/
 	
 	////Tasks added:
 	//tasks->addTask(globalLocalization);
-	tasks->addTask(laserTask);
-	tasks->addTask(omnidirectionalTask);
-	tasks->addTask(rfidTask);
+	//tasks->addTask(laserTask);
+	//tasks->addTask(omnidirectionalTask);
+	//tasks->addTask(rfidTask);
 	tasks->addTask(dialogs);
 	//tasks->addTask(armGestures);
 	tasks->addTask(gestures);
 	tasks->addTask(emotions);
-	tasks->addTask(localization);
+	//tasks->addTask(localization);
 	//tasks->addTask(eyesCameras);
 	
 	
@@ -149,8 +147,7 @@ GeneralController::~GeneralController(void){
 	kalmanFuzzy->clear();
 	delete kalmanFuzzy;
 	RNUtils::printLn("Deleted kalmanFuzzy...");
-	delete ttsLipSync;
-	RNUtils::printLn("Deleted ttsLipSync...");
+	
 	delete maestroControllers;
 	RNUtils::printLn("Deleted maestroControllers...");
 	delete spdWSServer;
@@ -315,8 +312,8 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x0B:
 			RNUtils::printLn("Command 0x0B. Text to speech message");
 			if(granted){
-				dialogs->setInputMessage(cad);
-				//ttsLipSync->textToViseme(cad);
+				//dialogs->setInputMessage(cad);
+				tts->textToViseme(cad);
 				sendMsg(socketIndex, 0x08, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				RNUtils::printLn("Command 0x0B. Text to speech message denied to %s", getClientIPAddress(socketIndex));
@@ -1002,6 +999,12 @@ void GeneralController::loadRobotConfig(){
 		robotConfig->localization = std::string(root_node->first_attribute(XML_ATTRIBUTE_LOCALIZATION_STR)->value());
 	} else {
 		robotConfig->localization = std::string(XML_LOCALIZATION_ALGORITHM_KALMAN_STR);
+	}
+	if(root_node->first_attribute(XML_ATTRIBUTE_ROBOT_FACE_ID_STR)){
+		robotConfig->faceId = std::atoi(root_node->first_attribute(XML_ATTRIBUTE_ROBOT_FACE_ID_STR)->value());
+	}
+	if(root_node->first_attribute(XML_ATTRIBUTE_ROBOT_NECK_ID_STR)){
+		robotConfig->neckId = std::atoi(root_node->first_attribute(XML_ATTRIBUTE_ROBOT_NECK_ID_STR)->value());
 	}
 	xml_node<>* nav_root_node = root_node->first_node(XML_ELEMENT_NAV_PARAMS_STR);
 
@@ -2621,6 +2624,18 @@ int GeneralController::unlockRawPosition(){
 
 double GeneralController::getRobotHeight(){
 	return (robotConfig != NULL ? robotConfig->height : 0.0);
+}
+
+int GeneralController::getFaceId(){
+	return (robotConfig != NULL ? robotConfig->faceId : 0.0);
+}
+
+int GeneralController::getNeckId(){
+	return (robotConfig != NULL ? robotConfig->neckId : 0.0);
+}
+
+SerialPort* GeneralController::getMaestroController(){
+	return this->maestroControllers;
 }
 
 void GeneralController::onLaserScanCompleted(LaserScan* data){

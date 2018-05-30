@@ -26,6 +26,8 @@
 #include <cstdarg>
 #include <cassert>
 #include <cstddef>
+#include <cwctype>
+#include <clocale>
 #include <locale>
 #include <algorithm>
 
@@ -234,6 +236,8 @@ public: // functions
 	static void sleep(int milliseconds);
 	static void printLn(const char* _format, ...);
 	static std::vector<std::string> split(char* buffer, const char* delimiter);
+	static std::vector<std::string> split(std::string buffer, const char* delimiter);
+	static std::vector<std::wstring> wsplit(std::wstring buffer, const wchar_t delimiter);
 	static void getTimestamp(std::ostringstream& timestamp);
 	static void getBezierCurve(std::vector<PointXY> bezierPointXYs, std::vector<PointXY> &bezierCurve);
 	static int binomialCoeff(int n, int k);

@@ -4,16 +4,20 @@
 #include "RobotNode.h"
 #include "RNLandmarkList.h"
 
+#include "DorisLipSync.h"
+
 #include "SocketNode2.h"
 #include "SerialPort.h"
 #include "UDPClient.h"
 #include "RNSocketClient.h"
+
+#include "xmldefs.h"
+
 #include "xml/rapidxml_print.hpp"
 #include "xml/rapidxml.hpp"
 
 #include "RNVirtualFace.h"
 #include "RobotDataStreamer.h"
-#include "DorisLipSync.h"
 #include "MapSector.h"
 
 #include "fl/Headers.h"
@@ -180,8 +184,12 @@ struct s_navigation_params{
 struct s_robot{
 	double height;
 	std::string localization;
+	int faceId;
+	int neckId;
 	s_navigation_params* navParams;
 	s_robot(){
+		faceId = RN_NONE;
+		neckId = RN_NONE;
 		height = 0.0;
 		localization = "kalman";
 		navParams = new s_navigation_params();
@@ -196,7 +204,7 @@ class GeneralController : public CSocketNode, public RobotNode // la clase Gener
 {
 private: //variables emotions
 	SerialPort* maestroControllers;
-	DorisLipSync* ttsLipSync;
+	DorisLipSync* tts;
 
 	bool continue_dynamic_thread;
 	bool pendingTransferControl;
@@ -223,6 +231,8 @@ public: // emotions functions
 	virtual void onConnection(int socketIndex);//callback for client and server
 	virtual void onMsg(int socketIndex, char* cad, unsigned long long int length);//callback for client and server
 	virtual const char* getClassName() const;
+
+	SerialPort* getMaestroController();
 private:
 
 	bool isPermissionNeeded(char function);
@@ -303,6 +313,8 @@ public:
 	double getCameraAngleVariance();
 
 	double getRobotHeight();
+	int getFaceId();
+	int getNeckId();
 
 	bool isLaserSensorActivated();
 	bool isCameraSensorActivated();

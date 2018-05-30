@@ -22,7 +22,7 @@ private:
 
     Arm* brazo;
 public:
-	RNArmTask(const GeneralController* gn, SerialPort* maestroController, const char* name = "Arm Gestures Task", const char* description = "Doris Arm");
+	RNArmTask(const GeneralController* gn, const char* name = "Arm Gestures Task", const char* description = "Doris Arm");
 	~RNArmTask();
 	virtual void task();
 	virtual void onKilled();

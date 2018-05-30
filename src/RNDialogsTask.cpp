@@ -42,6 +42,9 @@ RNDialogsTask::RNDialogsTask(const GeneralController* gn, DorisLipSync* tts, con
 }
 
 RNDialogsTask::~RNDialogsTask(){
+    delete tts;
+    RNUtils::printLn("Deleted tts...");
+
     for (int i = 0; i < outputMessages->size(); i++){
         delete outputMessages->at(i);
     }
@@ -127,7 +130,7 @@ void RNDialogsTask::task(){
             //We use random between the number of possible answers
             int index = rand() % responses.size();
             response = responses.at(index)->getText();
-            tts->textToViseme(response.c_str());
+            tts->textToViseme(response);
             inputMessage = "";
             //printf("\n%s. ", response);
         //} else if(number_states == 1){ //If there is only one possible answer we just take it (it's the first one in the matrix)

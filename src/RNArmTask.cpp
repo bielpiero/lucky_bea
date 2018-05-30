@@ -1,8 +1,8 @@
 #include "RNArmTask.h"
 
-RNArmTask::RNArmTask(const GeneralController* gn, SerialPort* maestroController, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
+RNArmTask::RNArmTask(const GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
 	this->gn = (GeneralController*)gn;
-	this->maestroController = maestroController;
+	this->maestroController = this->gn->getMaestroController();
 	gestures = new std::vector<ArmGesture*>();
 	
     xml_document<> doc;

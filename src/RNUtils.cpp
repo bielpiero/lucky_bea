@@ -68,6 +68,20 @@ void RNUtils::sleep(int milliseconds){
 	usleep(1000*milliseconds);
 }
 
+std::vector<std::string> RNUtils::split(std::string buffer, const char* delimiter){
+	return split((char*)buffer.c_str(), delimiter);
+}
+
+std::vector<std::wstring> RNUtils::wsplit(std::wstring buffer, const wchar_t delimiter){
+	std::vector<std::wstring> result;
+	std::wstringstream current(buffer);
+	std::wstring temp;
+	while(std::getline(current, temp, delimiter)){
+    	result.push_back(temp);
+    }
+	return result;
+}
+
 std::vector<std::string> RNUtils::split(char* buffer, const char* delimiter){
 	std::vector<std::string> result;
 	char* buffer_in = new char[strlen(buffer) + 1];

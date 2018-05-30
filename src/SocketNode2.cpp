@@ -136,8 +136,8 @@ void CSocketNode::handleConnection(void){
 							socket_conn[i].setCheckedIfIsAWebSocket(false);
 							socket_conn[i].setHandshakeDone(false);
 
-							int optval;
-							setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+							int optval = 1;
+							setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(int));
 							int buff_size = BUFFER_SIZE;
 							setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_SNDBUF, &buff_size, sizeof(buff_size));
 							setsockopt(socket_conn[i].getSocket(), SOL_SOCKET, SO_RCVBUF, &buff_size, sizeof(buff_size));

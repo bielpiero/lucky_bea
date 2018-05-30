@@ -1,71 +1,76 @@
 
 #include "DorisLipSync.h"
 
-DorisLipSync::DorisLipSync (SerialPort* mc, std::string packagePath) {
-	lastWord = "";
-	xmlLipSyncFullPath = packagePath + XML_FILE_LIP_SYNC_PATH;
-	xmlVisemesCodesFullPath = packagePath + XML_FILE_VISEMES_CODES_PATH;
-	this->mc = new SerialPort(*mc);
-
+DorisLipSync::DorisLipSync (SerialPort* mc, int faceId) {
+	xmlLipSyncFullPath = RNUtils::getApplicationPath() + XML_FILE_LIP_SYNC_PATH;
+	xmlVisemesCodesFullPath = RNUtils::getApplicationPath() + XML_FILE_VISEMES_CODES_PATH;
+	this->mc = mc;
+	this->faceId = faceId;
 	tts = new TextToSpeech;
 	tts->setDefaultConfiguration();
+
+	gestures = new std::vector<FaceGesture*>();
+	
+    xml_document<> doc;
+    xml_node<> * root_node;
+
+    // Read the xml file into a vector
+    ifstream theFile (xmlLipSyncFullPath.c_str());
+    vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
+    buffer.push_back('\0');
+
+     // Parse the buffer using the xml file parsing library into doc
+    doc.parse<0>(&buffer[0]);
+
+    // Find our root node
+    root_node = doc.first_node(XML_STATIC_GESTURES_STR);
+
+     for (xml_node<> * Gesto_node = root_node->first_node(XML_ELEMENT_GESTURE_STR); Gesto_node; Gesto_node = Gesto_node->next_sibling()){
+        FaceGesture* gesture = new FaceGesture();
+        gesture->setName(std::string(Gesto_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value()));
+        gesture->setId(std::string(Gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
+        gesture->setType(std::string(Gesto_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value()));
+
+        for(xml_node<> * state_node = Gesto_node->first_node(XML_ELEMENT_FRAME_STR); state_node; state_node = state_node->next_sibling()){
+        	FaceFrame* state = new FaceFrame();
+        	state->setId(std::string(state_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
+
+	        for(xml_node<> * Motor_node = state_node->first_node(XML_ELEMENT_MOTOR_STR); Motor_node; Motor_node = Motor_node->next_sibling()){ //we store all the variables for the motors in a matrix of strings
+	       		FaceMotor* motor = new FaceMotor();
+
+	       		motor->setCardId(this->faceId);
+	            motor->setId(std::atoi(Motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
+	            motor->setPos(std::atoi(Motor_node->first_attribute(XML_ATTRIBUTE_POSITION_STR)->value()));
+	            motor->setSpeed(std::atoi(Motor_node->first_attribute(XML_ATTRIBUTE_SPEED_STR)->value()));
+	            motor->setAcceleration(std::atoi(Motor_node->first_attribute(XML_ATTRIBUTE_ACCELERATION_STR)->value()));
+	            state->addMotor(motor);
+	        }
+	        gesture->addFrame(state);
+	    }
+        gestures->push_back(gesture);
+    }
+    theFile.close();
 }
 
-int DorisLipSync::numberOfSyllables (const char *word) {
-	process (word);
-	return numSyl;
-}
-
-std::vector<int> DorisLipSync::syllablePositions (const char *word) {
-	process (std::string(word));
-	return positions;
-}
-
-int DorisLipSync::stressedSyllable (const char *word) {
-	process (std::string(word));
-	return stressed;
-}
-
-char* DorisLipSync::cutData(char *text, int start, int stop){
-
-	std::string actualSyllable="";
-
-
-	for(int j = start; j <= stop; j++){
-		actualSyllable+=text[j];}
-
-
-		char *actualSyllablechar = new char[actualSyllable.length() + 1];
-		strcpy(actualSyllablechar, actualSyllable.c_str());
-
-
-		return actualSyllablechar;
-}
-
-char* DorisLipSync::textNorm(const char *str, char Symbol){
-	std::string someString(str);
-	std::transform(someString.begin(), someString.end(), someString.begin(), ::toupper);
-	size_t posicion;
-	while((posicion = someString.find(Symbol)) != std::string::npos){
-		someString.erase(posicion, 1);}
-
-		char *actualSyllablechar = new char[someString.length() + 1];
-		strcpy(actualSyllablechar, someString.c_str());
-
-		return actualSyllablechar;
+std::wstring DorisLipSync::textNorm(const std::wstring str, wchar_t symbol){
+	std::wstring someString(str);
+	std::transform(someString.begin(), someString.end(), someString.begin(), ::tolower);
+	someString.erase(std::remove(someString.begin(), someString.end(), symbol), someString.end());
+	return someString;
 
 
 }
 
-char* DorisLipSync::syllableToViseme(char *syllable){
+std::string DorisLipSync::syllableToViseme(const std::string syllable){
 
 	using namespace rapidxml;
 	xml_document<> doc;
 	xml_node<> * root_node;
-	char *iterViseme;
-	char *viseme;
-	char *actualSyllable;
-	int compVisemeSillable;
+	std::string iterViseme;
+	std::string viseme = "";
+	std::string actualSyllable;
+
+	bool found = false;
 
 	std::ifstream dorisVisemes (xmlVisemesCodesFullPath.c_str());
 	vector<char> buffer((istreambuf_iterator<char>(dorisVisemes)), istreambuf_iterator<char>());
@@ -74,43 +79,40 @@ char* DorisLipSync::syllableToViseme(char *syllable){
 
 	root_node = doc.first_node(XML_ELEMENT_VISEMES_STR);
 
-	for (xml_node<> * viseme_node = root_node->first_node(XML_ELEMENT_VISEME_STR); viseme_node; viseme_node = viseme_node->next_sibling())
-	{
-		iterViseme=viseme_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value();
-		viseme = cutData(iterViseme, 1,2);
-		actualSyllable = cutData(iterViseme, 3,(strlen(iterViseme)+1));
-    	//std::cout <<viseme<<endl;
-		compVisemeSillable = strcmp(actualSyllable, syllable);
-
-		if (compVisemeSillable==0){
-			break;
-		}
+	for (xml_node<> * viseme_node = root_node->first_node(XML_ELEMENT_VISEME_STR); viseme_node and not found; viseme_node = viseme_node->next_sibling()){
+		iterViseme = std::string(viseme_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+		viseme = iterViseme.substr(1, 2);
+		actualSyllable = iterViseme.substr(3, iterViseme.length() - 2);
+		found = actualSyllable == syllable;
+		
 	}
 
 	return viseme;
 
 }
 
-void DorisLipSync::textToViseme(const char *str){
+void DorisLipSync::textToViseme(const std::string str){
 
 ////////////////////////////
 // Comunication TTS object
 	
-	RNUtils::printLn("Text To Say: %s", str);
+	RNUtils::printLn("Text To Say: %s", str.c_str());
+	std::wstring wtxt;
+	wtxt.assign(str.begin(), str.end());
 
-	char* text = textNorm(str, '_');
+	std::wstring text = textNorm(wtxt, L'_');
+	text = textNorm(text, '?');
+	text = textNorm(text, '¡');
+	text = textNorm(text, '!');
+	text = textNorm(text, '¿');
+	text = textNorm(text, ',');
+	text = textNorm(text, '.');
 
-	std::vector<int> pointerPositions;
-	int storeSillableWeight;
+	std::vector<std::wstring> syllables;
 	std::string actualSyllable="";
-	int numSil;
-	char  endText[]  = " a";
-	strcat(text, endText);
 
-
-	pointerPositions = syllablePositions(text);
-	numSil = numberOfSyllables(text) - 1;
-
+	getSyllables(text, &syllables);
+	
 	//std::cout<<"<---Number of syllables--->\n"<<numSil<<std::endl;
 
 ////////////////////////////
@@ -118,58 +120,61 @@ void DorisLipSync::textToViseme(const char *str){
 	tts->setString(str);
 //__________________
 
-	for(int i = 0; i < numSil; i++){
-		storeSillableWeight = (pointerPositions.at(i + 1) - pointerPositions.at(i));
-		int k = 0;
-
-
-		for(int j = pointerPositions[i]; j < (storeSillableWeight + pointerPositions.at(i)); ){
-			actualSyllable+=text[j];
-			k++;
-
-    // Change to char the string of the actual Syllable
-			char *actualSyllablechar = new char[actualSyllable.length() + 1];
-			strcpy(actualSyllablechar, actualSyllable.c_str());
-
-
-			if (k == (storeSillableWeight)){
-				actualSyllablechar = textNorm(actualSyllablechar,' ');
-				actualSyllablechar = textNorm(actualSyllablechar,'?');
-				actualSyllablechar = textNorm(actualSyllablechar,'¡');
-				actualSyllablechar = textNorm(actualSyllablechar,'!');
-				actualSyllablechar = textNorm(actualSyllablechar,'¿');
-				actualSyllablechar = textNorm(actualSyllablechar,',');
-				actualSyllablechar = textNorm(actualSyllablechar,'.');
-
-				//std::cout << "\n\n<---------------------->\n" << std::endl;
-				//std::cout << "<---Syllable----------->\n" << actualSyllablechar << std::endl;
-				actualSyllablechar = syllableToViseme(actualSyllablechar);
-
-				//std::cout << "<---Viseme Code----------->\n"<<actualSyllablechar << std::endl;
-
-
-	        //Activar cuando cambie emociones
-	        //char Emotion[]="Neutro"; 
-	        //char *SRate = speakingRate("Neutro");
-	        //char *SRateOnly=cutData(SRate, 1,4);
-	        //int speakingRate = (atoi (SRateOnly));
-
-
-				float timer = (timeSync(storeSillableWeight, 250));
-	        //std::cout<<"<---tiempito----------->\n"<<speakingRate<<std::endl;
-				selectMotion(actualSyllablechar, timer);  
-			}
-
-			j++;
-		}
-
-		actualSyllable="";
-
+	for(int i = 0; i < syllables.size(); i++){
+		std::string fixedSyllable = fixSyllable(syllables.at(i));
+		//std::cout << fixedSyllable << std::endl;
+		actualSyllable = syllableToViseme(fixedSyllable);
+		float timer = (timeSync(syllables.at(i).length(), 250));
+		selectMotion(std::atoi(actualSyllable.c_str()), timer);
 	}
 	setViseme("5");
 }
 
-float  DorisLipSync::timeSync(int numOfLetters, int actualspeakingRate){
+std::string DorisLipSync::fixSyllable(std::wstring syllable){
+	std::string syl = "";
+	std::locale loc("es_ES.utf8");
+	for (int i = 0; i < syllable.length(); i++){
+		if(syllable.at(i) == 195){
+			switch(syllable.at(i + 1)){
+				case 179: // ó
+				case 147: // Ó
+					syl += 'O';
+					break;
+				case 173: // í
+				case 141: // Í
+					syl += 'I';
+					break;
+				case 161: // á
+				case 129: // Á
+					syl += 'A';
+					break;
+				case 169: // é
+				case 137: // É
+					syl += 'E';
+					break;
+				case 186: // ú
+				case 154: // Ú
+				case 188: // ü
+				case 156: // Ü
+					syl += 'U';
+					break;
+				case 177: // ú
+				case 145: // Ú
+					syl += 195;
+					syl += 145;
+					break;
+			}
+			i++;
+		} else {
+			syl += std::toupper(syllable.at(i), loc);
+		}
+    	
+	}
+
+	return syl;
+}
+
+float DorisLipSync::timeSync(int numOfLetters, int actualspeakingRate){
 	float sampleDuration;
 	float timetoSync;
 
@@ -249,25 +254,23 @@ int DorisLipSync::amplitudeWave(const double& emotion){
 	return selectVol;
 }
 
-int DorisLipSync::configureEmicTwo(const double& emotion, const char *language){
+int DorisLipSync::configureEmicTwo(const double& emotion, const std::string language){
 
 	std::string lx;
-	int selectLanguage;
 
-	char setVoice[]=     "N2";                /*Beautiful Betty*/
-	char setParser[]=    "P1";                /*P0 (DECtalk), P1 (Epson)*/
+	std::string setVoice = "N2";                /*Beautiful Betty*/
+	std::string setParser = "P1";                /*P0 (DECtalk), P1 (Epson)*/
 
 	int speaking = speakingRate(emotion);
 	int audioVolume = amplitudeWave(emotion);
 
 
-	selectLanguage= strcmp(language,"English");
-	if (selectLanguage == 0) {
+	if (language == ENGLISH_LANG_STR) {
 		lx="L0";
 	}
 	
-	selectLanguage= strcmp(language, "Spanish");     /*L1 para español castellano*/
-	if (selectLanguage == 0) {
+    /*L1 para español castellano*/
+	if (language == SPANISH_LANG_STR) {
 		lx="L2";
 	}
 
@@ -287,57 +290,40 @@ int DorisLipSync::configureEmicTwo(const double& emotion, const char *language){
 	return 0; // retornar el status de la tarjeta de TTS cuando responda :
 }
 
-void DorisLipSync::setViseme(string viseme_id){
-	using namespace rapidxml;
-	xml_document<> doc;
-	xml_node<>* root_node;
-	
-	std::string buffer_str = "";
-	std::ifstream the_file (xmlLipSyncFullPath.c_str());
-
-	vector<char> buffer((istreambuf_iterator<char>(the_file)), istreambuf_iterator<char>());
-	buffer.push_back('\0');
-	
-	doc.parse<0>(&buffer[0]);
-	//stopDynamicGesture();
-	root_node = doc.first_node(XML_STATIC_GESTURES_STR);
-	if(root_node != NULL){
-		for (xml_node<> * gesto_node = root_node->first_node(XML_ELEMENT_GESTURE_STR); gesto_node; gesto_node = gesto_node->next_sibling()){
-
-			string id(gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-
-			string tipo(gesto_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value());
-			
-			if (viseme_id == id)
-			{
-				for(xml_node<> * motor_node = gesto_node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling()){
-					unsigned char card_id = (unsigned char)atoi(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value());
-					unsigned char servo_id = (unsigned char)atoi(motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-					int position = atoi(motor_node->first_attribute(XML_ATTRIBUTE_POSITION_STR)->value());
-					//int speed = atoi(motor_node->first_attribute(XML_ATTRIBUTE_SPEED_STR)->value());
-					//int acceleration = atoi(motor_node->first_attribute(XML_ATTRIBUTE_ACCELERATION_STR)->value());
-
-					mc->setTarget(card_id, servo_id, position); 
-					//std::cout << "Motor = " << servo_id<<std::endl;
-					//std::cout << "Position = " << position<<std::endl;
-
-
-				}	
-
-			}
-		}
+void DorisLipSync::setViseme(std::string viseme_id){
+	if(viseme_id != ""){
+		std::ostringstream bufferOut_str;
+		for (int i = 0; i < gestures->size(); i++){
+	       if(viseme_id == gestures->at(i)->getId()){ //compares if the name of the gesture is the one we are looking for
+	            // Iterate over the motors
+	       		
+	       		for (int j = 0; j < gestures->at(i)->framesSize(); j++){
+		           	for(int k = 0; k < gestures->at(i)->frameAt(j)->motorsSize(); k++){ //we store all the variables for the motors in a string matrix
+		                //////////esto es lo que hay que enviar
+		                uint8_t card_id = gestures->at(i)->frameAt(j)->motorAt(k)->getCardId();
+		                uint8_t servo_id = gestures->at(i)->frameAt(j)->motorAt(k)->getId();
+		                uint16_t position = gestures->at(i)->frameAt(j)->motorAt(k)->getPos();
+		                uint16_t speed_t = gestures->at(i)->frameAt(j)->motorAt(k)->getSpeed();
+		                uint16_t acc_t = gestures->at(i)->frameAt(j)->motorAt(k)->getAcceleration();
+		                
+						this->mc->setTarget(card_id, servo_id, position);
+						this->mc->setSpeed(card_id, servo_id, speed_t);
+						this->mc->setAcceleration(card_id, servo_id, acc_t);
+		            }
+		        }
+	        }
+	    }
 	}
-	the_file.close();
 }
 
-void DorisLipSync::selectMotion(char *visemeCod, float timetoSync){
+void DorisLipSync::selectMotion(int visemeCod, float timetoSync){
 	
 	//std::cout << "<---Select Servos' Positions------>\n"<<std::endl;
 	
-	int codViseme = std::atoi (visemeCod);
-	string id;
+
+	std::string id;
 	
-	switch(codViseme)
+	switch(visemeCod)
 	{
 		case 1:
 		id="0";
@@ -972,83 +958,87 @@ void DorisLipSync::selectMotion(char *visemeCod, float timetoSync){
 	}
 }
 
-void DorisLipSync::process (std::string word) {
-	if(word != lastWord){
-		lastWord = word;
-		syllablePositions (word);
-	}
-}
-
 /**************************************************************/
 /* Returns an array with the start positions of the syllables */
 /**************************************************************/
 
-void DorisLipSync::syllablePositions (std::string word) {
-	wordLength      = word.length();
-	stressedFound   = false;
-	stressed        = 0;
-	numSyl          = 0;
-	letterAccent    = -1;
+int DorisLipSync::getSyllables (std::wstring word, std::vector<std::wstring>* syllables) {
+	std::vector<std::wstring> words = RNUtils::wsplit(word, L' ');
 
 	// It looks for syllables in the word
-	positions.clear();
-	for (int i = 0; i < wordLength;) {
-		positions.push_back(i);
-		numSyl++;
-		//positions [numSyl++] = i;  // It marks the beginning of the current syllable
-
+	syllables->clear();
+	for (int i = 0; i < words.size(); i++) {
+		int end = 0;
 		// Syllables consist of three parts: onSet, nucleus and coda
+		for(int j = 0; j < words.at(i).length();){
+			int start = j;
+			onSet(words.at(i), start, &end);
+			//std::wcout << L"set: " << words.at(i).substr(start, end - start) << std::endl;
+			start = end;
+			bool cont = nucleus(words.at(i), start, &end);
+			//std::wcout << L"nucleus: " << words.at(i).substr(start, end - start) << std::endl;
+			if(cont){
+				start = end;
+				if(start < words.at(i).length()){
+					coda(words.at(i), start, &end);	
+				}
+				//std::wcout << "coda: " << words.at(i).substr(start, end - start) << std::endl;
+			}
+			//std::wcout << L"Syllable: " << words.at(i).substr(j, end - j) << std::endl;
 
-		onSet   (word, i);
-		nucleus (word, i);
-		coda    (word, i);
-
-		if ((stressedFound) && (stressed == 0)) stressed = numSyl; // It marks the stressed syllable
-	}
-
-	// If the word has not written accent, the stressed syllable is determined
-	// according to the stress rules
-
-	if (!stressedFound) {
-		if (numSyl < 2) stressed = numSyl;  // Monosyllables
-		else {                              // Polysyllables
-			char endLetter      = tolower(word.at(wordLength - 1));
-			char previousLetter = tolower(word.at(wordLength - 2));
-
-			if ((!isConsonant (endLetter) || (endLetter == 'y')) ||
-				(((endLetter == 'n') || (endLetter == 's') || !isConsonant (previousLetter))))
-				stressed = numSyl - 1;	// Stressed penultimate syllable
-			else
-				stressed = numSyl;		// Stressed last syllable
+			syllables->push_back(words.at(i).substr(j, end - j));
+			j = end;
 		}
+
+		
 	}
-	positions.push_back(-1);
-	//positions [numSyl] = -1;  // It marks the end of found syllables
 }
 
 /************************************/
 /* Determines whether hiatus exists */
 /************************************/
 
+bool DorisLipSync::hiatus (std::wstring vowels, int* size) {
+	bool r = false;
+	if(vowels.length() == 2){
+		if((openVowel(vowels.at(0)) and openVowel(vowels.at(1))) or 
+			(vowels.at(0) == 'i' and vowels.at(1) == 'i') or 
+			(vowels.at(0) == 'u' and vowels.at(1) == 'u')){
+			r = true;
+		}
+	} else if(vowels.length() == 3){
+		if((openVowel(vowels.at(0)) and (vowels.at(1) == 195 and closedAcutedVowel(vowels.at(2)))) or
+			((vowels.at(0) == 195 and closedAcutedVowel(vowels.at(1))) and openVowel(vowels.at(2)))){
+			r = true;
+		}
+	}
+	
+	*size = vowels.length();
+	return r;
+}
 
-bool DorisLipSync::hiatus () {
-	char accented = tolower (lastWord.at(letterAccent));
+/****************************************/
+/* Determines whether triphthong exists */
+/****************************************/
 
-	if ((letterAccent > 1) &&  // hiatus is only possible if there is accent
-		(tolower(lastWord.at(letterAccent - 1)) == 'u') &&
-		(tolower(lastWord.at(letterAccent - 2)) == 'q'))
-	    return false; // The 'u' letter belonging "qu" doesn't form hiatus
-
-	// The central character of a hiatus must be a close-vowel with written accent
-
-	if ((accented == 'í') || (accented == 'ì') || (accented == 'ú') || (accented == 'ù')) {
-
-		if ((letterAccent > 0) && openVowel (lastWord.at(letterAccent - 1))) return true;
-
-		if ((letterAccent < (wordLength - 1)) && openVowel (lastWord.at(letterAccent + 1))) return true;
+bool DorisLipSync::triphthong (std::wstring vowels, int* size){
+	bool r = false;
+	if(vowels.length() == 3){
+		if(closedVowel(vowels.at(0)) and openVowel(vowels.at(1)) and closedVowel(vowels.at(2))){
+			r = true;
+		}
+	} else if(vowels.length() == 4){
+		if(closedVowel(vowels.at(0)) and (vowels.at(1) == 195 and openAcutedVowel(vowels.at(2))) and closedVowel(vowels.at(3))){
+			r = true;
+		}
+	} else if(vowels.length() == 5){
+		if((vowels.at(0) == 195 and (vowels.at(1) == 188 or vowels.at(1) == 156)) and (vowels.at(2) == 195 and openAcutedVowel(vowels.at(3))) and closedVowel(vowels.at(4))){
+			r = true;
+		}
 	}
 
-	return false;
+	*size = vowels.length();
+	return r;
 }
 
 
@@ -1057,34 +1047,45 @@ bool DorisLipSync::hiatus () {
 /* and pos is changed to the follow position after end of onSet     */
 /********************************************************************/
 
-void DorisLipSync::onSet (std::string pal, int &pos) {
+void DorisLipSync::onSet (std::wstring word, int start, int* end) {
 	// Every initial consonant belongs to the onSet
-
-	char lastConsonant = 'a';
-	while ((pos < wordLength) && ((isConsonant (pal.at(pos))) && (tolower (pal.at(pos)) != 'y'))) {
-		lastConsonant = tolower (pal.at(pos));
-		pos++;
-	}
-
-	// (q | g) + u (example: queso, gueto)
-
-	if (pos < wordLength - 1)
-	// 
-	{
-		if (tolower (pal.at(pos)) == 'u') {
-			if (lastConsonant == 'q') pos++;
-			else
-				if (lastConsonant == 'g') {
-					char letter = tolower (pal.at(pos + 1));
-					if ((letter == 'e') || (letter == 'é') ||
-						(letter == 'i') || (letter == 'í')) pos ++;
+	bool c1 = false, c2 = false;
+	if(word.at(start) != 195){
+		if(isConsonant(word.at(start)) or word.at(start) == 'y'){
+			c1 = true;
+			if(word.at(start) == 'g' or word.at(start) == 'k' or word.at(start) == 't' or word.at(start) == 'b' or word.at(start) == 'p' or word.at(start) == 'f'){
+				if(word.at(start + 1) == 'r' or word.at(start + 1) == 'l'){
+					c2 = true;
 				}
+			} else if(word.at(start) == 'g' or word.at(start) == 'k' or word.at(start) == 't' or word.at(start) == 'b' or word.at(start) == 'p' or word.at(start) == 'f' or word.at(start) == 'd'){
+				if(word.at(start + 1) == 'r'){
+					c2 = true;
+				}
+			} else if(word.at(start) == 'c'){
+				if(word.at(start + 1) == 'h'){
+					c2 = true;
+				}
+			} else if(word.at(start) == 'l'){
+				if(word.at(start + 1) == 'l'){
+					c2 = true;
+				}
+			} else if(word.at(start) == 'r'){
+				if(word.at(start + 1) == 'r'){
+					c2 = true;
+				}
+			}
 		}
-		else { // The 'u' with diaeresis is added to the consonant
-			if ((pal.at(pos) == 'ü') || (pal.at(pos) == 'Ü'))
-				if (lastConsonant == 'g') pos++;
-		}
-	// eliminar llave
+	} else if((start + 1) < word.length() and (word.at(start + 1) == 177 or word.at(start + 1) == 145)){
+		c1 = true;
+		c2 = true;
+	}
+	
+	
+	if(c1){
+		*end = start + 1;
+	}
+	if(c2){
+		*end = start + 2;
 	}
 }
 
@@ -1094,128 +1095,48 @@ void DorisLipSync::onSet (std::string pal, int &pos) {
 /****************************************************************************/
 
 
-void DorisLipSync::nucleus (std::string pal, int &pos) {
-	int previous; // Saves the type of previous vowel when two vowels together exists
-	              // 0 = open
-	              // 1 = close with written accent
-	              // 2 = close
-
-	if (pos >= wordLength) return; // ¡¿Doesn't it have nucleus?!
-
-	// Jumps a letter 'y' to the starting of nucleus, it is as consonant
-
-	if (tolower(pal.at(pos)) == 'y') pos++;
-
-	// First vowel
-
-	if (pos < wordLength) {
-		switch (pal.at(pos)) {
-		// Open-vowel or close-vowel with written accent
-			case 'á': case 'Á': case 'à': case 'À':
-			case 'é': case 'É': case 'è': case 'È':
-			case 'ó': case 'Ó': case 'ò': case 'Ò':
-			letterAccent = pos;
-			stressedFound   = true;
- 		// Open-vowel
-			case 'a': case 'A':
-			case 'e': case 'E':
-			case 'o': case 'O':
-			previous = 0;
-			pos++;
-			break;
-		// Close-vowel with written accent breaks some possible diphthong
-			case 'í': case 'Í': case 'ì': case 'Ì':
-			case 'ú': case 'Ú': case 'ù': case 'Ù': case 'ü': case 'Ü':
-			letterAccent = pos;
-			previous = 1;
-			pos++;
-			stressedFound = true;
-			return;
-			break;
-		// Close-vowel
-			case 'i': case 'I':
-			case 'u': case 'U':
-			previous = 2;
-			pos++;
-			break;
-		}
-	}
-
-	// If 'h' has been inserted in the nucleus then it doesn't determine diphthong neither hiatus
-
-	bool aitch = false;
-	if (pos < wordLength) {
-		if (tolower(pal.at(pos)) == 'h') {
-			pos++;
-			aitch = true;
-		}
-	}
-
-	// Second vowel
-
-	if (pos < wordLength) {
-		switch (pal.at(pos)) {
-		// Open-vowel with written accent
-			case 'á': case 'Á': case 'à': case 'À':
-			case 'é': case 'É': case 'è': case 'È':
-			case 'ó': case 'Ó': case 'ò': case 'Ò':
-			letterAccent = pos;
-			if (previous != 0) {
-				stressedFound    = true;
+bool DorisLipSync::nucleus (std::wstring word, int start, int* end) {
+	bool r = false;
+	std::wstring vowels;
+	int i = start;
+	int size;
+	bool enough = false;
+	while(i < word.length() and not enough){
+		if(word.at(i) == 195){ // precedent for acute letter
+			if((word.at(i + 1) != 177 and word.at(i + 1) != 145)){
+				vowels += word.at(i++);
+				vowels += word.at(i++);
+			} else {
+				enough = true;
 			}
-		// Open-vowel
-			case 'a': case 'A':
-			case 'e': case 'E':
-			case 'o': case 'O':
-			if (previous == 0) {    // Two open-vowels don't form syllable
-				if (aitch) pos--;
-			return;
-		}
-		else {
-			pos++;
-		}
-
-		break;
-
-		// Close-vowel with written accent, can't be a triphthong, but would be a diphthong
-		case 'í': case 'Í': case 'ì': case 'Ì':
-		case 'ú': case 'Ú': case 'ù': case 'Ù':
-		letterAccent = pos;
-
-			if (previous != 0) {  // Diphthong
-				stressedFound    = true;
-				pos++;
-			}
-			else
-				if (aitch) pos--;
-
-			return;
-		// Close-vowel
-			case 'i': case 'I':
-			case 'u': case 'U': case 'ü': case 'Ü':
-			if (pos < wordLength - 1) { // ¿Is there a third vowel?
-				if (!isConsonant (pal.at(pos+1))) {
-					if (tolower(pal.at(pos - 1)) == 'h') pos--;
-					return;
-				}
-			}
-
-			// Two equals close-vowels don't form diphthong
-			if (pal [pos] != pal.at(pos)) pos++;
-
-			return;  // It is a descendent diphthong
-			break;
+			
+		} else if(not isConsonant(word.at(i))){
+			vowels += word.at(i++);	
+		} else {
+			enough = true;
 		}
 	}
 
-	// Third vowel?
-
-	if (pos < wordLength) {
-		if ((tolower(pal.at(pos)) == 'i') || (tolower(pal.at(pos)) == 'u')) { // Close-vowel
-			pos++;
-			return;  // It is a triphthong
+	if(triphthong(vowels, &size)){
+		*end = *end + size;
+		r = true;
+	} else if(vowels.length() >= 2 and not hiatus(vowels, &size)){
+		*end = *end + size;
+		r = true;
+	} else if(hiatus(vowels, &size)) {
+		if(size > 2){
+			size = 2;
+		} else {
+			size = 1;
 		}
+		*end = *end + size;
+		r = false;
+	} else {
+		*end = *end + vowels.length();
+		r = true;
 	}
+	
+	return r;
 }
 
 /*****************************************************************************/
@@ -1224,136 +1145,135 @@ void DorisLipSync::nucleus (std::string pal, int &pos) {
 /*****************************************************************************/
 
 
-void DorisLipSync::coda (std::string pal, int &pos) {
-	if ((pos >= wordLength) || (!isConsonant (pal.at(pos))))
-		return; // Syllable hasn't coda
-	else {
-		if (pos == wordLength - 1) // End of word
-		{
-			pos++;
-			return;
-		}
-
-		// If there is only a consonant between vowels, it belongs to the following syllable
-
-		if (!isConsonant (pal.at(pos + 1))) return;
-
-		char c1 = tolower (pal.at(pos));
-		char c2 = tolower (pal.at(pos + 1));
-
-		// Has the syllable a third consecutive consonant?
-
-		if ((pos < wordLength - 2)) {
-			char c3 = tolower (pal.at(pos + 2));
-
-			if (!isConsonant (c3)) { // There isn't third consonant
-				// The groups ll, ch and rr begin a syllable
-
-				if ((c1 == 'l') && (c2 == 'l')) return;
-			if ((c1 == 'c') && (c2 == 'h')) return;
-			if ((c1 == 'r') && (c2 == 'r')) return;
-
-				// A consonant + 'h' begins a syllable, except for groups sh and rh
-			if ((c1 != 's') && (c1 != 'r') &&
-				(c2 == 'h'))
-				return;
-
-				// If the letter 'y' is preceded by the some
-                //      letter 's', 'l', 'r', 'n' or 'c' then
-				//      a new syllable begins in the previous consonant
-                // else it begins in the letter 'y'
-
-			if ((c2 == 'y')) {
-				if ((c1 == 's') || (c1 == 'l') || (c1 == 'r') || (c1 == 'n') || (c1 == 'c'))
-					return;
-
-				pos++;
-				return;
+void DorisLipSync::coda (std::wstring word, int start, int* end) {
+	bool incremented = false;
+	//rule 6
+	if(word.at(start) == 'b' or word.at(start) == 'd' or word.at(start) == 'k' or word.at(start) == 'n' or word.at(start) == 'l' or word.at(start) == 'r'){
+		if((start + 1) <= (word.length() - 1)){
+			if(word.at(start + 1) == 's'){
+				if((start + 1) == (word.length() - 1)){
+					*end = *end + 2;
+					incremented = true;
+				} else if((start + 2) < word.length()){
+					if(openVowel(word.at(start + 2)) or closedVowel(word.at(start + 2)) or (word.at(start + 2) == 195 and (openAcutedVowel(word.at(start + 3)) or closedAcutedVowel(word.at(start + 3))))){
+						*end = *end + 1;
+						incremented = true;
+					} else {
+						*end = *end + 2;
+						incremented = true;
+					}
+				}
 			}
-
-				// groups: gl - kl - bl - vl - pl - fl - tl
-
-			if ((((c1 == 'b')||(c1 == 'v')||(c1 == 'c')||(c1 == 'k')||
-				(c1 == 'f')||(c1 == 'g')||(c1 == 'p')||(c1 == 't')) &&
-				(c2 == 'l')
-				)
-				) {
-				return;
 		}
-
-				// groups: gr - kr - dr - tr - br - vr - pr - fr
-
-		if ((((c1 == 'b')||(c1 == 'v')||(c1 == 'c')||(c1 == 'd')||(c1 == 'k')||
-			(c1 == 'f')||(c1 == 'g')||(c1 == 'p')||(c1 == 't')) &&
-			(c2 == 'r')
-			)
-			) {
-			return;
 	}
 
-	pos++;
-	return;
-}
-			else { // There is a third consonant
-				if ((pos + 3) == wordLength) { // Three consonants to the end, foreign words?
-					if ((c2 == 'y')) {  // 'y' as vowel
-						if ((c1 == 's') || (c1 == 'l') || (c1 == 'r') || (c1 == 'n') || (c1 == 'c'))
-							return;
-					}
-
-					if (c3 == 'y') { // 'y' at the end as vowel with c2
-						pos++;
+	//rule 7
+	if(not incremented){
+		if(word.at(start) == 's' or word.at(start) == 'z' or word.at(start) == 'x' or word.at(start) == 'c' or word.at(start) == 'm'){
+			if((start + 1) < word.length()){
+				if(isConsonant(word.at(start + 1))){
+					*end = *end + 1;
+					incremented = true;
 				}
-					else {	// Three consonants to the end, foreign words?
-						pos += 3;
-					}
-					return;
-				}
-
-				if ((c2 == 'y')) { // 'y' as vowel
-					if ((c1 == 's') || (c1 == 'l') || (c1 == 'r') || (c1 == 'n') || (c1 == 'c'))
-						return;
-
-					pos++;
-					return;
-				}
-
-				// The groups pt, ct, cn, ps, mn, gn, ft, pn, cz, tz and ts begin a syllable
-				// when preceded by other consonant
-
-				if ((c2 == 'p') || (c3 == 't') ||
-					(c2 == 'c') || (c3 == 't') ||
-					(c2 == 'c') || (c3 == 'n') ||
-					(c2 == 'p') || (c3 == 's') ||
-					(c2 == 'm') || (c3 == 'n') ||
-					(c2 == 'g') || (c3 == 'n') ||
-					(c2 == 'f') || (c3 == 't') ||
-					(c2 == 'p') || (c3 == 'n') ||
-					(c2 == 'c') || (c3 == 'z') ||
-					(c2 == 't') || (c3 == 's') ||
-					(c2 == 't') || (c3 == 's'))
-				{
-					pos++;
-					return;
-				}
-
-				if ((c3 == 'l') || (c3 == 'r') ||    // The consonantal groups formed by a consonant
-				                                     // following the letter 'l' or 'r' cann't be
-				                                     // separated and they always begin syllable
-					((c2 == 'c') && (c3 == 'h')) ||  // 'ch'
-					(c3 == 'y')) {                   // 'y' as vowel
-					pos++;  // Following syllable begins in c2
+			} else if(start == (word.length() - 1)){
+				*end = *end + 1;
+				incremented = true;
 			}
-			else
-					pos += 2; // c3 begins the following syllable
+		} else if (word.at(start) == 195 and (word.at(start + 1) == 177 or word.at(start + 1) == 145)){
+			if((start + 2) < word.length()){
+				if(isConsonant(word.at(start + 2))){
+					*end = *end + 2;
+					incremented = true;
+				}
 			}
-		}
-		else {
-			if ((c2 == 'y')) return;
-
-			pos +=2; // The word ends with two consonants
+		} else if(word.at(start) == 'l'){
+			if((start + 1) < word.length()){
+				if(word.at(start + 1) == 'l'){
+					if((start + 2) < word.length()){
+						if(isConsonant(word.at(start + 2))){
+							*end = *end + 2;
+							incremented = true;
+						} else {
+							incremented = true;
+						}
+					}
+				}
+			} else if(start == (word.length() - 1)){
+				*end = *end + 1;
+				incremented = true;
+			}
 		}
 	}
+	
+	
+	//rule 8
+	if(not incremented){
+		if(word.at(start) == 'b' or word.at(start) == 'k'){
+			if((start + 1) < word.length()){
+				if(not (word.at(start + 1) == 'r' or word.at(start + 1) == 'l' or word.at(start + 1) == 's' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == 195 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
+					*end = *end + 1;
+					incremented = true;
+				}
+			} else if(start == (word.length() - 1)){
+				*end = *end + 1;
+				incremented = true;
+			}
+		}
+	}
+	
+	//rule 9
+	if(not incremented){
+		if(word.at(start) == 'p' or word.at(start) == 'g' or word.at(start) == 'f'){
+			if((start + 1) < word.length()){
+				if(not (word.at(start + 1) == 'r' or word.at(start + 1) == 'l' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == 195 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
+					*end = *end + 1;
+					incremented = true;
+				}
+			}
+		}
+	}
+	
+
+	//rule 10
+	if(not incremented){
+		if(word.at(start) == 'd'){
+			if((start + 1) < word.length()){
+				if(not (word.at(start + 1) == 'r' or word.at(start + 1) == 's' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == 195 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
+					*end = *end + 1;
+					incremented = true;
+				}
+			}
+		}
+	}
+	//rule 11
+	if(not incremented){
+		if(word.at(start) == 't'){
+			if((start + 1) < word.length()){
+				if(not (word.at(start + 1) == 'r' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == 195 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
+					*end = *end + 1;
+					incremented = true;
+				}
+			}
+		}
+	}
+
+	//rule 12
+	if(not incremented){
+		if(word.at(start) == 'm' or word.at(start) == 'n' or word.at(start) == 'l' or word.at(start) == 'r'){
+			if((start + 1) < word.length()){
+				if(word.at(start) == 'r' and word.at(start + 1) == 'r'){
+					incremented = true;
+				} else if(not (word.at(start + 1) == 's' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == 195 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
+					*end = *end + 1;
+					incremented = true;
+				}
+			} else if(start == (word.length() - 1)){
+				*end = *end + 1;
+				incremented = true;
+			}
+		}
+	}
+	
 }
 
 /***************************************************************************/
@@ -1361,16 +1281,69 @@ void DorisLipSync::coda (std::string pal, int &pos) {
 /***************************************************************************/
 
 
-bool DorisLipSync::openVowel (char c) {
-	switch (c) {
-		case 'a': case 'á': case 'A': case 'Á': case 'à': case 'À':
-		case 'e': case 'é': case 'E': case 'É': case 'è': case 'È':
-		case 'í': case 'Í': case 'ì': case 'Ì':
-		case 'o': case 'ó': case 'O': case 'Ó': case 'ò': case 'Ò':
-		case 'ú': case 'Ú': case 'ù': case 'Ù':
-		return true;
+bool DorisLipSync::openVowel (wchar_t vowel) {
+	bool r = false;
+	switch (vowel) {
+		case 'a': case 'A':
+		case 'e': case 'E':
+		case 'o': case 'O':
+		r = true;
+		break;
+		case 195: default:
+		r = false;
+		break;
 	}
-	return false;
+	return r;
+}
+
+bool DorisLipSync::openAcutedVowel(wchar_t vowel){
+	bool r = false;
+	switch (vowel) {
+		case 161: case 129:
+		case 169: case 137:
+		case 179: case 147:
+		r = true;
+		break;
+		case 195: default:
+		r = false;
+		break;
+	}
+	return r;
+}
+
+bool DorisLipSync::closedVowel (wchar_t vowel){
+	bool r = false;
+	switch (vowel) {
+		case 'i': case 'I':
+		case 'u': case 'U':
+		case 'y': case 'Y':
+		r = true;
+		break;
+		case 195: default:
+		r = false;
+		break;
+	}
+	return r;
+}
+
+bool DorisLipSync::closedAcutedVowel(wchar_t vowel){
+	bool r = false;
+	switch (vowel) {
+		case 173: case 141:
+		case 186: case 154: case 188: case 156:
+		r = true;
+		break;
+		case 195: default:
+		r = false;
+		break;
+	}
+	return r;
+}
+
+bool DorisLipSync::isAlveolarConsonant (wchar_t letter){
+	return (letter == 'd' or letter == 'l' or letter == 'n' or letter == 's' or letter == 'r' or letter == 'z'
+			 or letter == 'p' or letter == 'b' or letter == 'f' or letter == 't' or letter == 'k' or letter == 'g'
+			  or letter == 'x' or letter == 'm');
 }
 
 //**********************************/
@@ -1378,21 +1351,6 @@ bool DorisLipSync::openVowel (char c) {
 /***********************************/
 
 
-bool DorisLipSync::isConsonant (char c) {
-	switch (c) {
-	// Open-vowel or close-vowel with written accent
-		case 'a': case 'á': case 'A': case 'Á': case 'à': case 'À':
-		case 'e': case 'é': case 'E': case 'É': case 'è': case 'È':
-		case 'í': case 'Í': case 'ì': case 'Ì':
-		case 'o': case 'ó': case 'O': case 'Ó': case 'ò': case 'Ò':
-		case 'ú': case 'Ú': case 'ù': case 'Ù':
-	// Close-vowel
-		case 'i': case 'I':
-		case 'u': case 'U':
-		case 'ü': case 'Ü':
-		return false;
-		break;
-	}
-
-	return true;
+bool DorisLipSync::isConsonant (wchar_t c) {
+	return ((not openVowel(c)) and (not closedVowel(c)) and (not openAcutedVowel(c)) and (not closedAcutedVowel(c)));
 }
