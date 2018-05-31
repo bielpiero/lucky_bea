@@ -30,21 +30,21 @@ RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name
 	markerCorners3d.push_back(cv::Point3f(.5f, .5f, 0));
 
 	camMatrix = cv::Mat(3, 3, CV_32F);
-	camMatrix.at<float>(0, 0) = 7.620795116277220e+02;
+	camMatrix.at<float>(0, 0) = 3.30695155538328e+02;
 	camMatrix.at<float>(0, 1) = 0;
-	camMatrix.at<float>(0, 2) = 6.487635885840072e+02;
+	camMatrix.at<float>(0, 2) = 6.58460455093403e+02;
 	camMatrix.at<float>(1, 0) = 0.0;
-	camMatrix.at<float>(1, 1) = 7.650912503869941e+02;
-	camMatrix.at<float>(1, 2) = 4.902109843845752e+02;
+	camMatrix.at<float>(1, 1) = 3.29340837075887e+02;
+	camMatrix.at<float>(1, 2) = 4.81201043909506e+02;
 	camMatrix.at<float>(2, 0) = 0.0;
 	camMatrix.at<float>(2, 1) = 0.0;
 	camMatrix.at<float>(2, 2) = 1.0;
-
+	
 	distCoeff = cv::Mat(4, 1, CV_32F);
-	distCoeff.at<float>(0, 0) = -0.374638326614541;
-    distCoeff.at<float>(1, 0) = 1.589827747269453;
-    distCoeff.at<float>(2, 0) = 0.002701033449065;
-    distCoeff.at<float>(3, 0) = 0.006333313881936;
+	distCoeff.at<float>(0, 0) = -0.0118131157444707;
+	distCoeff.at<float>(1, 0) = -0.0230237657809746;
+	distCoeff.at<float>(2, 0) = 0.00934983977434772;
+	distCoeff.at<float>(3, 0) = -0.00156140271727628;
 
     xi = cv::Mat(1, 1, CV_32F);
     distCoeff.at<float>(0, 0) = 1.277926516360664;
@@ -226,11 +226,19 @@ void RNOmnicameraTask::recognizeMarkers(){
 		std::ostringstream windowName;
 		
 		int rotations = 0;
-		if (markerDecoder(canonicalMarkerImage, rotations, marker) == 0){
+		if (markerDecoder(canonicalMarkerImage, rotations, marker, CELL_MARKER_SIZE_ROWS, CELL_MARKER_SIZE_COLUMNS) == 0){
 			std::vector<cv::Point2f> markerDots = marker.getMarkerPoints();
 			std::rotate(markerDots.begin(), markerDots.begin() + 4 - rotations, markerDots.end());
 			marker.setMarkerPoints(markerDots);
 			goodMarkersPoints.push_back(marker);
+		} else {
+			rotations = 0;
+			if (markerDecoder(canonicalMarkerImage, rotations, marker, CELL_MARKER_SIZE_COLUMNS, CELL_MARKER_SIZE_ROWS) == 0){
+				std::vector<cv::Point2f> markerDots = marker.getMarkerPoints();
+				std::rotate(markerDots.begin(), markerDots.begin() + 4 - rotations, markerDots.end());
+				marker.setMarkerPoints(markerDots);
+				goodMarkersPoints.push_back(marker);			
+			}
 		}
 	}
 	tikiMarkers = goodMarkersPoints;
@@ -248,10 +256,10 @@ void RNOmnicameraTask::poseEstimation(){
 		cv::Point2f tikiPoint = imageCenter - markerCenter;
 		distortedPoint.push_back(cv::Point2f(marker.getRotatedRect().center.x, marker.getRotatedRect().center.y));
 		//RNUtils::printLn("[%d], distortedPoint: {x: %f, y: %f}", marker.getMarkerId(), marker.getRotatedRect().center.x, marker.getRotatedRect().center.y);
-		undistortPoints(distortedPoint, undistortedPoint, camMatrix, distCoeff, xi, cv::Mat::eye(3, 3, CV_32F));
+		cv::fisheye::undistortPoints(distortedPoint, undistortedPoint, camMatrix, distCoeff, cv::Mat::eye(3, 3, CV_32F), camMatrix);
 		//RNUtils::printLn("[%d], undistortedPoint: {x: %f, y: %f}", marker.getMarkerId(), undistortedPoint.at(0).x, undistortedPoint.at(0).y);
 		float distanceToCenter = 0;
-		float px, py, theta;
+		float px, py, theta = 0;
 		px = undistortedPoint.at(0).x * camMatrix.at<float>(0, 0) + camMatrix.at<float>(0, 2);
 		py = undistortedPoint.at(0).y * camMatrix.at<float>(1, 1) + camMatrix.at<float>(1, 2);
 
@@ -259,7 +267,7 @@ void RNOmnicameraTask::poseEstimation(){
 		
 		theta = std::atan(distanceToCenter / camMatrix.at<float>(0, 0));
 		marker.setOpticalTheta(theta);
-		//realWorldDistance = MARKER_HEIGHT * std::tan(theta);
+		double realWorldDistance = (MARKER_HEIGHT - gn->getRobotHeight()) * std::tan(theta);
 
 		//std::cout << "Real world distance: " << realWorldDistance << " cm, should be " << cmCounter << " cm. Error: " << abs(realWorldDistance - cmCounter) << " cm" << std::endl;
 
@@ -273,24 +281,25 @@ void RNOmnicameraTask::poseEstimation(){
 		}
 		//RNUtils::printLn("[%d], d: %f, angle: %lf", marker.getMarkerId(), distanceToCenter, angleInRadians);
 		marker.setThRad(angleInRadians);
+		marker.setDistance(realWorldDistance);
 		//RNUtils::printLn("Marker (%d) angle: %lf", i, angleInRadians);
 	}
 
 }
 
-int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations, RNMarker &marker){
+int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations, RNMarker &marker, int rows, int cols){
 	int result = 0;
 	cv::Mat grey = inputGrayscale;
 	cv::threshold(grey, grey, 127, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-	int cellHeigth = inputGrayscale.rows / CELL_MARKER_SIZE;
-	int cellWidth = inputGrayscale.cols / CELL_MARKER_SIZE;
-	for (int y = 0; y < CELL_MARKER_SIZE; y++){
-		int inc = 6;
-		if (y == 0 || y == 6){
+	int cellHeigth = inputGrayscale.rows / rows;
+	int cellWidth = inputGrayscale.cols / cols;
+	for (int y = 0; y < rows; y++){
+		int inc = cols - 1;
+		if (y == 0 || y == rows - 1){
 			inc = 1;
 		}
 
-		for (int x = 0; x < CELL_MARKER_SIZE; x += inc){
+		for (int x = 0; x < cols; x += inc){
 			int cellX = x * cellWidth;
 			int cellY = y * cellHeigth;
 			cv::Mat cell = grey(cv::Rect(cellX, cellY, cellWidth, cellHeigth));
@@ -302,9 +311,9 @@ int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotati
 	}
 
 	if (result == 0){
-		cv::Mat bitMatrix = cv::Mat::zeros(5, 5, CV_8UC1);
-		for (int y = 0; y < 5; y++){
-			for (int x = 0; x < 5; x++){
+		cv::Mat bitMatrix = cv::Mat::zeros(rows - 2, cols - 2, CV_8UC1);
+		for (int y = 0; y < rows - 2; y++){
+			for (int x = 0; x < cols - 2; x++){
 				int cellX = (x + 1) * cellWidth;
 				int cellY = (y + 1) * cellHeigth;
 				cv::Mat cell = grey(cv::Rect(cellX, cellY, cellWidth, cellHeigth));
@@ -369,7 +378,7 @@ int RNOmnicameraTask::hammingDistance(cv::Mat bits){
 	sum = 0;
 
 	for (int x = 0; x < 5; x++){
-		sum += bits.at<uchar>(4, x) == ids[1][x] ? 0 : 1;
+		sum += bits.at<uchar>(5, x) == ids[1][x] ? 0 : 1;
 	}
 
 	dist += sum;
@@ -402,6 +411,11 @@ void RNOmnicameraTask::markerIdNumber(const cv::Mat &bits, int &mapId, int &sect
     }
     for (int j = 0; j < 5; j++){
     	if(bits.at<uchar>(3, j)){
+    		markerId += 512/std::pow(2, j);
+    	}
+    }
+    for (int j = 0; j < 5; j++){
+    	if(bits.at<uchar>(4, j)){
     		markerId += 16/std::pow(2, j);
     	}
     }
@@ -463,92 +477,6 @@ int RNOmnicameraTask::getBrightnessAverageFromHistogram(const cv::Mat& input){
 	return (int)avgBrightness;
 }
 
-void RNOmnicameraTask::undistortPoints(cv::InputArray distorted, cv::OutputArray undistorted, cv::InputArray K, cv::InputArray D, cv::InputArray xi, cv::InputArray R){
-    CV_Assert(distorted.type() == CV_64FC2 || distorted.type() == CV_32FC2);
-    CV_Assert(R.empty() || (!R.empty() && (R.size() == cv::Size(3, 3) || R.total() * R.channels() == 3)
-        && (R.depth() == CV_64F || R.depth() == CV_32F)));
-    CV_Assert((D.depth() == CV_64F || D.depth() == CV_32F) && D.total() == 4);
-    CV_Assert(K.size() == cv::Size(3, 3) && (K.depth() == CV_64F || K.depth() == CV_32F));
-    CV_Assert(xi.total() == 1 && (xi.depth() == CV_64F || xi.depth() == CV_32F));
-
-    undistorted.create(distorted.size(), distorted.type());
-
-    cv::Vec2d f, c;
-    double s = 0.0;
-    if (K.depth() == CV_32F) {
-        cv::Matx33f camMat = K.getMat();
-        f = cv::Vec2f(camMat(0,0), camMat(1,1));
-        c = cv::Vec2f(camMat(0,2), camMat(1,2));
-        s = (double)camMat(0,1);
-    } else if (K.depth() == CV_64F) {
-        cv::Matx33d camMat = K.getMat();
-        f = cv::Vec2d(camMat(0,0), camMat(1,1));
-        c = cv::Vec2d(camMat(0,2), camMat(1,2));
-        s = camMat(0,1);
-    }
-
-    cv::Vec4d kp = D.depth() == CV_32F ? (cv::Vec4d)*D.getMat().ptr<cv::Vec4f>():(cv::Vec4d)*D.getMat().ptr<cv::Vec4d>();
-    cv::Vec2d k = cv::Vec2d(kp[0], kp[1]);
-    cv::Vec2d p = cv::Vec2d(kp[2], kp[3]);
-
-    double _xi = xi.depth() == CV_32F ? (double)*xi.getMat().ptr<float>() : *xi.getMat().ptr<double>();
-    cv::Matx33d RR = cv::Matx33d::eye();
-    // R is om
-    if(!R.empty() && R.total()*R.channels() == 3)
-    {
-        cv::Vec3d rvec;
-        R.getMat().convertTo(rvec, CV_64F);
-        cv::Rodrigues(rvec, RR);
-    }
-    else if (!R.empty() && R.size() == cv::Size(3,3))
-    {
-        R.getMat().convertTo(RR, CV_64F);
-    }
-
-    const cv::Vec2d *srcd = distorted.getMat().ptr<cv::Vec2d>();
-    const cv::Vec2f *srcf = distorted.getMat().ptr<cv::Vec2f>();
-
-    cv::Vec2d *dstd = undistorted.getMat().ptr<cv::Vec2d>();
-    cv::Vec2f *dstf = undistorted.getMat().ptr<cv::Vec2f>();
-
-    int n = (int)distorted.total();
-    for (int i = 0; i < n; i++){
-        cv::Vec2d pi = distorted.depth() == CV_32F ? (cv::Vec2d)srcf[i]:(cv::Vec2d)srcd[i];    // image point
-        cv::Vec2d pp((pi[0]*f[1]-c[0]*f[1]-s*(pi[1]-c[1]))/(f[0]*f[1]), (pi[1]-c[1])/f[1]); //plane
-        cv::Vec2d pu = pp;    // points without distortion
-
-        // remove distortion iteratively
-        for (int j = 0; j < 20; j++){
-            double r2 = pu[0]*pu[0] + pu[1]*pu[1];
-            double r4 = r2*r2;
-            pu[0] = (pp[0] - 2*p[0]*pu[0]*pu[1] - p[1]*(r2+2*pu[0]*pu[0])) / (1 + k[0]*r2 + k[1]*r4);
-            pu[1] = (pp[1] - 2*p[1]*pu[0]*pu[1] - p[0]*(r2+2*pu[1]*pu[1])) / (1 + k[0]*r2 + k[1]*r4);
-        }
-
-        // project to unit sphere
-        double r2 = pu[0]*pu[0] + pu[1]*pu[1];
-        double a = (r2 + 1);
-        double b = 2*_xi*r2;
-        double cc = r2*_xi*_xi-1;
-        double Zs = (-b + sqrt(b*b - 4*a*cc))/(2*a);
-        cv::Vec3d Xw = cv::Vec3d(pu[0]*(Zs + _xi), pu[1]*(Zs +_xi), Zs);
-
-        // rotate
-        Xw = RR * Xw;
-
-        // project back to sphere
-        cv::Vec3d Xs = Xw / cv::norm(Xw);
-
-        // reproject to camera plane
-        cv::Vec3d ppu = cv::Vec3d(Xs[0]/(Xs[2]+_xi), Xs[1]/(Xs[2]+_xi), 1.0);
-        if (undistorted.depth() == CV_32F){
-            dstf[i] = cv::Vec2f((float)ppu[0], (float)ppu[1]);
-        } else if (undistorted.depth() == CV_64F) {
-            dstd[i] = cv::Vec2d(ppu[0], ppu[1]);
-        }
-    }
-}
-
 void RNOmnicameraTask::task(){
 	//gn->lockSensorsReadings();
 	if(enableVideoProcessing and getFrameFromCamera(tiki) != RN_NONE){
@@ -573,8 +501,7 @@ void RNOmnicameraTask::task(){
 				//cv::imwrite("que ves.jpg", rectImage);
 				
 				RNLandmark* visualLand = new RNLandmark();
-				float distance = (MARKER_HEIGHT - gn->getRobotHeight()) * std::tan(tikiMarkers.at(i).getOpticalTheta());
-				visualLand->addPoint(distance, tikiMarkers.at(i).getThRad());
+				visualLand->addPoint(tikiMarkers.at(i).getDistance(), tikiMarkers.at(i).getThRad());
 				visualLand->setMapId(tikiMarkers.at(i).getMapId());
 				visualLand->setSectorId(tikiMarkers.at(i).getSectorId());
 				visualLand->setMarkerId(tikiMarkers.at(i).getMarkerId());

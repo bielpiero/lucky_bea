@@ -9,7 +9,8 @@
 #include "GeneralController.h"
 
 #define CURVE_SIZE 4
-#define CELL_MARKER_SIZE 7
+#define CELL_MARKER_SIZE_ROWS 8 
+#define CELL_MARKER_SIZE_COLUMNS 7
 #define IMAGE_OFFSET_X 15
 #define IMAGE_OFFSET_Y 10
 #define BLOCK_SIZE_FOR_ADAPTIVE_THRESHOLD 75
@@ -95,13 +96,10 @@ private:
 	void markerIdNumber(const cv::Mat &bits, int &mapId, int &sectorId, int &markerId);
 	int getBrightnessAverageFromHistogram(const cv::Mat& input);
 
-	void undistortPoints(cv::InputArray distorted, cv::OutputArray undistorted,
-        cv::InputArray K, cv::InputArray D, cv::InputArray xi, cv::InputArray R);
-
 private:
 	void drawRectangle(cv::Mat &img, RNMarker marker);
 	float perimeter(const std::vector<cv::Point2f> &a);
-	int markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations, RNMarker &marker);
+	int markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations, RNMarker &marker, int rows, int cols);
 	int hammingDistance(cv::Mat bits);
 	cv::Mat rotate(cv::Mat input);
 	static size_t write_data(char *ptr, size_t size, size_t nmemb, void *userdata);
@@ -138,13 +136,6 @@ private:
 	static const double MARKER_HEIGHT;
 	RNLandmarkList* landmarks;
 	cv::VideoCapture capture;
-
-	enum{
-        RECTIFY_PERSPECTIVE = 1,
-        RECTIFY_CYLINDRICAL,
-        RECTIFY_LONGLATI,
-        RECTIFY_STEREOGRAPHIC
-    };
 };
 
 #endif
