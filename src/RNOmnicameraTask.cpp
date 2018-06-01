@@ -17,7 +17,7 @@ RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name
 
 	minContourLengthAllowed = 100.0;
 	maxContourLengthAllowed = 4000.0;
-	markerSize = cv::Size(215, 345);
+	markerSize = cv::Size(420, 500);
 
 	markerCorners2d.push_back(cv::Point2f(0, 0));
 	markerCorners2d.push_back(cv::Point2f(markerSize.width - 1, 0));
@@ -223,7 +223,8 @@ void RNOmnicameraTask::recognizeMarkers(){
 		cv::Mat markerTransform = cv::getPerspectiveTransform(marker.getMarkerPoints(), markerCorners2d);
 
 		cv::warpPerspective(tikiGray, canonicalMarkerImage, markerTransform, markerSize);
-		std::ostringstream windowName;
+		
+		//cv::imwrite("Possible marker #" + std::to_string(i) + ".jpg", canonicalMarkerImage);
 		
 		int rotations = 0;
 		if (markerDecoder(canonicalMarkerImage, rotations, marker, CELL_MARKER_SIZE_ROWS, CELL_MARKER_SIZE_COLUMNS) == 0){
@@ -267,7 +268,7 @@ void RNOmnicameraTask::poseEstimation(){
 		
 		theta = std::atan(distanceToCenter / camMatrix.at<float>(0, 0));
 		marker.setOpticalTheta(theta);
-		double realWorldDistance = (MARKER_HEIGHT - gn->getRobotHeight()) * std::tan(theta);
+		double realWorldDistance = (MARKER_HEIGHT - gn->getRobotHeight()) * (distanceToCenter / camMatrix.at<float>(0, 0));
 
 		//std::cout << "Real world distance: " << realWorldDistance << " cm, should be " << cmCounter << " cm. Error: " << abs(realWorldDistance - cmCounter) << " cm" << std::endl;
 
@@ -311,7 +312,7 @@ int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotati
 	}
 
 	if (result == 0){
-		cv::Mat bitMatrix = cv::Mat::zeros(rows - 2, cols - 2, CV_8UC1);
+		Matrix bitMatrix = Matrix(rows - 2, cols - 2);
 		for (int y = 0; y < rows - 2; y++){
 			for (int x = 0; x < cols - 2; x++){
 				int cellX = (x + 1) * cellWidth;
@@ -319,23 +320,21 @@ int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotati
 				cv::Mat cell = grey(cv::Rect(cellX, cellY, cellWidth, cellHeigth));
 				int nZ = cv::countNonZero(cell);
 				if (nZ >(cellWidth*cellHeigth) / 2){
-					bitMatrix.at<uchar>(y, x) = 1;
+					bitMatrix(y, x) = 1;
 				}
 			}
 		}
 
-		cv::Mat rotations[CURVE_SIZE];
+		Matrix rotations[CURVE_SIZE];
 		int distances[CURVE_SIZE];
 		rotations[0] = bitMatrix;
 		distances[0] = hammingDistance(bitMatrix);
 
 		std::pair<int, int> minDist(distances[0], 0);
-
 		for (int i = 1; i < CURVE_SIZE; i++){
 			//get the hamming distance to the nearest possible word
 			rotations[i] = rotate(rotations[i - 1]);
 			distances[i] = hammingDistance(rotations[i]);
-
 			if (distances[i] < minDist.first){
 				minDist.first = distances[i];
 				minDist.second = i;
@@ -356,7 +355,7 @@ int RNOmnicameraTask::markerDecoder(const cv::Mat& inputGrayscale, int& nRrotati
 	return result;
 }
 
-int RNOmnicameraTask::hammingDistance(cv::Mat bits){
+int RNOmnicameraTask::hammingDistance(Matrix bits){
 	int ids[2][5] = {
 		{ 1, 0, 0, 0, 1 },
 		{ 1, 0, 1, 1, 1 }
@@ -366,9 +365,9 @@ int RNOmnicameraTask::hammingDistance(cv::Mat bits){
 	int sum = 0;
 
 	//Compares the first and last row of the bit matrix with the template matrix ids
-
+	
 	for (int x = 0; x < 5; x++){
-		sum += bits.at<uchar>(0, x) == ids[0][x] ? 0 : 1;
+		sum += (int)bits(0, x) == ids[0][x] ? 0 : 1;
 	}
 
 	if (1e5 > sum){
@@ -378,7 +377,7 @@ int RNOmnicameraTask::hammingDistance(cv::Mat bits){
 	sum = 0;
 
 	for (int x = 0; x < 5; x++){
-		sum += bits.at<uchar>(5, x) == ids[1][x] ? 0 : 1;
+		sum += (int)bits(bits.rows_size() - 1, x) == ids[1][x] ? 0 : 1;
 	}
 
 	dist += sum;
@@ -386,36 +385,36 @@ int RNOmnicameraTask::hammingDistance(cv::Mat bits){
 	return dist;
 }
 
-cv::Mat RNOmnicameraTask::rotate(cv::Mat input){
-	cv::Mat out;
-	input.copyTo(out);
-	for (int i = 0; i < input.rows; i++){
-		for (int j = 0; j < input.cols; j++){
-			out.at<uchar>(i, j) = input.at<uchar>(input.cols - j - 1, i);
+Matrix RNOmnicameraTask::rotate(Matrix input){
+	Matrix out(input.cols_size(), input.rows_size());
+
+	for (int i = 0; i < input.cols_size(); i++){
+		for (int j = 0; j < input.rows_size(); j++){
+			out(i, j) = input(input.rows_size() - j - 1, i);
 		}
 	}
 	return out;
 }
 
-void RNOmnicameraTask::markerIdNumber(const cv::Mat &bits, int &mapId, int &sectorId, int &markerId){
+void RNOmnicameraTask::markerIdNumber(const Matrix &bits, int &mapId, int &sectorId, int &markerId){
     
     for (int j = 0; j < 5; j++){
-    	if(bits.at<uchar>(1, j)){
+    	if(bits(1, j)){
     		mapId += 16/std::pow(2, j);
     	}
     }
     for (int j = 0; j < 5; j++){
-    	if(bits.at<uchar>(2, j)){
+    	if(bits(2, j)){
     		sectorId += 16/std::pow(2, j);
     	}
     }
     for (int j = 0; j < 5; j++){
-    	if(bits.at<uchar>(3, j)){
+    	if(bits(3, j)){
     		markerId += 512/std::pow(2, j);
     	}
     }
     for (int j = 0; j < 5; j++){
-    	if(bits.at<uchar>(4, j)){
+    	if(bits(4, j)){
     		markerId += 16/std::pow(2, j);
     	}
     }
@@ -495,9 +494,10 @@ void RNOmnicameraTask::task(){
 			poseEstimation();
 			landmarks = gn->getVisualLandmarks();
 			landmarks->clear();
-			//cv::Mat rectImage = flipped.clone();
+			cv::Mat rectImage = tiki.clone();
+
 			for(size_t i = 0; i < tikiMarkers.size(); i++){
-				//drawRectangle(rectImage, tikiMarkers[i]);
+				drawRectangle(rectImage, tikiMarkers[i]);
 				//cv::imwrite("que ves.jpg", rectImage);
 				
 				RNLandmark* visualLand = new RNLandmark();
@@ -508,7 +508,10 @@ void RNOmnicameraTask::task(){
 				visualLand->addExtraParameter(OPTICAL_THETA_STR, tikiMarkers.at(i).getOpticalTheta());
 				landmarks->add(visualLand);
 			}
-			RNUtils::printLn("%s", landmarks->toString().c_str());
+			if (tikiMarkers.size() > 0){
+				RNUtils::printLn("%s", landmarks->toString().c_str());	
+			}
+			//cv::imwrite("que ves.jpg", rectImage);
 			gn->setVisualLandmarks(landmarks);
 		}
 	} else {

@@ -93,15 +93,15 @@ private:
 	void findCandidates();
 	void recognizeMarkers();
 	void poseEstimation();
-	void markerIdNumber(const cv::Mat &bits, int &mapId, int &sectorId, int &markerId);
+	void markerIdNumber(const Matrix &bits, int &mapId, int &sectorId, int &markerId);
 	int getBrightnessAverageFromHistogram(const cv::Mat& input);
 
 private:
 	void drawRectangle(cv::Mat &img, RNMarker marker);
 	float perimeter(const std::vector<cv::Point2f> &a);
 	int markerDecoder(const cv::Mat& inputGrayscale, int& nRrotations, RNMarker &marker, int rows, int cols);
-	int hammingDistance(cv::Mat bits);
-	cv::Mat rotate(cv::Mat input);
+	int hammingDistance(Matrix bits);
+	Matrix rotate(Matrix input);
 	static size_t write_data(char *ptr, size_t size, size_t nmemb, void *userdata);
 private:
 	CURL* curl;
