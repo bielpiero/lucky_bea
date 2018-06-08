@@ -87,7 +87,6 @@ void* RNRecurrentTask::runThread(void* object){
         }
         RNUtils::sleep(20);
     }
-    printf("Stopped RT\n");
     stop();
     threadFinished();
     return NULL;

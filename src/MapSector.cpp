@@ -28,7 +28,15 @@ void MapSector::setId(int id){
 }
 
 int MapSector::getId(){
-	return this->id; 
+	return this->id;
+}
+
+void MapSector::setMapId(int id){
+	this->mapId = id;
+}
+
+int MapSector::getMapId(){
+	return this->mapId;
 }
 
 bool MapSector::isHallway(void){
@@ -200,6 +208,19 @@ size_t MapSector::landmarksSizeByType(std::string type){
 	return count;
 }
 
+s_landmark* MapSector::landmarkByTypeAndId(std::string type, int id){
+	s_landmark* l = NULL;
+	for(int i = 0; i < landmarks->size(); i++){
+		if(landmarks->at(i)->type == type){
+			if(id == landmarks->at(i)->id){
+				l = landmarks->at(i);
+			}
+		}
+	}
+
+	return l;
+}
+
 void MapSector::deleteAllSites() {  
 	for (int i = 0; i < sites->size(); i++) {
         delete sites->at(i);
@@ -250,12 +271,24 @@ void MapSector::getPolygonFromString(){
 		if(values.at(idx) == "m" or values.at(idx) == "M"){
 			px = std::atof(values.at(idx + 1).c_str()) / 100.0;
 			py = std::atof(values.at(idx + 2).c_str()) / 100.0;
+			if(px < 1.0e-7){
+				px = 0.0f;
+			}
+			if(py < 1.0e-7){
+				py = 0.0f;
+			}
 			polygon->push_back(new PointXY(px, py));
 			mPoint = PointXY(px, py);
 			idx += 3;
 		} else if(values.at(idx) == "l" or values.at(idx) == "L"){
 			px = polygon->at(polygon->size() - 1)->getX() + (std::atof(values.at(idx + 1).c_str()) / 100.0);
 			py = polygon->at(polygon->size() - 1)->getY() + (std::atof(values.at(idx + 2).c_str()) / 100.0);
+			if(px < 1.0e-7){
+				px = 0.0f;
+			}
+			if(py < 1.0e-7){
+				py = 0.0f;
+			}
 			polygon->push_back(new PointXY(px, py));
 			idx += 3;
 		} else if(values.at(idx) == "q" or values.at(idx) == "Q"){
@@ -264,10 +297,22 @@ void MapSector::getPolygonFromString(){
 
 			px = polygon->at(polygon->size() - 1)->getX() + (std::atof(values.at(idx + 1).c_str()) / 100.0);
 			py = polygon->at(polygon->size() - 1)->getY() + (std::atof(values.at(idx + 2).c_str()) / 100.0);
+			if(px < 1.0e-7){
+				px = 0.0f;
+			}
+			if(py < 1.0e-7){
+				py = 0.0f;
+			}
 			bezierPointXYs.push_back(PointXY(px, py));
 
 			px = polygon->at(polygon->size() - 1)->getX() + (std::atof(values.at(idx + 3).c_str()) / 100.0);
 			py = polygon->at(polygon->size() - 1)->getY() + (std::atof(values.at(idx + 4).c_str()) / 100.0);
+			if(px < 1.0e-7){
+				px = 0.0f;
+			}
+			if(py < 1.0e-7){
+				py = 0.0f;
+			}
 			bezierPointXYs.push_back(PointXY(px, py));
 
 			std::vector<PointXY> bezierCurve;
@@ -282,6 +327,11 @@ void MapSector::getPolygonFromString(){
 			idx++;
 		}
 	}
+	std::sort(polygon->begin(), polygon->end(), polygonSorter);
+}
+
+bool MapSector::polygonSorter(PointXY* a, PointXY* b){
+	return (a->getY() < b->getY()) and (a->getX() < b->getX());
 }
 
 double MapSector::getAngle(PointXY a, PointXY b){
@@ -298,35 +348,17 @@ double MapSector::getAngle(PointXY a, PointXY b){
 	return result;
 }
 
-bool MapSector::checkPointXYInPolygon(PointXY g, double &angle){
+bool MapSector::checkPointXYInPolygon(PointXY g){
 	PointXY a;
 	PointXY b;
 	bool result = false;
 
-	for(int i=0, j = polygon->size() - 1; i < polygon->size(); j = i++){
-    	if (((polygon->at(i)->getY() < g.getY() and polygon->at(j)->getY() >= g.getY()) or (polygon->at(j)->getY() < g.getY() and polygon->at(i)->getY() >= g.getY())) and (polygon->at(i)->getX() <= g.getX() or polygon->at(j)->getX() <= g.getX())) {
-      		if ((polygon->at(i)->getX() + (g.getY() - polygon->at(i)->getY()) / (polygon->at(j)->getY() - polygon->at(i)->getY()) * (polygon->at(j)->getX() - polygon->at(i)->getX())) < g.getX()) {
-        		result = !result; 
-        	}
-        }
+	for(int i=0, j = polygon->size() - 1; i < polygon->size(); i++){
+    	if (((polygon->at(i)->getY() > g.getY()) != (polygon->at(j)->getY() > g.getY())) and 
+    		(g.getX() < ((polygon->at(j)->getX() - polygon->at(i)->getX()) * (g.getY() - polygon->at(i)->getY()) / (polygon->at(j)->getY() - polygon->at(i)->getY()) + polygon->at(i)->getX()))){
+	       result = !result;
+    	}
+    	j = i;
     }
-    //printf("%s\n", g.toString());
-    if(std::abs(g.getX()) <= 0.01 and std::abs(g.getY()) <= 0.01){
-    	result = true;
-    }
-
-	/*for(unsigned int i = 0; i < polygon->size() - 1; i++){
-		a.setX(polygon->at(i)->getX() - g.getX());
-		a.setY(polygon->at(i)->getY() - g.getY());
-		b.setX(polygon->at(i + 1)->getX() - g.getX());
-		b.setY(polygon->at(i + 1)->getY() - g.getY());
-
-		angle += getAngle(a, b);
-	}
-	if((std::abs(angle) <= (2.00001 * M_PI)) and (std::abs(angle) >= M_PI)){
-		result = true;
-	} /*else if(std::abs((int)angle) == 0.0){
-		result = true;
-	}*/
 	return result;
 }

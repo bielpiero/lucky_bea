@@ -47,12 +47,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	visualLandmarks = new RNLandmarkList();
 	kalmanFuzzy = new std::vector<fl::Trapezoid*>();
 	
-	robotState = Matrix(3, 1);
 	robotEncoderPosition = Matrix(3, 1);
 	robotVelocity = Matrix (2, 1);
-
-	robotRawEncoderPosition = Matrix(3, 1);
-	robotRawDeltaPosition = Matrix (2, 1);
 	
 	P = Matrix(3, 3);
 	Q = Matrix(2, 2);
@@ -63,7 +59,6 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	xmlSectorsPath = RNUtils::getApplicationPath() + XML_FILE_SECTORS_PATH;
 	xmlRobotConfigFullPath = RNUtils::getApplicationPath() + XML_FILE_ROBOT_CONFIG_PATH;
 	
-	this->currentMapId = RN_NONE;
 	this->currentSector = NULL;
 	this->nextSectorId = RN_NONE;
 
@@ -71,7 +66,6 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	pthread_mutex_init(&laserLandmarksLocker, NULL);
 	pthread_mutex_init(&rfidLandmarksLocker, NULL);
 	pthread_mutex_init(&visualLandmarksLocker, NULL);
-	pthread_mutex_init(&rawDeltaEncoderLocker, NULL);
 	pthread_mutex_init(&rawPositionLocker, NULL);
 	
 	this->tts = new DorisLipSync(this->maestroControllers, this->getFaceId());
@@ -103,7 +97,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	//tasks->addTask(armGestures);
 	tasks->addTask(gestures);
 	tasks->addTask(emotions);
-	//tasks->addTask(localization);
+	tasks->addTask(localization);
 	//tasks->addTask(eyesCameras);
 	
 	
@@ -121,9 +115,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 			virtualFace->startThread();
 			RNUtils::printLn("Connected to Virtual-Face: %s over %d", ip.c_str(), port);
 		}
-		
 	}
-	
 	spdWSServer = new RobotDataStreamer();
 	spdWSServer->init("", 0, SOCKET_SERVER);
 	spdWSServer->startThread();
@@ -133,7 +125,6 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	RNUtils::getTimestamp(mappingLandmarksTimestamp);
 	RNUtils::getTimestamp(mappingFeaturesTimestamp);
 	RNUtils::getTimestamp(mappingSitesTimestamp);
-	//file = std::fopen("data-laser.txt", "w+");
 }
 
 GeneralController::~GeneralController(void){
@@ -160,8 +151,6 @@ GeneralController::~GeneralController(void){
 	unlockLaserLandmarks();
 	unlockVisualLandmarks();
 	unlockRFIDLandmarks();
-	unlockRawDeltaEncoders();
-	unlockRawPosition();
 	RNUtils::printLn("unlocked all mutex...");
 	delete rfidLandmarks;
 	RNUtils::printLn("Deleted rfidLandmarks...");
@@ -176,8 +165,6 @@ GeneralController::~GeneralController(void){
 	}*/
 	pthread_mutex_destroy(&rawPositionLocker);
 	RNUtils::printLn("Deleted rawPositionLocker...");
-	pthread_mutex_destroy(&rawDeltaEncoderLocker);
-	RNUtils::printLn("Deleted rawDeltaEncoderLocker...");
 	pthread_mutex_destroy(&laserLandmarksLocker);
 	RNUtils::printLn("Deleted laserLandmarksLocker...");
 	pthread_mutex_destroy(&rfidLandmarksLocker);
@@ -248,7 +235,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 	double x, y, theta;
 
 	bool granted = isPermissionNeeded(function) && (socketIndex == getTokenOwner());
-	//RNUtils::printLn("Function: 0x%x (%d) executed from: %s", function, function, getClientIPAddress(socketIndex));
+	RNUtils::printLn("Function: 0x%x (%d) executed from: %s", function, function, getClientIPAddress(socketIndex));
 	switch (function){
 		case 0x00:
 			RNUtils::printLn("Command 0x00. Static Faces Requested");
@@ -312,8 +299,8 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x0B:
 			RNUtils::printLn("Command 0x0B. Text to speech message");
 			if(granted){
-				//dialogs->setInputMessage(cad);
-				tts->textToViseme(cad);
+				dialogs->setInputMessage(cad);
+				//tts->textToViseme(cad);
 				sendMsg(socketIndex, 0x08, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				RNUtils::printLn("Command 0x0B. Text to speech message denied to %s", getClientIPAddress(socketIndex));
@@ -402,7 +389,6 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x16:
 			if(granted){
 				getMapSectorId(cad, mapId, sectorId);
-				this->currentMapId = mapId;
 				if(localization != NULL){
 					localization->kill();
 				}
@@ -423,7 +409,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				getMapSectorId(cad, mapId, sectorId);
 			} else {
 				sectorId = currentSector->getId();
-				mapId = this->currentMapId;
+				mapId = currentSector->getMapId();
 			}
 			getSectorInformationLandmarks(mapId, sectorId, sectorInformation);
 			sendMsg(socketIndex, 0x17, (char*)sectorInformation.c_str(), (unsigned int)sectorInformation.length()); 
@@ -433,7 +419,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				getMapSectorId(cad, mapId, sectorId);
 			} else {
 				sectorId = currentSector->getId();
-				mapId = this->currentMapId;
+				mapId = currentSector->getMapId();
 			}
 			getSectorInformationFeatures(mapId, sectorId, sectorInformation);
 			sendMsg(socketIndex, 0x18, (char*)sectorInformation.c_str(), (unsigned int)sectorInformation.length()); 
@@ -443,7 +429,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				getMapSectorId(cad, mapId, sectorId);
 			} else {
 				sectorId = currentSector->getId();
-				mapId = this->currentMapId;
+				mapId = currentSector->getMapId();
 			}
 			getSectorInformationSites(mapId, sectorId, sectorInformation);
 			sendMsg(socketIndex, 0x19, (char*)sectorInformation.c_str(), (unsigned int)sectorInformation.length()); 
@@ -453,7 +439,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 				getMapSectorId(cad, mapId, sectorId);
 			} else {
 				sectorId = currentSector->getId();
-				mapId = this->currentMapId;
+				mapId = currentSector->getMapId();
 			}
 			getSectorInformationSitesSequence(mapId, sectorId, sectorInformation);
 			sendMsg(socketIndex, 0x1A, (char*)sectorInformation.c_str(), (unsigned int)sectorInformation.length()); 
@@ -541,9 +527,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			sendMsg(socketIndex, 0x23, (char*)mapInformation.c_str(), (unsigned int)mapInformation.length()); 
 			break;
 		case 0x24: //temporal incoming
-			lockVisualLandmarks();
-			visualLandmarks->initializeFromString(cad);
-			unlockVisualLandmarks();
+			
 			break;
 		case 0x30:
 			if(granted){
@@ -827,7 +811,7 @@ void GeneralController::getMapId(char* cad, int& mapId){
 }
 
 void GeneralController::loadSector(int mapId, int sectorId){
-	this->currentMapId = mapId;
+
 	std::string filename;
 
 	getMapFilename(mapId, filename);
@@ -855,6 +839,7 @@ void GeneralController::loadSector(int mapId, int sectorId){
     		//std::cout << "hasta aqui bien" << std::endl;
     		if(xmlSectorId == sectorId){
     			found = true;
+    			currentSector->setMapId(mapId);
     			currentSector->setId(xmlSectorId);
 				currentSector->setName(std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value()));
 				currentSector->setPolygon(std::string(sector_node->first_attribute(XML_ATTRIBUTE_POLYGON_STR)->value()));
@@ -1517,7 +1502,7 @@ void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 
 				        sites_root_node->append_node(new_sites_node);
 
-			        	if(mapId == currentMapId and sectorId == currentSector->getId()){
+			        	if(mapId == currentSector->getMapId() and sectorId == currentSector->getId()){
 				        	s_site* tempSite = new s_site;
 
 				        	tempSite->id = indexAssigned;
@@ -1614,7 +1599,7 @@ void GeneralController::modifySectorInformationSite(char* cad){
 	    the_new_file << doc;
 	    the_new_file.close();
 
-		if(mapId == currentMapId and sectorId == currentSector->getId()){
+		if(mapId == currentSector->getMapId() and sectorId == currentSector->getId()){
         	s_site* tempSite = currentSector->findSiteById(siteId);
 
         	tempSite->name = data.at(3);
@@ -1688,7 +1673,7 @@ void GeneralController::deleteSectorInformationSite(char* cad){
 	    the_new_file << doc;
 	    the_new_file.close();
 		   
-		if(mapId == currentMapId and sectorId == currentSector->getId()){
+		if(mapId == currentSector->getMapId() and sectorId == currentSector->getId()){
         	s_site* tempSite = currentSector->findSiteById(siteId);
         	currentSector->deleteSite(tempSite);
         }
@@ -1745,7 +1730,7 @@ void GeneralController::setSitesExecutionSequence(char* cad){
 	    the_new_file << doc;
 	    the_new_file.close();
 
-	    if(mapId == currentMapId and sectorId == currentSector->getId()){
+	    if(mapId == currentSector->getMapId() and sectorId == currentSector->getId()){
 
         	currentSector->setSequence(data.at(1));
         }
@@ -1820,7 +1805,7 @@ void GeneralController::addSectorInformationFeatures(char* cad, int& indexAssign
 
 				        features_root_node->append_node(new_feature_node);
 
-				        if(mapId == currentMapId and sectorId == currentSector->getId()){
+				        if(mapId == currentSector->getMapId() and sectorId == currentSector->getId()){
 				        	s_feature* tempFeature = new s_feature;
 
 							tempFeature->id = indexAssigned;
@@ -1915,7 +1900,7 @@ void GeneralController::modifySectorInformationFeatures(char* cad){
 	    the_new_file << doc;
 	    the_new_file.close();
 
-	    if(mapId == currentMapId and sectorId == currentSector->getId()){
+	    if(mapId == currentSector->getMapId() and sectorId == currentSector->getId()){
         	s_feature* tempFeature = currentSector->findFeatureById(featureId);
 
 			tempFeature->name = data.at(3);
@@ -1990,7 +1975,7 @@ void GeneralController::deleteSectorInformationFeatures(char* cad){
 	    the_new_file << doc;
 	    the_new_file.close();
 
-	    if(mapId == currentMapId and sectorId == currentSector->getId()){
+	    if(mapId == currentSector->getMapId() and sectorId == currentSector->getId()){
         	s_feature* tempFeature = currentSector->findFeatureById(featureId);
         	currentSector->deleteFeature(tempFeature);
         }
@@ -2021,11 +2006,6 @@ void GeneralController::moveRobot(double lin_vel, double angular_vel){
 
 void GeneralController::setRobotPosition(double x, double y, double theta){
 	RNUtils::printLn("Changin' position...");
-	lockRawPosition();
-	robotRawEncoderPosition(0, 0) = x;
-	robotRawEncoderPosition(1, 0) = y;
-	robotRawEncoderPosition(2, 0) = theta;
-	unlockRawPosition();
 	this->setPosition(x, y, theta);	
 	RNUtils::printLn("new position is: {x: %f, y: %f, \u03d1: %f}", x, y, theta);
 }
@@ -2035,7 +2015,7 @@ void GeneralController::setRobotPosition(Matrix Xk){
 }
 
 void GeneralController::moveRobotToPosition(double x, double y, double theta){
-	//this->gotoPosition(x, y, theta);
+
 	this->gotoPosition(x, y, theta, (currentSector != NULL ? currentSector->isHallway() : false));
 }
 
@@ -2060,9 +2040,7 @@ void GeneralController::onBumpersUpdate(std::vector<bool> front, std::vector<boo
 	sprintf(bump, "$BUMPERS|%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", (int)front[0], (int)front[1], (int)front[2], (int)front[3], (int)front[4], (int)front[5],
 			(int)rear[0], (int)rear[1], (int)rear[2], (int)rear[3], (int)rear[4], (int)rear[5]);
 	int dataLen = strlen(bump);
-	/*if(spdUDPClient != NULL){
-		spdUDPClient->sendData((unsigned char*)bump, dataLen);
-	}*/
+
 	for(int i = 0; i < MAX_CLIENTS; i++){
 		if(isConnected(i)){
 			if(isWebSocket(i)){
@@ -2129,20 +2107,6 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 		}
 	}
 	delete[] bump;
-}
-
-
-void GeneralController::onRawPositionUpdate(double x, double y, double theta, double deltaDistance, double deltaDegrees){
-	lockRawPosition();
-	robotRawEncoderPosition(0, 0) = x;
-	robotRawEncoderPosition(1, 0) = y;
-	robotRawEncoderPosition(2, 0) = theta;
-	unlockRawPosition();
-
-	lockRawDeltaEncoders();
-	robotRawDeltaPosition(0, 0) = deltaDistance;
-	robotRawDeltaPosition(1, 0) = deltaDegrees;
-	unlockRawDeltaEncoders();
 }
 
 void GeneralController::onSonarsDataUpdate(std::vector<PointXY*>* data){
@@ -2272,9 +2236,112 @@ void GeneralController::stopCurrentTour(){
 	}
 }
 
+void GeneralController::getInitialLocation(){
+	lockVisualLandmarks();
+	if(visualLandmarks){
+		std::map<int, int> maps;
+		std::map<int, int> sectors;
+		for(int i = 0; i < visualLandmarks->size(); i++){
+			std::map<int, int>::iterator it;
+			if((it = maps.find(visualLandmarks->at(i)->getMapId())) != maps.end()){
+				maps.insert(std::pair<int, int>(visualLandmarks->at(i)->getMapId(), it->second + 1));
+			} else {
+				maps.insert(std::pair<int, int>(visualLandmarks->at(i)->getMapId(), 1));
+			}
+
+			if((it = sectors.find(visualLandmarks->at(i)->getSectorId())) != sectors.end()){
+				sectors.insert(std::pair<int, int>(visualLandmarks->at(i)->getSectorId(), it->second + 1));
+			} else {
+				sectors.insert(std::pair<int, int>(visualLandmarks->at(i)->getSectorId(), 1));
+			}
+		}
+		std::map<int, int>::iterator it;
+		int mapH = RN_NONE, sectorH = RN_NONE, map = RN_NONE, sector = RN_NONE;
+		for(it = maps.begin(); it != maps.end(); it++){
+			if(mapH < it->second){
+				mapH = it->second;
+				map = it->first;
+			}
+		}
+
+		for(it = sectors.begin(); it != sectors.end(); it++){
+			if(sectorH < it->second){
+				sectorH = it->second;
+				sector = it->first;
+			}
+		}
+
+		if(map != RN_NONE and sector != RN_NONE){
+			loadSector(map, sector);
+			if(visualLandmarks->size() >= 2){
+				double minDist = std::numeric_limits<double>::max();
+
+				//Checks pairs of markers and saves the pair that's closest to Doris
+				
+				int maIdx = RN_NONE, mbIdx = RN_NONE;
+				for(int i = 0; i < visualLandmarks->size(); i++){
+					for(int j = i + 1; j < visualLandmarks->size(); j++){
+						double combinedDistance = visualLandmarks->at(i)->getPointsXMean() + visualLandmarks->at(j)->getPointsXMean();
+						if(minDist > combinedDistance){
+							minDist = combinedDistance;
+							maIdx = i;
+							mbIdx = j;
+						}
+					}
+				}
+				double r0 = visualLandmarks->at(maIdx)->getPointsXMean();
+				double r1 = visualLandmarks->at(mbIdx)->getPointsXMean();
+
+				s_landmark* cma = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, visualLandmarks->at(maIdx)->getMarkerId());
+				s_landmark* cmb = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, visualLandmarks->at(mbIdx)->getMarkerId());
+
+				PointXYZ possiblePosition0;
+				PointXYZ possiblePosition1;
+				double d = RNUtils::distanceTo(cma->xpos, cma->ypos, cmb->xpos, cmb->ypos);
+				if(d <= r0 + r1 and d >= std::abs(r0 - r1)){
+					double a = (pow(r0, 2) - pow(r1, 2) + pow(d, 2)) / (2 * d);
+					double h = sqrt(pow(r0, 2) - pow(a, 2));
+					PointXY middlePoint(cma->xpos + a * (cmb->xpos - cma->xpos) / d, cma->ypos + a * (cmb->ypos - cma->ypos) / d);
+					/*double x2 = x0 + a * (x1 - x0) / d;
+					double y2 = y0 + a * (y1 - y0) / d;*/
+				
+					possiblePosition0.setX (middlePoint.getX() + h * (cmb->ypos - cma->ypos) / d);
+					possiblePosition0.setY (middlePoint.getY() - h * (cmb->xpos - cma->xpos) / d);
+					possiblePosition1.setX (middlePoint.getX() - h * (cmb->ypos - cma->ypos) / d);
+					possiblePosition1.setY (middlePoint.getY() + h * (cmb->xpos - cma->xpos) / d);
+
+					possiblePosition0.setZ(M_PI/2 - std::atan2((cma->ypos - possiblePosition0.getY()), (cma->xpos - possiblePosition0.getX())) - visualLandmarks->at(maIdx)->getPointsYMean());
+					if(possiblePosition0.getZ() > M_PI){
+						possiblePosition0.setZ(possiblePosition0.getZ() - 2 * M_PI);
+					} else if(possiblePosition0.getZ() < -M_PI){
+						possiblePosition0.setZ(possiblePosition0.getZ() + 2 * M_PI);
+					}
+
+					possiblePosition1.setZ(M_PI/2 - std::atan2((cmb->ypos - possiblePosition1.getY()), (cmb->xpos - possiblePosition1.getX())) - visualLandmarks->at(mbIdx)->getPointsYMean());
+					if(possiblePosition1.getZ() > M_PI){
+						possiblePosition1.setZ(possiblePosition1.getZ() - 2 * M_PI);
+					} else if(possiblePosition1.getZ() < -M_PI){
+						possiblePosition1.setZ(possiblePosition1.getZ() + 2 * M_PI);
+					}
+
+					if(currentSector->checkPointXYInPolygon(possiblePosition0)){
+						setRobotPosition(possiblePosition0.getX(), possiblePosition0.getY(), possiblePosition0.getZ());
+					} else if(currentSector->checkPointXYInPolygon(possiblePosition1)){
+						setRobotPosition(possiblePosition1.getX(), possiblePosition1.getY(), possiblePosition1.getZ());
+					}
+				}
+			}
+		}
+
+	}
+	unlockVisualLandmarks();
+}
 
 int GeneralController::initializeKalmanVariables(){
 	int result = RN_NONE;
+	if(currentSector == NULL){
+		getInitialLocation();
+	}
 	if(currentSector != NULL){
 		double uX, uY, uTh;
 		Matrix rpk = getRawEncoderPosition();
@@ -2285,11 +2352,11 @@ int GeneralController::initializeKalmanVariables(){
 
 		int totalLandmarks = 0;
 
-		fl::Trapezoid* xxKK = new fl::Trapezoid("Xx(k|k)", rpk(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, rpk(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, rpk(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, robotRawEncoderPosition(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
+		fl::Trapezoid* xxKK = new fl::Trapezoid("Xx(k|k)", rpk(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, rpk(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, rpk(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, rpk(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
 		
-		fl::Trapezoid* xyKK = new fl::Trapezoid("Xy(k|k)", rpk(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, rpk(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, rpk(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, robotRawEncoderPosition(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
+		fl::Trapezoid* xyKK = new fl::Trapezoid("Xy(k|k)", rpk(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, rpk(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, rpk(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, rpk(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
 		
-		fl::Trapezoid* xThKK = new fl::Trapezoid("XTh(k|k)", rpk(2, 0) + robotConfig->navParams->initialPosition->thZone->x1, rpk(2, 0) + robotConfig->navParams->initialPosition->thZone->x2, rpk(2, 0) + robotConfig->navParams->initialPosition->thZone->x3, robotRawEncoderPosition(2, 0) + robotConfig->navParams->initialPosition->thZone->x4);	
+		fl::Trapezoid* xThKK = new fl::Trapezoid("XTh(k|k)", rpk(2, 0) + robotConfig->navParams->initialPosition->thZone->x1, rpk(2, 0) + robotConfig->navParams->initialPosition->thZone->x2, rpk(2, 0) + robotConfig->navParams->initialPosition->thZone->x3, rpk(2, 0) + robotConfig->navParams->initialPosition->thZone->x4);	
 		
 		fl::Trapezoid* vdK1 = new fl::Trapezoid("Vd(k + 1)", robotConfig->navParams->processNoise->dZone->x1, robotConfig->navParams->processNoise->dZone->x2, robotConfig->navParams->processNoise->dZone->x3, robotConfig->navParams->processNoise->dZone->x4);
 		
@@ -2488,34 +2555,6 @@ MapSector* GeneralController::getCurrentSector(){
 	return currentSector;
 }
 
-Matrix GeneralController::getRawEncoderPosition(){
-	Matrix r;
-	lockRawPosition();
-	r = this->robotRawEncoderPosition;
-	unlockRawPosition();
-	return r;
-}
-
-Matrix GeneralController::getRawDeltaPosition(){
-	Matrix r;
-	lockRawDeltaEncoders();
-	r = this->robotRawDeltaPosition;
-	unlockRawDeltaEncoders();
-	return r;
-}
-
-int GeneralController::getCurrenMapId(){
-	return this->currentMapId;
-}
-
-int GeneralController::getCurrentSectorId(){
-	int result = RN_NONE;
-	if(currentSector != NULL){
-		result = currentSector->getId();
-	}
-	return result;
-}
-
 int GeneralController::getNextSectorId(){
 	return this->nextSectorId;
 }
@@ -2606,22 +2645,6 @@ int GeneralController::unlockVisualLandmarks(){
 	return pthread_mutex_unlock(&visualLandmarksLocker);
 }
 
-int GeneralController::lockRawDeltaEncoders(){
-	return pthread_mutex_lock(&rawDeltaEncoderLocker);
-}
-
-int GeneralController::unlockRawDeltaEncoders(){
-	return pthread_mutex_unlock(&rawDeltaEncoderLocker);
-}
-
-int GeneralController::lockRawPosition(){
-	return pthread_mutex_lock(&rawPositionLocker);
-}
-
-int GeneralController::unlockRawPosition(){
-	return pthread_mutex_unlock(&rawPositionLocker);
-}
-
 double GeneralController::getRobotHeight(){
 	return (robotConfig != NULL ? robotConfig->height : 0.0);
 }
@@ -2664,7 +2687,7 @@ void GeneralController::onLaserScanCompleted(LaserScan* data){
 
 void GeneralController::onSensorsScanCompleted(){
 	std::ostringstream buffer_str;
-	int mapId = currentMapId;
+	int mapId = currentSector->getMapId();
 	int sectorId = RN_NONE;
 	if(currentSector != NULL){
 		sectorId = currentSector->getId();

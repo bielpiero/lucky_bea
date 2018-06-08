@@ -44,7 +44,7 @@ private:
 	static void* launchThread(void* p);
 protected:
 	//virtual void OnConnection();//callback for client and server
-	virtual void OnMessageReceivedWithData(unsigned char* cad, int length);//callback for client and server	
+	virtual void OnMessageReceivedWithData(unsigned char* cad, int length) = 0;//callback for client and server	
 	
 };
 #endif

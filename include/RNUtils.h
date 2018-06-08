@@ -96,7 +96,7 @@ public:
 		this->x = 0.0;
 		this->y = 0.0;
 	}
-	PointXY(double x, double y){
+	PointXY(const double& x, const double& y){
 		this->x = x;
 		this->y = y;
 	}
@@ -108,13 +108,12 @@ public:
 	void setX(double x){ this->x = x; }
 	void setY(double y){ this->y = y; }
 
-	virtual const char* toString() const{
+	virtual const std::string toString() const{
 		std::ostringstream print_str;
 		print_str.str("");
 		print_str.clear();
 		print_str << "{x: " << x << ", y: " << y << "}";
-		std::string strprint = print_str.str();
-		return strprint.c_str();
+		return print_str.str();
 	}
 };
 
@@ -125,7 +124,7 @@ public:
 	PointXYZ() : PointXY() {
 		this->z = 0.0;
 	}
-	PointXYZ(double x, double y, double z) : PointXY(x, y) {
+	PointXYZ(const double& x, const double& y, const double& z) : PointXY(x, y) {
 		this->z = z;
 	}
 	virtual ~PointXYZ(){}
@@ -134,13 +133,12 @@ public:
 	
 	void setZ(double z){ this->z = z; }
 
-	virtual const char* toString() const{
+	virtual const std::string toString() const{
 		std::ostringstream print_str;
 		print_str.str("");
 		print_str.clear();
 		print_str << "{x: " << x << ", y: " << y << ", z: " << z << "}";
-		std::string strprint = print_str.str();
-		return strprint.c_str();
+		return print_str.str();
 	}
 };
 

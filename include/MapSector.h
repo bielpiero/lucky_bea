@@ -55,6 +55,7 @@ struct s_site{
 
 class MapSector{
 private:
+	int mapId;
 	int id;
 	std::string name;
 	double width;
@@ -69,12 +70,17 @@ private:
 private:
 	void getPolygonFromString();
 	double getAngle(PointXY a, PointXY b);
+
+	static bool polygonSorter(PointXY* a, PointXY* b);
 public:
 	MapSector();
 	~MapSector();
 
 	void setId(int id);
 	int getId();
+
+	void setMapId(int id);
+	int getMapId();
 
 	bool isHallway(void);
 
@@ -104,6 +110,8 @@ public:
 	s_feature* featureAt(int index);
 	s_landmark* landmarkAt(int index);
 
+	s_landmark* landmarkByTypeAndId(std::string type, int id);
+
 	s_site* findSiteById(int id);
 	s_feature* findFeatureById(int id);
 
@@ -129,7 +137,7 @@ public:
     void deleteAllLandmarks();
     void deletePolygon();
 
-    bool checkPointXYInPolygon(PointXY g, double &angle);
+    bool checkPointXYInPolygon(PointXY g);
 
 };
 

@@ -1,5 +1,5 @@
 <sectors sequence="0,1,0">
-	<sector id="23" name="Mobile Robots" width="897" height="432" reference="2" polygon="m 0 0 l 0 432 l 897 0 l 0 -432 z">
+	<sector id="0" name="Mobile Robots" width="897" height="432" reference="2" polygon="m 0 0 l 0 432 l 897 0 l 0 -432 z">
 		<landmarks>
 			
 		</landmarks>
@@ -20,7 +20,7 @@
 			
 		</sites>
 	</sector>
-	<sector id="1" name="MR-FM Hallway" width="160" height="400" reference="2" polygon="m 0 0 l 0 400 l 160 0 l 0 -400 z">
+	<sector id="21" name="MR-FM Hallway" width="160" height="400" reference="2" polygon="m 0 0 l 0 400 l 160 0 l 0 -400 z">
 		<landmarks>
 			
 		</landmarks>
@@ -34,7 +34,7 @@
 
 		</sites>
 	</sector>
-	<sector id="2" name="FM Office" width="310" height="420" reference="2" polygon="m 0 0 l 0 420 l 310 0 l 0 -420 z">
+	<sector id="22" name="FM Office" width="310" height="420" reference="2" polygon="m 0 0 l 0 420 l 310 0 l 0 -420 z">
 		<landmarks/>
 		<features>
 			<feature id="0" name="door" width="10" height="137" x="310" y="78" linked-sector-id="1" xcoord="-420" ycoord="0"/>
@@ -45,9 +45,15 @@
 
 		</sites>
 	</sector>
-	<sector id="20" name="Computer Vision" width="1118" height="1180" reference="2" polygon="m 0 0 l 0 1180 l 1118 0 l 0 -1180 z">
+	<sector id="1" name="Computer Vision" width="1030" height="1136" reference="2" polygon="m 0 0 l 0 1136 l 1030 0 l 0 -1136 z">
 		<landmarks>
-			
+			<landmark id="8" type="camera" x="92" y="0" z="275"/>
+			<landmark id="9" type="camera" x="0" y="199" z="275"/>
+			<landmark id="10" type="camera" x="0" y="445" z="275"/>
+			<landmark id="11" type="camera" x="0" y="703" z="275"/>
+			<landmark id="12" type="camera" x="0" y="975" z="275"/>
+			<landmark id="0" type="camera" x="90" y="1136" z="275"/>
+			<landmark id="1" type="camera" x="464" y="1136" z="275"/>
 		</landmarks>
 		<features>
 			<feature id="0" name="door" width="137" height="10" x="80" y="1174" linked-sector-id="0" xcoord="18" ycoord="-1174"/>

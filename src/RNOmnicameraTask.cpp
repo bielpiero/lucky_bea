@@ -1,7 +1,7 @@
 #include "RNOmnicameraTask.h"
 
 const double RNOmnicameraTask::PI_DEGREES = 180.0;
-const double RNOmnicameraTask::MARKER_HEIGHT = 2.50; //meters
+const double RNOmnicameraTask::MARKER_HEIGHT = 2.75; //meters
 
 const std::string RNOmnicameraTask::cameraUrl = "http://192.168.0.19/record/current.jpg";
 //const std::string RNOmnicameraTask::cameraUrl = "http://admin:C0n7r01_au70@192.168.1.33/control/faststream.jpg?stream=full&fps=24&noaudio&data=v.mjpg";
@@ -45,9 +45,6 @@ RNOmnicameraTask::RNOmnicameraTask(const GeneralController* gn, const char* name
 	distCoeff.at<float>(1, 0) = -0.0230237657809746;
 	distCoeff.at<float>(2, 0) = 0.00934983977434772;
 	distCoeff.at<float>(3, 0) = -0.00156140271727628;
-
-    xi = cv::Mat(1, 1, CV_32F);
-    distCoeff.at<float>(0, 0) = 1.277926516360664;
 
 	landmarks = NULL;
 
@@ -170,6 +167,31 @@ void RNOmnicameraTask::findCandidates(){
 					marker.setPoint(auxPoint, 3);
 					//std::swap(marker.getPoint(1), marker.getPoint(3));
 				}
+
+				float maxDist = 0;
+				int firstFarthestPointIndex; //Index of the first point (anti-clockwise) of the segment that is farthest from the center
+
+				//Compare pairs of consecutive points. Save the pair with the highest combined distance to center
+				//That pair will be the base of the marker's rectangle
+				for (int j = 0; j < approxCurve.size(); j++){
+        			cv::Point imageCenter(camMatrix.at<float>(0, 2), camMatrix.at<float>(1, 2));
+        			cv::Point distanceToCenter1 = approxCurve.at(j) - imageCenter;
+        			cv::Point distanceToCenter2 = approxCurve.at((j + 1) % 4) - imageCenter;
+
+        			float squaredDistance1 = sqrt(pow(distanceToCenter1.x, 2) + pow(distanceToCenter1.y, 2));
+        			float squaredDistance2 = sqrt(pow(distanceToCenter2.x, 2) + pow(distanceToCenter2.y, 2));
+
+        			if (squaredDistance1 + squaredDistance2 > maxDist){
+        				maxDist = squaredDistance1 + squaredDistance2;
+        				firstFarthestPointIndex = j;
+        			}
+        		}
+
+        		//Rotates the rectangle until its base is at the bottom (positions 1 and 2)
+        		std::vector<cv::Point2f> markerDots = marker.getMarkerPoints();
+        		std::rotate(markerDots.begin(), markerDots.begin() + 4 - ((firstFarthestPointIndex + 3) % 4), markerDots.end());
+        		marker.setMarkerPoints(markerDots);
+
 				marker.setContourIdx(i);
 				marker.setRotatedRect(cv::minAreaRect(approxCurve));
 				marker.setArea(cv::contourArea(approxCurve));
@@ -261,8 +283,8 @@ void RNOmnicameraTask::poseEstimation(){
 		//RNUtils::printLn("[%d], undistortedPoint: {x: %f, y: %f}", marker.getMarkerId(), undistortedPoint.at(0).x, undistortedPoint.at(0).y);
 		float distanceToCenter = 0;
 		float px, py, theta = 0;
-		px = undistortedPoint.at(0).x * camMatrix.at<float>(0, 0) + camMatrix.at<float>(0, 2);
-		py = undistortedPoint.at(0).y * camMatrix.at<float>(1, 1) + camMatrix.at<float>(1, 2);
+		px = std::abs(undistortedPoint.at(0).x - camMatrix.at<float>(0, 2));
+		py = std::abs(undistortedPoint.at(0).y - camMatrix.at<float>(1, 2));
 
 		distanceToCenter = sqrt(pow(px, 2) + std::pow(py, 2));
 		
@@ -270,8 +292,7 @@ void RNOmnicameraTask::poseEstimation(){
 		marker.setOpticalTheta(theta);
 		double realWorldDistance = (MARKER_HEIGHT - gn->getRobotHeight()) * (distanceToCenter / camMatrix.at<float>(0, 0));
 
-		//std::cout << "Real world distance: " << realWorldDistance << " cm, should be " << cmCounter << " cm. Error: " << abs(realWorldDistance - cmCounter) << " cm" << std::endl;
-
+		//std::cout << "Real world distance (" << marker.getMapId() << ", " << marker.getSectorId() << ", " << marker.getMarkerId() << "): " << realWorldDistance << std::endl;
 	
 		double angleInRadians = std::atan2(tikiPoint.y, tikiPoint.x) - (M_PI / 2);
 
@@ -508,9 +529,9 @@ void RNOmnicameraTask::task(){
 				visualLand->addExtraParameter(OPTICAL_THETA_STR, tikiMarkers.at(i).getOpticalTheta());
 				landmarks->add(visualLand);
 			}
-			if (tikiMarkers.size() > 0){
-				RNUtils::printLn("%s", landmarks->toString().c_str());	
-			}
+			//if (tikiMarkers.size() > 0){
+			//	RNUtils::printLn("%s", landmarks->toString().c_str());	
+			//}
 			//cv::imwrite("que ves.jpg", rectImage);
 			gn->setVisualLandmarks(landmarks);
 		}

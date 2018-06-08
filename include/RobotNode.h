@@ -12,7 +12,6 @@
 #define UPPER_LIMIT_TRANSITION 2
 #define RN_MOVEMENT 3
 
-class RNFactorySensorsTask;
 class RNDistanceTimerTask;
 
 class RNActionGoto;
@@ -32,6 +31,7 @@ private:
     ArFunctorC<RobotNode> connFailCB;
     ArFunctorC<RobotNode> disconnectedCB;
     ArFunctorC<RobotNode> connLostCB;
+    ArFunctorC<RobotNode> positionUpdateCB;
     ArFunctor2C<RobotNode, double, double> upCB;
     ArFunctor2C<RobotNode, double, double> downCB;
     ArFunctor2C<RobotNode, double, double> rightCB;
@@ -65,13 +65,14 @@ private:
     bool isFirstFakeEstimation;
     bool laserReady;
 
-    
-    RNFactorySensorsTask* sensors;
     RNDistanceTimerTask* distanceTimer;
 
     pthread_mutex_t mutexIncrements;
     pthread_mutex_t mutexAltPose;
     pthread_mutex_t mutexLaser;
+    pthread_mutex_t rawPositionLocker;
+
+    Matrix robotRawEncoderPosition;
 
 public:
 	RobotNode(const char* port);
@@ -103,7 +104,6 @@ public:
     void stopRobot(void);
 
     void getBatterChargeStatus(void);
-    void getBumpersStatus(void);
     LaserScan* getLaserScan();
     bool isLaserReady();
     void setLaserReady(bool ready);
@@ -132,6 +132,10 @@ public:
 	double getVelConvFactor();
 	double getAngleConvFactor();
 
+    int lockRawPosition();
+    int unlockRawPosition();
+
+    Matrix getRawEncoderPosition();
 
 private:
     
@@ -147,12 +151,13 @@ private:
     void disconnected(void);
     // called if the connection is lost due to an error
     void connectionLost(void);
+    // called to update position
+    void positionUpdate(void);
 
     
 public:
 	virtual void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear) = 0;
 	virtual void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed) = 0;
-	virtual void onRawPositionUpdate(double x, double y, double theta, double deltaDistance, double deltaDegrees) = 0;
 	virtual void onSonarsDataUpdate(std::vector<PointXY*>* data) = 0;
 	virtual void onBatteryChargeStateChanged(char data) = 0;
     virtual void onSecurityDistanceWarningSignal() = 0;

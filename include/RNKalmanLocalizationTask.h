@@ -2,11 +2,11 @@
 #define RN_KALMAN_LOCALIZATION_TASK_H
 
 #include "RNLocalizationTask.h"
-//#include "UDPServer.h"
+#include "UDPServer.h"
 
 #define STATE_VARIABLES 3
 
-class RNKalmanLocalizationTask : public RNLocalizationTask{
+class RNKalmanLocalizationTask : public RNLocalizationTask, public UDPServer{
 public:
 	RNKalmanLocalizationTask(const GeneralController* gn, const char* name = "Kalman Localization Task", const char* description = "");
 	~RNKalmanLocalizationTask();
@@ -14,7 +14,8 @@ public:
 	virtual void onKilled();
 	virtual void init();
 private:
-	
+	virtual void OnMessageReceivedWithData(unsigned char* cad, int length);  //temporal function
+
 	void getObservations(Matrix& observations);
 	void landmarkObservation(const Matrix& xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle);
 	Matrix fixFilterGain(const Matrix wk, const Matrix z);
@@ -33,7 +34,6 @@ private:
 	double rfidTMAngle;
 
 	bool enableLocalization;
-	//UDPServer* receiver;
 
 	std::FILE* test;
 	Matrix xk;		// current position

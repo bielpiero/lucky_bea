@@ -1,7 +1,6 @@
 #include "RobotNode.h"
 #include "RNActionGoto.h"
 #include "RNLaserTask.h"
-#include "RNFactorySensorsTask.h"
 #include "RNDistanceTimerTask.h"
 
 RobotNode::RobotNode(const char* port){
@@ -28,6 +27,8 @@ RobotNode::RobotNode(const char* port){
     robot->startStabilization();
     //dataLaser = NULL;
     laserReady = false;
+    robotRawEncoderPosition = Matrix(3, 1);
+    pthread_mutex_init(&rawPositionLocker, NULL);
     //robot->setCycleTime(1000);
     robot->setCycleWarningTime(0);
     //robot->setMutexUnlockWarningTime(2000);
@@ -37,7 +38,7 @@ RobotNode::RobotNode(const char* port){
     connFailCB = ArFunctorC<RobotNode>(this, &RobotNode::connectionFailed);
     disconnectedCB = ArFunctorC<RobotNode>(this, &RobotNode::disconnected);
     connLostCB = ArFunctorC<RobotNode>(this, &RobotNode::connectionLost);
-
+    positionUpdateCB = ArFunctorC<RobotNode>(this, &RobotNode::positionUpdate);
     keyHandler = Aria::getKeyHandler();
     if (not keyHandler){
         keyHandler = new ArKeyHandler;
@@ -61,6 +62,8 @@ RobotNode::RobotNode(const char* port){
     robot->addDisconnectNormallyCB(&disconnectedCB, ArListPos::FIRST);
     robot->addDisconnectOnErrorCB(&connLostCB, ArListPos::FIRST);
 
+    robot->addSensorInterpTask("Position Update Task", 50, &positionUpdateCB);
+
     this->prevBatteryChargeState = -5;
 
 	this->maxTransVel = robot->getTransVelMax();
@@ -80,9 +83,6 @@ RobotNode::RobotNode(const char* port){
     gotoPoseAction = new RNActionGoto(this);
     robot->addAction(gotoPoseAction, 89);
     
-    //sensors = new RNFactorySensorsTask(this);
-    //sensors->go();
-
     //distanceTimer = new RNDistanceTimerTask(this);
     //distanceTimer->go();
 
@@ -97,15 +97,11 @@ RobotNode::RobotNode(const char* port){
 }
 
 RobotNode::~RobotNode(){
-    if(sensors){
-        sensors->kill();
-        delete sensors;
-    }
 
-    if(distanceTimer){
+    /*if(distanceTimer){
         distanceTimer->kill();
         delete distanceTimer;
-    }
+    }*/
 
     if(connector){
         delete connector;
@@ -116,7 +112,9 @@ RobotNode::~RobotNode(){
         delete gotoPoseAction;
         RNUtils::printLn("Deleted gotoPoseAction...");
     }
-    
+
+    pthread_mutex_destroy(&rawPositionLocker);
+    RNUtils::printLn("Deleted rawDeltaEncoderLocker...");
     pthread_mutex_destroy(&mutexIncrements);
     RNUtils::printLn("Deleted mutexIncrements...");
     pthread_mutex_destroy(&mutexLaser);
@@ -156,6 +154,14 @@ void RobotNode::connectionLost(void){
     Aria::exit(1);
 }
 
+void RobotNode::positionUpdate(void){
+    lockRawPosition();
+    robotRawEncoderPosition(0, 0) = robot->getX()/1e3;
+    robotRawEncoderPosition(1, 0) = robot->getY()/1e3;
+    robotRawEncoderPosition(2, 0) = robot->getTh() * M_PI / 180;
+    unlockRawPosition();
+}
+
 ArRobotConnector* RobotNode::getRobotConnector() const{
     return connector;
 }
@@ -173,7 +179,7 @@ void RobotNode::disconnect(){
     //robot->unlock();
     robot->disableMotors();
     //robot->stopRunning();
-    //robot->waitForRunExit();
+    robot->waitForRunExit();
     //connector->disconnectAll();
     //finishThreads();    
 }
@@ -187,6 +193,14 @@ void RobotNode::getRobotPosition(){
 
 bool RobotNode::getSonarsStatus(){
     return robot->areSonarsEnabled();
+}
+
+Matrix RobotNode::getRawEncoderPosition(){
+    Matrix r;
+    lockRawPosition();
+    r = Matrix(robotRawEncoderPosition);
+    unlockRawPosition();
+    return r;
 }
 
 void RobotNode::getBatterChargeStatus(void){
@@ -262,17 +276,19 @@ void RobotNode::gotoPosition(double x, double y, double theta, bool isHallway, d
 }
 
 void RobotNode::setPosition(double x, double y, double theta){
-    
     robot->lock();
-    //pthread_mutex_lock(&mutexRawPositionLocker);
-    //myRawPose->setPose(x * 1000, y * 1000, theta * 180 / M_PI);
-    //pthread_mutex_unlock(&mutexRawPositionLocker);
-    sensors->kill();
+    
     isFirstFakeEstimation = true;
     robot->resetTripOdometer();
     robot->moveTo(ArPose(x * 1000, y * 1000, theta * 180 / M_PI));
-    sensors->reset();
+    
     robot->unlock();
+
+    lockRawPosition();
+    robotRawEncoderPosition(0, 0) = x;
+    robotRawEncoderPosition(1, 0) = y;
+    robotRawEncoderPosition(2, 0) = theta;
+    unlockRawPosition();
 }
 
 void RobotNode::setMotorsStatus(bool enabled){
@@ -437,12 +453,8 @@ void RobotNode::getIncrementPosition(double* deltaDistance, double* deltaDegrees
             isFirstFakeEstimation = false;
         }
 
-
-
         this->deltaDistance = currentDistance - prevDistance;
         this->deltaDegrees = currentRads - prevRads;
-
-
 
         if(robot->getVel() < 0){
             this->deltaDistance *= -1.0;
@@ -468,6 +480,14 @@ void RobotNode::getIncrementPosition(double* deltaDistance, double* deltaDegrees
         robot->resetTripOdometer();
         robot->unlock();
     }
+}
+
+int RobotNode::lockRawPosition(){
+    return pthread_mutex_lock(&rawPositionLocker);
+}
+
+int RobotNode::unlockRawPosition(){
+    return pthread_mutex_unlock(&rawPositionLocker);
 }
 
 void RobotNode::onLaserScanCompleted(LaserScan* data){

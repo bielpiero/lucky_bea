@@ -242,8 +242,7 @@ private:
 	void acceptTransferRobotControl(int socketIndex, char* acceptance);
 
 	void getPololuInstruction(char* cad, unsigned char& card_id, unsigned char& servo_id, int& value);
-	//void getGestures(std::string type, std::string& gestures);
-	//void setGesture(std::string id, std::string& servo_positions);
+
 	void saveGesture(std::string token, int gesture_type);
 	void saveStaticGesture(std::string name, s_motor servos[]);
 	void saveDynamicGesture(std::string name, s_motor servos[]);
@@ -260,7 +259,6 @@ private:
 public:
 	void onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear);
 	void onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed);
-	void onRawPositionUpdate(double x, double y, double theta, double deltaDistance, double deltaDegrees);
 	void onBatteryChargeStateChanged(char battery);
 	void onSonarsDataUpdate(std::vector<PointXY*>* data);
 	void onSecurityDistanceWarningSignal();
@@ -273,8 +271,6 @@ public:
 	
 	void stopCurrentTour();
 
-	int getCurrenMapId();
-	int getCurrentSectorId();
 	int getNextSectorId();
 	int getLastVisitedNode();
 
@@ -294,9 +290,6 @@ public:
 
 	int lockRawDeltaEncoders();
 	int unlockRawDeltaEncoders();
-
-	int lockRawPosition();
-	int unlockRawPosition();
 
 	Matrix getP();
 	Matrix getQ();
@@ -319,9 +312,6 @@ public:
 	bool isLaserSensorActivated();
 	bool isCameraSensorActivated();
 	bool isRfidSensorActivated();
-
-	Matrix getRawEncoderPosition();
-	Matrix getRawDeltaPosition();
 
 	MapSector* getCurrentSector();
 	RNLandmarkList* getLaserLandmarks();
@@ -357,7 +347,7 @@ private:
 	Matrix robotRawEncoderPosition;
 
 	std::vector<fl::Trapezoid*>* kalmanFuzzy;
-	Matrix robotState;
+	
 	Matrix P;
 	Matrix Q;
 	Matrix R;
@@ -389,7 +379,6 @@ private:
 	unsigned char keepRobotTracking;
 	unsigned char keepTourAlive;
 
-	int currentMapId;
 	int nextSectorId;
 	bool hallwayDetected;
 	PointXY nextSectorCoord;
@@ -405,12 +394,12 @@ private:
 	pthread_mutex_t laserLandmarksLocker;
 	pthread_mutex_t rfidLandmarksLocker;
 	pthread_mutex_t visualLandmarksLocker;
-	pthread_mutex_t rawDeltaEncoderLocker;
 	pthread_mutex_t rawPositionLocker;
 
 	void getMapId(char* cad, int& mapId);
 	
 	void loadRobotConfig();
+	void getInitialLocation();
 	
 	void initializeSPDPort(int socketIndex, char* cad);
 	

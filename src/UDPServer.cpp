@@ -56,9 +56,11 @@ int UDPServer::receiveData(unsigned char* buffer, unsigned int& size){
 	if(memcmp(buffer, "HELLO", size) == 0){
 		
 		processHello(incommingAddress);
+		result = 1;							//Hello...
 		
 	} else if(memcmp(buffer, "BYBYE", size) == 0){
-		processByBye(incommingAddress);
+		processByBye(incommingAddress);		//ByBye
+		result = 2;
 	}
 	size = (int)err;
 	return result;
@@ -109,20 +111,18 @@ void UDPServer::startThread(){
 void* UDPServer::launchThread(void* p){
 	UDPServer* self = (UDPServer*)p;
 	self->thread_status=1;
-	while(self->thread_status==1){
+	while(RNUtils::ok() and self->thread_status==1){
 		unsigned char* msg = new unsigned char[BUFFER_SIZE];
 		unsigned int l = BUFFER_SIZE;
 		
-		self->receiveData(msg, l);
+		if(self->receiveData(msg, l) == 0){
+			self->OnMessageReceivedWithData(msg, l);
+		}
 		RNUtils::sleep(10);
 		delete [] msg;
 	}
 	self->thread_status=0;
 	return NULL;
-}
-
-void UDPServer::OnMessageReceivedWithData(unsigned char* data, int length){
-
 }
 
 void UDPServer::closeConnection(){

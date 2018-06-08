@@ -13,6 +13,7 @@ public:
 	virtual void onKilled();
 private:
 	GeneralController* gn;
+	int lastSiteVisitedIndex;
 };
 
 #endif
