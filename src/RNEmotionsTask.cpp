@@ -2560,15 +2560,17 @@ void RNEmotionsTask::initializeFuzzyEmotionSystem(){
     emotionEngine->addRuleBlock(ruleBlock);
 }
 
-void RNEmotionsTask::getSystemInput(const double& distance, const double& angle, double* linearVelocity, double* angularVelocity){
+void RNEmotionsTask::getSystemInput(double* emotion){
 
-    this->distanceError->setValue(distance);
-    this->angleError->setValue(angle);
+    this->angryFS->setValue(currentState->getAngry());
+    this->happyFS->setValue(currentState->getHappy());
+    this->calmFS->setValue(currentState->getCalm());
+    this->sadFS->setValue(currentState->getSad());
+    this->afraidFS->setValue(currentState->getAfraid());
 
     emotionEngine->process();
 
-    *linearVelocity = this->linearVelocity->getValue();
-    *angularVelocity = this->angularVelocity->getValue();
+    *emotion = this->emotionFS->getValue();
 }
 
 void RNEmotionsTask::task(){ //This is supposed to be sensing Doris emotion by: speaking....
@@ -2582,12 +2584,18 @@ void RNEmotionsTask::task(){ //This is supposed to be sensing Doris emotion by: 
                 currentState->setSad(impulses->at(i)->getSad() + currentState->getSad());
                 currentState->setAfraid(impulses->at(i)->getAfraid() + currentState->getAfraid());
                 
-             }
+            }
         }
     }
     //future conditions
 
-    //
+    //Fuzzy System Inference
+
+    double emotion;
+    getSystemInput(&emotion);
+
+    // set face
+    // modify speaking rate and volume.
 }
 
 void RNEmotionsTask::onKilled(){

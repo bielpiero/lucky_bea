@@ -72,6 +72,7 @@ public:
 
 private:
     void initializeFuzzyEmotionSystem();
+    void getSystemInput(double* emotion);
 private:
 	GeneralController* gn;
 	std::vector<Impulse*>* impulses;
