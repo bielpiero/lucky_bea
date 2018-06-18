@@ -12,8 +12,12 @@ public:
 	virtual void task();
 	virtual void onKilled();
 private:
+	void init();
+private:
 	GeneralController* gn;
 	int lastSiteVisitedIndex;
+	bool initialized;
+	std::vector<std::string> sequence;
 };
 
 #endif

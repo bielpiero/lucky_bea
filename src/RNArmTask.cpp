@@ -104,8 +104,3 @@ void RNArmTask::getGestures(int type, std::string& jsonResponse){
 	}
 	jsonResponse = bufferOut_str.str();
 }
-
-
-void RNArmTask::onKilled(){
-	
-}

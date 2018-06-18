@@ -120,7 +120,7 @@ public:
 	~RNRFIdentificationTask();
 	int init(void);
 	virtual void task();
-	virtual void onKilled();
+	virtual void kill();
 
 private:
 	RFData* findByKeyAntenna(std::string key, int antenna);

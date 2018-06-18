@@ -6,7 +6,6 @@ const double RNLaserTask::LANDMARK_RADIUS = 0.045;
 
 RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
 	this->gn = gn;
-	rn->setLaserReady(false);
 	laserConnector = new ArLaserConnector(rn->getArgumentParser(), rn->getRobot(), rn->getRobotConnector());
 	if(!laserConnector->connectLasers(false, true, false)){
 		printf("Could not connect to configured lasers.\n");
@@ -14,11 +13,14 @@ RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* de
 
 	laser = rn->getRobot()->findLaser(1);
 	if(!laser){
+		laserActive = false;
 		printf("Error. Not Connected to any laser.\n");
 	} else {
+		laserActive = true;
 		printf("Connected to SICK LMS200 laser.\n");
-		rn->setLaserReady(true);
+		
 	}
+
 	laserDataScan = NULL;
 	laserLandmarks = NULL;
 
@@ -27,19 +29,16 @@ RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* de
 
 
 RNLaserTask::~RNLaserTask(){
-	//delete laser;
-}
-
-
-void RNLaserTask::onKilled(){
 	
+	//delete laser;
 }
 
 void RNLaserTask::getLaserScan(void){
 	if(laser != NULL){
-		laser->lockDevice();
-        
-		const std::list<ArSensorReading*> *currentReadings = new std::list<ArSensorReading*>(*laser->getRawReadings());
+    	laser->lockDevice();
+    	const std::list<ArSensorReading*> *currentReadings = new std::list<ArSensorReading*>(*laser->getRawReadings());
+    	
+//    	laser->unlockDevice();
         //lockSensorsReadings();
         if(laserDataScan == NULL){
             laserDataScan = new LaserScan();
@@ -49,10 +48,12 @@ void RNLaserTask::getLaserScan(void){
 		for(std::list<ArSensorReading*>::const_iterator it = currentReadings->begin(); it != currentReadings->end(); ++it){
 			laserDataScan->addRange((double)(*it)->getRange() / 1000, (double)(*it)->getExtraInt());
 		}
-        rn->onLaserScanCompleted(laserDataScan);
+        //rn->onLaserScanCompleted(laserDataScan);
         laser->unlockDevice();
-
-        delete currentReadings;
+        
+        if(currentReadings){
+        	delete currentReadings;
+        }
         //unlockSensorsReadings();
 	}
 }
@@ -125,7 +126,7 @@ void RNLaserTask::getReflectiveLandmarks(){
 			}
 		}
 	}
-	
+
 	std::ostringstream buffFile;
 	for(int i = 0; i < laserLandmarks->size(); i++){
 		
@@ -162,7 +163,9 @@ void RNLaserTask::getReflectiveLandmarks(){
 		
 	}
 	gn->unlockLaserLandmarks();
-	gn->setLaserLandmarks(laserLandmarks);
+	//gn->setLaserLandmarks(laserLandmarks);
+	
+	
 	
 }
 

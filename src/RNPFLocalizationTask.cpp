@@ -22,10 +22,6 @@ void RNPFLocalizationTask::init(){
 	}
 }
 
-void RNPFLocalizationTask::onKilled(){
-	enableLocalization = false;
-}
-
 void RNPFLocalizationTask::task(){
 	if(enableLocalization){
 		

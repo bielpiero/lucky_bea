@@ -45,8 +45,9 @@ void RNKalmanLocalizationTask::init(){
 	}
 }
 
-void RNKalmanLocalizationTask::onKilled(){
+void RNKalmanLocalizationTask::kill(){
 	enableLocalization = false;
+	RNRecurrentTask::kill();
 }
 
 void RNKalmanLocalizationTask::task(){
@@ -221,13 +222,14 @@ void RNKalmanLocalizationTask::task(){
 				measure(0, 0) = lndmrk->getPointsXMean();
 				measure(1, 0) = lndmrk->getPointsYMean();
 				for (int j = laserIndex; j < cameraIndex; j++){
+					
 					Matrix smallHk(2, 3);
 					smallHk(0, 0) = Hk(2 * j, 0);
 					smallHk(0, 1) = Hk(2 * j, 1);
 					smallHk(0, 2) = Hk(2 * j, 2);
 					smallHk(1, 0) = Hk(2 * j + 1, 0);
-					smallHk(2, 1) = Hk(2 * j + 1, 1);
-					smallHk(3, 2) = Hk(2 * j + 1, 2);
+					smallHk(1, 1) = Hk(2 * j + 1, 1);
+					smallHk(1, 2) = Hk(2 * j + 1, 2);
 					Matrix omega = smallHk * Pk * ~smallHk + smallR;
 					//float ed = std::sqrt(std::pow(zkl(j, 0), 2.0) + std::pow(lndmrk->getPointsXMean(), 2.0) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
 					Matrix obs(2, 1);
@@ -262,10 +264,10 @@ void RNKalmanLocalizationTask::task(){
 					
 					double mdDistance = std::abs(zl(2 * indexFound, 0) / std::sqrt(gn->getLaserDistanceVariance()));
 					double mdAngle = std::abs(zl(2 * indexFound + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
-					//printf("Mhd: (%d), %lg, %lg, nud: %lg, nua: %lg\n", i, mdDistance, mdAngle, zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
+					printf("Mhd: (%d), %lg, %lg, nud: %lg, nua: %lg\n", i, mdDistance, mdAngle, zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
 					if (mdDistance > laserTMDistance or mdAngle > laserTMAngle){
 						//distanceThreshold = (máxima zl que permite un buen matching)/sigma
-						//RNUtils::printLn("landmark %d rejected...", indexFound);
+						RNUtils::printLn("landmark %d rejected...", indexFound);
 						zl(2 * indexFound, 0) = 0.0;
 						zl(2 * indexFound + 1, 0) = 0.0;
 						rsize--;
@@ -442,7 +444,7 @@ void RNKalmanLocalizationTask::task(){
 Matrix RNKalmanLocalizationTask::fixFilterGain(const Matrix wk, const Matrix z){
 	Matrix result = wk;
 	for(int i = 0; i < z.rows_size(); i++){
-		if(z(i, 0) == 0.0){
+		if(z(i, 0) >= -1.0e-5 and z(i, 0) <= 1.0e-5){
 			for(int j = 0; j < wk.rows_size(); j++){
 				result(j, i) = 0.0;
 			}

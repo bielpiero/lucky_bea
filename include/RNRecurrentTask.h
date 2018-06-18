@@ -10,12 +10,12 @@ public:
 	virtual ~RNRecurrentTask();
 	virtual void task() = 0;
 
-	virtual void onKilled() = 0;
+	//virtual void onKilled() = 0;
 	
     void go();
     int done();
     void reset();
-    void kill();
+    virtual void kill();
     
     void* runThread(void* object);
 	void setController(RobotNode* rn);
@@ -27,7 +27,7 @@ protected:
 private:
 	std::string name;
 	std::string description;
-	bool running;
+	bool executingTask;
 	bool goRequested;
 	bool killed;
 };

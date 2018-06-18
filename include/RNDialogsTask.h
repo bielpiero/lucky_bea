@@ -77,7 +77,6 @@ public:
 	RNDialogsTask(const GeneralController* gn, DorisLipSync* tts, const char* name = "Dialogs Task", const char* description = "Doris Speech");
 	~RNDialogsTask();
 	virtual void task();
-	virtual void onKilled();
 
     void setInputMessage(std::string inputMessage);
     void setState(std::string state);

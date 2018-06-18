@@ -13,7 +13,6 @@
 #include "RNDialogsTask.h"
 #include "RNGesturesTask.h"
 #include "RNArmTask.h"
-#include "RNGlobalLocalizationTask.h"
 #include "RNTourTask.h"
 
 const double AntennaData::TX_GAIN = 9.75;
@@ -73,9 +72,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	tasks = new RNRecurrentTaskMap(this);
 
 	laserTask = new RNLaserTask(this);
-	omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
+	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
 	//rfidTask = new RNRFIdentificationTask(this);
-	//globalLocalization = new RNGlobalLocalizationTask(this);
 	dialogs = new RNDialogsTask(this, this->tts);
 	gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
@@ -91,7 +89,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	////Tasks added:
 	//tasks->addTask(globalLocalization);
 	tasks->addTask(laserTask);
-	tasks->addTask(omnidirectionalTask);
+	//tasks->addTask(omnidirectionalTask);
 	//tasks->addTask(rfidTask);
 	tasks->addTask(dialogs);
 	//tasks->addTask(armGestures);
@@ -158,11 +156,7 @@ GeneralController::~GeneralController(void){
 	RNUtils::printLn("Deleted laserLandmarks...");
 	delete visualLandmarks;
 	RNUtils::printLn("Deleted visualLandmarks...");
-	
 
-	/*if(!file){
-		std::fclose(file);
-	}*/
 	pthread_mutex_destroy(&rawPositionLocker);
 	RNUtils::printLn("Deleted rawPositionLocker...");
 	pthread_mutex_destroy(&laserLandmarksLocker);
@@ -175,7 +169,6 @@ GeneralController::~GeneralController(void){
 	closeConnection();
 	
 }
-
 const char* GeneralController::getClassName() const{
     return "GeneralController";
 }

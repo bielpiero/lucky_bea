@@ -14,7 +14,7 @@ void signalHandler(int s){
     	delete robot;
     }
 	RNUtils::printLn("Succesfully closed...\n");
-	exit(0);
+	Aria::exit(0);
 }
 
 int main(int argc, char** argv){

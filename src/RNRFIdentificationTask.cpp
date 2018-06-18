@@ -67,11 +67,9 @@ void RNRFIdentificationTask::task(){
 	}	
 }
 
-void RNRFIdentificationTask::onKilled(){
-	if(this){
-		this->deviceInitialized = false;	
-	}
-	
+void RNRFIdentificationTask::kill(){
+	this->deviceInitialized = false;	
+	RNRecurrentTask::kill();
 }
 
 int RNRFIdentificationTask::init(void){

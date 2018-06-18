@@ -20,8 +20,6 @@ protected:
 	GeneralController* gn;
 protected:
 	virtual void task() = 0;
-	virtual void onKilled() = 0;
-
 public:
 	virtual void init() = 0;
 };

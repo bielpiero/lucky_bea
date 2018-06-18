@@ -105,8 +105,6 @@ public:
 
     void getBatterChargeStatus(void);
     LaserScan* getLaserScan();
-    bool isLaserReady();
-    void setLaserReady(bool ready);
 		
     bool getMotorsStatus(void);
     bool getSonarsStatus(void);

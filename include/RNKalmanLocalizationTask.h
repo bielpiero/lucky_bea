@@ -11,7 +11,7 @@ public:
 	RNKalmanLocalizationTask(const GeneralController* gn, const char* name = "Kalman Localization Task", const char* description = "");
 	~RNKalmanLocalizationTask();
 	virtual void task();
-	virtual void onKilled();
+	virtual void kill();
 	virtual void init();
 private:
 	virtual void OnMessageReceivedWithData(unsigned char* cad, int length);  //temporal function

@@ -8,7 +8,6 @@ public:
 	RNPFLocalizationTask(const GeneralController* gn, const char* name = "Particle-Filter Localization Task", const char* description = "");
 	~RNPFLocalizationTask();
 	virtual void task();
-	virtual void onKilled();
 	virtual void init();
 private:
 	

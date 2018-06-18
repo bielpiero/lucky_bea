@@ -45,7 +45,46 @@
 
 		</sites>
 	</sector>
-	<sector id="1" name="Computer Vision" width="1030" height="1136" reference="2" polygon="m 0 0 l 0 1136 l 1030 0 l 0 -1136 z">
+	<sector id="1" name="Computer Vision" width="1030" height="2195" reference="2" polygon="m 0 0 l 0 2195 l 1030 0 l 0 -1136 l 850 0 l 0 -1059 z">
+		<landmarks>
+			<landmark id="0" type="laser" x="0" y="76" z="0"/>
+			<landmark id="1" type="laser" x="180" y="275" z="0"/>
+			<landmark id="2" type="laser" x="0" y="376" z="0"/>
+			<landmark id="3" type="laser" x="180" y="575" z="0"/>
+			<landmark id="4" type="laser" x="0" y="768" z="0"/>
+			<landmark id="5" type="laser" x="180" y="975" z="0"/>
+			<landmark id="7" type="camera" x="90" y="0" z="275"/>
+			<landmark id="6" type="camera" x="0" y="309" z="275"/>
+			<landmark id="3" type="camera" x="134" y="547" z="275"/>
+			<landmark id="5" type="camera" x="0" y="793" z="275"/>
+			<landmark id="4" type="camera" x="90" y="1049" z="275"/>
+			<landmark id="8" type="camera" x="92" y="1059" z="275"/>
+			<landmark id="9" type="camera" x="0" y="1258" z="275"/>
+			<landmark id="10" type="camera" x="0" y="1504" z="275"/>
+			<landmark id="11" type="camera" x="0" y="1762" z="275"/>
+			<landmark id="12" type="camera" x="0" y="2034" z="275"/>
+			<landmark id="0" type="camera" x="90" y="2195" z="275"/>
+			<landmark id="1" type="camera" x="464" y="2195" z="275"/>
+		</landmarks>
+		<features>
+			<feature id="0" name="mesa 1" width="80" height="179" x="160" y="1837"/>
+			<feature id="1" name="mesa 2" width="80" height="179" x="160" y="2016"/>
+			<feature id="0" name="mesa 3" width="80" height="179" x="323" y="1837"/>
+			<feature id="1" name="mesa 4" width="80" height="179" x="323" y="2016"/>
+			<feature id="0" name="mesa 5" width="80" height="179" x="486" y="1837"/>
+			<feature id="1" name="mesa 6" width="80" height="179" x="486" y="2016"/>
+			<feature id="0" name="mesa 7" width="80" height="179" x="566" y="1837"/>
+			<feature id="1" name="mesa 8" width="80" height="179" x="566" y="2016"/>
+
+			<feature id="2" name="door" width="137" height="10" x="10" y="1174" linked-sector-id="0" xcoord="18" ycoord="-1174"/>
+			<feature id="3" name="door" width="137" height="10" x="80" y="0" linked-sector-id="7" xcoord="0" ycoord="900"/>
+			<feature id="4" name="door" width="137" height="10" x="0" y="65"/>
+		</features>
+		<sites cyclic="no" sequence="0,1,3">
+
+		</sites>
+	</sector>
+	<!--<sector id="1" name="Computer Vision" width="1030" height="1136" reference="2" polygon="m 0 0 l 0 1136 l 1030 0 l 0 -1136 z">
 		<landmarks>
 			<landmark id="8" type="camera" x="92" y="0" z="275"/>
 			<landmark id="9" type="camera" x="0" y="199" z="275"/>
@@ -65,7 +104,7 @@
 		<sites cyclic="no" sequence="0,1,3">
 
 		</sites>
-	</sector>
+	</sector>-->
 	<sector id="4" name="Workshop Receiver" width="400" height="350" reference="2" polygon="m 0 0 l 0 350 l 400 0 l 0 -350 z">
 		<landmarks/>
 		<features>

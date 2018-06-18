@@ -25,7 +25,6 @@ public:
 	RNArmTask(const GeneralController* gn, const char* name = "Arm Gestures Task", const char* description = "Doris Arm");
 	~RNArmTask();
 	virtual void task();
-	virtual void onKilled();
 
 	void setGesture(std::string gestureId);
     void getGestures(int id, std::string& jsonResponse);

@@ -487,13 +487,13 @@ void CSocketNode::startThread(){
 
 
 int CSocketNode::closeConnection(){
-
-	if(thread_status == 1){
+	RNUtils::printLn("Waiting to finish connection thread...");
+	/*if(thread_status == 1){
 		thread_status = 2;
 		while(thread_status != 0) RNUtils::sleep(10);
-	}
+	}*/
 	pthread_cancel(socketsThread);
-	RNUtils::printLn("Finished Connections Thread...");
+	RNUtils::printLn("Finished connection thread...");
 	for(int i = 0; i < MAX_CLIENTS; i++){
 		if(socket_conn[i].getSocket() != INVALID_SOCKET){
 			if(socket_conn[i].getUDPClient() != NULL){

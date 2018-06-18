@@ -21,7 +21,6 @@ public:
 	RNGesturesTask(const GeneralController* gn, const char* name = "Gestures Task", const char* description = "Doris Faces");
 	~RNGesturesTask();
 	virtual void task();
-	virtual void onKilled();
 
 	void setGesture(std::string gestureId);
     void getGestures(std::string& jsonResponse);

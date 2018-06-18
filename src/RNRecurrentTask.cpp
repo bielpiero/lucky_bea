@@ -4,13 +4,13 @@ RNRecurrentTask::RNRecurrentTask(const RobotNode* rn, const char* name, const ch
     this->name = "RNRecurrentTask: " + std::string(name);
     this->description = std::string(description);
     setThreadName(this->name.c_str());
-    running = goRequested = killed = false;
+    executingTask = goRequested = killed = false;
     this->rn = (RobotNode*)rn;
     create();
 }
 
 RNRecurrentTask::~RNRecurrentTask(){
-    //kill();
+    kill();
 }
 
 void RNRecurrentTask::setController(RobotNode* rn){
@@ -20,14 +20,14 @@ void RNRecurrentTask::setController(RobotNode* rn){
 void RNRecurrentTask::go(){
     lock();
     goRequested = true;
-    running = true;
+    executingTask = true;
     killed = false;
     unlock();
 }
 
 int RNRecurrentTask::done(){
     int result = 1;
-    if(running){
+    if(executingTask){
         result = 0;
     } else if(killed){
         result = 2;
@@ -36,28 +36,25 @@ int RNRecurrentTask::done(){
 }
 
 void RNRecurrentTask::reset(){
-    if(running){
-        kill();
+    if(not isThreadRunning()){
         create();
         go();
     } else {
-        create();
+        kill();
         go();
     }
 }
 
 void RNRecurrentTask::kill(){
-    //if(isRunning){
+    if(isThreadRunning()){
+        RNUtils::printLn("Thread %s will be killed...", this->getTaskName().c_str());
         lock();
         goRequested = false;
-        running = false;
+        executingTask = false;
         killed = true;
-        unlock();
-        if(isThreadRunning()){
-            RNUtils::printLn("Thread %s will be killed...", this->getTaskName().c_str());
-            onKilled();
-        }
-    //}
+        unlock();           
+        //onKilled();
+    }
 }
 
 void RNRecurrentTask::waitUtilTaskFinished(){
@@ -78,11 +75,11 @@ void* RNRecurrentTask::runThread(void* object){
         unlock();
         if(doit){
             lock();
-            running = true;
+            executingTask = true;
             unlock();
             task();
             lock();
-            running = false;
+            executingTask = false;
             unlock();
         }
         RNUtils::sleep(20);

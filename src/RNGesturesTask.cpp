@@ -106,11 +106,6 @@ void RNGesturesTask::getGestures(std::string& jsonResponse){
 	jsonResponse = bufferOut_str.str();
 }
 
-
-void RNGesturesTask::onKilled(){
-	
-}
-
 void RNGesturesTask::saveGesture(std::string token){
     /*if(type == 0){
 		s_motor motor_positions[SERVOS_COUNT];

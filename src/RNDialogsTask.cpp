@@ -149,7 +149,3 @@ void RNDialogsTask::setInputMessage(std::string inputMessage){
 void RNDialogsTask::setState(std::string state){
     this->state = state;
 }
-	
-void RNDialogsTask::onKilled(){
-	
-}

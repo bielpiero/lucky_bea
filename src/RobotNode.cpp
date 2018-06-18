@@ -43,7 +43,7 @@ RobotNode::RobotNode(const char* port){
     if (not keyHandler){
         keyHandler = new ArKeyHandler;
         Aria::setKeyHandler(keyHandler);
-        robot->attachKeyHandler(keyHandler);
+        robot->attachKeyHandler(keyHandler, false);
     }
     upCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.10, 0.0);
     downCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, -0.10, -0.0);
@@ -121,18 +121,11 @@ RobotNode::~RobotNode(){
     RNUtils::printLn("Deleted mutexIncrements...");
     
     RNUtils::printLn("Destroyed RobotNode...");
+    //robot->waitForRunExit();
 }
 
 const char* RobotNode::getClassName() const{
     return "RobotNode";
-}
-
-bool RobotNode::isLaserReady(){
-    return laserReady;
-}
-
-void RobotNode::setLaserReady(bool ready){
-    laserReady = ready;
 }
 
 // called if the connection was sucessfully made
@@ -179,16 +172,18 @@ void RobotNode::disconnect(){
     //robot->unlock();
     robot->disableMotors();
     //robot->stopRunning();
-    robot->waitForRunExit();
+    //robot->waitForRunExit();
     //connector->disconnectAll();
     //finishThreads();    
 }
 
 void RobotNode::getRobotPosition(){
+    this->lockRobot();
     ArPose *myPose = new ArPose(robot->getPose());
     onPositionUpdate(myPose->getX()/1e3, myPose->getY()/1e3, myPose->getThRad(), robot->getVel()/1e3, robot->getRotVel()*M_PI/180);
     delete myPose;
     myPose = NULL;
+    this->unlockRobot();
 }
 
 bool RobotNode::getSonarsStatus(){

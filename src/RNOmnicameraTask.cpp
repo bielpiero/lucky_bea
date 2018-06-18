@@ -548,6 +548,7 @@ void RNOmnicameraTask::drawRectangle(cv::Mat &img, RNMarker marker){
     cv::line(img, marker.getPoint(3), marker.getPoint(0), cv::Scalar(255, 0, 0), 3);
 }
 
-void RNOmnicameraTask::onKilled(){
+void RNOmnicameraTask::kill(){
 	enableVideoProcessing = false;
+	RNRecurrentTask::kill();
 }

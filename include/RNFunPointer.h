@@ -15,6 +15,29 @@ protected:
 	std::string name;
 };
 
+template<class T>
+class RNFunPointerC : public RNFunPointer{
+protected:
+	T* obj;
+	void (T::*func)(void);
+public:
+	RNFunPointerC() {}
+	RNFunPointerC(T &obj,  void (T::*func)(void)) {
+		this->obj = &obj;
+		this->func = func;
+	}
+	RNFunPointerC(T *obj,  void (T::*func)(void)) {
+		this->obj = obj;
+		this->func = func;
+	}
+	~RNFunPointerC(){}
+	
+	void setSelf(T *obj){ this->obj = obj; }
+	void setSelf(T &obj){ this->obj = &obj; }
+
+	virtual void invoke(void) { (obj->*func)(); };
+};
+
 template<class Ret>
 class RNRetFunPointer : public RNFunPointer{
 public:

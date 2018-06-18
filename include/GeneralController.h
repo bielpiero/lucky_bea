@@ -19,6 +19,7 @@
 #include "RNVirtualFace.h"
 #include "RobotDataStreamer.h"
 #include "MapSector.h"
+#include "RNTimer.h"
 
 #include "fl/Headers.h"
 #include "fl/fuzzyStats.h"
@@ -59,7 +60,6 @@ using namespace rapidxml;
 
 class GeneralController;
 class RNLaserTask;
-class RNGlobalLocalizationTask;
 class RNLocalizationTask;
 class RNKalmanLocalizationTask;
 class RNPFLocalizationTask;
@@ -332,7 +332,6 @@ private:
 	RNDialogsTask* dialogs;
 	RNRecurrentTaskMap* tasks;
 	RNLocalizationTask* localization;
-	RNGlobalLocalizationTask* globalLocalization;
 	RNOmnicameraTask* omnidirectionalTask;
 	RNRFIdentificationTask* rfidTask; //future
 	RNCameraTask* eyesCameras;

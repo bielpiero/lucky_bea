@@ -86,7 +86,7 @@ void RNEmotionsTask::initializeFuzzyEmotionSystem(){
     sadFS->setLockValueInRange(false);
     sadFS->addTerm(new fl::Triangle("VL", -std::numeric_limits<double>::infinity(), 20.000, 40.000)); 
     sadFS->addTerm(new fl::Triangle("L", 20.000, 40.000, 60.000)); 
-    sadDialogInput->addTerm(new fl::Triangle("N", 40.000, 60.000, 80.000)); 
+    sadFS->addTerm(new fl::Triangle("N", 40.000, 60.000, 80.000)); 
     sadFS->addTerm(new fl::Triangle("H", 60.000, 80.000, 100.000)); 
     sadFS->addTerm(new fl::Triangle("VH", 80.000, 100.000, std::numeric_limits<double>::infinity())); 
     emotionEngine->addInputVariable(sadFS);
@@ -119,7 +119,7 @@ void RNEmotionsTask::initializeFuzzyEmotionSystem(){
     emotionFS->addTerm(new fl::Triangle("CALM", 40.000, 60.000, 80.000));
     emotionFS->addTerm(new fl::Triangle("HAPPY", 60.000, 80.000, 100.000));
     emotionFS->addTerm(new fl::Triangle("CALM", 80.000, 100.000, std::numeric_limits<double>::infinity()));
-    emotionEngine->addOutputVariable(outputEmotion);
+    emotionEngine->addOutputVariable(emotionFS);
 
     ruleBlock = new fl::RuleBlock;
     ruleBlock->setName("mamdani");
@@ -2575,9 +2575,9 @@ void RNEmotionsTask::getSystemInput(double* emotion){
 
 void RNEmotionsTask::task(){ //This is supposed to be sensing Doris emotion by: speaking....
     //conditions by speaking
-    if(spokenId != RN_NONE){
+   /*if(spokenId != RN_NONE){
         for (int i = 0; i < impulses->size(); i++){
-            if(id_input == id->at(i)->getId()){
+            if(spokenId == impulses->at(i)->getId()){
                 currentState->setAngry(impulses->at(i)->getAngry() + currentState->getAngry());
                 currentState->setHappy(impulses->at(i)->getHappy() + currentState->getHappy());
                 currentState->setCalm(impulses->at(i)->getCalm() + currentState->getCalm());
@@ -2592,14 +2592,10 @@ void RNEmotionsTask::task(){ //This is supposed to be sensing Doris emotion by: 
     //Fuzzy System Inference
 
     double emotion;
-    getSystemInput(&emotion);
+    getSystemInput(&emotion);*/
 
     // set face
     // modify speaking rate and volume.
-}
-
-void RNEmotionsTask::onKilled(){
-	
 }
 
 void RNEmotionsTask::setSpokenImpulseId(int id){

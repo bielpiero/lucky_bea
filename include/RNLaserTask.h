@@ -12,17 +12,21 @@ public:
 	RNLaserTask(GeneralController* gn, const char* name = "Laser Task", const char* description = "");
 	~RNLaserTask();
 	virtual void task();
-	virtual void onKilled();
 private:
 	void getLaserScan(void);
 	void securityDistanceChecker();
 	void getReflectiveLandmarks();
+
 private:
 	GeneralController* gn;
 	LaserScan *laserDataScan;
 	ArLaserConnector *laserConnector;
 	ArLaser *laser;
+
 	RNLandmarkList* laserLandmarks;
+
+	bool laserActive;
+
 	static const double SECURITY_DISTANCE;
 	static const double LASER_MAX_RANGE;
 	static const double LANDMARK_RADIUS;

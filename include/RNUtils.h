@@ -100,6 +100,12 @@ public:
 		this->x = x;
 		this->y = y;
 	}
+
+	PointXY(const PointXY& p){
+		this->x = p.x;
+		this->y = p.y;
+	}
+
 	virtual ~PointXY(){}
 
 	double getX() const { return this->x; }
@@ -127,6 +133,9 @@ public:
 	PointXYZ(const double& x, const double& y, const double& z) : PointXY(x, y) {
 		this->z = z;
 	}
+	PointXYZ(const PointXYZ& p) : PointXY(p){
+		this->z = p.z;
+	}
 	virtual ~PointXYZ(){}
 
 	double getZ() const { return this->z; }
@@ -142,60 +151,34 @@ public:
 	}
 };
 
-class LsColor{
-private:
-	unsigned char red;
-	unsigned char green;
-	unsigned char blue;
-public:
-	LsColor(unsigned char red, unsigned char green, unsigned char blue){
-		this->red = red;
-		this->green = green;
-		this->blue = blue;
-	}
-	~LsColor(){}
-	unsigned char getRed(){ return red; }
-	unsigned char getGreen(){ return green; }
-	unsigned char getBlue(){ return blue; }
-	std::string getHexadecimalColorString(){
-		char buf[6]={};
-		sprintf(buf, "%02x%02x%02x", red & 0xFF, green & 0xFF, blue & 0xFF);
-		return buf;
-
-	}
-};
-
 class LaserScan{
 private:
 	std::vector<double>* ranges;
 	std::vector<double>* intensities;
-	std::vector<LsColor*>* color;
 
 public:
 	LaserScan(){
 		ranges = new std::vector<double>();
 		intensities = new std::vector<double>();
-		color = new std::vector<LsColor*>();
 	}
+	
+	LaserScan(const LaserScan& ls){
+		ranges = new std::vector<double>(*ls.ranges);
+		intensities = new std::vector<double>(*ls.intensities);
+	}
+
     ~LaserScan(){
         clear();
         delete ranges;
         delete intensities;
-        delete color;
     }
 
 	std::vector<double>* getRanges() { return ranges; }
 	std::vector<double>* getIntensities() { return intensities; }
-	std::vector<LsColor*>* getColors() { return color; }
 
 	void clear(){
 		ranges->clear();
         intensities->clear();
-        
-        for (int i = 0; i < color->size(); i++){
-            delete color->at(i);
-        }
-        color->clear();
 	}
 
 	void addRange(double range, double intensity = 0) { 
@@ -203,13 +186,8 @@ public:
 		intensities->push_back(intensity);
 	}
 
-	void setScanPrimaryColor(unsigned char red, unsigned char green, unsigned char blue){
-		color->push_back(new LsColor(red, green, blue));
-	}
-
 	double getRange(int index) const { return ranges->at(index); }
 	double getIntensity(int index) { return intensities->at(index); }
-	LsColor* getColor(int index) { return color->at(index); }
 
 	int size() const { return ranges->size(); }
 	double getAngleMin() { return (-M_PI / 2.0); }

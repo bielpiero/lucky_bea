@@ -83,7 +83,7 @@ public:
 	RNOmnicameraTask(const GeneralController* gn, const char* name = "Omnicamera Task", const char* description = "");
 	~RNOmnicameraTask();
 	virtual void task();
-	virtual void onKilled();
+	virtual void kill();
 private:
 	void rgbToGrayscale(const cv::Mat& input, cv::Mat& output);
 	int getFrameFromCamera(cv::Mat &frame);
