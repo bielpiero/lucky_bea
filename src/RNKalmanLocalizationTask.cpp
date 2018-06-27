@@ -264,10 +264,10 @@ void RNKalmanLocalizationTask::task(){
 					
 					double mdDistance = std::abs(zl(2 * indexFound, 0) / std::sqrt(gn->getLaserDistanceVariance()));
 					double mdAngle = std::abs(zl(2 * indexFound + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
-					printf("Mhd: (%d), %lg, %lg, nud: %lg, nua: %lg\n", i, mdDistance, mdAngle, zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
+					//printf("Mhd: (%d), %lg, %lg, nud: %lg, nua: %lg\n", i, mdDistance, mdAngle, zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
 					if (mdDistance > laserTMDistance or mdAngle > laserTMAngle){
 						//distanceThreshold = (máxima zl que permite un buen matching)/sigma
-						RNUtils::printLn("landmark %d rejected...", indexFound);
+						//RNUtils::printLn("landmark %d rejected...", indexFound);
 						zl(2 * indexFound, 0) = 0.0;
 						zl(2 * indexFound + 1, 0) = 0.0;
 						rsize--;

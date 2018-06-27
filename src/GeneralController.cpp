@@ -77,7 +77,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	dialogs = new RNDialogsTask(this, this->tts);
 	gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
-	emotions = new RNEmotionsTask(this);
+	//emotions = new RNEmotionsTask(this);
 	//eyesCameras = new RNCameraTask(this);
 
 	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
@@ -92,9 +92,9 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	//tasks->addTask(omnidirectionalTask);
 	//tasks->addTask(rfidTask);
 	tasks->addTask(dialogs);
-	//tasks->addTask(armGestures);
 	tasks->addTask(gestures);
-	tasks->addTask(emotions);
+	//tasks->addTask(armGestures);
+	//tasks->addTask(emotions);
 	tasks->addTask(localization);
 	//tasks->addTask(eyesCameras);
 	
@@ -2303,23 +2303,45 @@ void GeneralController::getInitialLocation(){
 					possiblePosition1.setX (middlePoint.getX() - h * (cmb->ypos - cma->ypos) / d);
 					possiblePosition1.setY (middlePoint.getY() + h * (cmb->xpos - cma->xpos) / d);
 
-					possiblePosition0.setZ(M_PI/2 - std::atan2((cma->ypos - possiblePosition0.getY()), (cma->xpos - possiblePosition0.getX())) - visualLandmarks->at(maIdx)->getPointsYMean());
+					possiblePosition0.setZ(std::atan2((possiblePosition0.getY() - cma->ypos), (possiblePosition0.getX() - cma->xpos)) - visualLandmarks->at(maIdx)->getPointsYMean() - M_PI);
 					if(possiblePosition0.getZ() > M_PI){
 						possiblePosition0.setZ(possiblePosition0.getZ() - 2 * M_PI);
 					} else if(possiblePosition0.getZ() < -M_PI){
 						possiblePosition0.setZ(possiblePosition0.getZ() + 2 * M_PI);
 					}
 
-					possiblePosition1.setZ(M_PI/2 - std::atan2((cmb->ypos - possiblePosition1.getY()), (cmb->xpos - possiblePosition1.getX())) - visualLandmarks->at(mbIdx)->getPointsYMean());
+					possiblePosition1.setZ(std::atan2((possiblePosition1.getY() - cma->ypos ), (possiblePosition1.getX() - cma->xpos)) - visualLandmarks->at(maIdx)->getPointsYMean() - M_PI);
 					if(possiblePosition1.getZ() > M_PI){
 						possiblePosition1.setZ(possiblePosition1.getZ() - 2 * M_PI);
 					} else if(possiblePosition1.getZ() < -M_PI){
 						possiblePosition1.setZ(possiblePosition1.getZ() + 2 * M_PI);
 					}
+					bool s1 = currentSector->checkPointXYInPolygon(possiblePosition0);
+					bool s2 = currentSector->checkPointXYInPolygon(possiblePosition1);
+					if(s1 and s2){
+						if (visualLandmarks->size() >= 3){
+							double thirdMinRadius = std::numeric_limits<double>::max();
+							int thirdIndex = 0;
 
-					if(currentSector->checkPointXYInPolygon(possiblePosition0)){
+							for(int i = 0; i < visualLandmarks->size(); i++){
+								if(thirdMinRadius > visualLandmarks->at(i)->getPointsXMean() and i != maIdx and i != mbIdx){
+									thirdMinRadius = visualLandmarks->at(i)->getPointsXMean();
+									thirdIndex = i;
+								}
+							}
+							s_landmark* cmc = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, visualLandmarks->at(thirdIndex)->getMarkerId());
+							double difference0 = std::abs(visualLandmarks->at(thirdIndex)->getPointsXMean() - sqrt(pow(possiblePosition0.getX() - cmc->xpos, 2) + pow(possiblePosition0.getY() - cmc->ypos, 2)));
+							double difference1 = std::abs(visualLandmarks->at(thirdIndex)->getPointsXMean() - sqrt(pow(possiblePosition1.getX() - cmc->xpos, 2) + pow(possiblePosition1.getY() - cmc->ypos, 2)));
+
+							if (difference0 < difference1){
+								setRobotPosition(possiblePosition0.getX(), possiblePosition0.getY(), possiblePosition0.getZ());
+							} else {
+								setRobotPosition(possiblePosition1.getX(), possiblePosition1.getY(), possiblePosition1.getZ());
+							}
+						}
+					} else if(s1){
 						setRobotPosition(possiblePosition0.getX(), possiblePosition0.getY(), possiblePosition0.getZ());
-					} else if(currentSector->checkPointXYInPolygon(possiblePosition1)){
+					} else if(s2){
 						setRobotPosition(possiblePosition1.getX(), possiblePosition1.getY(), possiblePosition1.getZ());
 					}
 				}

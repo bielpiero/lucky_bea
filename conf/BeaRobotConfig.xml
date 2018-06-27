@@ -3,7 +3,7 @@
 		<initial-position>
 			<x-zone x1="-5" x2="-3" x3="3" x4="5"/> <!-- centimeters -->
 			<y-zone x1="-5" x2="-3" x3="3" x4="5"/> <!-- centimeters -->
-			<th-zone x1="-0.12" x2="-0.1" x3="0.1" x4="0.12"/> <!-- radians -->
+			<th-zone x1="-0.2" x2="-0.15" x3="0.15" x4="0.2"/> <!-- radians -->
 		</initial-position>
 		<process-noise>
 			<d-zone x1="-3" x2="-1" x3="1" x4="3"/> <!-- centimeters -->
@@ -12,8 +12,8 @@
 		<sensors>
 			<sensor type="laser" activated="1">
 				<observation-noise>
-					<d-zone alpha="0.04" x1="-2" x2="-1" x3="1" x4="2"/>  <!-- centimeters -->
-					<th-zone alpha="0.04" x1="-0.01" x2="-0.008" x3="0.008" x4="0.01"/> <!-- radians -->
+					<d-zone alpha="0.1" x1="-2" x2="-1" x3="1" x4="2"/>  <!-- centimeters -->
+					<th-zone alpha="0.1" x1="-0.01" x2="-0.008" x3="0.008" x4="0.01"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
 			<sensor type="camera" activated="1">

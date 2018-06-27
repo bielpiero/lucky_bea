@@ -14,6 +14,7 @@
 #include <cerrno>
 #include <vector>
 #include <list>
+#include <map>
 #include <fstream>
 #include <sstream>
 #include <cmath>
