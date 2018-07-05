@@ -43,6 +43,18 @@ void RNAdyacencyList::clear(){
     adyacencies->erase(adyacencies->begin(), adyacencies->end());
 }
 
+bool RNAdyacencyList::empty() const{
+    return adyacencies->empty();
+}
+
+RNAdyacencyList::iterator RNAdyacencyList::begin(){
+    adyacencies->begin();
+}
+
+RNAdyacencyList::iterator RNAdyacencyList::end(){
+    adyacencies->end();
+}
+
 RNGraph::RNGraph(){
 	graph = new std::map<int, RNAdyacencyList*>();
 }
@@ -93,7 +105,7 @@ void RNGraph::removeEdge(int src, int dst){
     }
 }
 
-RNAdyacencyList* RNGraph::getAdyacencies(int node){
+RNAdyacencyList* RNGraph::getAdyacencies(int node) const{
     RNAdyacencyList* adys = NULL;
     std::map<int, RNAdyacencyList*>::iterator it;
 
@@ -104,10 +116,61 @@ RNAdyacencyList* RNGraph::getAdyacencies(int node){
     return adys;
 }
 
+std::list<int> RNGraph::shortestPath(const int& src, const int& dst) const{
+    std::list<int> path;
+    std::list<int> selected;
+    std::map<int, int> prev;
+    std::map<int, float> dist;
+    int start = src;
+    bool mal = false;
+    selected.emplace_back(start);
+    dist.emplace(start, 0.0);
+    while(std::find(selected.begin(), selected.end(), dst) != selected.end() and not mal){
+        float min = std::numeric_limits<float>::max();
+        int m = RN_NONE;
+        RNAdyacencyList* ady = this->getAdyacencies(start);
+        if(not ady->empty()){
+            RNAdyacencyList::iterator it;
+            for(it = ady->begin(); it != ady->end(); it++){
+                float d = dist.find(start)->second + (*it)->getWeight();
+                float dstN = dist.find((*it)->getDestination()) != dist.end() ? dist.find((*it)->getDestination())->second : std::numeric_limits<float>::max();
+                if((d < dstN) and (std::find(selected.begin(), selected.end(), (*it)->getDestination()) != selected.end())){
+                    dist.emplace((*it)->getDestination(), d);
+                    dstN = dist.find((*it)->getDestination())->second;
+                    prev.emplace((*it)->getDestination(), start);
+                }
+                if((min > dst) and (std::find(selected.begin(), selected.end(), (*it)->getDestination()) != selected.end())){
+                    min = dstN;
+                    m = (*it)->getDestination();
+                }
+            }
+        }
+        if(m != RN_NONE){
+            start = m;
+            selected.emplace_back(start);
+        } else {
+            mal = true;
+        }
+    }
+    if(not mal){
+        int end = dst;
+        path.emplace_back(dst);
+        while(end != src){
+            end = prev[end];
+            path.emplace_front(end);
+        }
+    }
+    return path;
+}
+
 void RNGraph::clear(){
     std::map<int, RNAdyacencyList*>::iterator it;
     for(it = graph->begin(); it != graph->end(); it++){
         it->second->clear();
     }
     graph->erase(graph->begin(), graph->end());
+}
+
+bool RNGraph::empty() const{
+    return graph->empty();
 }

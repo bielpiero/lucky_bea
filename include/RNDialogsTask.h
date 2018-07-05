@@ -72,14 +72,16 @@ private:
     GeneralController* gn;
     std::string inputMessage;
     std::string state;
+    std::string id_input;
     DorisLipSync* tts;
+    std::vector<OutputMessage*> responses;
 public:
 	RNDialogsTask(const GeneralController* gn, DorisLipSync* tts, const char* name = "Dialogs Task", const char* description = "Doris Speech");
 	~RNDialogsTask();
 	virtual void task();
 
     void setInputMessage(std::string inputMessage);
-    void setState(std::string state);
+    void setState(int state);
     
     std::vector<InputMessage*> *inputMessages;
     std::vector<OutputMessage*> *outputMessages;

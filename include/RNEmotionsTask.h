@@ -72,6 +72,8 @@ public:
 private:
     void initializeFuzzyEmotionSystem();
     void getSystemInput(double* emotion);
+    void setFace(double outputEmotion);
+    void setDialogState(double outputEmotion);
 private:
 	GeneralController* gn;
 	std::vector<Impulse*>* impulses;

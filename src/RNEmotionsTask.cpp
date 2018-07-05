@@ -2575,29 +2575,111 @@ void RNEmotionsTask::getSystemInput(double* emotion){
 
 void RNEmotionsTask::task(){ //This is supposed to be sensing Doris emotion by: speaking....
     //conditions by speaking
-   /*if(spokenId != RN_NONE){
-        for (int i = 0; i < impulses->size(); i++){
+   if(spokenId != RN_NONE){
+       bool found = false;
+        for (int i = 0; i < impulses->size() and not found; i++){
             if(spokenId == impulses->at(i)->getId()){
+                found = true;
                 currentState->setAngry(impulses->at(i)->getAngry() + currentState->getAngry());
                 currentState->setHappy(impulses->at(i)->getHappy() + currentState->getHappy());
                 currentState->setCalm(impulses->at(i)->getCalm() + currentState->getCalm());
                 currentState->setSad(impulses->at(i)->getSad() + currentState->getSad());
                 currentState->setAfraid(impulses->at(i)->getAfraid() + currentState->getAfraid());
-                
             }
         }
+        double emotion;
+        getSystemInput(&emotion);
+        setDialogState(emotion);
+        setFace(emotion);
+        spokenId = RN_NONE;
+        // set face
+        // modify speaking rate and volume.
     }
-    //future conditions
+    
 
-    //Fuzzy System Inference
-
-    double emotion;
-    getSystemInput(&emotion);*/
-
-    // set face
-    // modify speaking rate and volume.
+    
 }
 
 void RNEmotionsTask::setSpokenImpulseId(int id){
     this->spokenId = id;
+}
+
+void RNEmotionsTask::setDialogState(double outputEmotion){ //Función para enviar parámetro state a la clase RNDialogsTask para que Doris responda en función de su estado de ánimo
+    std::string state = RN_NONE;
+	if ((outputEmotion < -std::numeric_limits<double>::infinity()) and (outputEmotion > 80)){//outputEmotion=="ANGRY";
+		state = "1";
+	}
+	else if (outputEmotion < 80 and outputEmotion > 60) {//outputEmotion=="HAPPY";
+		state = "4";
+	}
+	else if (outpoutputEmotion < 60 and outputEmotion > 40) {//outputEmotion=="CALM";
+		state = "3";
+	}
+	else if (outputEmotion < 40 and outputEmotion > 20 ) {//outputEmotion=="SAD";
+		state = "2";
+	}
+	else if (outputEmotion < 20 and outputEmotion > -std::numeric_limits<double>::infinity()) {//outputEmotion=="AFRAID";
+		state = "0";
+	}
+	
+	//return state;
+}
+
+void RNEmotionsTask::setFace(double outputEmotion){ //Función para enviar parámetro id a RNGestureTask para indicar qué cara tiene que poner 
+    std::string id;
+	if ((outputEmotion < -std::numeric_limits<double>::infinity()) and (outputEmotion > 80) ){//outputEmotion=="ANGRY";
+		if (outputEmotion < 85){ 
+			id = "13";
+		} else if ((outputEmotion > 85) and (outputEmotion < 90)){ 
+			id = "12";
+		} else if (outputEmotion > 90 and outputEmotion < 95){
+			id = "4";
+		} else if (outputEmotion > 95){ 
+			id = "8";
+		}
+	} else if (outputEmotion < 80 and outputEmotion > 60 ) { //outputEmotion=="HAPPY";
+		if (outputEmotion < 65){ 
+			id = "24";
+		} else if (outputEmotion > 65 and outputEmotion < 70){ 
+			id = "25";
+		} else if (outputEmotion > 70 and outputEmotion < 75){ 
+			id = "26";
+		} else if (outputEmotion > 80){ 
+			id = "0";
+		}
+			
+	} else if (outputEmotion < 60 and outputEmotion > 40) { //outputEmotion=="CALM";
+		if (outputEmotion < 45){ 
+			id = "11"; 
+		} else if (outputEmotion > 45 and outputEmotion < 50){ 
+			id = "29";
+		} else if (outputEmotion > 50 and outputEmotion < 55){ 
+			id = "16";
+		} else if (outputEmotion > 55){ 
+			id = "7";
+		}
+				
+	} else if (outputEmotion < 40 and outputEmotion > 20 ) { //outputEmotion=="SAD";
+		if (outputEmotion < 25) { 
+			id = "21"; 
+		} else if (outputEmotion > 25 and outputEmotion < 30){ 
+			id = "20";
+		} else if (outputEmotion > 30 and outputEmotion < 35){ 
+			id = "30";
+		} else if (outputEmotion > 35){ 
+			id = "14";
+		}
+					
+	} else if (outputEmotion < 20 and outputEmotion > -std::numeric_limits<double>::infinity() ) { //outputEmotion=="AFRAID";
+		if (outputEmotion < 5){  
+			id = "1";
+		} else if (outputEmotion > 5 and outputEmotion < 10){ 
+			id = "28"; 
+		} else if (outputEmotion > 10 and outputEmotion < 15){ 
+			id = "3";
+		} else if (outputEmotion > 15){ 
+			id = "10";
+		}					
+	}
+	// mandar a la clase GN
 }

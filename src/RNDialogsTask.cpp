@@ -8,6 +8,7 @@ RNDialogsTask::RNDialogsTask(const GeneralController* gn, DorisLipSync* tts, con
 
     this->tts = tts;
     this->state = "3";
+    id_input = "121"; //(XML parameter id) It initialized to help with the "121" case
     xml_document<> doc;
     xml_node<> * root_node;
     // Read the xml file into a vector
@@ -60,13 +61,12 @@ void RNDialogsTask::task(){
 	
     //XML parameters
     if(inputMessage != ""){
-        std::string id_input = "121"; //(XML parameter id) It initialized to help with the "121" case
         std::string id_input_aux; //To manage the id of the possible response
         std::string response;
 
         //Variables for when the phrase is not complete
         
-        std::vector<OutputMessage*> responses;
+        responses.clear();
         
         int coincidences = 0; //To count the number of coincidences between the input message and the xml request
         int coincidences_aux = 0; //Auxiliar variable to know if there is another phrase that has more coincidences
@@ -114,29 +114,10 @@ void RNDialogsTask::task(){
                 }
             }
         }
-
+        // ENVIAR id_input A GN
         // OUTPUT MESSAGES MANAGEMENT
-               
-        for (int i = 0; i < outputMessages->size(); i++){
-            if(id_input == outputMessages->at(i)->getId()){
-                if(this->state == outputMessages->at(i)->getState()){//We search for the responses that have the state Doris is in
-                    responses.push_back(outputMessages->at(i));
-                }
-            }
-        }
-         //Still output messages management
-         //The management of the output is different if there is only one possible answer or if there are plenty
-        //if(responses.size() > 1){ //If there is more than one possible answer we use random to select one
-            //We use random between the number of possible answers
-            int index = rand() % responses.size();
-            response = responses.at(index)->getText();
-            tts->textToViseme(response);
-            inputMessage = "";
-            //printf("\n%s. ", response);
-        //} else if(number_states == 1){ //If there is only one possible answer we just take it (it's the first one in the matrix)
-        //    response = aux_response[0][3];
-            //printf("\n%s. ", response);
-        //} 
+        inputMessage = "";   
+        
     }
                
     
@@ -148,4 +129,23 @@ void RNDialogsTask::setInputMessage(std::string inputMessage){
 
 void RNDialogsTask::setState(std::string state){
     this->state = state;
+    for (int i = 0; i < outputMessages->size(); i++){
+        if(id_input == outputMessages->at(i)->getId()){
+            if(this->state == outputMessages->at(i)->getState()){//We search for the responses that have the state Doris is in
+                responses.push_back(outputMessages->at(i));
+            }
+        }
+    }
+    //Still output messages management
+    //The management of the output is different if there is only one possible answer or if there are plenty
+    //if(responses.size() > 1){ //If there is more than one possible answer we use random to select one
+        //We use random between the number of possible answers
+    int index = rand() % responses.size();
+    response = responses.at(index)->getText();
+    tts->textToViseme(response);
+        //printf("\n%s. ", response);
+    //} else if(number_states == 1){ //If there is only one possible answer we just take it (it's the first one in the matrix)
+    //    response = aux_response[0][3];
+        //printf("\n%s. ", response);
+    //} 
 }
