@@ -73,6 +73,7 @@ private:
     std::string inputMessage;
     std::string state;
     std::string id_input;
+    std::string last_id_input;
     DorisLipSync* tts;
     std::vector<OutputMessage*> responses;
 public:
@@ -81,7 +82,7 @@ public:
 	virtual void task();
 
     void setInputMessage(std::string inputMessage);
-    void setState(int state);
+    void setState(std::string state);
     
     std::vector<InputMessage*> *inputMessages;
     std::vector<OutputMessage*> *outputMessages;

@@ -206,7 +206,10 @@ private: //variables emotions
 	SerialPort* maestroControllers;
 	DorisLipSync* tts;
 
-	bool continue_dynamic_thread;
+	std::string textInputId;
+	std::string emotionState;
+	std::string faceIdFromEmotions;
+
 	bool pendingTransferControl;
 	unsigned int clientsConnected;
 	
@@ -233,6 +236,8 @@ public: // emotions functions
 	virtual const char* getClassName() const;
 
 	SerialPort* getMaestroController();
+	void setTextInputIdToEmotion(std::string textInputId);
+	void setEmotionsResult(std::string emotionState, std::string faceIdFromEmotions);
 private:
 
 	bool isPermissionNeeded(char function);

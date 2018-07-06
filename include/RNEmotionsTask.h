@@ -59,6 +59,12 @@ public:
     int getAfraid() { return afraid; }
     void setAfraid(int afraid) { this->afraid = afraid; }
 
+    const std::string toString() const{
+        char buffer[1024];
+        sprintf(buffer, "id: %d {Angry: %d, Happy: %d, Calm: %d, Sad: %d, Afraid: %d}", id, angry, happy, calm, sad, afraid);
+        return std::string(buffer);
+    }
+
 };
 
 class RNEmotionsTask : public RNRecurrentTask{
@@ -72,8 +78,8 @@ public:
 private:
     void initializeFuzzyEmotionSystem();
     void getSystemInput(double* emotion);
-    void setFace(double outputEmotion);
-    void setDialogState(double outputEmotion);
+    std::string setFace(double outputEmotion);
+    std::string setDialogState(double outputEmotion);
 private:
 	GeneralController* gn;
 	std::vector<Impulse*>* impulses;

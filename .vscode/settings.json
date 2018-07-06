@@ -27,6 +27,7 @@
         "ios": "cpp",
         "__locale": "cpp",
         "valarray": "cpp",
-        "iosfwd": "cpp"
+        "iosfwd": "cpp",
+        "locale": "cpp"
     }
 }

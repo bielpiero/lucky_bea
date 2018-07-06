@@ -77,7 +77,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	dialogs = new RNDialogsTask(this, this->tts);
 	gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
-	//emotions = new RNEmotionsTask(this);
+	emotions = new RNEmotionsTask(this);
 	//eyesCameras = new RNCameraTask(this);
 
 	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
@@ -94,7 +94,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	tasks->addTask(dialogs);
 	tasks->addTask(gestures);
 	//tasks->addTask(armGestures);
-	//tasks->addTask(emotions);
+	tasks->addTask(emotions);
 	tasks->addTask(localization);
 	//tasks->addTask(eyesCameras);
 	
@@ -2507,6 +2507,24 @@ int GeneralController::initializeKalmanVariables(){
 		result = 0;
 	} 
 	return result;
+}
+
+void GeneralController::setTextInputIdToEmotion(std::string textInputId){
+	this->textInputId = textInputId;
+	if(emotions){
+		emotions->setSpokenImpulseId(std::atoi(this->textInputId.c_str()));
+	}
+}
+
+void GeneralController::setEmotionsResult(std::string emotionState, std::string faceIdFromEmotions){
+	this->emotionState = emotionState;
+	this->faceIdFromEmotions = faceIdFromEmotions;
+	if(dialogs){
+		dialogs->setState(this->emotionState);
+	}
+	if(this->gestures){
+		this->gestures->setGesture(this->faceIdFromEmotions);
+	}
 }
 
 bool GeneralController::isLaserSensorActivated(){

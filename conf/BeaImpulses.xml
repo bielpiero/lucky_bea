@@ -171,5 +171,5 @@
 		<impulse id="119" angry="0" happy="+5" calm="+5" sad="0" afraid="0"/>	<!--si-->
 		<impulse id="120" angry="+5" happy="-5" calm="0" sad="+5" afraid="0"/>	<!--no-->
 		<impulse id="121" angry="0" happy="0" calm="0" sad="0" afraid="0"/> <!--frases no registradas en la base de datos, les damos una respuesta aleatoria-->
-		<impulse id="122" angry="0" happy="0" calm="0" sad="0" afraid="0"/> <!--frases de respuesta a repetición-->
+		<impulse id="122" angry="10" happy="-5" calm="-5" sad="1" afraid="1"/> <!--frases de respuesta a repetición-->
 </impulses>

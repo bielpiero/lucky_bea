@@ -9,6 +9,7 @@ RNDialogsTask::RNDialogsTask(const GeneralController* gn, DorisLipSync* tts, con
     this->tts = tts;
     this->state = "3";
     id_input = "121"; //(XML parameter id) It initialized to help with the "121" case
+    last_id_input = "200";
     xml_document<> doc;
     xml_node<> * root_node;
     // Read the xml file into a vector
@@ -62,7 +63,7 @@ void RNDialogsTask::task(){
     //XML parameters
     if(inputMessage != ""){
         std::string id_input_aux; //To manage the id of the possible response
-        std::string response;
+        
 
         //Variables for when the phrase is not complete
         
@@ -73,17 +74,13 @@ void RNDialogsTask::task(){
         
         std::string s; //Used to divide the request into words
         //REPETITION
-        std::string id_repetition = "200"; //Variable used to know if the input message is the same as the last one
-                     
+                    
         for (int i = 0; i < inputMessages->size() and (id_input == "121"); i++){
             if( inputMessages->at(i)->getComplete() == "0" ){ //if complete is 0, the phrase is complete
                 if(inputMessage == inputMessages->at(i)->getText()){ //compares the phrase we say with the requests
                     id_input = inputMessages->at(i)->getId();
-                    if(id_repetition == id_input){
-                        id_repetition = id_input;
+                    if(last_id_input == id_input){
                         id_input = "122";
-                    } else {
-                        id_repetition = id_input;
                     }
                 }
             } else if(inputMessages->at(i)->getComplete() == "1" ){ //if complete is 1, the phrase is not complete
@@ -115,6 +112,7 @@ void RNDialogsTask::task(){
             }
         }
         // ENVIAR id_input A GN
+        gn->setTextInputIdToEmotion(id_input);
         // OUTPUT MESSAGES MANAGEMENT
         inputMessage = "";   
         
@@ -128,6 +126,7 @@ void RNDialogsTask::setInputMessage(std::string inputMessage){
 }
 
 void RNDialogsTask::setState(std::string state){
+    std::string response;
     this->state = state;
     for (int i = 0; i < outputMessages->size(); i++){
         if(id_input == outputMessages->at(i)->getId()){
@@ -141,8 +140,13 @@ void RNDialogsTask::setState(std::string state){
     //if(responses.size() > 1){ //If there is more than one possible answer we use random to select one
         //We use random between the number of possible answers
     int index = rand() % responses.size();
+    printf("Index Output Message %d\n", index);
     response = responses.at(index)->getText();
     tts->textToViseme(response);
+    if(id_input != "122"){
+        last_id_input = id_input;
+    }
+    id_input = "121";
         //printf("\n%s. ", response);
     //} else if(number_states == 1){ //If there is only one possible answer we just take it (it's the first one in the matrix)
     //    response = aux_response[0][3];
