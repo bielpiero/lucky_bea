@@ -116,10 +116,10 @@ void RNEmotionsTask::initializeFuzzyEmotionSystem(){
     emotionFS->setDefaultValue(0.0);
     emotionFS->setLockPreviousValue(false);
 
-    emotionFS->addTerm(new fl::Triangle("AFRAID", 0.000, 20.000, 40.000));
+    emotionFS->addTerm(new fl::Triangle("HAPPY", 0.000, 20.000, 40.000));
     emotionFS->addTerm(new fl::Triangle("SAD", 20.000, 40.000, 60.000));
     emotionFS->addTerm(new fl::Triangle("CALM", 40.000, 60.000, 80.000));
-    emotionFS->addTerm(new fl::Triangle("HAPPY", 60.000, 80.000, 100.000));
+    emotionFS->addTerm(new fl::Triangle("AFRAID", 60.000, 80.000, 100.000));
     emotionFS->addTerm(new fl::Triangle("ANGRY", 80.000, 100.000, 120.000));
     emotionEngine->addOutputVariable(emotionFS);
 
@@ -2588,7 +2588,7 @@ void RNEmotionsTask::task(){ //This is supposed to be sensing Doris emotion by: 
         if(found){
             double emotion;
             getSystemInput(&emotion);
-            RNUtils::printLn("aqui ha llegao...%lf", emotion);
+            RNUtils::printLn("Emotion: %lf", emotion);
             std::string state = setDialogState(emotion);
             std::string face = setFace(emotion);
             RNUtils::printLn("State: %s, Face: %s", state.c_str(), face.c_str());
@@ -2608,19 +2608,19 @@ void RNEmotionsTask::setSpokenImpulseId(int id){
 
 std::string RNEmotionsTask::setDialogState(double outputEmotion){ //Función para enviar parámetro state a la clase RNDialogsTask para que Doris responda en función de su estado de ánimo
     std::string state = "";
-	if (outputEmotion > 80.0){//outputEmotion=="ANGRY";
-		state = "1";
-	}
-	else if (outputEmotion < 80.0 and outputEmotion > 60.0) {//outputEmotion=="HAPPY";
+	if (outputEmotion >= 80.0){//outputEmotion=="ANGRY";
 		state = "4";
 	}
-	else if (outputEmotion < 60.0 and outputEmotion > 40.0) {//outputEmotion=="CALM";
+	else if (outputEmotion >= 60.0 and outputEmotion < 80.0) {//outputEmotion=="AFRAID";
 		state = "3";
 	}
-	else if (outputEmotion < 40.0 and outputEmotion > 20.0) {//outputEmotion=="SAD";
+	else if (outputEmotion >= 40.0 and outputEmotion < 60.0) {//outputEmotion=="CALM";
 		state = "2";
 	}
-	else if (outputEmotion < 20.0) {//outputEmotion=="AFRAID";
+	else if (outputEmotion >= 20.0 and outputEmotion < 40.0) {//outputEmotion=="SAD";
+		state = "1";
+	}
+	else if (outputEmotion < 20.0) {//outputEmotion=="HAPPY";
 		state = "0";
 	}
 	
@@ -2629,57 +2629,57 @@ std::string RNEmotionsTask::setDialogState(double outputEmotion){ //Función par
 
 std::string RNEmotionsTask::setFace(double outputEmotion){ //Función para enviar parámetro id a RNGestureTask para indicar qué cara tiene que poner 
     std::string id;
-	if (outputEmotion > 80 ){//outputEmotion=="ANGRY";
+	if (outputEmotion >= 80 ){//outputEmotion=="ANGRY";
 		if (outputEmotion < 85){ 
 			id = "13";
-		} else if ((outputEmotion > 85) and (outputEmotion < 90)){ 
+		} else if ((outputEmotion >= 85) and (outputEmotion < 90)){ 
 			id = "12";
-		} else if (outputEmotion > 90 and outputEmotion < 95){
+		} else if (outputEmotion >= 90 and outputEmotion < 95){
 			id = "4";
-		} else if (outputEmotion > 95){ 
+		} else if (outputEmotion >= 95){ 
 			id = "8";
 		}
-	} else if (outputEmotion < 80 and outputEmotion > 60 ) { //outputEmotion=="HAPPY";
+	} else if (outputEmotion < 80 and outputEmotion >= 60 ) { //outputEmotion=="AFRAID";
 		if (outputEmotion < 65){ 
 			id = "24";
-		} else if (outputEmotion > 65 and outputEmotion < 70){ 
+		} else if (outputEmotion >= 65 and outputEmotion < 70){ 
 			id = "25";
-		} else if (outputEmotion > 70 and outputEmotion < 75){ 
+		} else if (outputEmotion >= 70 and outputEmotion < 75){ 
 			id = "26";
-		} else if (outputEmotion > 80){ 
+		} else if (outputEmotion >= 75){ 
 			id = "0";
 		}
 			
-	} else if (outputEmotion < 60 and outputEmotion > 40) { //outputEmotion=="CALM";
+	} else if (outputEmotion < 60 and outputEmotion >= 40) { //outputEmotion=="CALM";
 		if (outputEmotion < 45){ 
 			id = "11"; 
-		} else if (outputEmotion > 45 and outputEmotion < 50){ 
+		} else if (outputEmotion >= 45 and outputEmotion < 50){ 
 			id = "29";
-		} else if (outputEmotion > 50 and outputEmotion < 55){ 
+		} else if (outputEmotion >= 50 and outputEmotion < 55){ 
 			id = "16";
-		} else if (outputEmotion > 55){ 
+		} else if (outputEmotion >= 55){ 
 			id = "7";
 		}
 				
-	} else if (outputEmotion < 40 and outputEmotion > 20 ) { //outputEmotion=="SAD";
+	} else if (outputEmotion < 40 and outputEmotion >= 20 ) { //outputEmotion=="SAD";
 		if (outputEmotion < 25) { 
 			id = "21"; 
-		} else if (outputEmotion > 25 and outputEmotion < 30){ 
+		} else if (outputEmotion >= 25 and outputEmotion < 30){ 
 			id = "20";
-		} else if (outputEmotion > 30 and outputEmotion < 35){ 
+		} else if (outputEmotion >= 30 and outputEmotion < 35){ 
 			id = "30";
-		} else if (outputEmotion > 35){ 
+		} else if (outputEmotion >= 35){ 
 			id = "14";
 		}
 					
-	} else if (outputEmotion < 20) { //outputEmotion=="AFRAID";
+	} else if (outputEmotion < 20) { //outputEmotion=="HAPPY";
 		if (outputEmotion < 5){  
 			id = "1";
-		} else if (outputEmotion > 5 and outputEmotion < 10){ 
+		} else if (outputEmotion >= 5 and outputEmotion < 10){ 
 			id = "28"; 
-		} else if (outputEmotion > 10 and outputEmotion < 15){ 
+		} else if (outputEmotion >= 10 and outputEmotion < 15){ 
 			id = "3";
-		} else if (outputEmotion > 15){ 
+		} else if (outputEmotion >= 15){ 
 			id = "10";
 		}					
 	}

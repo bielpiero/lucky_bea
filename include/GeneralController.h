@@ -273,7 +273,7 @@ public:
 	
 	int initializeKalmanVariables();
 	void loadSector(int mapId, int sectorId);
-	
+	void getMapFilename(int mapId, std::string& filename);
 	void stopCurrentTour();
 
 	int getNextSectorId();
@@ -340,7 +340,7 @@ private:
 	RNOmnicameraTask* omnidirectionalTask;
 	RNRFIdentificationTask* rfidTask; //future
 	RNCameraTask* eyesCameras;
-
+	RNTourTask* tourTask;
 	RNVirtualFace* virtualFace;
 
 	//possibilistic navigation
@@ -419,7 +419,7 @@ private:
 	void getArmSingleMotorInfo(char* cad, int& id, int& angle);
 	void getArmAllMotorsInfo(char* cad, std::vector<uint16_t>& motors);
 	void getMapsAvailable(std::string& mapsAvailable);
-	void getMapFilename(int mapId, std::string& filename);
+	
 	void getMapConnection(int mapId, std::string& connections);
 	void getSectorsAvailable(int mapId, std::string& sectorsAvailable);
 	void getSectorInformationLandmarks(int mapId, int sectorId, std::string& sectorInformation);

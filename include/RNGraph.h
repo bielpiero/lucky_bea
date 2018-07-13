@@ -45,6 +45,7 @@ public:
 	
 	RNAdyacencyList::iterator begin();
 	RNAdyacencyList::iterator end();
+	const std::string toString() const;
 private:
 	std::list<RNGraphEdge*>* adyacencies;
 };
@@ -55,7 +56,7 @@ public:
 	virtual ~RNGraph();
 	
 	void addNode(const int& node);
-	void addEdge(const int& src, const int& dst, const float& weight = 0.0);
+	int addEdge(const int& src, const int& dst, const float& weight = 0.0);
 
 	void removeNode(int node);
 	void removeEdge(int src, int dst);
@@ -63,6 +64,7 @@ public:
 	bool empty() const;
 	std::list<int> shortestPath(const int& src, const int& dst) const;
 	RNAdyacencyList* getAdyacencies(int node) const;
+	const std::string toString() const;
 private:
 	std::map<int, RNAdyacencyList*>* graph;
 };

@@ -42,6 +42,7 @@
 #define RN_NONE -1
 
 #define RN_YES 1
+#define RN_OK 0
 #define RN_NO 0
 #define MAYBE 2
 

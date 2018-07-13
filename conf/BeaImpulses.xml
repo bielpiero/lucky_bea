@@ -4,172 +4,172 @@
 
 	<!--type 0, PREGUNTAS-->
 		<!--SALUDOS-->
-		<impulse id="0" angry="0" happy="+10" calm="+5" sad="-5" afraid="0"/>	<!--que tal-->
-		<impulse id="1" angry="0" happy="+10" calm="+5" sad="-5" afraid="0"/>	<!--como estas-->
+		<impulse id="0" angry="0" happy="10" calm="5" sad="-5" afraid="0"/>	<!--que tal-->
+		<impulse id="1" angry="0" happy="10" calm="5" sad="-5" afraid="0"/>	<!--como estas-->
 		<!--QUIÉN-->
-		<impulse id="2" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--quien eres-->
-		<impulse id="3" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--quien gusta-->
+		<impulse id="2" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--quien eres-->
+		<impulse id="3" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--quien gusta-->
 		<!--A QUIÉN-->
-		<impulse id="4" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--a quien conocer-->
-		<impulse id="5" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--a quien admiras-->		
+		<impulse id="4" angry="0" happy="5" calm="2" sad="-3" afraid="0"/>	<!--a quien conocer-->
+		<impulse id="5" angry="0" happy="5" calm="2" sad="-3" afraid="0"/>	<!--a quien admiras-->		
 		<!--CON QUIÉN-->
-		<impulse id="6" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--con quien-->
+		<impulse id="6" angry="0" happy="5" calm="5" sad="2" afraid="0"/>	<!--con quien-->
 		<!--DE QUIÉN-->
-		<impulse id="7" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--de que persona-->
+		<impulse id="7" angry="0" happy="5" calm="2" sad="-2" afraid="0"/>	<!--de que persona-->
 		<!--PARA QUIÉN-->
-		<impulse id="8" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--para quien es-->
+		<impulse id="8" angry="0" happy="2" calm="2" sad="-2" afraid="0"/>	<!--para quien es-->
 		<!--QUÉ-->
-		<impulse id="9" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--que hora-->
-		<impulse id="10" angry="0" happy="+10" calm="+5" sad="-5" afraid="0"/>	<!--que te gusta hacer-->
-		<impulse id="11" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--que no te gusta hacer-->
-		<impulse id="12" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--que te pasa-->
+		<impulse id="9" angry="0" happy="5" calm="3" sad="-3" afraid="0"/>	<!--que hora-->
+		<impulse id="10" angry="0" happy="10" calm="3" sad="-3" afraid="0"/>	<!--que te gusta hacer-->
+		<impulse id="11" angry="0" happy="5" calm="3" sad="-3" afraid="0"/>	<!--que no te gusta hacer-->
+		<impulse id="12" angry="0" happy="5" calm="3" sad="-5" afraid="0"/>	<!--que te pasa-->
 		<!--CUÁNDO-->
-		<impulse id="13" angry="0" happy="+10" calm="+5" sad="-5" afraid="0"/>	<!--cuando es tu cumpleanos-->
+		<impulse id="13" angry="0" happy="10" calm="5" sad="-5" afraid="0"/>	<!--cuando es tu cumpleanos-->
 		<!--CUÁNTO TIEMPO-->
-		<impulse id="14" angry="0" happy="+5" calm="+5" sad="-5" afraid="+5"/>	<!--cuanto tiempo dura bateria-->
-		<impulse id="15" angry="0" happy="+5" calm="+5" sad="-5" afraid="+5"/>	<!--cuanto tiempo queda bateria-->
+		<impulse id="14" angry="0" happy="-1" calm="-3" sad="2" afraid="5"/>	<!--cuanto tiempo dura bateria-->
+		<impulse id="15" angry="0" happy="-1" calm="-3" sad="2" afraid="5"/>	<!--cuanto tiempo queda bateria-->
 		<!--DESDE CUÁNDO-->
-		<impulse id="16" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--desde cuando-->
+		<impulse id="16" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--desde cuando-->
 		<!--HASTA CUÁNDO-->
-		<impulse id="17" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--hasta cuanto tiempo-->
+		<impulse id="17" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--hasta cuanto tiempo-->
 		<!--DÓNDE-->
-		<impulse id="18" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--donde vives-->
-		<impulse id="19" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--donde vas-->
+		<impulse id="18" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--donde vives-->
+		<impulse id="19" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--donde vas-->
 		<!--DE DÓNDE-->
-		<impulse id="20" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--de donde eres-->
-		<impulse id="21" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--de donde venimos-->
+		<impulse id="20" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--de donde eres-->
+		<impulse id="21" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--de donde venimos-->
 		<!--CÓMO, DE QÚE MANERA, DE QUÉ MODO-->
-		<impulse id="22" angry="0" happy="+10" calm="+5" sad="-5" afraid="0"/>	<!--como te llamas-->
-		<impulse id="23" angry="+10" happy="-5" calm="-5" sad="+5" afraid="+10"/>	<!--como apagarte-->
-		<impulse id="24" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--como estas-->
-		<impulse id="25" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--como te encuentras-->
+		<impulse id="22" angry="0" happy="10" calm="5" sad="-5" afraid="0"/>	<!--como te llamas-->
+		<impulse id="23" angry="6" happy="-5" calm="-5" sad="5" afraid="10"/>	<!--como apagarte-->
+		<impulse id="24" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--como estas-->
+		<impulse id="25" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--como te encuentras-->
 		<!--CUÁNTO, CUÁNTOS-->
-		<impulse id="26" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--cuantos anos tienes-->
+		<impulse id="26" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--cuantos anos tienes-->
 		<!--POR QUÉ, CON QUÉ FIN, PARA QUÉ-->
-		<impulse id="27" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--para que estamos aqui-->
+		<impulse id="27" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--para que estamos aqui-->
 		<!--QUIERES, TE GUSTARÍA-->
-		<impulse id="28" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--te gustaria-->	
-		<impulse id="29" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--quieres-->
+		<impulse id="28" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--te gustaria-->	
+		<impulse id="29" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--quieres-->
 		<!--CUÁL, CUÁLES-->
-		<impulse id="30" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--cual nombre-->
-		<impulse id="31" angry="0" happy="+10" calm="+5" sad="-5" afraid="0"/>	<!--cual color favorito-->
-		<impulse id="32" angry="0" happy="+10" calm="+5" sad="-5" afraid="0"/>	<!--cual pelicula favorita-->
-		<impulse id="33" angry="0" happy="+10" calm="+5" sad="-5" afraid="0"/>	<!--cual cancion preferida-->
+		<impulse id="30" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--cual nombre-->
+		<impulse id="31" angry="0" happy="10" calm="5" sad="-5" afraid="0"/>	<!--cual color favorito-->
+		<impulse id="32" angry="0" happy="10" calm="5" sad="-5" afraid="0"/>	<!--cual pelicula favorita-->
+		<impulse id="33" angry="0" happy="10" calm="5" sad="-5" afraid="0"/>	<!--cual cancion preferida-->
 	<!--type 1, EXCLAMATIVAS-->
 		<!--QUÉ-->
-		<impulse id="34" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--que graciosa eres-->
-		<impulse id="35" angry="+10" happy="-5" calm="0" sad="+10" afraid="+5"/>	<!--que torpe eres-->
+		<impulse id="34" angry="-5" happy="10" calm="0" sad="-10" afraid="-5"/>	<!--que graciosa eres-->
+		<impulse id="35" angry="10" happy="-5" calm="0" sad="3" afraid="1"/>	<!--que torpe eres-->
 		<!--SALUDOS-->
-		<impulse id="36" angry="0" happy="0" calm="0" sad="0" afraid="0"/>	<!--hola hola caracola-->
+		<impulse id="36" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--hola hola caracola-->
 		<!--FELICITACIONES-->
-		<impulse id="37" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--excelente-->
-		<impulse id="38" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--fantastico-->
-		<impulse id="39" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--estupendo-->
-		<impulse id="40" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--genial-->
-		<impulse id="41" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--bien-->
-		<impulse id="42" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--buen trabajo-->
+		<impulse id="37" angry="-5" happy="10" calm="0" sad="-5" afraid="-3"/>	<!--excelente-->
+		<impulse id="38" angry="-5" happy="10" calm="0" sad="-5" afraid="-3"/>	<!--fantastico-->
+		<impulse id="39" angry="-5" happy="10" calm="0" sad="-3" afraid="-2"/>	<!--estupendo-->
+		<impulse id="40" angry="-5" happy="10" calm="0" sad="-3" afraid="-2"/>	<!--genial-->
+		<impulse id="41" angry="-2" happy="5" calm="0" sad="-2" afraid="-1"/>	<!--bien-->
+		<impulse id="42" angry="-3" happy="7" calm="0" sad="-3" afraid="-2"/>	<!--buen trabajo-->
 	<!--type 2, DUBITATIVAS-->
 		<!--NO SÉ-->
-		<impulse id="43" angry="0" happy="0" calm="+5" sad="0" afraid="0"/>	<!--no se hacer-->
-		<impulse id="44" angry="0" happy="0" calm="+5" sad="0" afraid="0"/>	<!--no se como-->
+		<impulse id="43" angry="0" happy="0" calm="5" sad="0" afraid="0"/>	<!--no se hacer-->
+		<impulse id="44" angry="0" happy="0" calm="5" sad="0" afraid="0"/>	<!--no se como-->
 		<!--TAL VEZ-->
-		<impulse id="45" angry="0" happy="0" calm="+5" sad="0" afraid="0"/>	<!--tal vez-->
+		<impulse id="45" angry="0" happy="0" calm="5" sad="0" afraid="0"/>	<!--tal vez-->
 		<!--QUIZÁ-->
-		<impulse id="46" angry="0" happy="0" calm="+5" sad="0" afraid="0"/>	<!--quiza-->
+		<impulse id="46" angry="0" happy="0" calm="5" sad="0" afraid="0"/>	<!--quiza-->
 		<!--DEBE DE-->
-		<impulse id="47" angry="0" happy="0" calm="+5" sad="0" afraid="0"/>	<!--debe de-->
+		<impulse id="47" angry="0" happy="0" calm="5" sad="0" afraid="0"/>	<!--debe de-->
 		<!--A LO MEJOR-->
-		<impulse id="48" angry="0" happy="0" calm="+5" sad="0" afraid="0"/>	<!--a lo mejor-->
+		<impulse id="48" angry="0" happy="0" calm="5" sad="0" afraid="0"/>	<!--a lo mejor-->
 		<!--POSIBLEMENTE/ ES POSIBLE/ ES PROBABLE/ PUEDE QUE-->
-		<impulse id="49" angry="0" happy="0" calm="+5" sad="0" afraid="0"/>	<!--posiblemente-->
+		<impulse id="49" angry="0" happy="0" calm="5" sad="0" afraid="0"/>	<!--posiblemente-->
 		<!--DUDO-->
-		<impulse id="50" angry="0" happy="0" calm="+5" sad="0" afraid="0"/>	<!--dudo que-->
+		<impulse id="50" angry="0" happy="0" calm="5" sad="0" afraid="0"/>	<!--dudo que-->
 	<!--type 3, DESIDERATIVAS-->
 		<!--OJALÁ/ESPERO/ESPEREMOS-->
-		<impulse id="51" angry="-5" happy="0" calm="+5" sad="-5" afraid="-5"/>	<!--ojala-->
-		<impulse id="52" angry="-5" happy="0" calm="+5" sad="-5" afraid="-5"/>	<!--espero-->
-		<impulse id="53" angry="-5" happy="0" calm="+5" sad="-5" afraid="-5"/>	<!--esperemos que-->
+		<impulse id="51" angry="-5" happy="0" calm="5" sad="-5" afraid="-5"/>	<!--ojala-->
+		<impulse id="52" angry="-5" happy="0" calm="5" sad="-5" afraid="-5"/>	<!--espero-->
+		<impulse id="53" angry="-5" happy="0" calm="5" sad="-5" afraid="-5"/>	<!--esperemos que-->
 		<!--QUISIERA/DESEARÍA/ME GUSTARÍA-->
-		<impulse id="54" angry="-5" happy="0" calm="+5" sad="-5" afraid="-5"/>	<!--estaria bien si-->
-		<impulse id="55" angry="-5" happy="0" calm="+5" sad="-5" afraid="-5"/>	<!--desearia-->
-		<impulse id="56" angry="-5" happy="0" calm="+5" sad="-5" afraid="-5"/>	<!--me gustaria-->
+		<impulse id="54" angry="-5" happy="0" calm="5" sad="-5" afraid="-5"/>	<!--estaria bien si-->
+		<impulse id="55" angry="-5" happy="0" calm="5" sad="-5" afraid="-5"/>	<!--desearia-->
+		<impulse id="56" angry="-5" happy="0" calm="5" sad="-5" afraid="-5"/>	<!--me gustaria-->
 	<!--type 4, ENUNCIATIVAS AFIRMATIVAS-->
 		<!--SALUDOS-->
-		<impulse id="57" angry="0" happy="+10" calm="0" sad="-5" afraid="0"/>  <!--hola-->
-		<impulse id="58" angry="0" happy="+10" calm="0" sad="-5" afraid="0"/>	<!--buenos dias-->
-		<impulse id="59" angry="0" happy="+10" calm="0" sad="-5" afraid="0"/>	<!--buenas tardes-->
-		<impulse id="60" angry="0" happy="+10" calm="0" sad="-5" afraid="0"/>	<!--buenas noches-->
+		<impulse id="57" angry="0" happy="10" calm="0" sad="-5" afraid="0"/>  <!--hola-->
+		<impulse id="58" angry="0" happy="10" calm="0" sad="-5" afraid="0"/>	<!--buenos dias-->
+		<impulse id="59" angry="0" happy="10" calm="0" sad="-5" afraid="0"/>	<!--buenas tardes-->
+		<impulse id="60" angry="0" happy="10" calm="0" sad="-5" afraid="0"/>	<!--buenas noches-->
 		<!--DESPEDIDAS-->
-		<impulse id="61" angry="0" happy="-5" calm="-5" sad="+10" afraid="0"/>	<!--adios-->
-		<impulse id="62" angry="0" happy="-5" calm="-5" sad="+10" afraid="0"/>	<!--hasta luego-->
-		<impulse id="63" angry="0" happy="-5" calm="-5" sad="+10" afraid="0"/>	<!--nos vemos-->
-		<impulse id="64" angry="0" happy="-5" calm="-5" sad="+10" afraid="0"/>	<!--ciao-->
+		<impulse id="61" angry="0" happy="-5" calm="-5" sad="10" afraid="0"/>	<!--adios-->
+		<impulse id="62" angry="0" happy="-5" calm="-5" sad="8" afraid="0"/>	<!--hasta luego-->
+		<impulse id="63" angry="0" happy="-5" calm="-5" sad="8" afraid="0"/>	<!--nos vemos-->
+		<impulse id="64" angry="0" happy="-5" calm="-5" sad="7" afraid="0"/>	<!--ciao-->
 		<!--DISCULPAS-->
-		<impulse id="65" angry="-10" happy="0" calm="+5" sad="-5" afraid="0"/>	<!--lo siento-->
-		<impulse id="66" angry="-10" happy="0" calm="+5" sad="-5" afraid="0"/>	<!--perdoname-->
-		<impulse id="67" angry="-10" happy="0" calm="+5" sad="-5" afraid="0"/>	<!--perdon-->
-		<impulse id="68" angry="-10" happy="0" calm="+5" sad="-5" afraid="0"/>	<!--no era mi intencion-->
+		<impulse id="65" angry="-10" happy="0" calm="5" sad="-5" afraid="-8"/>	<!--lo siento-->
+		<impulse id="66" angry="-10" happy="0" calm="5" sad="-5" afraid="-8"/>	<!--perdoname-->
+		<impulse id="67" angry="-10" happy="0" calm="5" sad="-5" afraid="-8"/>	<!--perdon-->
+		<impulse id="68" angry="-10" happy="0" calm="5" sad="-5" afraid="-8"/>	<!--no era mi intencion-->
 		<!--AGRADECIMIENTOS-->
-		<impulse id="69" angry="-5" happy="+5" calm="0" sad="-5" afraid="0"/>	<!--gracias-->
+		<impulse id="69" angry="-5" happy="5" calm="0" sad="-5" afraid="0"/>	<!--gracias-->
 		<!--INSULTOS-->
-		<impulse id="70" angry="+10" happy="-5" calm="-5" sad="+10" afraid="+10"/>	<!--eres tonta-->
-		<impulse id="71" angry="+10" happy="-5" calm="-5" sad="+10" afraid="+10"/>	<!--eres estupida-->
-		<impulse id="72" angry="+10" happy="-5" calm="-5" sad="+10" afraid="+10"/>	<!--eres fea-->
-		<impulse id="73" angry="+10" happy="-5" calm="-5" sad="+10" afraid="+10"/>	<!--mequetrefe-->
+		<impulse id="70" angry="10" happy="-5" calm="-5" sad="6" afraid="5"/>	<!--eres tonta-->
+		<impulse id="71" angry="10" happy="-5" calm="-5" sad="6" afraid="5"/>	<!--eres estupida-->
+		<impulse id="72" angry="10" happy="-5" calm="-5" sad="5" afraid="3"/>	<!--eres fea-->
+		<impulse id="73" angry="10" happy="-5" calm="-5" sad="2" afraid="3"/>	<!--mequetrefe-->
 		<!--HALAGOS-->
-		<impulse id="74" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--eres lista-->
-		<impulse id="75" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--eres guapa-->
-		<impulse id="76" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--eres inteligente-->
-		<impulse id="77" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--eres divertida-->
-		<impulse id="78" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--eres simpatica-->
-		<impulse id="79" angry="-5" happy="+10" calm="0" sad="-10" afraid="-5"/>	<!--eres amable-->
+		<impulse id="74" angry="-5" happy="10" calm="0" sad="-10" afraid="-5"/>	<!--eres lista-->
+		<impulse id="75" angry="-5" happy="10" calm="0" sad="-10" afraid="-5"/>	<!--eres guapa-->
+		<impulse id="76" angry="-5" happy="10" calm="0" sad="-10" afraid="-5"/>	<!--eres inteligente-->
+		<impulse id="77" angry="-5" happy="10" calm="0" sad="-10" afraid="-5"/>	<!--eres divertida-->
+		<impulse id="78" angry="-5" happy="10" calm="0" sad="-10" afraid="-5"/>	<!--eres simpatica-->
+		<impulse id="79" angry="-5" happy="10" calm="0" sad="-10" afraid="-5"/>	<!--eres amable-->
 		<!--OTRAS-->
-		<impulse id="80" angry="0" happy="+5" calm="+5" sad="0" afraid="0"/>	<!--me gusta-->
-		<impulse id="81" angry="0" happy="+10" calm="0" sad="0" afraid="0"/>	<!--hace buen tiempo-->
-		<impulse id="82" angry="0" happy="-5" calm="0" sad="+10" afraid="0"/>	<!--hace mal tiempo-->
-		<impulse id="83" angry="0" happy="0" calm="+5" sad="0" afraid="0"/>  <!--hoy es mi cumpleanos-->
-		<impulse id="84" angry="0" happy="+5" calm="+5" sad="-5" afraid="-5"/>	<!--estoy bien-->
-		<impulse id="85" angry="0" happy="0" calm="-5" sad="+5" afraid="+10"/>	<!--estoy mal-->
-		<impulse id="86" angry="0" happy="0" calm="0" sad="+5" afraid="0"/>	<!--estoy aburrido-->
-		<impulse id="87" angry="0" happy="0" calm="-5" sad="+5" afraid="0"/>	<!--estoy cansado-->
-		<impulse id="88" angry="+5" happy="-5" calm="0" sad="0" afraid="+10"/>	<!--estoy enfadado-->
-		<impulse id="89" angry="0" happy="0" calm="0" sad="0" afraid="0"/>	<!--estoy triste-->
-		<impulse id="90" angry="0" happy="-10" calm="-5" sad="+10" afraid="+10"/>	<!--estoy enfermo-->
-		<impulse id="91" angry="0" happy="0" calm="0" sad="+5" afraid="0"/>	<!--tengo frio-->
-		<impulse id="92" angry="0" happy="0" calm="0" sad="+5" afraid="0"/>	<!--tengo calor-->
-		<impulse id="93" angry="0" happy="0" calm="0" sad="+5" afraid="0"/>	<!--tengo hambre-->
-		<impulse id="94" angry="0" happy="0" calm="0" sad="+5" afraid="0"/>	<!--tengo sueno-->
-		<impulse id="95" angry="0" happy="0" calm="-5" sad="+5" afraid="+10"/>	<!--tengo miedo-->
+		<impulse id="80" angry="0" happy="5" calm="5" sad="0" afraid="0"/>	<!--me gusta-->
+		<impulse id="81" angry="0" happy="10" calm="0" sad="0" afraid="0"/>	<!--hace buen tiempo-->
+		<impulse id="82" angry="0" happy="-5" calm="0" sad="10" afraid="0"/>	<!--hace mal tiempo-->
+		<impulse id="83" angry="0" happy="0" calm="5" sad="0" afraid="0"/>  <!--hoy es mi cumpleanos-->
+		<impulse id="84" angry="0" happy="5" calm="5" sad="-5" afraid="-2"/>	<!--estoy bien-->
+		<impulse id="85" angry="0" happy="0" calm="-2" sad="5" afraid="10"/>	<!--estoy mal-->
+		<impulse id="86" angry="0" happy="0" calm="0" sad="5" afraid="0"/>	<!--estoy aburrido-->
+		<impulse id="87" angry="0" happy="0" calm="-5" sad="5" afraid="0"/>	<!--estoy cansado-->
+		<impulse id="88" angry="2" happy="-5" calm="0" sad="1" afraid="10"/>	<!--estoy enfadado-->
+		<impulse id="89" angry="0" happy="-3" calm="-1" sad="7" afraid="0"/>	<!--estoy triste-->
+		<impulse id="90" angry="0" happy="-8" calm="-5" sad="10" afraid="6"/>	<!--estoy enfermo-->
+		<impulse id="91" angry="0" happy="-1" calm="-1" sad="5" afraid="0"/>	<!--tengo frio-->
+		<impulse id="92" angry="0" happy="-1" calm="-1" sad="5" afraid="0"/>	<!--tengo calor-->
+		<impulse id="93" angry="0" happy="-1" calm="-1" sad="5" afraid="0"/>	<!--tengo hambre-->
+		<impulse id="94" angry="0" happy="-1" calm="-1" sad="5" afraid="0"/>	<!--tengo sueno-->
+		<impulse id="95" angry="0" happy="0" calm="-5" sad="5" afraid="10"/>	<!--tengo miedo-->
 	<!--type 5, ENUNCIATIVAS NEGATIVAS-->
 		<!--NO-->
-		<impulse id="96" angry="+5" happy="0" calm="+5" sad="0" afraid="0"/>	<!--no me gusta-->
-		<impulse id="97" angry="+5" happy="0" calm="+5" sad="0" afraid="0"/>	<!--no quiero-->
-		<impulse id="98" angry="+5" happy="0" calm="+5" sad="+5" afraid="0"/>	<!--hoy no es mi cumpleanos-->
-		<impulse id="99" angry="0" happy="-5" calm="-5" sad="+5" afraid="+5"/>	<!--no estoy bien-->
-		<impulse id="100" angry="0" happy="+5" calm="+5" sad="-5" afraid="-5"/>	<!--no estoy mal-->
-		<impulse id="101" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--no estoy aburrido-->
-		<impulse id="102" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--no estoy cansado-->
-		<impulse id="103" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/> <!--no estoy enfadado-->
-		<impulse id="104" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--no estoy triste-->
-		<impulse id="105" angry="0" happy="+5" calm="+5" sad="-5" afraid="-10"/>	<!--no estoy enfermo-->
-		<impulse id="106" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--no tengo frio-->
-		<impulse id="107" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--no tengo calor-->
-		<impulse id="108" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--no tengo hambre-->
-		<impulse id="109" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--no tengo sueno-->
-		<impulse id="110" angry="0" happy="+5" calm="+5" sad="-5" afraid="0"/>	<!--no tengo miedo-->
+		<impulse id="96" angry="5" happy="0" calm="5" sad="0" afraid="0"/>	<!--no me gusta-->
+		<impulse id="97" angry="5" happy="0" calm="5" sad="0" afraid="0"/>	<!--no quiero-->
+		<impulse id="98" angry="0" happy="0" calm="5" sad="5" afraid="-3"/>	<!--hoy no es mi cumpleanos-->
+		<impulse id="99" angry="0" happy="-5" calm="-5" sad="5" afraid="5"/>	<!--no estoy bien-->
+		<impulse id="100" angry="0" happy="5" calm="5" sad="-5" afraid="-5"/>	<!--no estoy mal-->
+		<impulse id="101" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--no estoy aburrido-->
+		<impulse id="102" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--no estoy cansado-->
+		<impulse id="103" angry="0" happy="5" calm="5" sad="-5" afraid="0"/> <!--no estoy enfadado-->
+		<impulse id="104" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--no estoy triste-->
+		<impulse id="105" angry="0" happy="5" calm="5" sad="-5" afraid="-10"/>	<!--no estoy enfermo-->
+		<impulse id="106" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--no tengo frio-->
+		<impulse id="107" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--no tengo calor-->
+		<impulse id="108" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--no tengo hambre-->
+		<impulse id="109" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--no tengo sueno-->
+		<impulse id="110" angry="0" happy="5" calm="5" sad="-5" afraid="0"/>	<!--no tengo miedo-->
 		<!--NUNCA/JAMÁS-->
-		<impulse id="111" angry="0" happy="0" calm="+5" sad="+5" afraid="0"/>	<!--nunca he-->
-		<impulse id="112" angry="0" happy="0" calm="+5" sad="+5" afraid="0"/> <!--yo nunca he-->
+		<impulse id="111" angry="0" happy="0" calm="5" sad="5" afraid="0"/>	<!--nunca he-->
+		<impulse id="112" angry="0" happy="0" calm="5" sad="5" afraid="0"/> <!--yo nunca he-->
 	<!--type 6, IMPERATIVAS-->
-		<impulse id="113" angry="+5" happy="0" calm="-5" sad="0" afraid="0"/> <!--ven-->
-		<impulse id="114" angry="0" happy="+5" calm="-5" sad="0" afraid="0"/> <!--baila-->
-		<impulse id="115" angry="0" happy="+5" calm="-5" sad="0" afraid="0"/> <!--canta-->
-		<impulse id="116" angry="+5" happy="0" calm="-5" sad="0" afraid="0"/>	<!--corre-->
-		<impulse id="117" angry="0" happy="0" calm="-5" sad="0" afraid="+10"/>	<!--cierra los ojos-->
-		<impulse id="118" angry="0" happy="+5" calm="+5" sad="-5" afraid="-5"/>	<!--dame la mano-->
+		<impulse id="113" angry="5" happy="0" calm="-5" sad="0" afraid="0"/> <!--ven-->
+		<impulse id="114" angry="0" happy="5" calm="-5" sad="0" afraid="0"/> <!--baila-->
+		<impulse id="115" angry="0" happy="5" calm="-5" sad="0" afraid="0"/> <!--canta-->
+		<impulse id="116" angry="5" happy="0" calm="-5" sad="0" afraid="0"/>	<!--corre-->
+		<impulse id="117" angry="0" happy="0" calm="-5" sad="0" afraid="10"/>	<!--cierra los ojos-->
+		<impulse id="118" angry="0" happy="5" calm="5" sad="-5" afraid="-5"/>	<!--dame la mano-->
 		<!--//OTRAS-->
-		<impulse id="119" angry="0" happy="+5" calm="+5" sad="0" afraid="0"/>	<!--si-->
-		<impulse id="120" angry="+5" happy="-5" calm="0" sad="+5" afraid="0"/>	<!--no-->
-		<impulse id="121" angry="0" happy="0" calm="0" sad="0" afraid="0"/> <!--frases no registradas en la base de datos, les damos una respuesta aleatoria-->
+		<impulse id="119" angry="0" happy="5" calm="5" sad="0" afraid="0"/>	<!--si-->
+		<impulse id="120" angry="5" happy="-5" calm="0" sad="5" afraid="0"/>	<!--no-->
+		<impulse id="121" angry="1" happy="-2" calm="-2" sad="3" afraid="1"/> <!--frases no registradas en la base de datos, les damos una respuesta aleatoria-->
 		<impulse id="122" angry="10" happy="-5" calm="-5" sad="1" afraid="1"/> <!--frases de respuesta a repetición-->
 </impulses>

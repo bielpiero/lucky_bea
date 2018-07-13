@@ -55,6 +55,17 @@ RNAdyacencyList::iterator RNAdyacencyList::end(){
     adyacencies->end();
 }
 
+const std::string RNAdyacencyList::toString() const{
+    std::ostringstream print_str;
+    print_str.str("");
+    print_str.clear();
+    std::list<RNGraphEdge*>::iterator it;
+    for(it = adyacencies->begin(); it != adyacencies->end(); it++){
+        print_str << (*it)->getDestination() << " ";
+    }
+    return print_str.str();
+}
+
 RNGraph::RNGraph(){
 	graph = new std::map<int, RNAdyacencyList*>();
 }
@@ -68,17 +79,33 @@ void RNGraph::addNode(const int& node){
     graph->emplace(node, new RNAdyacencyList());
 }
 
-void RNGraph::addEdge(const int& src, const int& dst, const float& weight){
-    RNGraphEdge* edge = new RNGraphEdge(dst, weight);
-    RNAdyacencyList* adys = NULL;
-    std::map<int, RNAdyacencyList*>::iterator it;
+int RNGraph::addEdge(const int& src, const int& dst, const float& weight){
+    int res = RN_NONE;
+    std::map<int, RNAdyacencyList*>::iterator itSrc;
+    std::map<int, RNAdyacencyList*>::iterator itDst;
+    itSrc = graph->find(src);
 
-    it = graph->find(src);
-    if(it != graph->end()){
-        adys = it->second;
+    if(itSrc != graph->end() and itDst != graph->end()){
+        RNGraphEdge* edge = new RNGraphEdge(dst, weight);
+        RNAdyacencyList* adys = NULL;
+        adys = itSrc->second;
         adys->insert(edge);
         graph->emplace(src, adys);
+        res = RN_OK;
     }
+    return res;
+}
+
+const std::string RNGraph::toString() const{
+    std::ostringstream print_str;
+    print_str.str("");
+    print_str.clear();
+
+    std::map<int, RNAdyacencyList*>::iterator it;
+    for(it = graph->begin(); it != graph->end(); it++){
+        print_str << it->first << " -> " <<  it->second->toString() << "\n";
+    }
+    return print_str.str();
 }
 
 void RNGraph::removeNode(int node){

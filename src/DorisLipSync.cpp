@@ -102,16 +102,16 @@ void DorisLipSync::textToViseme(const std::string str){
 
 	std::wstring text = textNorm(wtxt, L'_');
 	text = textNorm(text, '?');
-	text = textNorm(text, '¡');
+	text = textNorm(text, 'ï¿½');
 	text = textNorm(text, '!');
-	text = textNorm(text, '¿');
+	text = textNorm(text, 'ï¿½');
 	text = textNorm(text, ',');
 	text = textNorm(text, '.');
 
 	std::vector<std::wstring> syllables;
 	std::string actualSyllable="";
 
-	getSyllables(text, &syllables);
+	//getSyllables(text, &syllables);
 	
 	//std::cout<<"<---Number of syllables--->\n"<<numSil<<std::endl;
 
@@ -136,30 +136,30 @@ std::string DorisLipSync::fixSyllable(std::wstring syllable){
 	for (int i = 0; i < syllable.length(); i++){
 		if(syllable.at(i) == 195){
 			switch(syllable.at(i + 1)){
-				case 179: // ó
-				case 147: // Ó
+				case 179: // ï¿½
+				case 147: // ï¿½
 					syl += 'O';
 					break;
-				case 173: // í
-				case 141: // Í
+				case 173: // ï¿½
+				case 141: // ï¿½
 					syl += 'I';
 					break;
-				case 161: // á
-				case 129: // Á
+				case 161: // ï¿½
+				case 129: // ï¿½
 					syl += 'A';
 					break;
-				case 169: // é
-				case 137: // É
+				case 169: // ï¿½
+				case 137: // ï¿½
 					syl += 'E';
 					break;
-				case 186: // ú
-				case 154: // Ú
-				case 188: // ü
-				case 156: // Ü
+				case 186: // ï¿½
+				case 154: // ï¿½
+				case 188: // ï¿½
+				case 156: // ï¿½
 					syl += 'U';
 					break;
-				case 177: // ú
-				case 145: // Ú
+				case 177: // ï¿½
+				case 145: // ï¿½
 					syl += 195;
 					syl += 145;
 					break;
@@ -269,7 +269,7 @@ int DorisLipSync::configureEmicTwo(const double& emotion, const std::string lang
 		lx="L0";
 	}
 	
-    /*L1 para español castellano*/
+    /*L1 para espaï¿½ol castellano*/
 	if (language == SPANISH_LANG_STR) {
 		lx="L2";
 	}

@@ -3,6 +3,7 @@
 
 #include "RNRecurrentTask.h"
 #include "GeneralController.h"
+#include "RNGraph.h"
 
 class RNTourTask : public RNRecurrentTask{
 
@@ -13,10 +14,14 @@ public:
 	virtual void onKilled();
 private:
 	void init();
+	int createCurrentMapGraph();
 private:
 	GeneralController* gn;
+	RNGraph* currentMapGraph;
+	
 	int lastSiteVisitedIndex;
 	bool initialized;
+	std::string xmlSectorsPath;
 	std::vector<std::string> sequence;
 };
 

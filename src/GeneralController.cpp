@@ -78,6 +78,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
 	emotions = new RNEmotionsTask(this);
+	tourTask = new RNTourTask(this);
 	//eyesCameras = new RNCameraTask(this);
 
 	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
@@ -96,6 +97,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	//tasks->addTask(armGestures);
 	tasks->addTask(emotions);
 	tasks->addTask(localization);
+	tasks->addTask(tourTask);
 	//tasks->addTask(eyesCameras);
 	
 	
@@ -1142,8 +1144,7 @@ void GeneralController::getSectorsAvailable(int mapId, std::string& sectorsAvail
 				buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value() << ",";
 				buffer_str << (((double)atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100) << ",";
 				buffer_str << (((double)atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100) << ",";
-				buffer_str << sector_node->first_attribute(XML_ATTRIBUTE_REFERENCE_STR)->value();
-
+				
 				if(sector_node->next_sibling() != NULL){
 					buffer_str << "|";
 				}
@@ -2519,10 +2520,11 @@ void GeneralController::setTextInputIdToEmotion(std::string textInputId){
 void GeneralController::setEmotionsResult(std::string emotionState, std::string faceIdFromEmotions){
 	this->emotionState = emotionState;
 	this->faceIdFromEmotions = faceIdFromEmotions;
-	if(dialogs){
+
+	if(dialogs and not this->emotionState.empty()){
 		dialogs->setState(this->emotionState);
 	}
-	if(this->gestures){
+	if(this->gestures and not this->faceIdFromEmotions.empty()){
 		this->gestures->setGesture(this->faceIdFromEmotions);
 	}
 }

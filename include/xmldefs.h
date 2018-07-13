@@ -22,6 +22,7 @@
 
 #define XML_ATTRIBUTE_FILENAME_STR "filename"
 #define XML_ATTRIBUTE_POLYGON_STR "polygon"
+#define XML_ATTRIBUTE_ADYACENCY_STR "adjacency"
 
 #define XML_ELEMENT_SECTORS_STR "sectors"
 #define XML_ELEMENT_SECTOR_STR "sector"
