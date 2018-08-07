@@ -2,6 +2,7 @@
 #include "DorisLipSync.h"
 
 DorisLipSync::DorisLipSync (SerialPort* mc, int faceId) {
+	std::setlocale(LC_ALL, "es_ES");
 	xmlLipSyncFullPath = RNUtils::getApplicationPath() + XML_FILE_LIP_SYNC_PATH;
 	xmlVisemesCodesFullPath = RNUtils::getApplicationPath() + XML_FILE_VISEMES_CODES_PATH;
 	this->mc = mc;
@@ -52,13 +53,20 @@ DorisLipSync::DorisLipSync (SerialPort* mc, int faceId) {
     theFile.close();
 }
 
-std::wstring DorisLipSync::textNorm(const std::wstring str, wchar_t symbol){
-	std::wstring someString(str);
-	std::transform(someString.begin(), someString.end(), someString.begin(), ::tolower);
+char localeToLower(char c) {        
+    return std::tolower(c, std::locale());    
+}
+
+std::string DorisLipSync::textNorm(const std::string str){
+	std::string someString(str);
+	std::transform(someString.begin(), someString.end(), someString.begin(), localeToLower);
+	return someString;
+}
+
+std::string DorisLipSync::removeExtraChars(const std::string str, char symbol){
+	std::string someString(str);
 	someString.erase(std::remove(someString.begin(), someString.end(), symbol), someString.end());
 	return someString;
-
-
 }
 
 std::string DorisLipSync::syllableToViseme(const std::string syllable){
@@ -97,21 +105,22 @@ void DorisLipSync::textToViseme(const std::string str){
 // Comunication TTS object
 	
 	RNUtils::printLn("Text To Say: %s", str.c_str());
-	std::wstring wtxt;
+	std::string wtxt;
 	wtxt.assign(str.begin(), str.end());
 
-	std::wstring text = textNorm(wtxt, L'_');
-	text = textNorm(text, '?');
-	text = textNorm(text, '�');
-	text = textNorm(text, '!');
-	text = textNorm(text, '�');
-	text = textNorm(text, ',');
-	text = textNorm(text, '.');
+	std::string text = textNorm(wtxt);
 
-	std::vector<std::wstring> syllables;
+	text = removeExtraChars(text, 63);
+	text = removeExtraChars(text, 168);
+	text = removeExtraChars(text, 33);
+	text = removeExtraChars(text, 173);
+	text = removeExtraChars(text, 44);
+	text = removeExtraChars(text, 46);
+
+	std::vector<std::string> syllables;
 	std::string actualSyllable="";
 
-	//getSyllables(text, &syllables);
+	getSyllables(text, &syllables);
 	
 	//std::cout<<"<---Number of syllables--->\n"<<numSil<<std::endl;
 
@@ -120,7 +129,7 @@ void DorisLipSync::textToViseme(const std::string str){
 	tts->setString(str);
 //__________________
 
-	for(int i = 0; i < syllables.size(); i++){
+	for(unsigned int i = 0; i < syllables.size(); i++){
 		std::string fixedSyllable = fixSyllable(syllables.at(i));
 		//std::cout << fixedSyllable << std::endl;
 		actualSyllable = syllableToViseme(fixedSyllable);
@@ -130,38 +139,29 @@ void DorisLipSync::textToViseme(const std::string str){
 	setViseme("5");
 }
 
-std::string DorisLipSync::fixSyllable(std::wstring syllable){
+std::string DorisLipSync::fixSyllable(std::string syllable){
 	std::string syl = "";
 	std::locale loc("es_ES.utf8");
-	for (int i = 0; i < syllable.length(); i++){
-		if(syllable.at(i) == 195){
+	for (unsigned int i = 0; i < syllable.length(); i++){
+		if(syllable.at(i) == -61){
 			switch(syllable.at(i + 1)){
-				case 179: // �
-				case 147: // �
+				case -77: case -109:
 					syl += 'O';
 					break;
-				case 173: // �
-				case 141: // �
+				case -83: case -115:
 					syl += 'I';
 					break;
-				case 161: // �
-				case 129: // �
+				case -95: case -127:
 					syl += 'A';
 					break;
-				case 169: // �
-				case 137: // �
+				case -87: case -119:
 					syl += 'E';
-					break;
-				case 186: // �
-				case 154: // �
-				case 188: // �
-				case 156: // �
+				case -70: case -102: case -68: case -100:
 					syl += 'U';
 					break;
-				case 177: // �
-				case 145: // �
-					syl += 195;
-					syl += 145;
+				case -79: // �
+				case -111: // �
+					syl += -111;
 					break;
 			}
 			i++;
@@ -962,8 +962,8 @@ void DorisLipSync::selectMotion(int visemeCod, float timetoSync){
 /* Returns an array with the start positions of the syllables */
 /**************************************************************/
 
-int DorisLipSync::getSyllables (std::wstring word, std::vector<std::wstring>* syllables) {
-	std::vector<std::wstring> words = RNUtils::wsplit(word, L' ');
+int DorisLipSync::getSyllables (std::string word, std::vector<std::string>* syllables) {
+	std::vector<std::string> words = RNUtils::split(word, " ");
 
 	// It looks for syllables in the word
 	syllables->clear();
@@ -998,7 +998,7 @@ int DorisLipSync::getSyllables (std::wstring word, std::vector<std::wstring>* sy
 /* Determines whether hiatus exists */
 /************************************/
 
-bool DorisLipSync::hiatus (std::wstring vowels, int* size) {
+bool DorisLipSync::hiatus (std::string vowels, int* size) {
 	bool r = false;
 	if(vowels.length() == 2){
 		if((openVowel(vowels.at(0)) and openVowel(vowels.at(1))) or 
@@ -1007,8 +1007,8 @@ bool DorisLipSync::hiatus (std::wstring vowels, int* size) {
 			r = true;
 		}
 	} else if(vowels.length() == 3){
-		if((openVowel(vowels.at(0)) and (vowels.at(1) == 195 and closedAcutedVowel(vowels.at(2)))) or
-			((vowels.at(0) == 195 and closedAcutedVowel(vowels.at(1))) and openVowel(vowels.at(2)))){
+		if((openVowel(vowels.at(0)) and (vowels.at(1) == -61 and closedAcutedVowel(vowels.at(2)))) or
+			((vowels.at(0) == -61 and closedAcutedVowel(vowels.at(1))) and openVowel(vowels.at(2)))){
 			r = true;
 		}
 	}
@@ -1021,18 +1021,18 @@ bool DorisLipSync::hiatus (std::wstring vowels, int* size) {
 /* Determines whether triphthong exists */
 /****************************************/
 
-bool DorisLipSync::triphthong (std::wstring vowels, int* size){
+bool DorisLipSync::triphthong (std::string vowels, int* size){
 	bool r = false;
 	if(vowels.length() == 3){
 		if(closedVowel(vowels.at(0)) and openVowel(vowels.at(1)) and closedVowel(vowels.at(2))){
 			r = true;
 		}
 	} else if(vowels.length() == 4){
-		if(closedVowel(vowels.at(0)) and (vowels.at(1) == 195 and openAcutedVowel(vowels.at(2))) and closedVowel(vowels.at(3))){
+		if(closedVowel(vowels.at(0)) and (vowels.at(1) == -61 and openAcutedVowel(vowels.at(2))) and closedVowel(vowels.at(3))){
 			r = true;
 		}
 	} else if(vowels.length() == 5){
-		if((vowels.at(0) == 195 and (vowels.at(1) == 188 or vowels.at(1) == 156)) and (vowels.at(2) == 195 and openAcutedVowel(vowels.at(3))) and closedVowel(vowels.at(4))){
+		if((vowels.at(0) == -61 and (vowels.at(1) == -68 or vowels.at(1) == -100)) and (vowels.at(2) == -61 and openAcutedVowel(vowels.at(3))) and closedVowel(vowels.at(4))){
 			r = true;
 		}
 	}
@@ -1047,10 +1047,10 @@ bool DorisLipSync::triphthong (std::wstring vowels, int* size){
 /* and pos is changed to the follow position after end of onSet     */
 /********************************************************************/
 
-void DorisLipSync::onSet (std::wstring word, int start, int* end) {
+void DorisLipSync::onSet (std::string word, int start, int* end) {
 	// Every initial consonant belongs to the onSet
 	bool c1 = false, c2 = false;
-	if(word.at(start) != 195){
+	if(word.at(start) != -61){
 		if(isConsonant(word.at(start)) or word.at(start) == 'y'){
 			c1 = true;
 			if(word.at(start) == 'g' or word.at(start) == 'k' or word.at(start) == 't' or word.at(start) == 'b' or word.at(start) == 'p' or word.at(start) == 'f'){
@@ -1075,7 +1075,7 @@ void DorisLipSync::onSet (std::wstring word, int start, int* end) {
 				}
 			}
 		}
-	} else if((start + 1) < word.length() and (word.at(start + 1) == 177 or word.at(start + 1) == 145)){
+	} else if((start + 1) < word.length() and (word.at(start + 1) == -79 or word.at(start + 1) == -111)){
 		c1 = true;
 		c2 = true;
 	}
@@ -1087,6 +1087,7 @@ void DorisLipSync::onSet (std::wstring word, int start, int* end) {
 	if(c2){
 		*end = start + 2;
 	}
+	
 }
 
 /****************************************************************************/
@@ -1095,21 +1096,23 @@ void DorisLipSync::onSet (std::wstring word, int start, int* end) {
 /****************************************************************************/
 
 
-bool DorisLipSync::nucleus (std::wstring word, int start, int* end) {
+bool DorisLipSync::nucleus (std::string word, int start, int* end) {
 	bool r = false;
-	std::wstring vowels;
+	std::string vowels;
 	int i = start;
 	int size;
 	bool enough = false;
+
 	while(i < word.length() and not enough){
-		if(word.at(i) == 195){ // precedent for acute letter
-			if((word.at(i + 1) != 177 and word.at(i + 1) != 145)){
-				vowels += word.at(i++);
-				vowels += word.at(i++);
+		//std::cout << (int)word.at(i) << ", " << word.length() << std::endl;
+		if(word.at(i) == -61){ // precedent for acute letter
+			if((word.at(i + 1) != -79 and word.at(i + 1) != -111)){
+				vowels += word.at(i);
+				vowels += word.at(i + 1);
+				i += 2;
 			} else {
 				enough = true;
 			}
-			
 		} else if(not isConsonant(word.at(i))){
 			vowels += word.at(i++);	
 		} else {
@@ -1145,7 +1148,7 @@ bool DorisLipSync::nucleus (std::wstring word, int start, int* end) {
 /*****************************************************************************/
 
 
-void DorisLipSync::coda (std::wstring word, int start, int* end) {
+void DorisLipSync::coda (std::string word, int start, int* end) {
 	bool incremented = false;
 	//rule 6
 	if(word.at(start) == 'b' or word.at(start) == 'd' or word.at(start) == 'k' or word.at(start) == 'n' or word.at(start) == 'l' or word.at(start) == 'r'){
@@ -1155,7 +1158,7 @@ void DorisLipSync::coda (std::wstring word, int start, int* end) {
 					*end = *end + 2;
 					incremented = true;
 				} else if((start + 2) < word.length()){
-					if(openVowel(word.at(start + 2)) or closedVowel(word.at(start + 2)) or (word.at(start + 2) == 195 and (openAcutedVowel(word.at(start + 3)) or closedAcutedVowel(word.at(start + 3))))){
+					if(openVowel(word.at(start + 2)) or closedVowel(word.at(start + 2)) or (word.at(start + 2) == -61 and (openAcutedVowel(word.at(start + 3)) or closedAcutedVowel(word.at(start + 3))))){
 						*end = *end + 1;
 						incremented = true;
 					} else {
@@ -1171,7 +1174,7 @@ void DorisLipSync::coda (std::wstring word, int start, int* end) {
 	if(not incremented){
 		if(word.at(start) == 's' or word.at(start) == 'z' or word.at(start) == 'x' or word.at(start) == 'c' or word.at(start) == 'm'){
 			if((start + 1) < word.length()){
-				if(isConsonant(word.at(start + 1))){
+				if(word.at(start + 1) != -61 and isConsonant(word.at(start + 1))){
 					*end = *end + 1;
 					incremented = true;
 				}
@@ -1179,7 +1182,7 @@ void DorisLipSync::coda (std::wstring word, int start, int* end) {
 				*end = *end + 1;
 				incremented = true;
 			}
-		} else if (word.at(start) == 195 and (word.at(start + 1) == 177 or word.at(start + 1) == 145)){
+		} else if (word.at(start) == -61 and (word.at(start + 1) == -79 or word.at(start + 1) == -111)){
 			if((start + 2) < word.length()){
 				if(isConsonant(word.at(start + 2))){
 					*end = *end + 2;
@@ -1210,7 +1213,7 @@ void DorisLipSync::coda (std::wstring word, int start, int* end) {
 	if(not incremented){
 		if(word.at(start) == 'b' or word.at(start) == 'k'){
 			if((start + 1) < word.length()){
-				if(not (word.at(start + 1) == 'r' or word.at(start + 1) == 'l' or word.at(start + 1) == 's' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == 195 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
+				if(not (word.at(start + 1) == 'r' or word.at(start + 1) == 'l' or word.at(start + 1) == 's' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or word.at(start + 1))){
 					*end = *end + 1;
 					incremented = true;
 				}
@@ -1225,7 +1228,7 @@ void DorisLipSync::coda (std::wstring word, int start, int* end) {
 	if(not incremented){
 		if(word.at(start) == 'p' or word.at(start) == 'g' or word.at(start) == 'f'){
 			if((start + 1) < word.length()){
-				if(not (word.at(start + 1) == 'r' or word.at(start + 1) == 'l' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == 195 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
+				if(not (word.at(start + 1) == 'r' or word.at(start + 1) == 'l' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == -61 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
 					*end = *end + 1;
 					incremented = true;
 				}
@@ -1238,10 +1241,13 @@ void DorisLipSync::coda (std::wstring word, int start, int* end) {
 	if(not incremented){
 		if(word.at(start) == 'd'){
 			if((start + 1) < word.length()){
-				if(not (word.at(start + 1) == 'r' or word.at(start + 1) == 's' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == 195 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
+				if(not (word.at(start + 1) == 'r' or word.at(start + 1) == 's' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == -61 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
 					*end = *end + 1;
 					incremented = true;
 				}
+			} else if((start + 1) == word.length()){
+				*end = *end + 1;
+				incremented = true;
 			}
 		}
 	}
@@ -1249,10 +1255,13 @@ void DorisLipSync::coda (std::wstring word, int start, int* end) {
 	if(not incremented){
 		if(word.at(start) == 't'){
 			if((start + 1) < word.length()){
-				if(not (word.at(start + 1) == 'r' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == 195 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
+				if(not (word.at(start + 1) == 'r' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == -61 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
 					*end = *end + 1;
 					incremented = true;
 				}
+			} else if((start + 1) == word.length()){
+				*end = *end + 1;
+				incremented = true;
 			}
 		}
 	}
@@ -1263,7 +1272,7 @@ void DorisLipSync::coda (std::wstring word, int start, int* end) {
 			if((start + 1) < word.length()){
 				if(word.at(start) == 'r' and word.at(start + 1) == 'r'){
 					incremented = true;
-				} else if(not (word.at(start + 1) == 's' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == 195 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
+				} else if(not (word.at(start + 1) == 's' or openVowel(word.at(start + 1)) or closedVowel(word.at(start + 1)) or (word.at(start + 1) == -61 and (openAcutedVowel(word.at(start + 2)) or closedAcutedVowel(word.at(start + 2)))))){
 					*end = *end + 1;
 					incremented = true;
 				}
@@ -1281,7 +1290,7 @@ void DorisLipSync::coda (std::wstring word, int start, int* end) {
 /***************************************************************************/
 
 
-bool DorisLipSync::openVowel (wchar_t vowel) {
+bool DorisLipSync::openVowel (char vowel) {
 	bool r = false;
 	switch (vowel) {
 		case 'a': case 'A':
@@ -1289,29 +1298,29 @@ bool DorisLipSync::openVowel (wchar_t vowel) {
 		case 'o': case 'O':
 		r = true;
 		break;
-		case 195: default:
+		case -61: default:
 		r = false;
 		break;
 	}
 	return r;
 }
 
-bool DorisLipSync::openAcutedVowel(wchar_t vowel){
+bool DorisLipSync::openAcutedVowel(char vowel){
 	bool r = false;
 	switch (vowel) {
-		case 161: case 129:
-		case 169: case 137:
-		case 179: case 147:
+		case -95: case -127:		//á - Á
+		case -87: case -119:		//é - É
+		case -77: case -109:		//ó - Ó
 		r = true;
 		break;
-		case 195: default:
+		case -61: default:
 		r = false;
 		break;
 	}
 	return r;
 }
 
-bool DorisLipSync::closedVowel (wchar_t vowel){
+bool DorisLipSync::closedVowel (char vowel){
 	bool r = false;
 	switch (vowel) {
 		case 'i': case 'I':
@@ -1319,31 +1328,25 @@ bool DorisLipSync::closedVowel (wchar_t vowel){
 		case 'y': case 'Y':
 		r = true;
 		break;
-		case 195: default:
+		case -61: default:
 		r = false;
 		break;
 	}
 	return r;
 }
 
-bool DorisLipSync::closedAcutedVowel(wchar_t vowel){
+bool DorisLipSync::closedAcutedVowel(char vowel){
 	bool r = false;
 	switch (vowel) {
-		case 173: case 141:
-		case 186: case 154: case 188: case 156:
+		case -83: case -115:
+		case -70: case -102: case -68: case -100:
 		r = true;
 		break;
-		case 195: default:
+		case -61: default:
 		r = false;
 		break;
 	}
 	return r;
-}
-
-bool DorisLipSync::isAlveolarConsonant (wchar_t letter){
-	return (letter == 'd' or letter == 'l' or letter == 'n' or letter == 's' or letter == 'r' or letter == 'z'
-			 or letter == 'p' or letter == 'b' or letter == 'f' or letter == 't' or letter == 'k' or letter == 'g'
-			  or letter == 'x' or letter == 'm');
 }
 
 //**********************************/
@@ -1351,6 +1354,6 @@ bool DorisLipSync::isAlveolarConsonant (wchar_t letter){
 /***********************************/
 
 
-bool DorisLipSync::isConsonant (wchar_t c) {
-	return ((not openVowel(c)) and (not closedVowel(c)) and (not openAcutedVowel(c)) and (not closedAcutedVowel(c)));
+bool DorisLipSync::isConsonant (char c) {
+	return (not (openVowel(c) or closedVowel(c) or openAcutedVowel(c) or closedAcutedVowel(c)));
 }

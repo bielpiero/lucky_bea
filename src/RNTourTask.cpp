@@ -6,6 +6,7 @@ RNTourTask::RNTourTask(const GeneralController* gn, const char* name, const char
 	currentMapGraph = NULL;
 	initialized = false;
 	lastSiteVisitedIndex = RN_NONE;
+	tourSpeech = new RNTourDialog(gn);
 }
 
 RNTourTask::~RNTourTask(){
@@ -16,7 +17,7 @@ void RNTourTask::task(){
 	if(initialized){
 
 	} else {
-		init();
+		//init();
 	}
 }
 

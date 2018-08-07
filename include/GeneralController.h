@@ -238,6 +238,7 @@ public: // emotions functions
 	SerialPort* getMaestroController();
 	void setTextInputIdToEmotion(std::string textInputId);
 	void setEmotionsResult(std::string emotionState, std::string faceIdFromEmotions);
+	DorisLipSync* getTTS();
 private:
 
 	bool isPermissionNeeded(char function);

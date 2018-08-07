@@ -77,7 +77,7 @@ private:
     DorisLipSync* tts;
     std::vector<OutputMessage*> responses;
 public:
-	RNDialogsTask(const GeneralController* gn, DorisLipSync* tts, const char* name = "Dialogs Task", const char* description = "Doris Speech");
+	RNDialogsTask(const GeneralController* gn, const char* name = "Dialogs Task", const char* description = "Doris Speech");
 	~RNDialogsTask();
 	virtual void task();
 

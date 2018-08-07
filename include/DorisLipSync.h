@@ -33,27 +33,27 @@ private:
 	int faceId;
 
 private:
-	void onSet   (std::wstring word, int start, int* end);
-	bool nucleus (std::wstring word, int start, int* end);
-	void coda    (std::wstring word, int start, int* end);
+	void onSet   (std::string word, int start, int* end);
+	bool nucleus (std::string word, int start, int* end);
+	void coda    (std::string word, int start, int* end);
 
-	bool hiatus (std::wstring vowels, int* size);
-	bool triphthong (std::wstring vowels, int* size);
+	bool hiatus (std::string vowels, int* size);
+	bool triphthong (std::string vowels, int* size);
 
-	bool openVowel (wchar_t vowel);
-	bool openAcutedVowel(wchar_t vowel);
-	bool closedVowel (wchar_t vowel);
-	bool closedAcutedVowel(wchar_t vowel);
-	bool isConsonant (wchar_t vowel);
-	bool isAlveolarConsonant(wchar_t letter);
-	std::string fixSyllable(std::wstring syllable);
-	int getSyllables (std::wstring word, std::vector<std::wstring>* syllables);
+	bool openVowel (char vowel);
+	bool openAcutedVowel(char vowel);
+	bool closedVowel (char vowel);
+	bool closedAcutedVowel(char vowel);
+	bool isConsonant (char vowel);
+	std::string fixSyllable(std::string syllable);
+	int getSyllables (std::string word, std::vector<std::string>* syllables);
 
 public:
 	DorisLipSync(SerialPort* mc, int faceId);
     virtual ~DorisLipSync(){}
 
-    std::wstring textNorm(const std::wstring, wchar_t symbol); /* normalizes the text by removing the symbols of the string */
+    std::string textNorm(const std::string str); /* normalizes the text by removing the symbols of the string */
+    std::string removeExtraChars(const std::string str, char symbol); /* normalizes the text by removing the symbols of the string */
     std::string syllableToViseme(const std::string syllable); /* Convert the syllable to Viseme */
     void textToViseme(const std::string text); /* Convert all Syllables in actual Viseme */
     float timeSync(int, int); /* Calculates the time for sync */

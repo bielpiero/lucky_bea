@@ -71,33 +71,33 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
-	laserTask = new RNLaserTask(this);
+	//laserTask = new RNLaserTask(this);
 	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
 	//rfidTask = new RNRFIdentificationTask(this);
-	dialogs = new RNDialogsTask(this, this->tts);
-	gestures = new RNGesturesTask(this);
+	//dialogs = new RNDialogsTask(this);
+	//gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
-	emotions = new RNEmotionsTask(this);
+	//emotions = new RNEmotionsTask(this);
 	tourTask = new RNTourTask(this);
 	//eyesCameras = new RNCameraTask(this);
 
-	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
+	/*if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
 		localization = new RNKalmanLocalizationTask(this);
 	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PF_STR){
 		localization = new RNPFLocalizationTask(this);
-	}
+	}*/
 	
 	////Tasks added:
 	//tasks->addTask(globalLocalization);
-	tasks->addTask(laserTask);
+	//tasks->addTask(laserTask);
 	//tasks->addTask(omnidirectionalTask);
 	//tasks->addTask(rfidTask);
-	tasks->addTask(dialogs);
-	tasks->addTask(gestures);
+	//tasks->addTask(dialogs);
+	//tasks->addTask(gestures);
 	//tasks->addTask(armGestures);
-	tasks->addTask(emotions);
-	tasks->addTask(localization);
-	tasks->addTask(tourTask);
+	//tasks->addTask(emotions);
+	//tasks->addTask(localization);
+	//tasks->addTask(tourTask);
 	//tasks->addTask(eyesCameras);
 	
 	
@@ -2690,6 +2690,10 @@ int GeneralController::getFaceId(){
 
 int GeneralController::getNeckId(){
 	return (robotConfig != NULL ? robotConfig->neckId : 0.0);
+}
+
+DorisLipSync* GeneralController::getTTS(){
+	return tts;
 }
 
 SerialPort* GeneralController::getMaestroController(){

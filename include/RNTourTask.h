@@ -4,6 +4,7 @@
 #include "RNRecurrentTask.h"
 #include "GeneralController.h"
 #include "RNGraph.h"
+#include "RNTourDialog.h"
 
 class RNTourTask : public RNRecurrentTask{
 
@@ -18,6 +19,7 @@ private:
 private:
 	GeneralController* gn;
 	RNGraph* currentMapGraph;
+	RNTourDialog* tourSpeech;
 	
 	int lastSiteVisitedIndex;
 	bool initialized;

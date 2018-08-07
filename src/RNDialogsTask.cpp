@@ -1,12 +1,12 @@
 #include "RNDialogsTask.h"
 
-RNDialogsTask::RNDialogsTask(const GeneralController* gn, DorisLipSync* tts, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
+RNDialogsTask::RNDialogsTask(const GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
     this->gn = (GeneralController*)gn;
     srand (time(NULL));// Initialize random seed
     inputMessages = new std::vector<InputMessage*>();
     outputMessages = new std::vector<OutputMessage*>();
 
-    this->tts = tts;
+    this->tts = this->gn->getTTS();
     this->state = "3";
     id_input = "121"; //(XML parameter id) It initialized to help with the "121" case
     last_id_input = "200";
