@@ -75,9 +75,9 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
 	//rfidTask = new RNRFIdentificationTask(this);
 	//dialogs = new RNDialogsTask(this);
-	//gestures = new RNGesturesTask(this);
+	gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
-	//emotions = new RNEmotionsTask(this);
+	emotions = new RNEmotionsTask(this);
 	tourTask = new RNTourTask(this);
 	//eyesCameras = new RNCameraTask(this);
 
@@ -93,11 +93,11 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	//tasks->addTask(omnidirectionalTask);
 	//tasks->addTask(rfidTask);
 	//tasks->addTask(dialogs);
-	//tasks->addTask(gestures);
+	tasks->addTask(gestures);
 	//tasks->addTask(armGestures);
-	//tasks->addTask(emotions);
+	tasks->addTask(emotions);
 	//tasks->addTask(localization);
-	//tasks->addTask(tourTask);
+	tasks->addTask(tourTask);
 	//tasks->addTask(eyesCameras);
 	
 	

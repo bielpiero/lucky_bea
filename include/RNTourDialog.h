@@ -15,7 +15,9 @@ class RNTourDialog{
 	private:
 		void printList(std::list<std::string> l);
 		void printMap(std::map<std::string, std::string> m);
-		std::map<std::string, std::string> processOptions(std::string opts);
+		void loadPredifinedSymbols();
+		std::map<std::string, std::string> createOptionsMap(std::string opts);
+		void processOptions(std::map<std::string, std::string> opts);
 	private:
 		struct wcontent_t{
 			std::map<std::string, std::string> symbols;

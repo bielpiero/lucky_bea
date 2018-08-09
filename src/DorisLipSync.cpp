@@ -110,10 +110,13 @@ void DorisLipSync::textToViseme(const std::string str){
 
 	std::string text = textNorm(wtxt);
 
+	text = removeExtraChars(text, '/');
+	text = removeExtraChars(text, '\\');
+	text = removeExtraChars(text, '<');
+	text = removeExtraChars(text, '>');
 	text = removeExtraChars(text, 63);
-	text = removeExtraChars(text, 168);
+	text = removeExtraChars(text, 63);
 	text = removeExtraChars(text, 33);
-	text = removeExtraChars(text, 173);
 	text = removeExtraChars(text, 44);
 	text = removeExtraChars(text, 46);
 
@@ -126,6 +129,10 @@ void DorisLipSync::textToViseme(const std::string str){
 
 ////////////////////////////
 //Text to speech
+	while(not tts->isEndOfSpeaking()){
+		usleep(1*1000);
+	}
+
 	tts->setString(str);
 //__________________
 
@@ -133,7 +140,7 @@ void DorisLipSync::textToViseme(const std::string str){
 		std::string fixedSyllable = fixSyllable(syllables.at(i));
 		//std::cout << fixedSyllable << std::endl;
 		actualSyllable = syllableToViseme(fixedSyllable);
-		float timer = (timeSync(syllables.at(i).length(), 250));
+		float timer = timeSync(syllables.at(i).length(), 200);
 		selectMotion(std::atoi(actualSyllable.c_str()), timer);
 	}
 	setViseme("5");
@@ -967,24 +974,25 @@ int DorisLipSync::getSyllables (std::string word, std::vector<std::string>* syll
 
 	// It looks for syllables in the word
 	syllables->clear();
-	for (int i = 0; i < words.size(); i++) {
+	for (unsigned int i = 0; i < words.size(); i++) {
 		int end = 0;
+		//std::cout << words.at(i) << std::endl;
 		// Syllables consist of three parts: onSet, nucleus and coda
-		for(int j = 0; j < words.at(i).length();){
+		for(unsigned int j = 0; j < words.at(i).length();){
 			int start = j;
 			onSet(words.at(i), start, &end);
-			//std::wcout << L"set: " << words.at(i).substr(start, end - start) << std::endl;
+			//std::cout << "set: " << words.at(i).substr(start, end - start) << std::endl;
 			start = end;
 			bool cont = nucleus(words.at(i), start, &end);
-			//std::wcout << L"nucleus: " << words.at(i).substr(start, end - start) << std::endl;
+			//std::cout << "nucleus: " << words.at(i).substr(start, end - start) << std::endl;
 			if(cont){
 				start = end;
 				if(start < words.at(i).length()){
 					coda(words.at(i), start, &end);	
 				}
-				//std::wcout << "coda: " << words.at(i).substr(start, end - start) << std::endl;
+				//std::cout << "coda: " << words.at(i).substr(start, end - start) << std::endl;
 			}
-			//std::wcout << L"Syllable: " << words.at(i).substr(j, end - j) << std::endl;
+			//std::cout << "Syllable: " << words.at(i).substr(j, end - j) << std::endl << std::endl;
 
 			syllables->push_back(words.at(i).substr(j, end - j));
 			j = end;

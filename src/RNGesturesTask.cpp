@@ -24,7 +24,6 @@ RNGesturesTask::RNGesturesTask(const GeneralController* gn, const char* name, co
         gesture->setName(std::string(Gesto_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value()));
         gesture->setId(std::string(Gesto_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
         gesture->setType(std::string(Gesto_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value()));
-
         for(xml_node<> * state_node = Gesto_node->first_node(XML_ELEMENT_FRAME_STR); state_node; state_node = state_node->next_sibling()){
         	FaceFrame* state = new FaceFrame();
         	state->setId(std::string(state_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
@@ -62,23 +61,26 @@ void RNGesturesTask::task(){
 	if(this->gestureId != ""){
 		std::ostringstream bufferOut_str;
 		for (int i = 0; i < gestures->size(); i++){
-	       if(gestureId == gestures->at(i)->getId()){ //compares if the name of the gesture is the one we are looking for
+	       	if(gestureId == gestures->at(i)->getId()){ //compares if the name of the gesture is the one we are looking for
 	            // Iterate over the motors
+	       		
 	       		std::string currentCardId = "";
 		       		//bufferOut_str << "{\"Gesture\":\"" << gestures->at(i)->getName() << "\",\"Id\":\"" << gestures->at(i)->getId() << "\",\"Cards\":[";
 	       		for (int j = 0; j < gestures->at(i)->framesSize(); j++){
-		           	for(int k = 0; k < gestures->at(i)->frameAt(j)->motorsSize(); k++){ //we store all the variables for the motors in a string matrix
-		                //////////esto es lo que hay que enviar
-		                uint8_t card_id = gestures->at(i)->frameAt(j)->motorAt(k)->getCardId();
-		                uint8_t servo_id = gestures->at(i)->frameAt(j)->motorAt(k)->getId();
-		                uint16_t position = gestures->at(i)->frameAt(j)->motorAt(k)->getPos();
-		                uint16_t speed_t = gestures->at(i)->frameAt(j)->motorAt(k)->getSpeed();
-		                uint16_t acc_t = gestures->at(i)->frameAt(j)->motorAt(k)->getAcceleration();
-		                
-						this->maestroController->setTarget(card_id, servo_id, position);
-						this->maestroController->setSpeed(card_id, servo_id, speed_t);
-						this->maestroController->setAcceleration(card_id, servo_id, acc_t);
-		            }
+	       			if(gestures->at(i)->frameAt(j)->getId() == "0"){
+			           	for(int k = 0; k < gestures->at(i)->frameAt(j)->motorsSize(); k++){ //we store all the variables for the motors in a string matrix
+			                //////////esto es lo que hay que enviar
+			                uint8_t card_id = gestures->at(i)->frameAt(j)->motorAt(k)->getCardId();
+			                uint8_t servo_id = gestures->at(i)->frameAt(j)->motorAt(k)->getId();
+			                uint16_t position = gestures->at(i)->frameAt(j)->motorAt(k)->getPos();
+			                uint16_t speed_t = gestures->at(i)->frameAt(j)->motorAt(k)->getSpeed();
+			                uint16_t acc_t = gestures->at(i)->frameAt(j)->motorAt(k)->getAcceleration();
+			                
+							this->maestroController->setTarget(card_id, servo_id, position);
+							this->maestroController->setSpeed(card_id, servo_id, speed_t);
+							this->maestroController->setAcceleration(card_id, servo_id, acc_t);
+			            }
+			        }
 		        }
 	            //bufferOut_str << "]}]}";
 	        }

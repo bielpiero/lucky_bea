@@ -1,23 +1,21 @@
 function entrance 
-	say[mood=happy; face=sad]("Hola chicos")
+	say[attention=front; face=happy]("Hola chicos")
 	var var2 = "hey"
 	var variable1654 = (var2)
 	goto(#3, y)
 	say(variable1654)
-	say("biénvenidos al centro de automática y robótica de la universidad politécnica de madrid")
+	say[attention=right; face=surprise]("biénvenidos al centro de automática y robótica de la universidad politécnica de madrid")
 	move(next)
-	say("seguidme por favor que os mostraré el laboratorio, los distintos grupos que hay, os explicaré que hace cada grupo y lo mas importante, os mostraré donde he nacido y quién es mi creador.")
+	say[attention=left; face=suspect]("seguidme por favor que os mostraré el laboratorio, los distintos grupos que hay, os explicaré que hace cada grupo y lo mas importante, os mostraré donde he nacido y quién es mi creador.")
 endfunction
 
 function reception
 	turn(#90)
 	say("coloquemos nuestra atención a la izquierda")
-	attention(left)
 	say("subiendo por las escaleras están los despachos de los profesores.")
 	smile 
 	say("como mi creador me odia y no me ha puesto piernas, no puedo mostrarles la parte de arriba todavía.")
-	attention(right) 
-	say("a la derecha se tienen los principales despachos de los grupos de investigación.")
+	say("a la derecha están los principales despachos de los grupos de investigación.")
 	move(next)
 	say("vamos para ahí. iremos hasta el final del todo y mientras caminamos") 
 	say[mood=sad]("y yo rodando")
@@ -25,7 +23,7 @@ function reception
 endfunction
 
 function main
+
 	call entrance
-	call reception
 endfunction
 

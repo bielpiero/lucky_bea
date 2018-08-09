@@ -122,7 +122,7 @@ bool TextToSpeech::isEndOfSpeaking(){
     DWORD bytesReceived; 
     char rxBuffer[10];
 
-    FT_SetTimeouts(this->ftHandle, 5000, 0);
+    FT_SetTimeouts(this->ftHandle, 1000, 0);
 
     ftStatus = FT_Read(this->ftHandle, rxBuffer, rxBytes, &bytesReceived);
 

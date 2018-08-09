@@ -22,7 +22,25 @@
 			<motor cardId="{face}" id="15" pos="6000" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="4966" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="3000" speed="0" acceleration="0"/>
+		</frame>
+	</gesture>
+	<gesture name="Atencion adelante" id="33" type="0">
+		<frame id="0">
 			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
+			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
+			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
+		</frame>
+	</gesture>
+	<gesture name="Atencion lado derecho" id="34" type="0">
+		<frame id="0">
+			<motor cardId="{neck}" id="0" pos="4000" speed="0" acceleration="0"/>
+			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
+			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
+		</frame>
+	</gesture>
+	<gesture name="Atencion lado izquierdo" id="35" type="0">
+		<frame id="0">
+			<motor cardId="{neck}" id="0" pos="8000" speed="0" acceleration="0"/>
 			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
 			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
@@ -46,9 +64,6 @@
 			<motor cardId="{face}" id="15" pos="6000" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="4966" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="3000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Cantando" id="2" type="1">
@@ -69,9 +84,14 @@
 			<motor cardId="{face}" id="15" pos="1500" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="1500" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="1500" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
+		</frame>
+		<frame id="1">
+			<motor cardId="{face}" id="0" pos="1000" speed="0" acceleration="0"/>
+			<motor cardId="{face}" id="3" pos="2000" speed="0" acceleration="0"/>
+		</frame>
+		<frame id="2">
+			<motor cardId="{face}" id="0" pos="2000" speed="0" acceleration="0"/>
+			<motor cardId="{face}" id="3" pos="1000" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Desesperacion" id="3" type="0">
@@ -94,9 +114,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Desprecio" id="4" type="0">
@@ -118,9 +135,6 @@
 			<motor cardId="{face}" id="15" pos="6000" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="4706" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="6000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Disimulo" id="5" type="0">
@@ -142,9 +156,6 @@
 			<motor cardId="{face}" id="15" pos="6000" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="3549" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="6000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Harta" id="6" type="0">
@@ -167,9 +178,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Dormida" id="7" type="0">
@@ -191,9 +199,6 @@
 			<motor cardId="{face}" id="15" pos="6000" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="3549" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="6000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Enfado" id="8" type="0">
@@ -216,9 +221,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Felices sueños" id="9" type="0">
@@ -241,9 +243,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Gritando" id="10" type="0">
@@ -266,9 +265,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Hablando" id="11" type="1">
@@ -291,9 +287,20 @@
 			<motor cardId="{face}" id="15" pos="4032" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="1500" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="1500" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
+		</frame>
+		<frame id="1">
+			<motor cardId="{face}" id="0" pos="7424" speed="0" acceleration="0"/>
+			<motor cardId="{face}" id="6" pos="6486" speed="0" acceleration="0"/>
+			<motor cardId="{face}" id="9" pos="5418" speed="0" acceleration="0"/>
+			<motor cardId="{face}" id="10" pos="3584" speed="0" acceleration="0"/>
+		</frame>
+		<frame id="2">
+			<motor cardId="{face}" id="0" pos="5352" speed="0" acceleration="0"/>
+			<motor cardId="{face}" id="10" pos="6121" speed="0" acceleration="0"/>
+		</frame>
+		<frame id="3">
+			<motor cardId="{face}" id="6" pos="8640" speed="0" acceleration="0"/>
+			<motor cardId="{face}" id="9" pos="3584" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Hipnotica" id="12" type="0">
@@ -316,9 +323,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Maldad" id="13" type="0">
@@ -341,9 +345,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Miedo" id="14" type="0">
@@ -366,9 +367,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Sospecha" id="15" type="0">
@@ -391,9 +389,18 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
+		</frame>
+		<frame id="1">
+			<motor cardId="{face}" id="6" pos="6486" speed="8" acceleration="0"/>
+			<motor cardId="{face}" id="9" pos="5418" speed="8" acceleration="0"/>
+			<motor cardId="{face}" id="10" pos="3584" speed="8" acceleration="0"/>
+		</frame>
+		<frame id="2">
+			<motor cardId="{face}" id="10" pos="6121" speed="8" acceleration="0"/>
+		</frame>
+		<frame id="3">
+			<motor cardId="{face}" id="6" pos="8640" speed="8" acceleration="0"/>
+			<motor cardId="{face}" id="9" pos="3584" speed="8" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Neutra" id="16" type="1">
@@ -416,9 +423,6 @@
 			<motor cardId="{face}" id="15" pos="3584" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="3584" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="3584" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Neutra guiño 1" id="17" type="0">
@@ -441,9 +445,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Neutra guiño 2" id="18" type="0">
@@ -466,9 +467,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Neutra guiño 3" id="19" type="0">
@@ -491,9 +489,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Pena" id="20" type="0">
@@ -516,9 +511,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Pensativa" id="21" type="0">
@@ -541,9 +533,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Piripi" id="22" type="0">
@@ -565,9 +554,6 @@
 			<motor cardId="{face}" id="15" pos="5749" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="5012" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="6000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Preocupada" id="23" type="0">
@@ -590,9 +576,14 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
+		</frame>
+		<frame id="1">
+			<motor cardId="{face}" id="0" pos="1200" speed="0" acceleration="0"/>
+			<motor cardId="{face}" id="3" pos="1000" speed="0" acceleration="0"/>
+		</frame>
+		<frame id="2">
+			<motor cardId="{face}" id="2" pos="1500" speed="0" acceleration="0"/>
+			<motor cardId="{face}" id="4" pos="1500" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Pucheros" id="24" type="1">
@@ -615,9 +606,14 @@
 			<motor cardId="{face}" id="15" pos="2000" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="2000" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="2000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
+		</frame>
+		<frame id="1">
+			<motor cardId="{face}" id="0" pos="1200" speed="0" acceleration="0"/>
+			<motor cardId="{face}" id="3" pos="1000" speed="0" acceleration="0"/>
+		</frame>
+		<frame id="2">
+			<motor cardId="{face}" id="2" pos="1500" speed="0" acceleration="0"/>
+			<motor cardId="{face}" id="4" pos="1500" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Reojo" id="25" type="1">
@@ -640,9 +636,6 @@
 			<motor cardId="{face}" id="15" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Simpatia" id="26" type="0">
@@ -664,9 +657,6 @@
 			<motor cardId="{face}" id="15" pos="5749" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="5012" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="6000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Sonrisa media" id="27" type="0">
@@ -688,9 +678,6 @@
 			<motor cardId="{face}" id="15" pos="5749" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="5012" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="6000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Sonrisa grande" id="28" type="0">
@@ -712,9 +699,6 @@
 			<motor cardId="{face}" id="15" pos="5749" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="5012" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="6000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Sonrisa maliciosa" id="29" type="0">
@@ -736,9 +720,6 @@
 			<motor cardId="{face}" id="15" pos="6000" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="6613" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="6000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Temor" id="30" type="0">
@@ -760,9 +741,6 @@
 			<motor cardId="{face}" id="15" pos="6000" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="5480" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="6000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Tranquila" id="31" type="0">
@@ -784,9 +762,6 @@
 			<motor cardId="{face}" id="15" pos="6000" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="5480" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="6000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 	<gesture name="Triste" id="32" type="0">
@@ -808,72 +783,6 @@
 			<motor cardId="{face}" id="15" pos="6000" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="16" pos="5480" speed="0" acceleration="0"/>
 			<motor cardId="{face}" id="17" pos="6000" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="0" pos="6752" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="1" pos="6916" speed="0" acceleration="0"/>
-			<motor cardId="{neck}" id="2" pos="5564" speed="0" acceleration="0"/>
 		</frame>
 	</gesture>
 </gestures>
-<GestosDinamicos>
-	<Repetir id="1" idGesto="2" ts="2000">
-		<Secuencia idSecuencia="0" tsec="">
-			<motor cardId="{face}" id="0" pos="1000" speed="0" acceleration="0"/>
-			<motor cardId="{face}" id="3" pos="2000" speed="0" acceleration="0"/>
-		</Secuencia>
-		<Secuencia idSecuencia="1" tsec="">
-			<motor cardId="{face}" id="0" pos="2000" speed="0" acceleration="0"/>
-			<motor cardId="{face}" id="3" pos="1000" speed="0" acceleration="0"/>
-		</Secuencia>
-	</Repetir>
-	<Repetir id="2" idGesto="11" ts="1500">
-		<Secuencia idSecuencia="0" tsec="50">
-			<motor cardId="{face}" id="0" pos="7424" speed="0" acceleration="0"/>
-			<motor cardId="{face}" id="6" pos="6486" speed="0" acceleration="0"/>
-			<motor cardId="{face}" id="9" pos="5418" speed="0" acceleration="0"/>
-			<motor cardId="{face}" id="10" pos="3584" speed="0" acceleration="0"/>
-		</Secuencia>
-		<Secuencia idSecuencia="1" tsec="50">
-			<motor cardId="{face}" id="0" pos="5352" speed="0" acceleration="0"/>
-			<motor cardId="{face}" id="10" pos="6121" speed="0" acceleration="0"/>
-		</Secuencia>
-		<Secuencia idSecuencia="2" tsec="50">
-			<motor cardId="{face}" id="6" pos="8640" speed="0" acceleration="0"/>
-			<motor cardId="{face}" id="9" pos="3584" speed="0" acceleration="0"/>
-		</Secuencia>
-	</Repetir>
-	<Repetir id="3" idGesto="15" ts="1200">
-		<Secuencia idSecuencia="0" tsec="4000">
-			<motor cardId="{face}" id="6" pos="6486" speed="8" acceleration="0"/>
-			<motor cardId="{face}" id="9" pos="5418" speed="8" acceleration="0"/>
-			<motor cardId="{face}" id="10" pos="3584" speed="8" acceleration="0"/>
-		</Secuencia>
-		<Secuencia idSecuencia="1" tsec="20">
-			<motor cardId="{face}" id="10" pos="6121" speed="8" acceleration="0"/>
-		</Secuencia>
-		<Secuencia idSecuencia="2" tsec="1200">
-			<motor cardId="{face}" id="6" pos="8640" speed="8" acceleration="0"/>
-			<motor cardId="{face}" id="9" pos="3584" speed="8" acceleration="0"/>
-		</Secuencia>
-	</Repetir>
-	<Repetir id="4" idGesto="23" ts="1000">
-		<Secuencia idSecuencia="0" tsec="">
-			<motor cardId="{face}" id="0" pos="1200" speed="0" acceleration="0"/>
-			<motor cardId="{face}" id="3" pos="1000" speed="0" acceleration="0"/>
-		</Secuencia>
-		<Secuencia idSecuencia="1" tsec="">
-			<motor cardId="{face}" id="2" pos="1500" speed="0" acceleration="0"/>
-			<motor cardId="{face}" id="4" pos="1500" speed="0" acceleration="0"/>
-		</Secuencia>
-	</Repetir>
-	<Repetir id="5" idGesto="24" ts="1000">
-		<Secuencia idSecuencia="0" tsec="">
-			<motor cardId="{face}" id="0" pos="1200" speed="0" acceleration="0"/>
-			<motor cardId="{face}" id="3" pos="1000" speed="0" acceleration="0"/>
-		</Secuencia>
-		<Secuencia idSecuencia="1" tsec="">
-			<motor cardId="{face}" id="2" pos="1500" speed="0" acceleration="0"/>
-			<motor cardId="{face}" id="4" pos="1500" speed="0" acceleration="0"/>
-		</Secuencia>
-	</Repetir>
-</GestosDinamicos>
-

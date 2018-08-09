@@ -7,7 +7,8 @@ RNTourDialog::RNTourDialog(const GeneralController* gn){
 	file.open("tts/disam-01.text");
 	if(!file){
 		printf("could not load file\n");
-	} else {		
+	} else {
+		loadPredifinedSymbols();	
 		lex();
 		parse();
 	}
@@ -17,6 +18,45 @@ RNTourDialog::~RNTourDialog(){
 	if(file){
 		file.close();
 	}
+}
+
+void RNTourDialog::loadPredifinedSymbols(){
+	globalSymbols.emplace("FACE:happy", "ID:0");
+	globalSymbols.emplace("FACE:surprise", "ID:1");
+	globalSymbols.emplace("FACE:singing", "ID:2");
+	globalSymbols.emplace("FACE:despair", "ID:3");
+	globalSymbols.emplace("FACE:rejection", "ID:4");
+	globalSymbols.emplace("FACE:slyly", "ID:5");
+	globalSymbols.emplace("FACE:tired", "ID:6");
+	globalSymbols.emplace("FACE:sleepy", "ID:7");
+	globalSymbols.emplace("FACE:angry", "ID:8");
+	globalSymbols.emplace("FACE:happy-dream", "ID:9");
+	globalSymbols.emplace("FACE:shouting", "ID:10");
+	globalSymbols.emplace("FACE:talking", "ID:11");
+	globalSymbols.emplace("FACE:hypnotic", "ID:12");
+	globalSymbols.emplace("FACE:evil", "ID:13");
+	globalSymbols.emplace("FACE:afraid", "ID:14");
+	globalSymbols.emplace("FACE:suspect", "ID:15");
+	globalSymbols.emplace("FACE:neutral", "ID:16");
+	globalSymbols.emplace("FACE:wink1", "ID:17");
+	globalSymbols.emplace("FACE:wink2", "ID:18");
+	globalSymbols.emplace("FACE:wink3", "ID:19");
+	globalSymbols.emplace("FACE:shame", "ID:20");
+	globalSymbols.emplace("FACE:thinker", "ID:21");
+	globalSymbols.emplace("FACE:drunk", "ID:22");
+	globalSymbols.emplace("FACE:worried", "ID:23");
+	globalSymbols.emplace("FACE:pouts", "ID:24");
+	globalSymbols.emplace("FACE:sidelook", "ID:25");
+	globalSymbols.emplace("FACE:sympathy", "ID:26");
+	globalSymbols.emplace("FACE:med-smile", "ID:27");
+	globalSymbols.emplace("FACE:big-smile", "ID:28");
+	globalSymbols.emplace("FACE:creepy-smile", "ID:29");
+	globalSymbols.emplace("FACE:panic", "ID:30");
+	globalSymbols.emplace("FACE:quiet", "ID:31");
+	globalSymbols.emplace("FACE:sad", "ID:32");
+	globalSymbols.emplace("ATTN:front", "ID:33");
+	globalSymbols.emplace("ATTN:right", "ID:34");
+	globalSymbols.emplace("ATTN:left", "ID:35");
 }
 
 void RNTourDialog::lex(){
@@ -107,8 +147,8 @@ void RNTourDialog::lex(){
 		} else if(tok == "endfunction"){
 			if(functionStarted == 1){
 				functionStarted = 0;
-				std::cout << functionName << std::endl;
-				printList(tokens);
+				//std::cout << functionName << std::endl;
+				//printList(tokens);
 				wcontent_t currentContent = functions.at(functionName);
 				currentContent.tokens = tokens;
 				functions[functionName] = currentContent;
@@ -327,21 +367,22 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 			if(it2 != functionTokens.end()){
 				if((*it2).substr(0, 3) == "STR"){
 					printf("SAY STRING: %s\n", (*it2).substr(4).c_str());
-					//lips->textToViseme((*it2).substr(4));
+					lips->textToViseme((*it2).substr(4));
 					it = std::next(it, 2);
 				} else if((*it2).substr(0, 3) == "VAR"){
 					if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
 						printf("SAY VAR: %s\n", functionSymbols->at((*it2).substr(4)).c_str());
-						//lips->textToViseme((*it2).substr(4));
+						lips->textToViseme((*it2).substr(4));
 					} else {
 						fprintf(stderr, "Unidefined VAR: %s\n", (*it2).substr(4).c_str());
 					}
 					it = std::next(it, 2);
 				} else if((*it2).substr(0, 3) == "OPT"){
 					if(it3 != functionTokens.end() and (*it3).substr(0, 3) == "STR"){
-						std::map<std::string, std::string> opt = processOptions((*it2).substr(4));
-						printMap(opt);
 						printf("SAY STRING %s WITH OPTIONS: %s\n", (*it3).substr(4).c_str(), (*it2).substr(4).c_str());
+						std::map<std::string, std::string> opts = createOptionsMap((*it2).substr(4));
+						processOptions(opts);
+						lips->textToViseme((*it3).substr(4));
 						it = std::next(it, 3);
 					}
 				}
@@ -384,7 +425,7 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 	}
 }
 
-std::map<std::string, std::string> RNTourDialog::processOptions(std::string opts){
+std::map<std::string, std::string> RNTourDialog::createOptionsMap(std::string opts){
 	std::map<std::string, std::string> dic;
 	std::vector<std::string> sopts = RNUtils::split(opts, ";");
 	for(int i = 0; i < sopts.size(); i++){
@@ -398,4 +439,23 @@ std::map<std::string, std::string> RNTourDialog::processOptions(std::string opts
 		}
 	}
 	return dic;
+}
+
+void RNTourDialog::processOptions(std::map<std::string, std::string> opts){
+	std::map<std::string, std::string>::iterator optsIt;
+	std::map<std::string, std::string>::iterator op;
+	for(optsIt = opts.begin(); optsIt != opts.end(); optsIt++){
+		if(optsIt->first == "face"){
+			op = globalSymbols.find("FACE:" + optsIt->second);
+			if(op != opts.end()){
+				gn->setEmotionsResult("", op->second.substr(3));
+			}
+		} else if(optsIt->first == "attention"){
+			op = globalSymbols.find("ATTN:" + optsIt->second);
+			if(op != opts.end()){
+				gn->setEmotionsResult("", op->second.substr(3));
+			}
+		}
+		RNUtils::sleep(100);
+	}
 }

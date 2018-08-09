@@ -6,7 +6,7 @@ RNTourTask::RNTourTask(const GeneralController* gn, const char* name, const char
 	currentMapGraph = NULL;
 	initialized = false;
 	lastSiteVisitedIndex = RN_NONE;
-	tourSpeech = new RNTourDialog(gn);
+	tourSpeech = NULL;
 }
 
 RNTourTask::~RNTourTask(){
@@ -17,7 +17,7 @@ void RNTourTask::task(){
 	if(initialized){
 
 	} else {
-		//init();
+		init();
 	}
 }
 
@@ -80,10 +80,15 @@ int RNTourTask::createCurrentMapGraph(){
 
 void RNTourTask::init(){
 	if(gn != NULL){
-		if(createCurrentMapGraph() == RN_OK){
+		if(tourSpeech){
+			delete tourSpeech;
+		}
+		tourSpeech = new RNTourDialog(gn);
+		initialized = true;
+		/*if(createCurrentMapGraph() == RN_OK){
 			sequence = RNUtils::split(gn->getCurrentSector()->getSequence(), ",");
 			initialized = true;
-		}
+		}*/
 		
 	}
 }
