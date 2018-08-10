@@ -147,8 +147,8 @@ void RNTourDialog::lex(){
 		} else if(tok == "endfunction"){
 			if(functionStarted == 1){
 				functionStarted = 0;
-				//std::cout << functionName << std::endl;
-				//printList(tokens);
+				std::cout << functionName << std::endl;
+				printList(tokens);
 				wcontent_t currentContent = functions.at(functionName);
 				currentContent.tokens = tokens;
 				functions[functionName] = currentContent;
@@ -330,16 +330,67 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 				}
 			}
 		} else if((*it) == "GOTO"){
-			if((*it2).substr(0, 3) == "NUM" and (*it3).substr(0, 3) == "NUM"){
-				printf("GO TO COMMAND\n");
-			} else if((*it2).substr(0, 3) == "NUM" and (*it3).substr(0, 3) == "VAR"){
-				printf("GO TO COMMAND\n");
-			} else if((*it2).substr(0, 3) == "VAR" and (*it3).substr(0, 3) == "NUM"){
-				printf("GO TO COMMAND\n");
-			} else if((*it2).substr(0, 3) == "VAR" and (*it3).substr(0, 3) == "VAR"){
-				printf("GO TO COMMAND\n");
+			int sector;
+			float px, py;
+			if((*it2).substr(0, 3) == "NUM" and (*it3).substr(0, 3) == "NUM" and (*it4).substr(0, 3) == "NUM"){
+				sector = std::stoi((*it2).substr(4));
+				px = std::stof((*it3).substr(4));
+				py = std::stof((*it4).substr(4));
+			} else if((*it2).substr(0, 3) == "NUM" and (*it3).substr(0, 3) == "NUM" and (*it4).substr(0, 3) == "VAR"){
+				sector = std::stoi((*it2).substr(4));
+				px = std::stof((*it3).substr(4));
+				if(functionSymbols->find((*it4).substr(4)) != functionSymbols->end()){
+					py = std::stof(functionSymbols->at((*it4).substr(4)).substr(4));
+				}
+			} else if((*it2).substr(0, 3) == "NUM" and (*it3).substr(0, 3) == "VAR" and (*it4).substr(0, 3) == "NUM"){
+				sector = std::stoi((*it2).substr(4));
+				if(functionSymbols->find((*it3).substr(4)) != functionSymbols->end()){
+					px = std::stof(functionSymbols->at((*it3).substr(4)).substr(4));
+				}
+				py = std::stof((*it4).substr(4));
+			} else if((*it2).substr(0, 3) == "NUM" and (*it3).substr(0, 3) == "VAR" and (*it4).substr(0, 3) == "VAR"){
+				sector = std::stoi((*it2).substr(4));
+				if(functionSymbols->find((*it3).substr(4)) != functionSymbols->end()){
+					px = std::stof(functionSymbols->at((*it3).substr(4)).substr(4));
+				}
+				if(functionSymbols->find((*it4).substr(4)) != functionSymbols->end()){
+					py = std::stof(functionSymbols->at((*it4).substr(4)).substr(4));
+				}
+			} else if((*it2).substr(0, 3) == "VAR" and (*it3).substr(0, 3) == "NUM" and (*it4).substr(0, 3) == "NUM"){
+				if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
+					sector = std::stoi(functionSymbols->at((*it2).substr(4)).substr(4));
+				}
+				px = std::stof((*it3).substr(4));
+				py = std::stof((*it4).substr(4));
+			} else if((*it2).substr(0, 3) == "VAR" and (*it3).substr(0, 3) == "NUM" and (*it4).substr(0, 3) == "VAR"){
+				if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
+					sector = std::stoi(functionSymbols->at((*it2).substr(4)).substr(4));
+				}
+				px = std::stof((*it3).substr(4));
+				if(functionSymbols->find((*it4).substr(4)) != functionSymbols->end()){
+					py = std::stof(functionSymbols->at((*it4).substr(4)).substr(4));
+				}
+			} else if((*it2).substr(0, 3) == "VAR" and (*it3).substr(0, 3) == "VAR" and (*it4).substr(0, 3) == "NUM"){
+				if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
+					sector = std::stoi(functionSymbols->at((*it2).substr(4)).substr(4));
+				}
+				if(functionSymbols->find((*it3).substr(4)) != functionSymbols->end()){
+					px = std::stof(functionSymbols->at((*it3).substr(4)).substr(4));
+				}
+				py = std::stof((*it4).substr(4));
+			} else if((*it2).substr(0, 3) == "VAR" and (*it3).substr(0, 3) == "VAR" and (*it4).substr(0, 3) == "VAR"){
+				if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
+					sector = std::stoi(functionSymbols->at((*it2).substr(4)).substr(4));
+				}
+				if(functionSymbols->find((*it3).substr(4)) != functionSymbols->end()){
+					px = std::stof(functionSymbols->at((*it3).substr(4)).substr(4));
+				}
+				if(functionSymbols->find((*it4).substr(4)) != functionSymbols->end()){
+					py = std::stof(functionSymbols->at((*it4).substr(4)).substr(4));
+				}
 			}
-			it = std::next(it, 3);
+			printf("Going to Sector: %d, {x: %f, y: %f}\n", sector, px, py);
+			it = std::next(it, 4);
 		} else if((*it) == "TURN"){
 			if(it2 != functionTokens.end()){
 				if((*it2).substr(0, 3) == "NUM"){
@@ -349,7 +400,6 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 			} 
 		} else if((*it) == "CALL"){
 			if(it2 != functionTokens.end() and (*it2).substr(0, 3) == "FNC"){
-				printf("CALL FUNCTION\n");
 				std::string functionName = (*it2).substr(4);
 				std::map<std::string, wcontent_t>::iterator fit_call;
 				fit_call = functions.find(functionName);
@@ -366,13 +416,12 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 		} else if((*it) == "SAY"){
 			if(it2 != functionTokens.end()){
 				if((*it2).substr(0, 3) == "STR"){
-					printf("SAY STRING: %s\n", (*it2).substr(4).c_str());
-					lips->textToViseme((*it2).substr(4));
+					//lips->textToViseme((*it2).substr(4));
 					it = std::next(it, 2);
 				} else if((*it2).substr(0, 3) == "VAR"){
 					if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
 						printf("SAY VAR: %s\n", functionSymbols->at((*it2).substr(4)).c_str());
-						lips->textToViseme((*it2).substr(4));
+						//lips->textToViseme((*it2).substr(4));
 					} else {
 						fprintf(stderr, "Unidefined VAR: %s\n", (*it2).substr(4).c_str());
 					}
@@ -382,7 +431,7 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 						printf("SAY STRING %s WITH OPTIONS: %s\n", (*it3).substr(4).c_str(), (*it2).substr(4).c_str());
 						std::map<std::string, std::string> opts = createOptionsMap((*it2).substr(4));
 						processOptions(opts);
-						lips->textToViseme((*it3).substr(4));
+						//lips->textToViseme((*it3).substr(4));
 						it = std::next(it, 3);
 					}
 				}
@@ -390,7 +439,6 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 		} else if((*it).substr(0, 3) == "VAR"){
 			if(it2 != functionTokens.end()){
 				if((*it2).substr(0, 3) == "STR" or (*it2).substr(0, 3) == "NUM"){
-					printf("VAR WITH DATA\n");
 					if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
 						functionSymbols->emplace((*it).substr(4), (*it2));
 					} else {
@@ -398,7 +446,6 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 					}
 					it = std::next(it, 2);
 				} else if((*it2).substr(0, 3) == "VAR"){
-					printf("VAR FROM OTHER VAR\n");
 					if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
 						if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
 							functionSymbols->emplace((*it).substr(4), functionSymbols->at((*it2).substr(4)));
@@ -410,7 +457,6 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 					}
 					it = std::next(it, 2);
 				} else {
-					printf("DECLARED VAR %s\n", (*it).substr(4).c_str());
 					if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
 						functionSymbols->emplace((*it).substr(4), "UNK:nil");
 					} else {
@@ -448,12 +494,12 @@ void RNTourDialog::processOptions(std::map<std::string, std::string> opts){
 		if(optsIt->first == "face"){
 			op = globalSymbols.find("FACE:" + optsIt->second);
 			if(op != opts.end()){
-				gn->setEmotionsResult("", op->second.substr(3));
+				//gn->setEmotionsResult("", op->second.substr(3));
 			}
 		} else if(optsIt->first == "attention"){
 			op = globalSymbols.find("ATTN:" + optsIt->second);
 			if(op != opts.end()){
-				gn->setEmotionsResult("", op->second.substr(3));
+				//gn->setEmotionsResult("", op->second.substr(3));
 			}
 		}
 		RNUtils::sleep(100);
