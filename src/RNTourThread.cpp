@@ -1,26 +1,140 @@
-#include "RNTourDialog.h"
+#include "RNTourThread.h"
 
-RNTourDialog::RNTourDialog(const GeneralController* gn){
+RNTourThread::RNTourThread(const GeneralController* gn, const char* name, const char* description) {
 	std::setlocale(LC_ALL, "es_ES");
+	this->name = "RNThread: " + std::string(name);
+    this->description = std::string(description);
+    setThreadName(this->name.c_str());
+
 	this->gn = (GeneralController*)gn;
 	this->lips = this->gn->getTTS();
-	file.open("tts/disam-01.text");
-	if(!file){
-		printf("could not load file\n");
-	} else {
-		loadPredifinedSymbols();	
-		lex();
-		parse();
-	}
+
+	executingTask = goRequested = killed = false;
+
+	xmlSectorsPath = RNUtils::getApplicationPath() + XML_FILE_SECTORS_PATH;
+	currentMapGraph = NULL;
+	lastSiteVisitedIndex = RN_NONE;
+	programLoaded = false;
+	loadPredifinedSymbols();
 }
 
-RNTourDialog::~RNTourDialog(){
+RNTourThread::~RNTourThread(){
 	if(file){
 		file.close();
 	}
 }
 
-void RNTourDialog::loadPredifinedSymbols(){
+void RNTourThread::go(){
+    lock();
+    goRequested = true;
+    executingTask = true;
+    killed = false;
+    unlock();
+
+    create();
+}
+
+void* RNTourThread::runThread(void* object){
+    threadStarted();
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    if(RNUtils::ok() and isRunning){
+        testCancel(); 
+        bool doit;
+        lock();
+        doit = goRequested;
+        unlock();
+        if(doit){
+            lock();
+            executingTask = true;
+            unlock();
+            task();
+            lock();
+            executingTask = false;
+            unlock();
+        }
+        RNUtils::sleep(20);
+    }
+    stop();
+    threadFinished();
+    return NULL;
+}
+
+void RNTourThread::task(){
+	if(currentMapGraph == NULL){
+		RNUtils::printLn("error: Sector not loaded...");
+	} else if(not programLoaded){
+		RNUtils::printLn("error: Program not loaded...");
+	} else {
+		parse();
+	}
+}
+
+void RNTourThread::loadProgram(std::string filename){
+	programLoaded = false;
+	file.open(filename);
+	if(!file){
+		RNUtils::printLn("could not load file: %s", filename.c_str());
+	} else {
+		lex();
+		programLoaded = true;
+	}
+}
+
+int RNTourThread::createCurrentMapGraph(){
+	int res = RN_NONE;
+	if(gn->getCurrentSector()){
+		if(currentMapGraph){
+			delete currentMapGraph;
+		}
+		currentMapGraph = new RNGraph;
+		std::string filename;
+
+		gn->getMapFilename(gn->getCurrentSector()->getMapId(), filename);
+
+		xml_document<> doc;
+		xml_node<>* root_node;  
+
+		std::string fullSectorPath = xmlSectorsPath + filename;
+		std::ifstream the_file(fullSectorPath.c_str());
+		std::vector<char> buffer = std::vector<char>((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+		buffer.push_back('\0');
+		doc.parse<0>(&buffer[0]);
+		root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+		if(root_node != NULL){
+			for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){
+				int xmlSectorId = std::atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+				currentMapGraph->addNode(xmlSectorId);
+
+			}
+			if(not currentMapGraph->empty()){
+				RNUtils::printLn("%s", currentMapGraph->toString().c_str());
+			}
+			root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+			for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){
+				int xmlSectorId = std::atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+				std::string ady = std::string(sector_node->first_attribute(XML_ATTRIBUTE_ADYACENCY_STR)->value());
+				std::vector<std::string> adys = RNUtils::split(ady, ",");
+				for(int i = 0; i < adys.size(); i++){
+					int sectorAdy = std::atoi(adys.at(i).c_str());
+					if(currentMapGraph->addEdge(xmlSectorId, sectorAdy) != RN_OK){
+						RNUtils::printLn("Could not add edge between sector %d and sector %d", xmlSectorId, sectorAdy);
+					}
+					if(currentMapGraph->addEdge(sectorAdy, xmlSectorId) != RN_OK){
+						RNUtils::printLn("Could not add edge between sector %d and sector %d", sectorAdy, xmlSectorId);
+					}
+				}
+				
+			}
+		}
+		the_file.close();
+		res = RN_OK;
+	}
+	return res;
+}
+
+void RNTourThread::loadPredifinedSymbols(){
+	globalSymbols.clear();
 	globalSymbols.emplace("FACE:happy", "ID:0");
 	globalSymbols.emplace("FACE:surprise", "ID:1");
 	globalSymbols.emplace("FACE:singing", "ID:2");
@@ -59,7 +173,7 @@ void RNTourDialog::loadPredifinedSymbols(){
 	globalSymbols.emplace("ATTN:left", "ID:35");
 }
 
-void RNTourDialog::lex(){
+void RNTourThread::lex(){
 	
 	std::stringstream wss;
 	wss << file.rdbuf();
@@ -270,7 +384,7 @@ void RNTourDialog::lex(){
 	}
 }
 
-void RNTourDialog::printList(std::list<std::string> l){
+void RNTourThread::printList(std::list<std::string> l){
 	std::list<std::string>::iterator it;
 	std::cout << "[";
 	for(it = l.begin(); it != l.end(); it++){
@@ -282,7 +396,7 @@ void RNTourDialog::printList(std::list<std::string> l){
 	std::cout << "]" << std::endl;
 }
 
-void RNTourDialog::printMap(std::map<std::string, std::string> m){
+void RNTourThread::printMap(std::map<std::string, std::string> m){
 	std::map<std::string, std::string>::iterator it;
 	std::cout << "{";
 	for(it = m.begin(); it != m.end(); it++){
@@ -294,7 +408,7 @@ void RNTourDialog::printMap(std::map<std::string, std::string> m){
 	std::cout << "}" << std::endl;
 }
 
-void RNTourDialog::parse(){
+void RNTourThread::parse(){
 
 	std::map<std::string, wcontent_t>::iterator fit_main;
 	fit_main = functions.find("main");
@@ -307,7 +421,7 @@ void RNTourDialog::parse(){
 	}
 }
 
-void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::string, std::string>* functionSymbols){
+void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::string, std::string>* functionSymbols){
 	//printList(functionTokens);
 	std::list<std::string>::iterator it = functionTokens.begin();
 	while(it != functionTokens.end()){
@@ -390,6 +504,11 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 				}
 			}
 			printf("Going to Sector: %d, {x: %f, y: %f}\n", sector, px, py);
+			if(sector != -1){
+
+			} else {
+				gn->moveRobotToPosition(px, py, 0.0);
+			}
 			it = std::next(it, 4);
 		} else if((*it) == "TURN"){
 			if(it2 != functionTokens.end()){
@@ -416,7 +535,7 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 		} else if((*it) == "SAY"){
 			if(it2 != functionTokens.end()){
 				if((*it2).substr(0, 3) == "STR"){
-					//lips->textToViseme((*it2).substr(4));
+					lips->textToViseme((*it2).substr(4));
 					it = std::next(it, 2);
 				} else if((*it2).substr(0, 3) == "VAR"){
 					if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
@@ -431,7 +550,7 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 						printf("SAY STRING %s WITH OPTIONS: %s\n", (*it3).substr(4).c_str(), (*it2).substr(4).c_str());
 						std::map<std::string, std::string> opts = createOptionsMap((*it2).substr(4));
 						processOptions(opts);
-						//lips->textToViseme((*it3).substr(4));
+						lips->textToViseme((*it3).substr(4));
 						it = std::next(it, 3);
 					}
 				}
@@ -471,7 +590,7 @@ void RNTourDialog::parse(std::list<std::string> functionTokens, std::map<std::st
 	}
 }
 
-std::map<std::string, std::string> RNTourDialog::createOptionsMap(std::string opts){
+std::map<std::string, std::string> RNTourThread::createOptionsMap(std::string opts){
 	std::map<std::string, std::string> dic;
 	std::vector<std::string> sopts = RNUtils::split(opts, ";");
 	for(int i = 0; i < sopts.size(); i++){
@@ -487,19 +606,19 @@ std::map<std::string, std::string> RNTourDialog::createOptionsMap(std::string op
 	return dic;
 }
 
-void RNTourDialog::processOptions(std::map<std::string, std::string> opts){
+void RNTourThread::processOptions(std::map<std::string, std::string> opts){
 	std::map<std::string, std::string>::iterator optsIt;
 	std::map<std::string, std::string>::iterator op;
 	for(optsIt = opts.begin(); optsIt != opts.end(); optsIt++){
 		if(optsIt->first == "face"){
 			op = globalSymbols.find("FACE:" + optsIt->second);
 			if(op != opts.end()){
-				//gn->setEmotionsResult("", op->second.substr(3));
+				gn->setEmotionsResult("", op->second.substr(3));
 			}
 		} else if(optsIt->first == "attention"){
 			op = globalSymbols.find("ATTN:" + optsIt->second);
 			if(op != opts.end()){
-				//gn->setEmotionsResult("", op->second.substr(3));
+				gn->setEmotionsResult("", op->second.substr(3));
 			}
 		}
 		RNUtils::sleep(100);

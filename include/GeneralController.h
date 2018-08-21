@@ -71,7 +71,7 @@ class RNGesturesTask;
 class RNArmTask;
 class RNDialogsTask;
 class RNEmotionsTask;
-class RNTourTask;
+class RNTourThread;
 
 struct s_motor{
 	std::string idMotor;
@@ -327,6 +327,11 @@ public:
 	void setLaserLandmarks(RNLandmarkList* landmarks);
 	void setVisualLandmarks(RNLandmarkList* landmarks);
 	void setRFIDLandmarks(RNLandmarkList* landmarks);
+
+	void moveRobotToPosition(double x, double y, double th);
+	void setRobotPosition(Matrix pose);
+	void setRobotPosition(double x, double y, double theta);
+	void moveRobot(double lin_vel, double angular_vel);
 private:
 	
 	RobotDataStreamer* spdWSServer;
@@ -341,7 +346,7 @@ private:
 	RNOmnicameraTask* omnidirectionalTask;
 	RNRFIdentificationTask* rfidTask; //future
 	RNCameraTask* eyesCameras;
-	RNTourTask* tourTask;
+	RNTourThread* tourThread;
 	RNVirtualFace* virtualFace;
 
 	//possibilistic navigation
@@ -409,11 +414,7 @@ private:
 	void initializeSPDPort(int socketIndex, char* cad);
 	
 	void getVelocities(char* cad, double& lin_vel, double& angular_vel);
-	void moveRobot(double lin_vel, double angular_vel);
-
-	void setRobotPosition(Matrix pose);
-	void setRobotPosition(double x, double y, double theta);
-	void moveRobotToPosition(double x, double y, double th);
+	
 	void getPositions(char* cad, double& x, double& y, double& theta);
 
 	void getMapSectorId(char* cad, int& mapId, int& sectorId);

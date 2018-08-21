@@ -1,9 +1,7 @@
 function entrance 
 	say[attention=front; face=happy]("Hola chicos")
-	var y = #3
-	goto(#-1, #6, y)
 	say[attention=right; face=surprise]("biénvenidos al centro de automática y robótica de la universidad politécnica de madrid")
-	move(next)
+	goto(#-1, #3, #2)
 	say[attention=left; face=suspect]("seguidme por favor que os mostraré el laboratorio, los distintos grupos que hay, os explicaré que hace cada grupo y lo mas importante, os mostraré donde he nacido y quién es mi creador.")
 endfunction
 
@@ -21,6 +19,5 @@ endfunction
 
 function main
 	call entrance
-	call reception
 endfunction
 

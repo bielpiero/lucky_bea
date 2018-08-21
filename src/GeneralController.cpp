@@ -13,7 +13,7 @@
 #include "RNDialogsTask.h"
 #include "RNGesturesTask.h"
 #include "RNArmTask.h"
-#include "RNTourTask.h"
+#include "RNTourThread.h"
 
 const double AntennaData::TX_GAIN = 9.75;
 const double AntennaData::FREQUENCY = 866.9e6;
@@ -71,33 +71,33 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
-	//laserTask = new RNLaserTask(this);
+	laserTask = new RNLaserTask(this);
 	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
 	//rfidTask = new RNRFIdentificationTask(this);
-	//dialogs = new RNDialogsTask(this);
+	dialogs = new RNDialogsTask(this);
 	gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
 	emotions = new RNEmotionsTask(this);
-	tourTask = new RNTourTask(this);
+	tourThread = new RNTourThread(this);
 	//eyesCameras = new RNCameraTask(this);
 
-	/*if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
+	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
 		localization = new RNKalmanLocalizationTask(this);
 	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PF_STR){
 		localization = new RNPFLocalizationTask(this);
-	}*/
+	}
 	
 	////Tasks added:
 	//tasks->addTask(globalLocalization);
-	//tasks->addTask(laserTask);
+	tasks->addTask(laserTask);
 	//tasks->addTask(omnidirectionalTask);
 	//tasks->addTask(rfidTask);
-	//tasks->addTask(dialogs);
+	tasks->addTask(dialogs);
 	tasks->addTask(gestures);
 	//tasks->addTask(armGestures);
 	tasks->addTask(emotions);
-	//tasks->addTask(localization);
-	tasks->addTask(tourTask);
+	tasks->addTask(localization);
+
 	//tasks->addTask(eyesCameras);
 	
 	
@@ -948,9 +948,13 @@ void GeneralController::loadSector(int mapId, int sectorId){
     	}
 
     }
+    the_file.close();
+    if(tourThread){
+    	tourThread->createCurrentMapGraph();
+    }
     RNUtils::getTimestamp(mappingSectorTimestamp);
     RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", sectorId, currentSector->getName().c_str());
-    the_file.close();
+    
 
 }
 
