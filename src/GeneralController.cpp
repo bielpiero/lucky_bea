@@ -204,6 +204,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 	std::string jsonResponse = "";
 	std::string servo_positions = "";
 	std::string mapsAvailable = "";
+	std::string availablePrograms = "";
 	std::string sectorsAvailable = "";
 	std::string mapInformation = "";
 	std::string sectorInformation = "";
@@ -238,14 +239,21 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			sendMsg(socketIndex, 0x00, (char*)jsonResponse.c_str(), (unsigned int)(jsonResponse.length())); 
 			break;
 		case 0x01:
-
+			RNUtils::printLn("Command 0x01. List of programs requested");
+			getAvailablePrograms(availablePrograms);
+			sendMsg(socketIndex, 0x01, (char*)availablePrograms.c_str(), (unsigned int)availablePrograms.length()); 
 			break;
 		case 0x02:
 			RNUtils::printLn("Command 0x02. Saving New Face Frame");
 			gestures->saveGesture(cad);
 			break;
 		case 0x03:
-
+			if(granted){
+				tourThread->loadProgram(cad);
+			} else {
+				RNUtils::printLn("Command 0x03. Loading program denied to %s", getClientIPAddress(socketIndex));
+				sendMsg(socketIndex, 0x03, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
+			}
 			break;
 		case 0x04:
 			RNUtils::printLn("Command 0x04. Modifying Face frame");
@@ -284,9 +292,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			setServoPosition(card_id, port, servo_position);
 			break;
 		case 0x09:
-			RNUtils::printLn("Command 0x09. Sending current positions");
-			//SendServoPositions(servo_positions);
-			//SendMsg(socketIndex, 0x09, (char*)servo_positions.c_str(), (int)(servo_positions.length()));
+			
 			break;
 		case 0x0A:
 			
@@ -321,7 +327,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 
 			if(granted){
 				if(currentSector != NULL){
-					//startSitesTour();
+					tourThread->go();
 				} else {
 					RNUtils::printLn("Command 0x11. No current sector available to start tour to ", getClientIPAddress(socketIndex));
 					sendMsg(socketIndex, 0x11, (char*)jsonSectorNotLoadedError.c_str(), (unsigned int)jsonSectorNotLoadedError.length());
@@ -1121,6 +1127,29 @@ void GeneralController::getMapsAvailable(std::string& mapsAvailable){
     the_file.close();
 
 	mapsAvailable = buffer_str.str();
+	buffer_str.clear();
+}
+
+void GeneralController::getAvailablePrograms(std::string& availablePrograms){
+	std::ostringstream buffer_str;
+	DIR *folder;
+	struct dirent *cont;
+	folder = opendir(PROGRAMS_DIR_PATH);
+	if(folder){
+		while((cont = readdir(folder)) != NULL){
+			if(cont->d_type == DT_REG){
+				std::string fname(cont->d_name);
+				if(fname.substr(fname.find_last_of(".") + 1) == PROGRAM_EXTENSION){
+					buffer_str << fname << ",";
+				}
+			}
+		}
+		closedir(folder);
+	} else {
+		RNUtils::printLn("error: could not find programs folder...");
+	}
+
+	availablePrograms = buffer_str.str();
 	buffer_str.clear();
 }
 

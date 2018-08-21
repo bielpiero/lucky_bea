@@ -36,6 +36,9 @@
 #define XML_FILE_SECTORS_PATH "maps/"
 #define XML_FILE_ROBOT_CONFIG_PATH "conf/BeaRobotConfig.xml"
 
+#define PROGRAMS_DIR_PATH "tts/"
+#define PROGRAM_EXTENSION "doris"
+
 #define PERMISSION_ACCEPTED 0
 #define PERMISSION_REQUESTED 1
 #define PERMISSION_REJECTED 2
@@ -421,6 +424,8 @@ private:
 	void getArmSingleMotorInfo(char* cad, int& id, int& angle);
 	void getArmAllMotorsInfo(char* cad, std::vector<uint16_t>& motors);
 	void getMapsAvailable(std::string& mapsAvailable);
+
+	void getAvailablePrograms(std::string& availablePrograms);
 	
 	void getMapConnection(int mapId, std::string& connections);
 	void getSectorsAvailable(int mapId, std::string& sectorsAvailable);

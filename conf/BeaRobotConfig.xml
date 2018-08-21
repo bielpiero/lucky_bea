@@ -34,7 +34,7 @@
 		<permission function="0x00" token-required="0"/>
 		<permission function="0x01" token-required="0"/>
 		<permission function="0x02" token-required="0"/>
-		<permission function="0x03" token-required="0"/>
+		<permission function="0x03" token-required="1"/>
 		<permission function="0x04" token-required="1"/>
 		<permission function="0x05" token-required="1"/>
 		<permission function="0x06" token-required="1"/>
