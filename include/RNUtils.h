@@ -247,6 +247,8 @@ public: // functions
 	static double deg2Rad(double degrees);
 	static double rad2Deg(double rad);
 
+	static double fixAngleRad(double rad);
+
 	static double milliwattsTodBm(const double& milliwatts);
 	static double dBmTomilliwatts(const double& dBm);
 

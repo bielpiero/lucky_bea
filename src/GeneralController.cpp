@@ -249,7 +249,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			break;
 		case 0x03:
 			if(granted){
-				tourThread->loadProgram(cad);
+				tourThread->loadProgram(std::string(PROGRAMS_DIR_PATH) + std::string(cad));
 			} else {
 				RNUtils::printLn("Command 0x03. Loading program denied to %s", getClientIPAddress(socketIndex));
 				sendMsg(socketIndex, 0x03, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());

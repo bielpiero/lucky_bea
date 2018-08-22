@@ -283,6 +283,19 @@ double RNUtils::rad2Deg(double rad){
 	return (rad * 180.0 / M_PI);
 }
 
+double RNUtils::fixAngleRad(double rad){
+	if(rad > M_PI){
+		while(rad > M_PI){
+			rad = rad - 2 * M_PI;
+		}	
+	} else if(rad < -M_PI){
+		while(rad < -M_PI){
+			rad = rad + 2 * M_PI;
+		}
+	}
+	return rad;
+}
+
 void RNUtils::getOdometryPose(const double& xk, const double& yk, const double& thk, const double& deltaDistance, const double& deltaDegrees, double* xk1, double* yk1, double* thk1){
     //printf("Pre-Raw: %lf, %lf, %lf\n", xk, yk, thk);
     *xk1 = xk + deltaDistance * std::cos(thk + (deltaDegrees / 2.0));

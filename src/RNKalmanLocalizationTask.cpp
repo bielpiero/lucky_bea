@@ -260,14 +260,14 @@ void RNKalmanLocalizationTask::task(){
 					} else if(zl(2 * indexFound + 1, 0) < -M_PI){
 						zl(2 * indexFound + 1, 0) = zl(2 * indexFound + 1, 0) + 2 * M_PI;
 					}
-					//RNUtils::printLn("markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, Error: {d: %f, a: %f}", indexFound, lndmrk->getPointsXMean() , lndmrk->getPointsYMean() , zkl(indexFound , 0), zkl(indexFound , 1), zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
+					RNUtils::printLn("markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, Error: {d: %f, a: %f}", indexFound, lndmrk->getPointsXMean() , lndmrk->getPointsYMean() , zkl(indexFound , 0), zkl(indexFound , 1), zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
 					
 					double mdDistance = std::abs(zl(2 * indexFound, 0) / std::sqrt(gn->getLaserDistanceVariance()));
 					double mdAngle = std::abs(zl(2 * indexFound + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
 					//printf("Mhd: (%d), %lg, %lg, nud: %lg, nua: %lg\n", i, mdDistance, mdAngle, zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
 					if (mdDistance > laserTMDistance or mdAngle > laserTMAngle){
 						//distanceThreshold = (máxima zl que permite un buen matching)/sigma
-						//RNUtils::printLn("landmark %d rejected...", indexFound);
+						RNUtils::printLn("landmark %d rejected...", indexFound);
 						zl(2 * indexFound, 0) = 0.0;
 						zl(2 * indexFound + 1, 0) = 0.0;
 						rsize--;
@@ -417,6 +417,7 @@ void RNKalmanLocalizationTask::task(){
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		sprintf(bufferpk, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
 		xk = xk_1 + Wk * zl;
+		xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
 		gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 		char buffer[1024];
 		sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize);

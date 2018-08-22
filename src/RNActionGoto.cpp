@@ -55,7 +55,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 				distanceLocal = currPose->findDistanceTo(this->goal);
 		    	deltaThetaLocal = ArMath::subAngle(currPose->findAngleTo(this->goal), currPose->getTh());
 		    }
-	    	RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
+	    	//RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
 	    	delete currPose;
 	    }
 		/*if(rn->isLaserReady() and (distanceLocal > minimumDistance)){
@@ -78,7 +78,7 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     		//linearController->reset();
     		//int iter = angularController->getSystemInput(deltaThetaLocal, &angVel);
     		speedController->getSystemInput(distanceLocal/1e3, RNUtils::deg2Rad(deltaThetaLocal), &linearSpeed, &angularSpeed);
-    		RNUtils::printLn("{lin-vel: %f, rot-vel: %f}", linearSpeed, RNUtils::rad2Deg(angularSpeed));
+    		//RNUtils::printLn("{lin-vel: %f, rot-vel: %f}", linearSpeed, RNUtils::rad2Deg(angularSpeed));
 			myDesired->setRotVel(RNUtils::rad2Deg(angularSpeed));
     		myDesired->setVel(linearSpeed);
     	} else {

@@ -78,6 +78,7 @@ void RNTourThread::loadProgram(std::string filename){
 	} else {
 		lex();
 		programLoaded = true;
+		RNUtils::printLn("Loaded program file: %s. waiting for user to start..", filename.c_str());
 	}
 }
 
@@ -261,8 +262,8 @@ void RNTourThread::lex(){
 		} else if(tok == "endfunction"){
 			if(functionStarted == 1){
 				functionStarted = 0;
-				std::cout << functionName << std::endl;
-				printList(tokens);
+				//std::cout << functionName << std::endl;
+				//printList(tokens);
 				wcontent_t currentContent = functions.at(functionName);
 				currentContent.tokens = tokens;
 				functions[functionName] = currentContent;
