@@ -38,9 +38,15 @@ struct s_feature{
 	double height;
 	double xpos;
 	double ypos;
-	int linkedSectorId;
-    double xcoord;
-    double ycoord;
+};
+
+struct s_way{
+	int st;
+	std::vector<int> adjacencies;
+	s_way(){
+		st = RN_NONE;
+		adjacencies = std::vector<int>();
+	}
 };
 
 struct s_site{
@@ -50,7 +56,9 @@ struct s_site{
 	double radius;
 	double xpos;
 	double ypos;
-	int linkedFeatureId;
+	int linkedSectorId;
+    double xcoord;
+    double ycoord;
 };
 
 class MapSector{
@@ -67,6 +75,7 @@ private:
 	std::vector<s_landmark*> *landmarks;
 	std::vector<s_feature*> *features;
 	std::vector<s_site*> *sites;
+	std::vector<s_way*> *ways;
 private:
 	void getPolygonFromString();
 	double getAngle(PointXY a, PointXY b);
@@ -103,10 +112,12 @@ public:
 	std::string getSequence();
 
 	void addSite(s_site* site);
+	void addWay(s_way* way);
 	void addFeature(s_feature* feature);
 	void addLandmark(s_landmark* landmark);
 
 	s_site* siteAt(int index);
+	s_way* wayAt(int index);
 	s_feature* featureAt(int index);
 	s_landmark* landmarkAt(int index);
 
@@ -119,20 +130,24 @@ public:
 	std::vector<s_feature*> findFeaturesByName(std::string name);
 
 	void deleteSite(s_site* obj);
+	void deleteWay(s_way* obj);
 	void deleteFeature(s_feature* obj);
 	void deleteLandmark(s_landmark* obj);
 
 	void deleteSiteAt(int index);
+	void deleteWayAt(int index);
 	void deleteFeatureAt(int index);
 	void deleteLandmarkAt(int index);
 
 	size_t sitesSize();
+	size_t waysSize();
 	size_t featuresSize();
 	size_t landmarksSize();
 
 	size_t landmarksSizeByType(std::string type);
 	
 	void deleteAllSites();
+	void deleteAllWays();
     void deleteAllFeatures();
     void deleteAllLandmarks();
     void deletePolygon();

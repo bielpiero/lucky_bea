@@ -114,7 +114,7 @@ int RNTourThread::createCurrentMapGraph(){
 			root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
 			for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){
 				int xmlSectorId = std::atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-				std::string ady = std::string(sector_node->first_attribute(XML_ATTRIBUTE_ADYACENCY_STR)->value());
+				std::string ady = std::string(sector_node->first_attribute(XML_ATTRIBUTE_ADJACENCY_STR)->value());
 				std::vector<std::string> adys = RNUtils::split(ady, ",");
 				for(int i = 0; i < adys.size(); i++){
 					int sectorAdy = std::atoi(adys.at(i).c_str());

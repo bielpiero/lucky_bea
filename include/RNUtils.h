@@ -234,6 +234,8 @@ public: // functions
 	static std::string getVirtualScenarioPort();
 	static void getVirtualFaceIpPort(std::string& ip, int& port);
 
+	static void rotate(const double& x, const double& y, const double& angleRad, double* newx, double* newy);
+
 	static double linearInterpolator(const double& x, const PointXY& p1, const PointXY& p2);
 	static double quadraticInterpolator(const double& x, const PointXY& p1, const PointXY& p2, const PointXY& x3);
 

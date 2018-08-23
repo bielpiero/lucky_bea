@@ -892,24 +892,6 @@ void GeneralController::loadSector(int mapId, int sectorId){
 						tempFeature->height = ((double)atoi(features_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100;
 						tempFeature->xpos = ((double)atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
 						tempFeature->ypos = ((double)atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
-
-						if(features_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
-							tempFeature->linkedSectorId = atoi(features_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value());
-						} else {
-							tempFeature->linkedSectorId = RN_NONE;
-						}
-                        
-                        if(features_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)){
-                            tempFeature->xcoord = ((double)atoi(features_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)->value())) / 100;
-                        } else {
-                            tempFeature->xcoord = 0.0;
-                        }
-                        
-                        if(features_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)){
-                            tempFeature->ycoord = ((double)atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)->value())) / 100;
-                        } else {
-                            tempFeature->ycoord = 0.0;
-                        }
                         
                         currentSector->addFeature(tempFeature);
 						
@@ -918,13 +900,6 @@ void GeneralController::loadSector(int mapId, int sectorId){
 
 				xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
 				if(sites_root_node->first_attribute()){
-					if(sites_root_node->first_attribute(XML_ATTRIBUTE_CYCLIC_STR)){
-						std::string cyclic(sites_root_node->first_attribute(XML_ATTRIBUTE_CYCLIC_STR)->value());
-						if(cyclic == "yes"){
-							currentSector->setIfSitesCyclic(true);
-						}
-					}
-
 					if(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)){
 						std::string sequence(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)->value());
 						currentSector->setSequence(sequence);
@@ -941,13 +916,38 @@ void GeneralController::loadSector(int mapId, int sectorId){
 						tempSite->tsec = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_TIME_STR)->value()));
 						tempSite->xpos = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
 						tempSite->ypos = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
-						if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)){
-							tempSite->linkedFeatureId = atoi(site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)->value());
+
+						if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
+							tempSite->linkedSectorId = atoi(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value());
 						} else {
-							tempSite->linkedFeatureId = RN_NONE;
+							tempSite->linkedSectorId = RN_NONE;
 						}
+                        
+                        if(site_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)){
+                            tempSite->xcoord = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)->value())) / 100;
+                        } else {
+                            tempSite->xcoord = 0.0;
+                        }
+                        
+                        if(site_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)){
+                            tempSite->ycoord = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)->value())) / 100;
+                        } else {
+                            tempSite->ycoord = 0.0;
+                        }
 
 						currentSector->addSite(tempSite);
+					}
+				}
+				xml_node<>* ways_root_node = sector_node->first_node(XML_ELEMENT_WAYS_STR);
+				if(ways_root_node->first_node() !=  NULL){
+					for(xml_node<>* way_node = ways_root_node->first_node(XML_ELEMENT_WAY_STR); way_node; way_node = way_node->next_sibling()){
+						s_way* tempWay = new s_way;
+						tempWay->st = std::atoi(way_node->first_attribute(XML_ATTRIBUTE_ST_STR)->value());
+						std::vector<std::string> adyList = RNUtils::split(way_node->first_attribute(XML_ATTRIBUTE_ADJACENCY_STR)->value(), ",");
+						for(int i = 0; i < adyList.size(); i++){
+							tempWay->adjacencies.push_back(std::stoi(adyList.at(i)));
+						}
+						currentSector->addWay(tempWay);
 					}
 				}
     		}
@@ -1538,11 +1538,7 @@ void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 							tempSite->tsec = ((double)atoi(data.at(4).c_str()));
 							tempSite->xpos = ((double)atoi(data.at(5).c_str())) / 100;
 							tempSite->ypos = ((double)atoi(data.at(6).c_str())) / 100;
-							if(data.size() >= ADD_SITE_VARIABLE_LENGTH + 1){
-								tempSite->linkedFeatureId = atoi(data.at(7).c_str());
-							} else {
-								tempSite->linkedFeatureId = RN_NONE;
-							}
+							
 				        	currentSector->addSite(tempSite);
 				        }
 
@@ -1633,12 +1629,7 @@ void GeneralController::modifySectorInformationSite(char* cad){
 			tempSite->radius = ((double)atoi(data.at(4).c_str())) / 100;
 			tempSite->tsec = ((double)atoi(data.at(5).c_str()));
 			tempSite->xpos = ((double)atoi(data.at(6).c_str())) / 100;
-			tempSite->ypos = ((double)atoi(data.at(7).c_str())) / 100;
-			if(data.size() >= MODIFY_SITE_VARIABLE_LENGTH + 1){
-				tempSite->linkedFeatureId = atoi(data.at(8).c_str());
-			} else {
-				tempSite->linkedFeatureId = RN_NONE;
-			}			
+			tempSite->ypos = ((double)atoi(data.at(7).c_str())) / 100;		
 		}
 	} else {
 		RNUtils::printLn("Unable to edit site. Invalid number of parameters..");
@@ -1826,10 +1817,6 @@ void GeneralController::addSectorInformationFeatures(char* cad, int& indexAssign
 				        new_feature_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(5).c_str()));
 				        new_feature_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(6).c_str()));
 
-				        if(data.size() >= ADD_FEATURE_VARIABLE_LENGTH + 1){
-				        	new_feature_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR, data.at(7).c_str()));
-				        }
-
 				        features_root_node->append_node(new_feature_node);
 
 				        if(mapId == currentSector->getMapId() and sectorId == currentSector->getId()){
@@ -1841,12 +1828,6 @@ void GeneralController::addSectorInformationFeatures(char* cad, int& indexAssign
 							tempFeature->height = ((double)atoi(data.at(4).c_str())) / 100;
 							tempFeature->xpos = ((double)atoi(data.at(5).c_str())) / 100;
 							tempFeature->ypos = ((double)atoi(data.at(6).c_str())) / 100;
-
-							if(data.size() >= ADD_FEATURE_VARIABLE_LENGTH + 1){
-								tempFeature->linkedSectorId = atoi(data.at(7).c_str());
-							} else {
-								tempFeature->linkedSectorId = RN_NONE;
-							}
 
 							currentSector->addFeature(tempFeature);
 				        }
@@ -1910,10 +1891,6 @@ void GeneralController::modifySectorInformationFeatures(char* cad){
 						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(6).c_str()));
 						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(7).c_str()));
 
-						        if(data.size() >= MODIFY_FEATURE_VARIABLE_LENGTH + 1){
-						        	where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR, data.at(8).c_str()));
-						        }
-
 								RNUtils::getTimestamp(mappingFeaturesTimestamp);
 							}
 						}
@@ -1935,12 +1912,6 @@ void GeneralController::modifySectorInformationFeatures(char* cad){
 			tempFeature->height = ((double)atoi(data.at(5).c_str())) / 100;
 			tempFeature->xpos = ((double)atoi(data.at(6).c_str())) / 100;
 			tempFeature->ypos = ((double)atoi(data.at(7).c_str())) / 100;
-			
-			if(data.size() >= MODIFY_FEATURE_VARIABLE_LENGTH + 1){
-				tempFeature->linkedSectorId = atoi(data.at(8).c_str());
-			} else {
-				tempFeature->linkedSectorId = RN_NONE;
-			}
         }
 	} else {
 		RNUtils::printLn("Unable to edit feature. Invalid number of parameters..");
@@ -2102,9 +2073,9 @@ void GeneralController::onPositionUpdate(double x, double y, double theta, doubl
 				double fromHereXY = std::sqrt(std::pow((robotEncoderPosition(0, 0) - doors.at(i)->xpos), 2) + std::pow((robotEncoderPosition(1, 0) - doors.at(i)->ypos), 2));
 				if(distance > fromHereXY){
 					distance = fromHereXY;
-					index = doors.at(i)->linkedSectorId;
-	                nXCoord = doors.at(i)->xcoord;
-	                nYCoord = doors.at(i)->ycoord;
+					//index = doors.at(i)->linkedSectorId;
+	                //nXCoord = doors.at(i)->xcoord;
+	                //nYCoord = doors.at(i)->ycoord;
 				}
 			}
 			this->nextSectorId = index;
@@ -2182,7 +2153,7 @@ void GeneralController::startSitesTour(){
 }
 
 void* GeneralController::sitesTourThread(void* object){
-	GeneralController* self = (GeneralController*)object;
+	/*GeneralController* self = (GeneralController*)object;
 	self->keepTourAlive = RN_YES;
 
     std::vector<std::string> spltdSequence = RNUtils::split((char*)self->currentSector->getSequence().c_str(), ",");
@@ -2250,7 +2221,7 @@ void* GeneralController::sitesTourThread(void* object){
         	self->keepTourAlive = RN_NO;
         }
 	}
-	self->keepTourAlive = RN_NO;
+	self->keepTourAlive = RN_NO;*/
 	return NULL;
 }
 

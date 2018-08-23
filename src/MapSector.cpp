@@ -19,6 +19,9 @@ MapSector::~MapSector(){
     deleteAllSites();
     delete sites;
 
+    deleteAllWays();
+    delete ways;
+
     deletePolygon();
     delete polygon;
 }
@@ -87,6 +90,10 @@ void MapSector::addSite(s_site* site){
 	sites->push_back(site); 
 }
 
+void MapSector::addWay(s_way* way){ 
+	ways->push_back(way); 
+}
+
 void MapSector::addFeature(s_feature* feature){ 
 	features->push_back(feature); 
 }
@@ -97,6 +104,10 @@ void MapSector::addLandmark(s_landmark* landmark){
 
 s_site* MapSector::siteAt(int index) { 
 	return sites->at(index); 
+}
+
+s_way* MapSector::wayAt(int index) { 
+	return ways->at(index); 
 }
 
 s_feature* MapSector::featureAt(int index) { 
@@ -165,6 +176,10 @@ void MapSector::deleteSite(s_site* obj) {
 	sites->erase(std::remove(sites->begin(), sites->end(), obj), sites->end()); 
 }
 
+void MapSector::deleteWay(s_way* obj) { 
+	ways->erase(std::remove(ways->begin(), ways->end(), obj), ways->end()); 
+}
+
 void MapSector::deleteFeature(s_feature* obj) { 
 	features->erase(std::remove(features->begin(), features->end(), obj), features->end()); 
 }
@@ -177,6 +192,10 @@ void MapSector::deleteSiteAt(int index) {
 	sites->erase(sites->begin() + index); 
 }
 
+void MapSector::deleteWayAt(int index) { 
+	ways->erase(ways->begin() + index); 
+}
+
 void MapSector::deleteFeatureAt(int index) { 
 	features->erase(features->begin() + index); 
 }
@@ -187,6 +206,10 @@ void MapSector::deleteLandmarkAt(int index) {
 
 size_t MapSector::sitesSize() { 
 	return sites->size(); 
+}
+
+size_t MapSector::waysSize() { 
+	return ways->size(); 
 }
 
 size_t MapSector::featuresSize() { 
@@ -227,6 +250,14 @@ void MapSector::deleteAllSites() {
     }
     sites->clear();
     RNUtils::printLn("Deleted all sites..");
+}
+
+void MapSector::deleteAllWays() {  
+	for (int i = 0; i < ways->size(); i++) {
+        delete ways->at(i);
+    }
+    ways->clear();
+    RNUtils::printLn("Deleted all ways..");
 }
 
 void MapSector::deleteAllFeatures(){

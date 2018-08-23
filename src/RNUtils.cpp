@@ -287,13 +287,18 @@ double RNUtils::fixAngleRad(double rad){
 	if(rad > M_PI){
 		while(rad > M_PI){
 			rad = rad - 2 * M_PI;
-		}	
+		}
 	} else if(rad < -M_PI){
 		while(rad < -M_PI){
 			rad = rad + 2 * M_PI;
 		}
 	}
 	return rad;
+}
+
+void RNUtils::rotate(const double& x, const double& y, const double& angleRad, double* newx, double* newy){
+	*newx = x * std::cos(angleRad) - y * std::sin(angleRad);
+	*newy = x * std::sin(angleRad) + y * std::cos(angleRad);
 }
 
 void RNUtils::getOdometryPose(const double& xk, const double& yk, const double& thk, const double& deltaDistance, const double& deltaDegrees, double* xk1, double* yk1, double* thk1){

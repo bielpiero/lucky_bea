@@ -22,7 +22,8 @@
 
 #define XML_ATTRIBUTE_FILENAME_STR "filename"
 #define XML_ATTRIBUTE_POLYGON_STR "polygon"
-#define XML_ATTRIBUTE_ADYACENCY_STR "adjacency"
+#define XML_ATTRIBUTE_ADJACENCY_STR "adjacency"
+#define XML_ATTRIBUTE_ST_STR "st"
 
 #define XML_ELEMENT_SECTORS_STR "sectors"
 #define XML_ELEMENT_SECTOR_STR "sector"
@@ -32,6 +33,8 @@
 #define XML_ELEMENT_FEATURE_STR "feature"
 #define XML_ELEMENT_SITES_STR "sites"
 #define XML_ELEMENT_SITE_STR "site"
+#define XML_ELEMENT_WAYS_STR "ways"
+#define XML_ELEMENT_WAY_STR "way"
 
 #define XML_ELEMENT_VISEMES_STR "Visemes"
 #define XML_ELEMENT_VISEME_STR "Viseme"
