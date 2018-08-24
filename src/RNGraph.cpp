@@ -11,9 +11,11 @@ RNAdyacencyList::~RNAdyacencyList(){
 
 void RNAdyacencyList::insert(RNGraphEdge* edge){
     if(edge){
-        if(!contains(edge->getDestination())){
-            adyacencies->emplace_back(edge);
-        }
+        adyacencies->emplace_back(edge);
+        printf("Insertada la arista\n");
+        /*if(!contains(edge->getDestination())){
+            
+        }*/
     }
 }
 
@@ -44,7 +46,7 @@ void RNAdyacencyList::clear(){
 }
 
 bool RNAdyacencyList::empty() const{
-    return adyacencies->empty();
+    return (adyacencies->size() == 0);
 }
 
 RNAdyacencyList::iterator RNAdyacencyList::begin(){
@@ -84,6 +86,7 @@ int RNGraph::addEdge(const int& src, const int& dst, const float& weight){
     std::map<int, RNAdyacencyList*>::iterator itSrc;
     std::map<int, RNAdyacencyList*>::iterator itDst;
     itSrc = graph->find(src);
+    itDst = graph->find(dst);
 
     if(itSrc != graph->end() and itDst != graph->end()){
         RNGraphEdge* edge = new RNGraphEdge(dst, weight);
@@ -152,14 +155,18 @@ std::list<int> RNGraph::shortestPath(const int& src, const int& dst) const{
     bool mal = false;
     selected.emplace_back(start);
     dist.emplace(start, 0.0);
-    while(std::find(selected.begin(), selected.end(), dst) != selected.end() and not mal){
+    bool finalNodeArrived = std::find(selected.begin(), selected.end(), dst) != selected.end();
+    while(not finalNodeArrived and not mal){
         float min = std::numeric_limits<float>::max();
         int m = RN_NONE;
         RNAdyacencyList* ady = this->getAdyacencies(start);
         if(not ady->empty()){
             RNAdyacencyList::iterator it;
+            printf("ta aqui llega\n");
             for(it = ady->begin(); it != ady->end(); it++){
+                printf("ta aqui llega tambien\n");
                 float d = dist.find(start)->second + (*it)->getWeight();
+                printf("Node: %d, Dist: %f", start, d);
                 float dstN = dist.find((*it)->getDestination()) != dist.end() ? dist.find((*it)->getDestination())->second : std::numeric_limits<float>::max();
                 if((d < dstN) and (std::find(selected.begin(), selected.end(), (*it)->getDestination()) != selected.end())){
                     dist.emplace((*it)->getDestination(), d);
@@ -171,6 +178,8 @@ std::list<int> RNGraph::shortestPath(const int& src, const int& dst) const{
                     m = (*it)->getDestination();
                 }
             }
+        } else {
+            printf("ady list empty\n");
         }
         if(m != RN_NONE){
             start = m;
@@ -178,6 +187,8 @@ std::list<int> RNGraph::shortestPath(const int& src, const int& dst) const{
         } else {
             mal = true;
         }
+        finalNodeArrived = std::find(selected.begin(), selected.end(), dst) != selected.end();
+        printf("finalNodeArrived: %d\n", (int)finalNodeArrived);
     }
     if(not mal){
         int end = dst;
@@ -187,6 +198,7 @@ std::list<int> RNGraph::shortestPath(const int& src, const int& dst) const{
             path.emplace_front(end);
         }
     }
+    printf("Exiting shortestPath\n");
     return path;
 }
 
@@ -199,5 +211,5 @@ void RNGraph::clear(){
 }
 
 bool RNGraph::empty() const{
-    return graph->empty();
+    return (graph->size() == 0);
 }

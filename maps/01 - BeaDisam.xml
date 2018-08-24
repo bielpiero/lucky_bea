@@ -18,15 +18,15 @@
 			<feature id="1" name="door" width="10" height="80" x="0" y="65"/>
 
 		</features>
-		<sites sequence="7,5,4,2">
-			<site id="0" name="charger" radius="0" tsec="0" x="141" y="421"/>
-			<site id="1" name="way" radius="0" tsec="0" x="326" y="364"/>
-			<site id="2" name="way" radius="0" tsec="0" x="329" y="459"/>
-			<site id="3" name="frame" radius="0" tsec="0" x="447" y="453"/>
-			<site id="4" name="way" radius="0" tsec="0" x="632" y="352"/>
-			<site id="5" name="way" radius="0" tsec="0" x="774" y="430"/>
-			<site id="6" name="door" radius="0" tsec="0" x="791" y="445" linked-sector-id="1" xcoord="-18" ycoord="1180"/>
-			<site id="7" name="door" radius="0" tsec="0" x="919" y="346" linked-sector-id="4" xcoord="160" ycoord="0"/>
+		<sites sequence="6,5,4,2">
+			<site id="0" name="charger" x="680" y="110"/>
+			<site id="1" name="way" x="680" y="230"/>
+			<site id="2" name="way" x="360" y="230"/>
+			<site id="3" name="frame" x="360" y="310"/>
+			<site id="4" name="way" x="120" y="230"/>
+			<site id="5" name="way" x="120" y="110"/>
+			<site id="6" name="door" x="120" y="0" linked-sector-id="1" xcoord="-18" ycoord="1180"/>
+			<site id="7" name="door" x="0" y="110" linked-sector-id="4" xcoord="160" ycoord="0"/>
 		</sites>
 		<ways>
 			<way st="0" adjacency="1"/>
@@ -104,10 +104,26 @@
 			<feature id="3" name="door" width="137" height="10" x="80" y="0" linked-sector-id="7" xcoord="0" ycoord="900"/>
 			<feature id="4" name="door" width="137" height="10" x="0" y="65"/>
 		</features>
-		<sites sequence="0,1,3">
-
+		<sites sequence="5,3,2,0">
+			<site id="0" name="charger" x="141" y="421" linked-sector-id="0" xcoord="-18" ycoord="1180"/>
+			<site id="1" name="way" x="326" y="364"/>
+			<site id="2" name="way" x="329" y="459"/>
+			<site id="3" name="frame" x="447" y="453"/>
+			<site id="4" name="way" x="632" y="352" linked-sector-id="0" xcoord="-18" ycoord="1180"/>
+			<site id="5" name="way" x="774" y="430"/>
+			<site id="6" name="door" x="791" y="445" linked-sector-id="1" xcoord="-18" ycoord="1180"/>
+			<site id="7" name="door" x="919" y="346" linked-sector-id="4" xcoord="160" ycoord="0"/>
 		</sites>
-		<ways/>
+		<ways>
+			<way st="0" adjacency="1"/>
+			<way st="1" adjacency="0,2"/>
+			<way st="2" adjacency="1"/>
+			<way st="3" adjacency="1,4.5"/>
+			<way st="4" adjacency="3"/>
+			<way st="5" adjacency="3,6,7"/>
+			<way st="6" adjacency="5"/>
+			<way st="7" adjacency="5"/>
+		</ways>
 	</sector>
 	<sector id="7" name="Workshop Place" width="400" height="400" polygon="m 0 0 l 0 400 l 400 0 l 0 -400 z" adjacency="1">
 		<landmarks>

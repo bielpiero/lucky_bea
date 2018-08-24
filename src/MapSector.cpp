@@ -6,6 +6,7 @@ MapSector::MapSector(){
 	landmarks = new std::vector<s_landmark*>();
 	features = new std::vector<s_feature*>();
 	sites = new std::vector<s_site*>();
+	ways = new std::vector<s_way*>();
 	polygon = new std::vector<PointXY*>();
 }
 

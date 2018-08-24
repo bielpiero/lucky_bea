@@ -214,6 +214,33 @@ public: // functions
     static void init(int argc, char** argv);
 	static void sleep(int milliseconds);
 	static void printLn(const char* _format, ...);
+
+	template <typename T>
+	static void printList(std::list<T> l){
+		typename std::list<T>::iterator it;
+		std::cout << "[";
+		for(it = l.begin(); it != l.end(); it++){
+			std::cout << *it;
+			if(std::next(it, 1) != l.end()){
+				std::cout << ", ";
+			}
+		}
+		std::cout << "]" << std::endl;
+	}
+
+	template <typename T, typename U>
+	static void printMap(std::map<T, U> m){
+		typename std::map<T, U>::iterator it;
+		std::cout << "{";
+		for(it = m.begin(); it != m.end(); it++){
+			std::cout << it->first << ": " << it->second; 
+			if(std::next(it, 1) != m.end()){
+				std::cout << ", ";
+			}
+		}
+		std::cout << "}" << std::endl;
+	}
+
 	static std::vector<std::string> split(char* buffer, const char* delimiter);
 	static std::vector<std::string> split(std::string buffer, const char* delimiter);
 	static std::vector<std::wstring> wsplit(std::wstring buffer, const wchar_t delimiter);

@@ -52,8 +52,6 @@ struct s_way{
 struct s_site{
 	int id;
 	std::string name;
-	double tsec;
-	double radius;
 	double xpos;
 	double ypos;
 	int linkedSectorId;

@@ -13,6 +13,7 @@ RNTourThread::RNTourThread(const GeneralController* gn, const char* name, const 
 
 	xmlSectorsPath = RNUtils::getApplicationPath() + XML_FILE_SECTORS_PATH;
 	currentMapGraph = NULL;
+	currentSectorGraph = NULL;
 	lastSiteVisitedIndex = RN_NONE;
 	programLoaded = false;
 	loadPredifinedSymbols();
@@ -106,10 +107,6 @@ int RNTourThread::createCurrentMapGraph(){
 			for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){
 				int xmlSectorId = std::atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 				currentMapGraph->addNode(xmlSectorId);
-
-			}
-			if(not currentMapGraph->empty()){
-				RNUtils::printLn("%s", currentMapGraph->toString().c_str());
 			}
 			root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
 			for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node; sector_node = sector_node->next_sibling()){
@@ -130,8 +127,128 @@ int RNTourThread::createCurrentMapGraph(){
 		}
 		the_file.close();
 		res = RN_OK;
+		RNUtils::printLn("Created Map Graph..");
 	}
 	return res;
+}
+
+int RNTourThread::createCurrentSectorGraph(){
+	int res = RN_NONE;
+	if(gn->getCurrentSector()){
+		if(currentSectorGraph){
+			delete currentSectorGraph;
+		}
+		currentSectorGraph = new RNGraph;
+		
+		for (int w = 0; w < gn->getCurrentSector()->waysSize(); w++){
+			currentSectorGraph->addNode(gn->getCurrentSector()->wayAt(w)->st);
+		}
+		for (int w = 0; w < gn->getCurrentSector()->waysSize(); w++){
+			int siteId = gn->getCurrentSector()->wayAt(w)->st;
+			for(int i = 0; i < gn->getCurrentSector()->wayAt(w)->adjacencies.size(); i++){
+				int siteAdy = gn->getCurrentSector()->wayAt(w)->adjacencies.at(i);
+				if(currentMapGraph->addEdge(siteId, siteAdy) != RN_OK){
+					RNUtils::printLn("Could not add edge between site %d and site %d", siteId, siteAdy);
+				}
+				if(currentMapGraph->addEdge(siteAdy, siteId) != RN_OK){
+					RNUtils::printLn("Could not add edge between site %d and site %d", siteAdy, siteId);
+				}
+			}
+		}
+		res = RN_OK;
+		RNUtils::printLn("Created Sector Graph..");
+	}
+	return res;
+}
+
+void RNTourThread::tripTo(int dst_sector, double dst_x, double dst_y){
+	if(dst_sector != RN_NONE){
+		longTravel(gn->getCurrentSector()->getId(), dst_sector);
+	}
+	ArPose* currPose = gn->getAltPose();
+	ArPose dstPose(dst_x, dst_y, 0.0);
+	int originSite = closestNodeTo(*currPose);
+	printf("originSite: %d\n", originSite);
+	int destinySite = closestNodeTo(dstPose);
+	printf("destinySite: %d\n", destinySite);
+	shortTravel(originSite, destinySite);
+	RNUtils::printLn("Arrived Near, going to point desired");
+	gn->moveRobotToPosition(dst_x, dst_y, 0.0);
+    while((not gn->isGoalAchieved()) and (not gn->isGoalCanceled())) RNUtils::sleep(100);
+}
+
+void RNTourThread::longTravel(int origin, int destiny){
+	if(currentMapGraph){
+		std::list<int> path = currentMapGraph->shortestPath(origin, destiny);
+		RNUtils::printList<int>(path);
+		std::list<int>::iterator pathIt;
+		for(pathIt = path.begin(); pathIt != path.end(); pathIt++){
+			if(*pathIt != destiny){
+				s_site* destinationSite = NULL;
+				int originSite = RN_NONE, destinySite = RN_NONE;
+				ArPose* currPose = gn->getAltPose();
+				originSite = closestNodeTo(*currPose);
+				std::map<int, double> mds;
+				for(int i = 0; i < gn->getCurrentSector()->sitesSize(); i++){
+					s_site* node = gn->getCurrentSector()->siteAt(i);
+					std::list<int>::iterator pathNextIt = std::next(pathIt, 1);
+					if(pathNextIt != path.end()){
+						if(node->linkedSectorId == *pathNextIt){
+							destinySite = node->id;
+						}
+					}
+				}
+				shortTravel(originSite, destinySite);
+			}
+		}
+	}
+}
+
+void RNTourThread::shortTravel(int origin, int destiny){
+	if(currentSectorGraph){
+		std::list<int> path = currentSectorGraph->shortestPath(origin, destiny);
+		RNUtils::printList<int>(path);
+		std::list<int>::iterator pathIt;
+		for(pathIt = path.begin(); pathIt != path.end(); pathIt++){
+			s_site* destinationSite = gn->getCurrentSector()->findSiteById(*pathIt);
+			RNUtils::sleep(100);
+        	if(destinationSite != NULL){
+        		bool changeSector = destinationSite->name == std::string(SEMANTIC_FEATURE_DOOR_STR);
+        		gn->moveRobotToPosition(destinationSite->xpos, destinationSite->ypos, 0.0);
+        		while((not gn->isGoalAchieved()) and (not gn->isGoalCanceled())) RNUtils::sleep(100);
+
+        		if(changeSector){
+        			gn->loadSector(gn->getCurrentSector()->getMapId(), destinationSite->linkedSectorId);
+        			lastSiteVisitedIndex = 0;
+        			ArPose* currPose = gn->getAltPose();
+        			gn->setPosition(currPose->getX() + destinationSite->xcoord, currPose->getY() +destinationSite->ycoord, currPose->getTh());
+        		}
+
+        	}
+		}
+	}
+	
+}
+
+int RNTourThread::closestNodeTo(const ArPose& pose){
+	int nodeId = RN_NONE;
+	std::map<int, double> mds;
+	for(int i = 0; i < gn->getCurrentSector()->sitesSize(); i++){
+		s_site* node = gn->getCurrentSector()->siteAt(i);
+		if(node->name != std::string(SEMANTIC_FEATURE_DOOR_STR)){
+			mds.emplace(node->id, RNUtils::distanceTo(node->xpos, node->ypos, pose.getX(), pose.getY()));
+		}		
+		
+	}
+	double mdist = std::numeric_limits<double>::max();
+	std::map<int, double>::iterator mdsit;
+	for(mdsit = mds.begin(); mdsit != mds.end(); mdsit++){
+		if(mdist > mdsit->second){
+			mdist = mdsit->second;
+			nodeId = mdsit->first;
+		}
+	}
+	return nodeId;
 }
 
 void RNTourThread::loadPredifinedSymbols(){
@@ -385,7 +502,7 @@ void RNTourThread::lex(){
 	}
 }
 
-void RNTourThread::printList(std::list<std::string> l){
+/*void RNTourThread::printList(std::list<std::string> l){
 	std::list<std::string>::iterator it;
 	std::cout << "[";
 	for(it = l.begin(); it != l.end(); it++){
@@ -395,9 +512,9 @@ void RNTourThread::printList(std::list<std::string> l){
 		}
 	}
 	std::cout << "]" << std::endl;
-}
+}*/
 
-void RNTourThread::printMap(std::map<std::string, std::string> m){
+/*void RNTourThread::printMap(std::map<std::string, std::string> m){
 	std::map<std::string, std::string>::iterator it;
 	std::cout << "{";
 	for(it = m.begin(); it != m.end(); it++){
@@ -407,7 +524,7 @@ void RNTourThread::printMap(std::map<std::string, std::string> m){
 		}
 	}
 	std::cout << "}" << std::endl;
-}
+}*/
 
 void RNTourThread::parse(){
 
@@ -505,11 +622,8 @@ void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::st
 				}
 			}
 			printf("Going to Sector: %d, {x: %f, y: %f}\n", sector, px, py);
-			if(sector != -1){
-
-			} else {
-				gn->moveRobotToPosition(px, py, 0.0);
-			}
+			tripTo(sector, px, py);
+			
 			it = std::next(it, 4);
 		} else if((*it) == "TURN"){
 			if(it2 != functionTokens.end()){

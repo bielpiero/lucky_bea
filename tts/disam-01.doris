@@ -1,11 +1,13 @@
 function entrance 
-	say[attention=front; face=happy]("Hola chicos")
-	say[attention=right; face=surprise]("biénvenidos al centro de automática y robótica de la universidad politécnica de madrid")
-	goto(#-1, #3, #2)
-	say[attention=left; face=suspect]("seguidme por favor que os mostraré el laboratorio, los distintos grupos que hay, os explicaré que hace cada grupo y lo mas importante, os mostraré donde he nacido y quién es mi creador.")
+	
+	goto(#-1, #1.2, #1.2)
+	
 endfunction
 
 function reception
+	say[attention=front; face=happy]("Hola chicos")
+	say[attention=right; face=surprise]("biénvenidos al centro de automática y robótica de la universidad politécnica de madrid")
+	say[attention=left; face=suspect]("seguidme por favor que os mostraré el laboratorio, los distintos grupos que hay, os explicaré que hace cada grupo y lo mas importante, os mostraré donde he nacido y quién es mi creador.")
 	turn(#90)
 	say("coloquemos nuestra atención a la izquierda")
 	say("subiendo por las escaleras están los despachos de los profesores.")

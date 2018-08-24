@@ -9,7 +9,7 @@ public:
 		this->dst = RN_NONE;
 		this->weight = 0.0;
 	}
-	RNGraphEdge(const int& dst, const float& weight = 0.0){
+	RNGraphEdge(const int& dst, const float& weight = 1.0){
 		this->dst = dst;
 		this->weight = weight;
 	}
@@ -56,7 +56,7 @@ public:
 	virtual ~RNGraph();
 	
 	void addNode(const int& node);
-	int addEdge(const int& src, const int& dst, const float& weight = 0.0);
+	int addEdge(const int& src, const int& dst, const float& weight = 1.0);
 
 	void removeNode(int node);
 	void removeEdge(int src, int dst);

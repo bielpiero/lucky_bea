@@ -353,14 +353,8 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x13:
 			if(granted){
 				getPositions(cad, x, y, theta);
-				if(localization != NULL){
-					localization->kill();
-				}
 				if(currentSector != NULL){
 					setRobotPosition(x, y, theta);
-					if(localization != NULL){
-						localization->reset();
-					}
 					sendMsg(socketIndex, 0x13, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 				} else {
 					RNUtils::printLn("Command 0x13. No current sector available to set robot position to ", getClientIPAddress(socketIndex));
@@ -390,15 +384,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x16:
 			if(granted){
 				getMapSectorId(cad, mapId, sectorId);
-				if(localization != NULL){
-					localization->kill();
-				}
-				
-				loadSector(mapId, sectorId);
-				if(localization != NULL){
-					localization->reset();	
-				}
-				
+				loadSector(mapId, sectorId);				
 				sendMsg(socketIndex, 0x16, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				RNUtils::printLn("Command 0x16. Setting Map into Robot denied to %s", getClientIPAddress(socketIndex));
@@ -532,13 +518,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			break;
 		case 0x30:
 			if(granted){
-				if(localization != NULL){
-					localization->kill();
-				}
 				setRobotPosition(0.0, 0.0, 0.0);
-				if(localization != NULL){
-					localization->reset();
-				}
 				sendMsg(socketIndex, 0x30, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 			} else {
 				RNUtils::printLn("Command 0x30. Reset odometry denied to ", getClientIPAddress(socketIndex));
@@ -813,8 +793,11 @@ void GeneralController::getMapId(char* cad, int& mapId){
 
 void GeneralController::loadSector(int mapId, int sectorId){
 
+	if(localization != NULL){
+		localization->kill();
+	}
 	std::string filename;
-
+	bool reloadMap = true;
 	getMapFilename(mapId, filename);
 
 	xml_document<> doc;
@@ -827,6 +810,7 @@ void GeneralController::loadSector(int mapId, int sectorId){
     doc.parse<0>(&buffer[0]);
 
     if(currentSector != NULL){
+    	reloadMap = mapId != currentSector->getMapId();
     	delete currentSector;
     	currentSector = NULL;
     }
@@ -912,8 +896,6 @@ void GeneralController::loadSector(int mapId, int sectorId){
 
 						tempSite->id = atoi(site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 						tempSite->name = std::string(site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-						tempSite->radius = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_RADIUS_STR)->value())) / 100;
-						tempSite->tsec = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_TIME_STR)->value()));
 						tempSite->xpos = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
 						tempSite->ypos = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
 
@@ -956,8 +938,14 @@ void GeneralController::loadSector(int mapId, int sectorId){
     }
     the_file.close();
     if(tourThread){
-    	tourThread->createCurrentMapGraph();
+    	if(reloadMap){
+    		tourThread->createCurrentMapGraph();
+    	}
+    	tourThread->createCurrentSectorGraph();
     }
+    if(localization != NULL){
+		localization->reset();	
+	}
     RNUtils::getTimestamp(mappingSectorTimestamp);
     RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", sectorId, currentSector->getName().c_str());
     
@@ -1396,8 +1384,7 @@ void GeneralController::getSectorInformationSites(int mapId, int sectorId, std::
 							buffer_str << site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value() << ",";
 							buffer_str << site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value() << ",";
 							buffer_str << (((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100) << ",";
-							buffer_str << (((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100) << ",";
-							buffer_str << (((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_RADIUS_STR)->value())) / 100);
+							buffer_str << (((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100);
 
 							if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)){
 								buffer_str << "," << site_node->first_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR)->value();
@@ -1519,14 +1506,8 @@ void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 						RNUtils::printLn("New Site Index Assigned: %s", convert.str().c_str());
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, convert.str().c_str()));
 				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_NAME_STR, data.at(2).c_str()));
-				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_RADIUS_STR, data.at(3).c_str()));
-				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_TIME_STR, data.at(4).c_str()));
-				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(5).c_str()));
-				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(6).c_str()));
-				        if(data.size() >= ADD_SITE_VARIABLE_LENGTH + 1){
-				        	new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR, data.at(7).c_str()));
-				        }
-
+				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(3).c_str()));
+				        new_sites_node->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(4).c_str()));
 				        sites_root_node->append_node(new_sites_node);
 
 			        	if(mapId == currentSector->getMapId() and sectorId == currentSector->getId()){
@@ -1534,10 +1515,8 @@ void GeneralController::addSectorInformationSite(char* cad, int& indexAssigned){
 
 				        	tempSite->id = indexAssigned;
 							tempSite->name = data.at(2);
-							tempSite->radius = ((double)atoi(data.at(3).c_str())) / 100;
-							tempSite->tsec = ((double)atoi(data.at(4).c_str()));
-							tempSite->xpos = ((double)atoi(data.at(5).c_str())) / 100;
-							tempSite->ypos = ((double)atoi(data.at(6).c_str())) / 100;
+							tempSite->xpos = ((double)atoi(data.at(3).c_str())) / 100;
+							tempSite->ypos = ((double)atoi(data.at(4).c_str())) / 100;
 							
 				        	currentSector->addSite(tempSite);
 				        }
@@ -1599,15 +1578,8 @@ void GeneralController::modifySectorInformationSite(char* cad){
 
 				        		where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_ID_STR, convert.str().c_str()));
 								where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_NAME_STR, data.at(3).c_str()));
-						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_RADIUS_STR, data.at(4).c_str()));
-						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_TIME_STR, data.at(5).c_str()));
-						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(6).c_str()));
-						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(7).c_str()));
-
-						        if(data.size() >= MODIFY_SITE_VARIABLE_LENGTH + 1){
-						        	where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_LINKED_FEATURE_ID_STR, data.at(8).c_str()));
-						        }
-
+						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_X_POSITION_STR, data.at(4).c_str()));
+						        where->append_attribute(doc.allocate_attribute(XML_ATTRIBUTE_Y_POSITION_STR, data.at(5).c_str()));
 						        
 								RNUtils::getTimestamp(mappingSitesTimestamp);
 							}
@@ -1626,10 +1598,8 @@ void GeneralController::modifySectorInformationSite(char* cad){
         	s_site* tempSite = currentSector->findSiteById(siteId);
 
         	tempSite->name = data.at(3);
-			tempSite->radius = ((double)atoi(data.at(4).c_str())) / 100;
-			tempSite->tsec = ((double)atoi(data.at(5).c_str()));
-			tempSite->xpos = ((double)atoi(data.at(6).c_str())) / 100;
-			tempSite->ypos = ((double)atoi(data.at(7).c_str())) / 100;		
+			tempSite->xpos = ((double)atoi(data.at(4).c_str())) / 100;
+			tempSite->ypos = ((double)atoi(data.at(5).c_str())) / 100;		
 		}
 	} else {
 		RNUtils::printLn("Unable to edit site. Invalid number of parameters..");
@@ -2003,8 +1973,14 @@ void GeneralController::moveRobot(double lin_vel, double angular_vel){
 }
 
 void GeneralController::setRobotPosition(double x, double y, double theta){
+	if(localization != NULL){
+		localization->kill();
+	}
 	RNUtils::printLn("Changin' position...");
 	this->setPosition(x, y, theta);	
+	if(localization != NULL){
+		localization->reset();	
+	}
 	RNUtils::printLn("new position is: {x: %f, y: %f, \u03d1: %f}", x, y, theta);
 }
 
