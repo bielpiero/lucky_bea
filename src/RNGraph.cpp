@@ -11,11 +11,9 @@ RNAdyacencyList::~RNAdyacencyList(){
 
 void RNAdyacencyList::insert(RNGraphEdge* edge){
     if(edge){
-        adyacencies->emplace_back(edge);
-        printf("Insertada la arista\n");
-        /*if(!contains(edge->getDestination())){
-            
-        }*/
+        if(!contains(edge->getDestination())){
+            adyacencies->emplace_back(edge);   
+        }
     }
 }
 
@@ -93,7 +91,7 @@ int RNGraph::addEdge(const int& src, const int& dst, const float& weight){
         RNAdyacencyList* adys = NULL;
         adys = itSrc->second;
         adys->insert(edge);
-        graph->emplace(src, adys);
+        graph->at(src) = adys;
         res = RN_OK;
     }
     return res;
