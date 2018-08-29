@@ -153,6 +153,8 @@ void RobotNode::positionUpdate(void){
     robotRawEncoderPosition(1, 0) = robot->getY()/1e3;
     robotRawEncoderPosition(2, 0) = robot->getTh() * M_PI / 180;
     unlockRawPosition();
+    onPositionUpdate(robotRawEncoderPosition(0, 0), robotRawEncoderPosition(1, 0), robotRawEncoderPosition(2, 0), robot->getVel(), robot->getRotVel());
+    onSensorsScanCompleted();
 }
 
 ArRobotConnector* RobotNode::getRobotConnector() const{
@@ -276,14 +278,16 @@ void RobotNode::setPosition(double x, double y, double theta){
     isFirstFakeEstimation = true;
     robot->resetTripOdometer();
     robot->moveTo(ArPose(x * 1000, y * 1000, theta * 180 / M_PI));
-    
     robot->unlock();
+    
+    setAltPose(ArPose(x * 1000, y * 1000, theta * 180 / M_PI));
 
     lockRawPosition();
     robotRawEncoderPosition(0, 0) = x;
     robotRawEncoderPosition(1, 0) = y;
     robotRawEncoderPosition(2, 0) = theta;
     unlockRawPosition();
+
 }
 
 void RobotNode::setMotorsStatus(bool enabled){

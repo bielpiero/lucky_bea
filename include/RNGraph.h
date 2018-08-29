@@ -40,11 +40,10 @@ public:
 	void removeEdge(int edgeName);
 	bool contains(int edgeName);
 	void clear();
+	int size() const;
 	bool empty() const;
-	typedef std::list<RNGraphEdge*>::iterator iterator;
+	RNGraphEdge* at(int index);
 	
-	RNAdyacencyList::iterator begin();
-	RNAdyacencyList::iterator end();
 	const std::string toString() const;
 private:
 	std::list<RNGraphEdge*>* adyacencies;
@@ -63,8 +62,12 @@ public:
 	void clear();
 	bool empty() const;
 	std::list<int> shortestPath(const int& src, const int& dst) const;
+	std::list<int> branchAndBound(const int& src, const int& dst) const;
+
 	RNAdyacencyList* getAdyacencies(int node) const;
 	const std::string toString() const;
+private:
+	void branchAndBound(const int& src, const int& dst, std::list<int>* cerrados, std::list<int>* visitados) const;
 private:
 	std::map<int, RNAdyacencyList*>* graph;
 };

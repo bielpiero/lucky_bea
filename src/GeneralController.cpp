@@ -5,7 +5,7 @@
 #include "RNLaserTask.h"
 #include "RNLocalizationTask.h"
 #include "RNKalmanLocalizationTask.h"
-#include "RNPFLocalizationTask.h"
+#include "RNPKalmanLocalizationTask.h"
 #include "RNCameraTask.h"
 #include "RNOmnicameraTask.h"
 #include "RNRFIdentificationTask.h"
@@ -83,8 +83,8 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
 		localization = new RNKalmanLocalizationTask(this);
-	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PF_STR){
-		localization = new RNPFLocalizationTask(this);
+	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PKALMAN_STR){
+		localization = new RNPKalmanLocalizationTask(this);
 	}
 	
 	////Tasks added:
@@ -828,8 +828,8 @@ void GeneralController::loadSector(int mapId, int sectorId){
     			currentSector->setId(xmlSectorId);
 				currentSector->setName(std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value()));
 				currentSector->setPolygon(std::string(sector_node->first_attribute(XML_ATTRIBUTE_POLYGON_STR)->value()));
-				currentSector->setWidth((double)atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())/100);
-				currentSector->setHeight((double)atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())/100);
+				currentSector->setWidth((double)std::atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())/100.0);
+				currentSector->setHeight((double)std::atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())/100.0);
 				xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
 				if(landmarks_root_node->first_node() !=  NULL){
 					for(xml_node<>* landmark_node = landmarks_root_node->first_node(XML_ELEMENT_LANDMARK_STR); landmark_node; landmark_node = landmark_node->next_sibling()){
@@ -838,28 +838,28 @@ void GeneralController::loadSector(int mapId, int sectorId){
 						tempLandmark->id = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 						tempLandmark->type = std::string(landmark_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value());
 						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)){
-							tempLandmark->varMinX = ((double)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100;
+							tempLandmark->varMinX = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100.0;
 						}
 						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)){
-							tempLandmark->varMaxX = ((double)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100;
+							tempLandmark->varMaxX = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100.0;
 						}
 						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)){
-							tempLandmark->varMinY = ((double)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100;
+							tempLandmark->varMinY = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100.0;
 						}
 						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)){
-							tempLandmark->varMaxY = ((double)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100;
+							tempLandmark->varMaxY = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100.0;
 						}
 						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Z_STR)){
-							tempLandmark->varMinZ = ((double)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Z_STR)->value())) / 100;
+							tempLandmark->varMinZ = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Z_STR)->value())) / 100.0;
 						}
 						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Z_STR)){
-							tempLandmark->varMaxZ = ((double)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Z_STR)->value())) / 100;
+							tempLandmark->varMaxZ = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Z_STR)->value())) / 100.0;
 						}	
 
-						tempLandmark->xpos = ((double)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
-						tempLandmark->ypos = ((double)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
+						tempLandmark->xpos = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100.0;
+						tempLandmark->ypos = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100.0;
 						if(landmark_node->first_attribute(XML_ATTRIBUTE_Z_POSITION_STR)){
-							tempLandmark->zpos = ((double)atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Z_POSITION_STR)->value())) / 100;
+							tempLandmark->zpos = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Z_POSITION_STR)->value())) / 100.0;
 						}
 						currentSector->addLandmark(tempLandmark);
 					}
@@ -872,10 +872,10 @@ void GeneralController::loadSector(int mapId, int sectorId){
 
 						tempFeature->id = atoi(features_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 						tempFeature->name = std::string(features_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-						tempFeature->width = ((double)atoi(features_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100;
-						tempFeature->height = ((double)atoi(features_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100;
-						tempFeature->xpos = ((double)atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
-						tempFeature->ypos = ((double)atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
+						tempFeature->width = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100.0;
+						tempFeature->height = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100.0;
+						tempFeature->xpos = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100.0;
+						tempFeature->ypos = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100.0;
                         
                         currentSector->addFeature(tempFeature);
 						
@@ -894,25 +894,25 @@ void GeneralController::loadSector(int mapId, int sectorId){
 					for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
 						s_site* tempSite = new s_site;
 
-						tempSite->id = atoi(site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+						tempSite->id = std::atoi(site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 						tempSite->name = std::string(site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-						tempSite->xpos = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100;
-						tempSite->ypos = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100;
+						tempSite->xpos = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100.0;
+						tempSite->ypos = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100.0;
 
 						if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
-							tempSite->linkedSectorId = atoi(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value());
+							tempSite->linkedSectorId = std::atoi(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value());
 						} else {
 							tempSite->linkedSectorId = RN_NONE;
 						}
                         
                         if(site_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)){
-                            tempSite->xcoord = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)->value())) / 100;
+                            tempSite->xcoord = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)->value())) / 100.0;
                         } else {
                             tempSite->xcoord = 0.0;
                         }
                         
                         if(site_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)){
-                            tempSite->ycoord = ((double)atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)->value())) / 100;
+                            tempSite->ycoord = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)->value())) / 100.0;
                         } else {
                             tempSite->ycoord = 0.0;
                         }
@@ -2032,41 +2032,9 @@ void GeneralController::onBumpersUpdate(std::vector<bool> front, std::vector<boo
 
 void GeneralController::onPositionUpdate(double x, double y, double theta, double transSpeed, double rotSpeed){
 
-	robotEncoderPosition(0, 0) = x;
-	robotEncoderPosition(1, 0) = y;
-	robotEncoderPosition(2, 0) = theta;
-
-	robotVelocity(0, 0) = transSpeed;
-	robotVelocity(1, 0) = rotSpeed;
-	if(currentSector != NULL){
-		std::vector<s_feature*> doors = currentSector->findFeaturesByName(std::string(SEMANTIC_FEATURE_DOOR_STR));
-		if(doors.size() > 0){
-			double distance = std::numeric_limits<double>::infinity();
-			int index = RN_NONE;
-	        double nXCoord = 0;
-	        double nYCoord = 0;
-			for(int i = 0; i < doors.size(); i++){
-				double fromHereXY = std::sqrt(std::pow((robotEncoderPosition(0, 0) - doors.at(i)->xpos), 2) + std::pow((robotEncoderPosition(1, 0) - doors.at(i)->ypos), 2));
-				if(distance > fromHereXY){
-					distance = fromHereXY;
-					//index = doors.at(i)->linkedSectorId;
-	                //nXCoord = doors.at(i)->xcoord;
-	                //nYCoord = doors.at(i)->ycoord;
-				}
-			}
-			this->nextSectorId = index;
-			nextSectorCoord = PointXY(nXCoord, nYCoord);
-	    }
-	    if(RNUtils::toLowercase(currentSector->getName()).find(SEMANTIC_HALLWAY_STR) < std::string(SEMANTIC_HALLWAY_STR).length()){
-	    	this->hallwayDetected = true;
-	    } else {
-	    	this->hallwayDetected = false;
-	    }
-	}
-
 	
 	char* bump = new char[256];
-	sprintf(bump, "$POSE_VEL|%.4f,%.4f,%.4f,%.4f,%.4f", robotEncoderPosition(0, 0), robotEncoderPosition(1, 0), robotEncoderPosition(2, 0), robotVelocity(0, 0), robotVelocity(1, 0));
+	sprintf(bump, "$POSE_VEL|%.4f,%.4f,%.4f,%.4f,%.4f", x, y, theta, transSpeed, rotSpeed);
 	int dataLen = strlen(bump);
 
 	for(int i = 0; i < MAX_CLIENTS; i++){
@@ -2706,11 +2674,13 @@ void GeneralController::onLaserScanCompleted(LaserScan* data){
 
 void GeneralController::onSensorsScanCompleted(){
 	std::ostringstream buffer_str;
-	int mapId = currentSector->getMapId();
+	int mapId = RN_NONE;
 	int sectorId = RN_NONE;
 	if(currentSector != NULL){
+		mapId = currentSector->getMapId();
 		sectorId = currentSector->getId();
 	}
+	
 	buffer_str.clear();
 	buffer_str << "$DORIS|" << mapId << "," 
 				<< sectorId << "," 

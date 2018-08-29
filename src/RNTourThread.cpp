@@ -147,10 +147,10 @@ int RNTourThread::createCurrentSectorGraph(){
 			int siteId = gn->getCurrentSector()->wayAt(w)->st;
 			for(int i = 0; i < gn->getCurrentSector()->wayAt(w)->adjacencies.size(); i++){
 				int siteAdy = gn->getCurrentSector()->wayAt(w)->adjacencies.at(i);
-				if(currentMapGraph->addEdge(siteId, siteAdy) != RN_OK){
+				if(currentSectorGraph->addEdge(siteId, siteAdy) != RN_OK){
 					RNUtils::printLn("Could not add edge between site %d and site %d", siteId, siteAdy);
 				}
-				if(currentMapGraph->addEdge(siteAdy, siteId) != RN_OK){
+				if(currentSectorGraph->addEdge(siteAdy, siteId) != RN_OK){
 					RNUtils::printLn("Could not add edge between site %d and site %d", siteAdy, siteId);
 				}
 			}
@@ -179,7 +179,8 @@ void RNTourThread::tripTo(int dst_sector, double dst_x, double dst_y){
 
 void RNTourThread::longTravel(int origin, int destiny){
 	if(currentMapGraph){
-		std::list<int> path = currentMapGraph->shortestPath(origin, destiny);
+		std::list<int> path = currentMapGraph->branchAndBound(origin, destiny);
+		printf("Long Travel in Map: %d\n", gn->getCurrentSector()->getMapId());
 		RNUtils::printList<int>(path);
 		std::list<int>::iterator pathIt;
 		for(pathIt = path.begin(); pathIt != path.end(); pathIt++){
@@ -206,7 +207,8 @@ void RNTourThread::longTravel(int origin, int destiny){
 
 void RNTourThread::shortTravel(int origin, int destiny){
 	if(currentSectorGraph){
-		std::list<int> path = currentSectorGraph->shortestPath(origin, destiny);
+		std::list<int> path = currentSectorGraph->branchAndBound(origin, destiny);
+		printf("Short Travel in sector: %d\n", gn->getCurrentSector()->getId());
 		RNUtils::printList<int>(path);
 		std::list<int>::iterator pathIt;
 		for(pathIt = path.begin(); pathIt != path.end(); pathIt++){
@@ -218,10 +220,10 @@ void RNTourThread::shortTravel(int origin, int destiny){
         		while((not gn->isGoalAchieved()) and (not gn->isGoalCanceled())) RNUtils::sleep(100);
 
         		if(changeSector){
+        			ArPose* currPose = gn->getAltPose();
+        			gn->setPosition((currPose->getX() / 1e3) + destinationSite->xcoord, (currPose->getY() / 1e3) + destinationSite->ycoord, currPose->getThRad());
         			gn->loadSector(gn->getCurrentSector()->getMapId(), destinationSite->linkedSectorId);
         			lastSiteVisitedIndex = 0;
-        			ArPose* currPose = gn->getAltPose();
-        			gn->setPosition(currPose->getX() + destinationSite->xcoord, currPose->getY() +destinationSite->ycoord, currPose->getTh());
         		}
 
         	}
@@ -297,6 +299,7 @@ void RNTourThread::lex(){
 	wss << file.rdbuf();
 	std::string buff = wss.str();
 	std::list<char> fileContent(buff.begin(), buff.end());
+	file.close();
 	std::list<char>::iterator it;
 	std::list<std::string> tokens;
 	std::string tok = "";

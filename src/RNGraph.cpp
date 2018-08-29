@@ -47,12 +47,12 @@ bool RNAdyacencyList::empty() const{
     return (adyacencies->size() == 0);
 }
 
-RNAdyacencyList::iterator RNAdyacencyList::begin(){
-    adyacencies->begin();
+int RNAdyacencyList::size() const{
+    return adyacencies->size();
 }
 
-RNAdyacencyList::iterator RNAdyacencyList::end(){
-    adyacencies->end();
+RNGraphEdge* RNAdyacencyList::at(int index){
+    return *(std::next(adyacencies->begin(), index));
 }
 
 const std::string RNAdyacencyList::toString() const{
@@ -115,7 +115,7 @@ void RNGraph::removeNode(int node){
     for(it = graph->begin(); it != graph->end(); it++){
         adys = it->second;
         adys->removeEdge(node);
-        graph->emplace(it->first, adys);
+        graph->at(it->first) = adys;
     }
     it = graph->find(node);
     graph->erase(it);
@@ -129,7 +129,7 @@ void RNGraph::removeEdge(int src, int dst){
     if(it != graph->end()){
         adys = it->second;
         adys->removeEdge(dst);
-        graph->emplace(src, adys);
+        graph->at(src) = adys;
     }
 }
 
@@ -142,6 +142,40 @@ RNAdyacencyList* RNGraph::getAdyacencies(int node) const{
         adys = it->second;
     }
     return adys;
+}
+
+std::list<int> RNGraph::branchAndBound(const int& src, const int& dst) const{
+    std::list<int> path;
+    std::list<int> visited;
+    branchAndBound(src, dst, &path, &visited);
+    return path;
+}
+
+void RNGraph::branchAndBound(const int& src, const int& dst, std::list<int>* cerrados, std::list<int>* visitados) const{
+    visitados->emplace_back(src);
+    if(src == dst){
+        cerrados->emplace_back(src);
+        return;
+    } else {
+        RNAdyacencyList* ady = this->getAdyacencies(src);
+        if(not ady->empty()){
+            bool finalNodeFound = false;
+            for(int i = 0; i < ady->size() and not finalNodeFound; i++){
+                bool visitedNode = std::find(visitados->begin(), visitados->end(), ady->at(i)->getDestination()) != visitados->end();
+                if(not visitedNode){
+                    branchAndBound(ady->at(i)->getDestination(), dst, cerrados, visitados);
+                }
+                finalNodeFound = std::find(cerrados->begin(), cerrados->end(), dst) != cerrados->end();
+            }
+
+            finalNodeFound = std::find(cerrados->begin(), cerrados->end(), dst) != cerrados->end();
+            if(finalNodeFound){
+                cerrados->emplace_front(src);
+            }
+        } else {
+            printf("ady list empty\n");
+        }
+    }
 }
 
 std::list<int> RNGraph::shortestPath(const int& src, const int& dst) const{
@@ -159,22 +193,30 @@ std::list<int> RNGraph::shortestPath(const int& src, const int& dst) const{
         int m = RN_NONE;
         RNAdyacencyList* ady = this->getAdyacencies(start);
         if(not ady->empty()){
-            RNAdyacencyList::iterator it;
-            printf("ta aqui llega\n");
-            for(it = ady->begin(); it != ady->end(); it++){
-                printf("ta aqui llega tambien\n");
-                float d = dist.find(start)->second + (*it)->getWeight();
-                printf("Node: %d, Dist: %f", start, d);
-                float dstN = dist.find((*it)->getDestination()) != dist.end() ? dist.find((*it)->getDestination())->second : std::numeric_limits<float>::max();
-                if((d < dstN) and (std::find(selected.begin(), selected.end(), (*it)->getDestination()) != selected.end())){
-                    dist.emplace((*it)->getDestination(), d);
-                    dstN = dist.find((*it)->getDestination())->second;
-                    prev.emplace((*it)->getDestination(), start);
+            for(int i = 0; i < ady->size(); i++){
+                float d = dist.find(start)->second + ady->at(i)->getWeight();
+                float dstN = dist.find(ady->at(i)->getDestination()) != dist.end() ? dist.find(ady->at(i)->getDestination())->second : std::numeric_limits<float>::max();
+                bool selectedNode = std::find(selected.begin(), selected.end(), ady->at(i)->getDestination()) == selected.end();
+                printf("Node Origin: %d, Node Destiny: %d, Dist: %f, DistN: %f, selectedNode: %d\n", start, ady->at(i)->getDestination(), d, dstN, (int)selectedNode);
+                if((d < dstN) and selectedNode) {
+                    if(dist.find(ady->at(i)->getDestination()) != dist.end()){
+                        dist.at(ady->at(i)->getDestination()) = d;  
+                    } else {
+                        dist.emplace(ady->at(i)->getDestination(), d);
+                    }
+                    dstN = dist.find(ady->at(i)->getDestination())->second;
+                    if(prev.find(ady->at(i)->getDestination()) != prev.end()){
+                        prev.at(ady->at(i)->getDestination()) = start;  
+                    } else {
+                        prev.emplace(ady->at(i)->getDestination(), start);
+                    }
                 }
-                if((min > dst) and (std::find(selected.begin(), selected.end(), (*it)->getDestination()) != selected.end())){
+                if((min > dstN) and selectedNode){
                     min = dstN;
-                    m = (*it)->getDestination();
+                    m = ady->at(i)->getDestination();
                 }
+                printf("m: %d\n", m);
+                RNUtils::printList<int>(selected);
             }
         } else {
             printf("ady list empty\n");
