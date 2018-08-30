@@ -5,6 +5,11 @@
 #include "GeneralController.h"
 #include "RNGraph.h"
 
+#define CMD_MOVE_BEGIN 0
+#define CMD_MOVE_NEXT 1
+#define CMD_MOVE_PREVIOUS 2
+#define CMD_MOVE_END 3
+
 class RNTourThread : public RNAsyncTask{
 
 public:
@@ -21,12 +26,11 @@ private:
 	void tripTo(int dst_sector, double dst_x, double dst_y);
 	void shortTravel(int origin, int destiny);
 	void longTravel(int origin, int destiny);
+	void moveAround(int direction);
 	int closestNodeTo(const ArPose& pose);
 	void lex();
 	void parse();
 	void parse(std::list<std::string> functionTokens, std::map<std::string, std::string> *functionSymbols);
-	//void printList(std::list<std::string> l);
-	//void printMap(std::map<std::string, std::string> m);	
 	void loadPredifinedSymbols();
 	std::map<std::string, std::string> createOptionsMap(std::string opts);
 	void processOptions(std::map<std::string, std::string> opts);

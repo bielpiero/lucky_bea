@@ -1,10 +1,5 @@
 function entrance 
-	say[attention=front; face=happy]("Hola chicos")
-	say("yaba daba du")
-	goto(#1, #1.15, #5.0)
-	say("con la carita de poh vaya poh vaya")
-	goto(#0, #6.8, #2.7)
-	say("mi amo me tiene andando de un lado a otro como una tonta")
+	move(next)
 endfunction
 
 function reception

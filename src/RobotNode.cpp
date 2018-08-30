@@ -280,7 +280,7 @@ void RobotNode::setPosition(double x, double y, double theta){
     robot->moveTo(ArPose(x * 1000, y * 1000, theta * 180 / M_PI));
     robot->unlock();
     
-    setAltPose(ArPose(x * 1000, y * 1000, theta * 180 / M_PI));
+    setAltPose(ArPose(x, y, theta * 180 / M_PI));
 
     lockRawPosition();
     robotRawEncoderPosition(0, 0) = x;
@@ -470,7 +470,7 @@ void RobotNode::getIncrementPosition(double* deltaDistance, double* deltaDegrees
         prevRotVel = currentRotVel;
         prevDistance = currentDistance;
         prevRads = currentRads;
-
+        this->deltaDegrees = RNUtils::fixAngleRad(this->deltaDegrees);
         pthread_mutex_lock(&mutexIncrements);
         *deltaDegrees = this->deltaDegrees;
         *deltaDistance = this->deltaDistance/1.0e3;

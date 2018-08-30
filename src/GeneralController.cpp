@@ -191,8 +191,6 @@ void GeneralController::onConnection(int socketIndex){ //callback for client and
 				this->getClientUDP(socketIndex)->closeConnection();
 				this->connectClientUDP(socketIndex, NULL);
 			}
-			//stopDynamicGesture();
-			//stopCurrentTour();
 		}
 	}
 	RNUtils::printLn("Clients connected: %d", clientsConnected);
@@ -338,17 +336,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			}
 			break;
 		case 0x12:
-			if(granted){
-				if(currentSector != NULL){
-					stopCurrentTour();
-				} else {
-					RNUtils::printLn("Command 0x12. No current sector available to stop tour to ", getClientIPAddress(socketIndex));
-					sendMsg(socketIndex, 0x12, (char*)jsonSectorNotLoadedError.c_str(), (unsigned int)jsonSectorNotLoadedError.length());
-				}
-			} else {
-				RNUtils::printLn("Command 0x12. Stop robot tour denied to %s", getClientIPAddress(socketIndex));
-				sendMsg(socketIndex, 0x12, (char*)jsonControlError.c_str(), (unsigned int)jsonControlError.length());
-			}
+			
 			break;	
 		case 0x13:
 			if(granted){
@@ -2072,8 +2060,6 @@ void GeneralController::onBatteryChargeStateChanged(char battery){
 	}
 }
 
-
-
 void GeneralController::onSecurityDistanceWarningSignal(){
 	RNUtils::printLn("Alert on something is blocking Doris to achieve goal...");
 }
@@ -2085,96 +2071,6 @@ void GeneralController::onSecurityDistanceStopSignal(){
 			int goalId = atoi(spltdSequence.at(lastSiteVisitedIndex + 1).c_str());
 			RNUtils::printLn("Doris Stopped. Could not achieve next goal from current position...");
 		}
-	}
-}
-
-void GeneralController::startSitesTour(){
-	pthread_t tourThread;
-	stopCurrentTour();
-	
-	RNUtils::printLn("Starting tour in current sector...");
-	pthread_create(&tourThread, NULL, sitesTourThread, (void *)(this));
-}
-
-void* GeneralController::sitesTourThread(void* object){
-	/*GeneralController* self = (GeneralController*)object;
-	self->keepTourAlive = RN_YES;
-
-    std::vector<std::string> spltdSequence = RNUtils::split((char*)self->currentSector->getSequence().c_str(), ",");
-    bool movedToCenter = false;
-	
-	while(self->keepTourAlive == RN_YES){
-        int goalIndex = self->lastSiteVisitedIndex + 1;
-        RNUtils::printLn("Goal Index: %d, lastSiteVisitedIndex: %d, splitted: %d, sequence: %s", goalIndex, self->lastSiteVisitedIndex, spltdSequence.size(), (char*)self->currentSector->getSequence().c_str());
-        int goalId = atoi(spltdSequence.at(goalIndex).c_str());
-        s_site* destinationSite = self->currentSector->findSiteById(goalId);
-        
-        RNUtils::sleep(100);
-        if(destinationSite != NULL){
-        	s_feature* linkedFeature = NULL;
-        	if(destinationSite->linkedFeatureId != RN_NONE){
-        		linkedFeature = self->currentSector->findFeatureById(destinationSite->linkedFeatureId);
-        	}
-
-        	PointXY phantomPoint(destinationSite->xpos, destinationSite->ypos);
-
-        	if(linkedFeature != NULL and linkedFeature->name == SEMANTIC_FEATURE_DOOR_STR){
-    			if(linkedFeature->width > linkedFeature->height){
-    				phantomPoint.setY(self->robotRawDeltaPosition(1, 0));
-    			} else {
-    				phantomPoint.setX(self->robotRawDeltaPosition(0, 0));
-    			}
-    			RNUtils::printLn("Door site detected. Creating a virtual point at {x: %f, y: %f}", phantomPoint.getX(), phantomPoint.getY());
-    			self->moveRobotToPosition(phantomPoint.getX(), phantomPoint.getY(), 0.0);
-    			while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == RN_YES)) RNUtils::sleep(100);
-    		}
-    		if(self->hallwayDetected and not movedToCenter){
-    			if(self->currentSector->getWidth() < self->currentSector->getHeight()){
-    				phantomPoint.setX(self->currentSector->getWidth() / 2.0);
-    				phantomPoint.setY(self->robotRawDeltaPosition(1, 0));
-    				
-    			} else {
-    				phantomPoint.setX(self->robotRawDeltaPosition(0, 0));
-    				phantomPoint.setY(self->currentSector->getHeight() / 2.0);
-    			}
-
-				movedToCenter = true;
-				RNUtils::printLn("Site in hallway zone. Creating a virtual point at {x: %f, y: %f}", phantomPoint.getX(), phantomPoint.getY());
-				self->moveRobotToPosition(phantomPoint.getX(), phantomPoint.getY(), 0.0);
-				while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == RN_YES)) RNUtils::sleep(100);
-    			
-    		}
-
-        	self->moveRobotToPosition(destinationSite->xpos, destinationSite->ypos, 0.0);
-        	while((not self->isGoalAchieved()) and (not self->isGoalCanceled()) and (self->keepTourAlive == RN_YES)) RNUtils::sleep(100);
-        	if (self->isGoalAchieved()) {
-	            self->lastSiteVisitedIndex++;
-	            if (self->currentSector->isSitesCyclic()){
-	            	self->lastSiteVisitedIndex = RN_NONE;
-	            	movedToCenter = false;
-	            } else if((self->lastSiteVisitedIndex == (spltdSequence.size() - 1))) {
-	                self->lastSiteVisitedIndex = RN_NONE;
-	                self->stopRobot();
-	            }
-	        }
-	        if (self->isGoalCanceled()) {
-	            self->keepTourAlive = RN_NO;
-	        }
-        } else {
-        	RNUtils::printLn("Non existing site %d. Check sequence...", goalId);
-        	self->keepTourAlive = RN_NO;
-        }
-	}
-	self->keepTourAlive = RN_NO;*/
-	return NULL;
-}
-
-void GeneralController::stopCurrentTour(){
-	if(keepTourAlive == RN_YES){
-		keepTourAlive = MAYBE;
-		RNUtils::printLn("Stopping all tours...");
-		while(keepTourAlive != RN_NO) RNUtils::sleep(100);
-		RNUtils::printLn("All tours stopped...");
 	}
 }
 

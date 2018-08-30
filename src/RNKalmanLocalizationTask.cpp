@@ -55,6 +55,7 @@ void RNKalmanLocalizationTask::task(){
 		xk_1 = xk;
 		double deltaDistance = 0.0, deltaAngle = 0.0;
 		gn->getIncrementPosition(&deltaDistance, &deltaAngle);
+		//printf("dd: %lf, da: %lf\n", deltaDistance, deltaAngle);
 		/*char buff[1024];
 		sprintf(buff, "%f\t%f\t%f\t%f\t%f\n", gn->getRobot()->getX(), gn->getRobot()->getY(), gn->getRobot()->getTh() * M_PI / 180.0, deltaDistance, deltaAngle);
 		if(test != NULL){
@@ -218,12 +219,13 @@ void RNKalmanLocalizationTask::task(){
 					smallHk(1, 1) = Hk(2 * j + 1, 1);
 					smallHk(1, 2) = Hk(2 * j + 1, 2);
 					Matrix omega = smallHk * Pk * ~smallHk + smallR;
-					//float ed = std::sqrt(std::pow(zkl(j, 0), 2.0) + std::pow(lndmrk->getPointsXMean(), 2.0) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
 					Matrix obs(2, 1);
 					obs(0, 0) = zkl(j, 0);
 					obs(1, 0) = zkl(j, 1);
 					Matrix mdk = ~(measure - obs) * omega * (measure - obs);
 					float md = std::sqrt(mdk(0, 0));
+
+					//float ed = std::sqrt(std::pow(zkl(j, 0), 2.0) + std::pow(lndmrk->getPointsXMean(), 2.0) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
 					euclideanDistances.push_back(std::pair<int, float>(j, md));
 					
 					//RNUtils::printLn("Euclidean Distance[%d]: %f", j, euclideanDistances.at(j));	
@@ -432,7 +434,7 @@ void RNKalmanLocalizationTask::task(){
 Matrix RNKalmanLocalizationTask::fixFilterGain(const Matrix wk, const Matrix z){
 	Matrix result = wk;
 	for(int i = 0; i < z.rows_size(); i++){
-		if(z(i, 0) >= -1.0e-5 and z(i, 0) <= 1.0e-5){
+		if(z(i, 0) >= -1.0e-6 and z(i, 0) <= 1.0e-6){
 			for(int j = 0; j < wk.rows_size(); j++){
 				result(j, i) = 0.0;
 			}

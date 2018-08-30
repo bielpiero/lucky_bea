@@ -166,7 +166,7 @@ void RNTourThread::tripTo(int dst_sector, double dst_x, double dst_y){
 		longTravel(gn->getCurrentSector()->getId(), dst_sector);
 	}
 	ArPose* currPose = gn->getAltPose();
-	ArPose dstPose(dst_x, dst_y, 0.0);
+	ArPose dstPose(dst_x * 1e3, dst_y * 1e3, 0.0);
 	int originSite = closestNodeTo(*currPose);
 	printf("originSite: %d\n", originSite);
 	int destinySite = closestNodeTo(dstPose);
@@ -175,6 +175,42 @@ void RNTourThread::tripTo(int dst_sector, double dst_x, double dst_y){
 	RNUtils::printLn("Arrived Near, going to point desired");
 	gn->moveRobotToPosition(dst_x, dst_y, 0.0);
     while((not gn->isGoalAchieved()) and (not gn->isGoalCanceled())) RNUtils::sleep(100);
+}
+
+void RNTourThread::moveAround(int direction){
+	int originSite, destinySite;
+	std::vector<std::string> sequence = RNUtils::split(gn->getCurrentSector()->getSequence(), ",");
+	if(lastSiteVisitedIndex == RN_NONE){
+		ArPose* currPose = gn->getAltPose();
+		originSite = closestNodeTo(*currPose);
+	} else {
+		originSite = std::stoi(sequence.at(lastSiteVisitedIndex));
+	}
+	printf("originSite: %d\n", originSite);
+	int actualSector = gn->getCurrentSector()->getId();
+	if(direction == CMD_MOVE_BEGIN){
+		destinySite = std::stoi(sequence.at(0));
+	} else if(direction == CMD_MOVE_NEXT){
+		destinySite = std::stoi(sequence.at(lastSiteVisitedIndex + 1));
+	} else if(direction == CMD_MOVE_NEXT){
+		destinySite = std::stoi(sequence.at(lastSiteVisitedIndex - 1));	
+	} else if(direction == CMD_MOVE_NEXT){
+		destinySite = std::stoi(sequence.at(sequence.size() - 1));
+	}
+	
+	printf("destinySite: %d\n", destinySite);
+	//shortTravel(originSite, destinySite);
+	if(gn->isGoalAchieved() and actualSector == gn->getCurrentSector()->getId()){
+		if(direction == CMD_MOVE_BEGIN){
+			lastSiteVisitedIndex = std::stoi(sequence.at(0));
+		} else if(direction == CMD_MOVE_NEXT){
+			lastSiteVisitedIndex = std::stoi(sequence.at(lastSiteVisitedIndex + 1));
+		} else if(direction == CMD_MOVE_NEXT){
+			lastSiteVisitedIndex = std::stoi(sequence.at(lastSiteVisitedIndex - 1));	
+		} else if(direction == CMD_MOVE_NEXT){
+			lastSiteVisitedIndex = std::stoi(sequence.at(sequence.size() - 1));
+		}
+	}
 }
 
 void RNTourThread::longTravel(int origin, int destiny){
@@ -189,6 +225,7 @@ void RNTourThread::longTravel(int origin, int destiny){
 				int originSite = RN_NONE, destinySite = RN_NONE;
 				ArPose* currPose = gn->getAltPose();
 				originSite = closestNodeTo(*currPose);
+				printf("originSite: %d\n", originSite);
 				std::map<int, double> mds;
 				for(int i = 0; i < gn->getCurrentSector()->sitesSize(); i++){
 					s_site* node = gn->getCurrentSector()->siteAt(i);
@@ -223,7 +260,7 @@ void RNTourThread::shortTravel(int origin, int destiny){
         			ArPose* currPose = gn->getAltPose();
         			gn->setPosition((currPose->getX() / 1e3) + destinationSite->xcoord, (currPose->getY() / 1e3) + destinationSite->ycoord, currPose->getThRad());
         			gn->loadSector(gn->getCurrentSector()->getMapId(), destinationSite->linkedSectorId);
-        			lastSiteVisitedIndex = 0;
+        			lastSiteVisitedIndex = RN_NONE;
         		}
 
         	}
@@ -238,12 +275,12 @@ int RNTourThread::closestNodeTo(const ArPose& pose){
 	for(int i = 0; i < gn->getCurrentSector()->sitesSize(); i++){
 		s_site* node = gn->getCurrentSector()->siteAt(i);
 		if(node->name != std::string(SEMANTIC_FEATURE_DOOR_STR)){
-			mds.emplace(node->id, RNUtils::distanceTo(node->xpos, node->ypos, pose.getX(), pose.getY()));
+			mds.emplace(node->id, RNUtils::distanceTo(node->xpos, node->ypos, (pose.getX() / 1e3), (pose.getY() / 1e3)));
 		}		
-		
 	}
 	double mdist = std::numeric_limits<double>::max();
 	std::map<int, double>::iterator mdsit;
+	RNUtils::printMap<int, double>(mds);
 	for(mdsit = mds.begin(); mdsit != mds.end(); mdsit++){
 		if(mdist > mdsit->second){
 			mdist = mdsit->second;
@@ -291,6 +328,10 @@ void RNTourThread::loadPredifinedSymbols(){
 	globalSymbols.emplace("ATTN:front", "ID:33");
 	globalSymbols.emplace("ATTN:right", "ID:34");
 	globalSymbols.emplace("ATTN:left", "ID:35");
+	globalSymbols.emplace("DIRE:begin", "ID:0");
+	globalSymbols.emplace("DIRE:next", "ID:1");
+	globalSymbols.emplace("DIRE:previous", "ID:2");
+	globalSymbols.emplace("DIRE:end", "ID:3");
 }
 
 void RNTourThread::lex(){
@@ -505,30 +546,6 @@ void RNTourThread::lex(){
 	}
 }
 
-/*void RNTourThread::printList(std::list<std::string> l){
-	std::list<std::string>::iterator it;
-	std::cout << "[";
-	for(it = l.begin(); it != l.end(); it++){
-		std::cout << *it;
-		if(std::next(it, 1) != l.end()){
-			std::cout << ", ";
-		}
-	}
-	std::cout << "]" << std::endl;
-}*/
-
-/*void RNTourThread::printMap(std::map<std::string, std::string> m){
-	std::map<std::string, std::string>::iterator it;
-	std::cout << "{";
-	for(it = m.begin(); it != m.end(); it++){
-		std::cout << it->first << ": " << it->second; 
-		if(std::next(it, 1) != m.end()){
-			std::cout << ", ";
-		}
-	}
-	std::cout << "}" << std::endl;
-}*/
-
 void RNTourThread::parse(){
 
 	std::map<std::string, wcontent_t>::iterator fit_main;
@@ -543,7 +560,6 @@ void RNTourThread::parse(){
 }
 
 void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::string, std::string>* functionSymbols){
-	//printList(functionTokens);
 	std::list<std::string>::iterator it = functionTokens.begin();
 	while(it != functionTokens.end()){
 		std::list<std::string>::iterator it2 = std::next(it, 1);
@@ -556,8 +572,8 @@ void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::st
 					it = std::next(it, 2);
 				} else if((*it2).substr(0, 3) == "VAR"){
 					if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
-						printf("MOVE VAR: %s\n", functionSymbols->at((*it2).substr(4)).c_str());
-						//lips->textToViseme((*it2).substr(4));
+						int direction = std::stoi(functionSymbols->at((*it2).substr(4)).c_str());
+						moveAround(direction);
 					} else {
 						fprintf(stderr, "Unidefined VAR: %s\n", (*it2).substr(4).c_str());
 					}

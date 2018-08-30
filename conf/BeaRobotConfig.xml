@@ -1,4 +1,4 @@
-<robot height="1.425" cameras="2" localization="kalman" face="1" neck="0"> <!--localization: {kalman, particle-filter}-->
+<robot height="1.425" cameras="2" localization="pkalman" face="1" neck="0"> <!--localization: {kalman, pkalman}-->
 	<navigation>
 		<initial-position>
 			<x-zone x1="-5" x2="-3" x3="3" x4="5"/> <!-- centimeters -->

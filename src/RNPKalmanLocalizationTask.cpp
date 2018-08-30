@@ -7,7 +7,7 @@ const float RNPKalmanLocalizationTask::MULTIPLIER_FACTOR = 1.5;
 
 RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
-	test = std::fopen("laser_camera.txt","w+");
+	test = std::fopen("laser_camera_pkalman.txt","w+");
 	this->startThread();
 }
 
@@ -321,7 +321,7 @@ void RNPKalmanLocalizationTask::task(){
 					
 					//RNUtils::printLn("markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, Error: {d: %f, a: %f}", indexFound, lndmrk->getPointsXMean() , lndmrk->getPointsYMean() , zkl(indexFound , 0), zkl(indexFound , 1), zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
 					
-					/** NOTAS: FALTA CUIDADO
+					/** NOTAS: FALTA CUIDADO (Fernando Matia)
 					* 
 					* 
 					* 
@@ -339,8 +339,8 @@ void RNPKalmanLocalizationTask::task(){
 						zl(2 * indexFound, 0) = 0.0;
 						zl(2 * indexFound + 1, 0) = 0.0;
 						rsize--;
-					}
-					*/ 
+					}*/
+				
 				}
 			}
 			gn->unlockLaserLandmarks();
@@ -413,7 +413,7 @@ void RNPKalmanLocalizationTask::task(){
 				}
 			}
 			
-			/** NOTAS: FALTA CUIDADO
+			/** NOTAS: FALTA CUIDADO (Fernando Matía)
 			 * 
 			 * 
 			 * 
@@ -507,8 +507,23 @@ void RNPKalmanLocalizationTask::task(){
 		sprintf(bufferpk_sup, "%.4e\t%.4e\t%.4e", Pk_sup(0, 0), Pk_sup(1, 1), Pk_sup(2, 2));
 		sprintf(bufferpk_inf, "%.4e\t%.4e\t%.4e", Pk_inf(0, 0), Pk_inf(1, 1), Pk_inf(2, 2));
 
+		char bufferxk1_sup[256], bufferxk_sup[256];
+		char bufferxk1_inf[256], bufferxk_inf[256];
+
+		sprintf(bufferxk1_sup, "%.4lf\t%.4lf\t%.4lf", xk_sup_1(0, 0), xk_sup_1(1, 0), xk_sup_1(2, 0));
+		sprintf(bufferxk1_inf, "%.4lf\t%.4lf\t%.4lf", xk_inf_1(0, 0), xk_inf_1(1, 0), xk_inf_1(2, 0));
+
 		xk_sup = xk_sup_1 + Wk_sup * zl_sup;
 		xk_inf = xk_inf_1 + Wk_inf * zl_inf;
+
+		sprintf(bufferxk_sup, "%.4lf\t%.4lf\t%.4lf", xk_sup(0, 0), xk_sup(1, 0), xk_sup(2, 0));
+		sprintf(bufferxk_inf, "%.4lf\t%.4lf\t%.4lf", xk_inf(0, 0), xk_inf(1, 0), xk_inf(2, 0));
+
+		char buffer[1024];
+		sprintf(buffer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\n", bufferxk1_sup, bufferxk1_inf, bufferxk_sup, bufferxk_inf, bufferpk1_sup, bufferpk1_inf, bufferpk_sup, bufferpk_inf, rsize, vsize);
+		if(test != NULL){
+			fprintf(test, "%s", buffer);
+		}
 
 	} else {
 		init();

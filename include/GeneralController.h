@@ -65,7 +65,7 @@ class GeneralController;
 class RNLaserTask;
 class RNLocalizationTask;
 class RNKalmanLocalizationTask;
-class RNPFLocalizationTask;
+class RNPKalmanLocalizationTask;
 class RNOmnicameraTask;
 class RNCameraTask;
 class RNRecurrentTaskMap;
@@ -278,7 +278,6 @@ public:
 	int initializeKalmanVariables();
 	void loadSector(int mapId, int sectorId);
 	void getMapFilename(int mapId, std::string& filename);
-	void stopCurrentTour();
 
 	int getNextSectorId();
 	int getLastVisitedNode();
@@ -445,14 +444,12 @@ private:
 	void modifySectorInformationFeatures(char* cad);
 	void deleteSectorInformationFeatures(char* cad);
 	
-	void startSitesTour();
 
 	bool isFirstQuadrant(double angle);
 	bool isSecondQuadrant(double angle);
 	bool isThirdQuadrant(double angle);
 	bool isFouthQuadrant(double angle);
 	
-	static void* sitesTourThread(void*);
 };
 
 #endif
