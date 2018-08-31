@@ -32,6 +32,7 @@ private:
 	void parse();
 	void parse(std::list<std::string> functionTokens, std::map<std::string, std::string> *functionSymbols);
 	void loadPredifinedSymbols();
+	bool evaluateCondition(std::string condition);
 	std::map<std::string, std::string> createOptionsMap(std::string opts);
 	void processOptions(std::map<std::string, std::string> opts);
 private:

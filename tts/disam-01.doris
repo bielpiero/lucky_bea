@@ -21,3 +21,5 @@ function main
 	call entrance
 endfunction
 
+when RfidTagsReceived(tags)
+endwhen

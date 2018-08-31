@@ -351,13 +351,17 @@ void RNTourThread::lex(){
 	file.close();
 	std::list<char>::iterator it;
 	std::list<std::string> tokens;
+	std::list<std::string>::iterator tpos = tokens.end();
 	std::string tok = "";
 	std::string str = "";
 	std::string var = "";
+	std::string cnd = "";
 	tokens.clear();
+	unsigned long long ifcounter = 0, forcounter = 0, whilecounter = 0;
 	int state = 0, isnumber = 0, varstarted = 0;
 	int functionStarted = 0;
 	int callfunction = 0;
+	int ifcondition = 0, elsestate = 0;
 	int equalfound = 0;
 	std::string functionName = "";
 	int functionNameStatus = 0;
@@ -371,18 +375,18 @@ void RNTourThread::lex(){
 				str = "";
 				tok = "";
 			} else if(varstarted == 1 and var != ""){
-				tokens.emplace_back("VAR:" + var);
+				tokens.insert(tpos, "VAR:" + var);
 				varstarted = 0;
 				var = "";
 				tok = "";
 			} else if (callfunction == 1 and str != ""){
-				tokens.emplace_back("FNC:" + str);
+				tokens.insert(tpos, "FNC:" + str);
 				callfunction = 0;
 				str = "";
 				tok = "";
 			} else if(state == 2 and isnumber == 1){
 				if(str != ""){
-					tokens.emplace_back("NUM:" + str);
+					tokens.insert(tpos, "NUM:" + str);
 				}
 				isnumber = 0;
 				str = "";
@@ -400,17 +404,17 @@ void RNTourThread::lex(){
 				functions.emplace(functionName, wcontent_t());
 				str = "";
 			} else if(varstarted == 1 and var != ""){
-				tokens.emplace_back("VAR:" + var);
+				tokens.insert(tpos, "VAR:" + var);
 				varstarted = 0;
 				var = "";
 				tok = "";
 			} else if (callfunction == 1 and str != ""){
-				tokens.emplace_back("FNC:" + str);
+				tokens.insert(tpos, "FNC:" + str);
 				callfunction = 0;
 				str = "";
 			} else if(state == 2 and isnumber == 1){
 				if(str != ""){
-					tokens.emplace_back("NUM:" + str);
+					tokens.insert(tpos, "NUM:" + str);
 				}
 				isnumber = 0;
 				str = "";
@@ -442,24 +446,39 @@ void RNTourThread::lex(){
 				functionStarted = -1;
 			}
 			tok = "";
+		} else if(tok == "if"){
+			tokens.insert(tpos, "IF");
+			ifcondition = 1;
+			tok = "";
+		} else if(tok == "else"){
+			elsestate++;
+			tpos = std::next(tpos, 1);
+			tok = "";
+		} else if(tok == "endif"){
+			if(elsestate > 0){
+				elsestate--;
+				tpos = std::next(tpos, 1);
+			} else {
+				tpos = std::next(tpos, 2);
+			}
 		} else if(tok == "call"){
-			tokens.emplace_back("CALL");
+			tokens.insert(tpos, "CALL");
 			callfunction = 1;
 			tok = "";
 		} else if(tok == "move"){
-			tokens.emplace_back("MOVE");
+			tokens.insert(tpos, "MOVE");
 			tok = "";
 		} else if(tok == "goto"){
-			tokens.emplace_back("GOTO");
+			tokens.insert(tpos, "GOTO");
 			tok = "";
 		} else if(tok == "say"){
-			tokens.emplace_back("SAY");
+			tokens.insert(tpos, "SAY");
 			tok = "";
 		} else if(tok == "turn"){
-			tokens.emplace_back("TURN");
+			tokens.insert(tpos, "TURN");
 			tok = "";
 		} else if(tok == "attention"){
-			tokens.emplace_back("ATTENTION");
+			tokens.insert(tpos, "ATTENTION");
 			tok = "";
 		} else if(tok == "var"){
 			varstarted = 1;
@@ -477,7 +496,7 @@ void RNTourThread::lex(){
 				str += tok;
 			} else if (state == 2){
 				if(str != "" and str.substr(0, 1) == "\""){
-					tokens.emplace_back("STR:" + str.substr(1, str.length() - 1));
+					tokens.insert(tpos, "STR:" + str.substr(1, str.length() - 1));
 				}
 				str = "";
 				state = 0;
@@ -492,13 +511,13 @@ void RNTourThread::lex(){
 		} else if (tok == ","){
 			if(state == 1){
 				if(str != ""){
-					tokens.emplace_back("VAR:" + str);
+					tokens.insert(tpos, "VAR:" + str);
 					str = "";
 					tok = "";
 				}
 			} else if(state == 2){
 				if(isnumber == 1){
-					tokens.emplace_back("NUM:" + str);
+					tokens.insert(tpos, "NUM:" + str);
 					isnumber = 0;
 					state = 1;
 					str = "";
@@ -511,12 +530,20 @@ void RNTourThread::lex(){
 			}
 		} else if (tok == ")"){
 			if(state == 1){
-				if(str != ""){
-					tokens.emplace_back("VAR:" + str);
+				if(ifcondition == 1){
+					tokens.insert(tpos, "CND:" + cnd);
+					tokens.insert(tpos, "BIF:" + std::to_string(ifcounter));
+					tokens.insert(tpos, "BEL:" + std::to_string(ifcounter));
+					tokens.insert(tpos, "EIF:" + std::to_string(ifcounter++));
+					tpos = std::prev(tpos, 2);
+					ifcondition = 0;
+					cnd = "";
+				} else if(str != ""){
+					tokens.insert(tpos, "VAR:" + str);
 				}
 			} else if(state == 2){
 				if(isnumber == 1){
-					tokens.emplace_back("NUM:" + str);
+					tokens.insert(tpos, "NUM:" + str);
 					isnumber = 0;
 				}
 			}
@@ -526,7 +553,7 @@ void RNTourThread::lex(){
 			
 		} else if(tok == "]"){
 			if(state == 1){
-				tokens.emplace_back("OPT:" + str);
+				tokens.insert(tpos, "OPT:" + str);
 				state = 0;
 				tok = "";
 				str = "";
@@ -569,6 +596,7 @@ void RNTourThread::parse(){
 
 void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::string, std::string>* functionSymbols){
 	std::list<std::string>::iterator it = functionTokens.begin();
+	std::stack<std::string> ifIdsStack;
 	while(it != functionTokens.end()){
 		std::list<std::string>::iterator it2 = std::next(it, 1);
 		std::list<std::string>::iterator it3 = std::next(it, 2);
@@ -727,10 +755,25 @@ void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::st
 					it++;
 				}
 			}
+		} else if((*it) == "IF"){
+			bool r = evaluateCondition((*it2).substr(4)); //hacer recursive descent parser
+			ifIdsStack.push((*it3).substr(4));
+			if(r){
+				it = std::next(it, 3);
+			} else {
+				std::string elsename = "BEL:" + ifIdsStack.top();
+				while((*it) != elsename){
+					it++;
+				}
+			}
 		} else {
 			it++;
 		}
 	}
+}
+
+bool RNTourThread::evaluateCondition(std::string condition){
+	return true;
 }
 
 std::map<std::string, std::string> RNTourThread::createOptionsMap(std::string opts){

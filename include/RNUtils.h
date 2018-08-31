@@ -32,6 +32,7 @@
 #include <clocale>
 #include <locale>
 #include <algorithm>
+#include <stack>
 
 #include "Matrix.h"
 #include "stats.h"
