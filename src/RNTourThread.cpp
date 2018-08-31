@@ -757,15 +757,35 @@ void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::st
 			}
 		} else if((*it) == "IF"){
 			bool r = evaluateCondition((*it2).substr(4)); //hacer recursive descent parser
-			ifIdsStack.push((*it3).substr(4));
 			if(r){
 				it = std::next(it, 3);
+				ifIdsStack.push((*it3).substr(4));
 			} else {
-				std::string elsename = "BEL:" + ifIdsStack.top();
+				std::string elsename = "BEL:" + (*it3).substr(4);
 				while((*it) != elsename){
 					it++;
 				}
+
 			}
+		} else if((*it).substr(0, 3) == "BEL"){
+			if(not ifIdsStack.empty()){
+				if(ifIdsStack.top() == (*it).substr(4)){
+					std::string elsename = "EIF:" + ifIdsStack.top();
+					while((*it) != elsename){
+						it++;
+					}
+					ifIdsStack.pop();
+				}
+			} else {
+				it++;
+			}
+		} else if((*it).substr(0, 3) == "EIF"){
+			if(not ifIdsStack.empty()){
+				if(ifIdsStack.top() == (*it).substr(4)){
+					ifIdsStack.pop();
+				}
+			}
+			it++;
 		} else {
 			it++;
 		}
