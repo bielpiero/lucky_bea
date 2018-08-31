@@ -3,7 +3,7 @@
 const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.25;
 const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.014;
 
-const float RNPKalmanLocalizationTask::MULTIPLIER_FACTOR = 1.5;
+const float RNPKalmanLocalizationTask::MULTIPLIER_FACTOR = 4;
 
 RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
@@ -70,10 +70,18 @@ void RNPKalmanLocalizationTask::task(){
 		/* NOTAS: FERNANDO MATIA. Anteriormente calculaba el centro de gravedad de theta en la predicción (como ahora) y posteriormente en la corrección calculaba el centro de gravedad de X e Y.
 		 * Actualmente creo que es mejor hacerlo aquí los 3 cálculos por la razón que he escrito en la nota anterior, si lo hago aquí los calculo a partir del resultado de la corrección, si calculo
 		 * X e Y después estoy utilizando una estimación sobre la odometría sin corrección*/
-		CG(0, 0) = (2 * xk_sup_1(0, 0) * std::sqrt(pk_sup_1(0, 0)) + 2 * xk_inf_1(0, 0) * std::sqrt(pk_inf_1(0, 0)) + xk_sup_1(0, 0) * std::sqrt(pk_inf_1(0, 0)) + xk_inf_1(0, 0) * std::sqrt(pk_sup_1(0, 0))) / (3 * (std::sqrt(pk_sup_1(0, 0)) + sqrt(pk_inf_1(0, 0))));
-		CG(1, 0) = (2 * xk_sup_1(1, 0) * std::sqrt(pk_sup_1(1, 1)) + 2 * xk_inf_1(1, 0) * std::sqrt(pk_inf_1(1, 1)) + xk_sup_1(1, 0) * std::sqrt(pk_inf_1(1, 1)) + xk_inf_1(1, 0) * std::sqrt(pk_sup_1(1, 1))) / (3 * (std::sqrt(pk_sup_1(1, 1)) + sqrt(pk_inf_1(1, 1))));
-		CG(2, 0) = (2 * xk_sup_1(2, 0) * std::sqrt(pk_sup_1(2, 2)) + 2 * xk_inf_1(2, 0) * std::sqrt(pk_inf_1(2, 2)) + xk_sup_1(2, 0) * std::sqrt(pk_inf_1(2, 2)) + xk_inf_1(2, 0) * std::sqrt(pk_sup_1(2, 2))) / (3 * (std::sqrt(pk_sup_1(2, 2)) + sqrt(pk_inf_1(2, 2))));
-		
+
+		printf("pk_sup_1:\n");
+		pk_sup_1.print();
+		printf("pk_inf_1:\n");
+		pk_inf_1.print();
+
+		CG(0, 0) = (2 * xk_sup_1(0, 0) * std::sqrt(std::abs(pk_sup_1(0, 0))) + 2 * xk_inf_1(0, 0) * std::sqrt(std::abs(pk_inf_1(0, 0))) + xk_sup_1(0, 0) * std::sqrt(std::abs(pk_inf_1(0, 0))) + xk_inf_1(0, 0) * std::sqrt(std::abs(pk_sup_1(0, 0)))) / (3 * (std::sqrt(std::abs(pk_sup_1(0, 0))) + sqrt(std::abs(pk_inf_1(0, 0)))));
+		CG(1, 0) = (2 * xk_sup_1(1, 0) * std::sqrt(std::abs(pk_sup_1(1, 1))) + 2 * xk_inf_1(1, 0) * std::sqrt(std::abs(pk_inf_1(1, 1))) + xk_sup_1(1, 0) * std::sqrt(std::abs(pk_inf_1(1, 1))) + xk_inf_1(1, 0) * std::sqrt(std::abs(pk_sup_1(1, 1)))) / (3 * (std::sqrt(std::abs(pk_sup_1(1, 1))) + sqrt(std::abs(pk_inf_1(1, 1)))));
+		CG(2, 0) = (2 * xk_sup_1(2, 0) * std::sqrt(std::abs(pk_sup_1(2, 2))) + 2 * xk_inf_1(2, 0) * std::sqrt(std::abs(pk_inf_1(2, 2))) + xk_sup_1(2, 0) * std::sqrt(std::abs(pk_inf_1(2, 2))) + xk_inf_1(2, 0) * std::sqrt(std::abs(pk_sup_1(2, 2)))) / (3 * (std::sqrt(std::abs(pk_sup_1(2, 2))) + sqrt(std::abs(pk_inf_1(2, 2)))));
+		CG(2, 0) = RNUtils::fixAngleRad(CG(2, 0));
+		printf("CG:\n");
+		CG.print();
 		/** Jacobianos */
 		// Jacobiano del movimiento
 		Ak(0, 2) = -deltaDistance * std::sin(CG(2, 0) + deltaAngle/2.0);
@@ -196,7 +204,8 @@ void RNPKalmanLocalizationTask::task(){
 			disp(0, 0) = 0.0; //< Siempre hay que reiniciarlas pues para el láser no hay que transformar S.Ref
 			disp(1, 0) = 0.0;
 		}
-		
+		printf("Hk:\n");
+		Hk.print();
 		/** Predicción de cuál debe ser la medida de los sensores según la posición estimada */
 		Matrix zkl_sup;
 		Matrix zkl_inf;
@@ -490,9 +499,8 @@ void RNPKalmanLocalizationTask::task(){
 		Matrix Wk_sup = Pk_sup * ~Hk * !Sk_sup;
 		Matrix Wk_inf = Pk_inf * ~Hk * !Sk_inf;
 
-
-		Wk_sup = fixFilterGain(Wk_sup, zl_sup);
-		Wk_inf = fixFilterGain(Wk_inf, zl_inf);
+		Wk_sup = fixFilterGain(Wk_sup);
+		Wk_inf = fixFilterGain(Wk_inf);
 
 
 		/** Corrección y fiabilidad */
@@ -535,12 +543,12 @@ void RNPKalmanLocalizationTask::task(){
  * @param Matriz W (ganancia de Kalman)
  * @param Matriz (Medida_tomada - Medida_predicha) 
  * */
-Matrix RNPKalmanLocalizationTask::fixFilterGain(const Matrix wk, const Matrix z){
+Matrix RNPKalmanLocalizationTask::fixFilterGain(const Matrix wk){
 	Matrix result = wk;
-	for(int i = 0; i < z.rows_size(); i++){
-		if(z(i, 0) >= -1.0e-5 and z(i, 0) <= 1.0e-5){
-			for(int j = 0; j < wk.rows_size(); j++){
-				result(j, i) = 0.0;
+	for(int i = 0; i < wk.rows_size(); i++){
+		for(int j = 0; j < wk.cols_size(); j++){
+			if(wk(i, j) >= -1.0e-5 and wk(i, j) <= 1.0e-5){
+				result(i, j) = 0.0;
 			}
 		}
 	}

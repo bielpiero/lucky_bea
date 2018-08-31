@@ -219,11 +219,12 @@ void RNTourThread::longTravel(int origin, int destiny){
 		printf("Long Travel in Map: %d\n", gn->getCurrentSector()->getMapId());
 		RNUtils::printList<int>(path);
 		std::list<int>::iterator pathIt;
+		ArPose* currPose = NULL;
 		for(pathIt = path.begin(); pathIt != path.end(); pathIt++){
 			if(*pathIt != destiny){
 				s_site* destinationSite = NULL;
 				int originSite = RN_NONE, destinySite = RN_NONE;
-				ArPose* currPose = gn->getAltPose();
+				currPose = gn->getAltPose();
 				originSite = closestNodeTo(*currPose);
 				printf("originSite: %d\n", originSite);
 				std::map<int, double> mds;
@@ -237,6 +238,9 @@ void RNTourThread::longTravel(int origin, int destiny){
 					}
 				}
 				shortTravel(originSite, destinySite);
+				delete currPose;
+				currPose = NULL;
+				RNUtils::sleep(10);
 			}
 		}
 	}
@@ -257,8 +261,11 @@ void RNTourThread::shortTravel(int origin, int destiny){
         		while((not gn->isGoalAchieved()) and (not gn->isGoalCanceled())) RNUtils::sleep(100);
 
         		if(changeSector){
+        			
         			ArPose* currPose = gn->getAltPose();
         			gn->setPosition((currPose->getX() / 1e3) + destinationSite->xcoord, (currPose->getY() / 1e3) + destinationSite->ycoord, currPose->getThRad());
+        			currPose = gn->getAltPose();
+        			printf("{x: %f, y: %f, th: %f}\n", (currPose->getX() / 1e3), (currPose->getY() / 1e3), currPose->getThRad());
         			gn->loadSector(gn->getCurrentSector()->getMapId(), destinationSite->linkedSectorId);
         			lastSiteVisitedIndex = RN_NONE;
         		}
@@ -272,6 +279,7 @@ void RNTourThread::shortTravel(int origin, int destiny){
 int RNTourThread::closestNodeTo(const ArPose& pose){
 	int nodeId = RN_NONE;
 	std::map<int, double> mds;
+	printf("Pose: {x: %f, y: %f, th: %f}\n", (pose.getX() / 1e3), (pose.getY() / 1e3), pose.getThRad());
 	for(int i = 0; i < gn->getCurrentSector()->sitesSize(); i++){
 		s_site* node = gn->getCurrentSector()->siteAt(i);
 		if(node->name != std::string(SEMANTIC_FEATURE_DOOR_STR)){
@@ -328,10 +336,10 @@ void RNTourThread::loadPredifinedSymbols(){
 	globalSymbols.emplace("ATTN:front", "ID:33");
 	globalSymbols.emplace("ATTN:right", "ID:34");
 	globalSymbols.emplace("ATTN:left", "ID:35");
-	globalSymbols.emplace("DIRE:begin", "ID:0");
-	globalSymbols.emplace("DIRE:next", "ID:1");
-	globalSymbols.emplace("DIRE:previous", "ID:2");
-	globalSymbols.emplace("DIRE:end", "ID:3");
+	globalSymbols.emplace("VAR:begin", "ID:0");
+	globalSymbols.emplace("VAR:next", "ID:1");
+	globalSymbols.emplace("VAR:previous", "ID:2");
+	globalSymbols.emplace("VAR:end", "ID:3");
 }
 
 void RNTourThread::lex(){
@@ -571,8 +579,9 @@ void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::st
 					printf("MOVE TO COMMAND\n");
 					it = std::next(it, 2);
 				} else if((*it2).substr(0, 3) == "VAR"){
-					if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
-						int direction = std::stoi(functionSymbols->at((*it2).substr(4)).c_str());
+					std::map<std::string, std::string>::iterator dir = globalSymbols.find((*it2));
+					if(dir != globalSymbols.end()){
+						int direction = std::stoi(globalSymbols.at((*it2)).substr(3));
 						moveAround(direction);
 					} else {
 						fprintf(stderr, "Unidefined VAR: %s\n", (*it2).substr(4).c_str());

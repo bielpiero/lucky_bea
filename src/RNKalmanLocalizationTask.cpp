@@ -34,7 +34,7 @@ void RNKalmanLocalizationTask::init(){
 
 		xk = gn->getRawEncoderPosition();
 		xk.print();
-		gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
+		//gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 		//gn->unlockLaserLandmarks();
 		//gn->unlockVisualLandmarks();
 		enableLocalization = true;
@@ -55,7 +55,6 @@ void RNKalmanLocalizationTask::task(){
 		xk_1 = xk;
 		double deltaDistance = 0.0, deltaAngle = 0.0;
 		gn->getIncrementPosition(&deltaDistance, &deltaAngle);
-		//printf("dd: %lf, da: %lf\n", deltaDistance, deltaAngle);
 		/*char buff[1024];
 		sprintf(buff, "%f\t%f\t%f\t%f\t%f\n", gn->getRobot()->getX(), gn->getRobot()->getY(), gn->getRobot()->getTh() * M_PI / 180.0, deltaDistance, deltaAngle);
 		if(test != NULL){
@@ -105,14 +104,14 @@ void RNKalmanLocalizationTask::task(){
 					zIndex = 2 * laserIndex;
 					laserIndex++;
 
-					landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, (xk_1(0, 0) + disp(0, 0)), (xk_1(1, 0) + disp(1, 0)));
+					landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, xk_1(0, 0), xk_1(1, 0));
 
-					Hk(zIndex, 0) = -(currLandmark->xpos - (xk_1(0, 0) + disp(0, 0)))/landmarkDistance;
-					Hk(zIndex, 1) = -(currLandmark->ypos - (xk_1(1, 0) + disp(1, 0)))/landmarkDistance;
+					Hk(zIndex, 0) = -(currLandmark->xpos - xk_1(0, 0))/landmarkDistance;
+					Hk(zIndex, 1) = -(currLandmark->ypos - xk_1(1, 0))/landmarkDistance;
 					Hk(zIndex, 2) = 0.0;
 
-					Hk(zIndex + 1, 0) = (currLandmark->ypos - (xk_1(1, 0) + disp(1, 0)))/landmarkDistance;
-					Hk(zIndex + 1, 1) = -(currLandmark->xpos - (xk_1(0, 0) + disp(0, 0)))/landmarkDistance;
+					Hk(zIndex + 1, 0) = (currLandmark->ypos - xk_1(1, 0))/landmarkDistance;
+					Hk(zIndex + 1, 1) = -(currLandmark->xpos - xk_1(0, 0))/landmarkDistance;
 					Hk(zIndex + 1, 2) = -1.0;
 				}
 			}
@@ -120,9 +119,10 @@ void RNKalmanLocalizationTask::task(){
 				if(gn->getCurrentSector()->landmarkAt(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
 					zIndex = cameraIndex;
 					cameraIndex++;
-
-					disp(0, 0) = CAMERA_ERROR_POSITION_X * std::cos(xk_1(2, 0)) - CAMERA_ERROR_POSITION_Y * std::sin(xk_1(2, 0));
-					disp(1, 0) = CAMERA_ERROR_POSITION_X * std::sin(xk_1(2, 0)) + CAMERA_ERROR_POSITION_Y * std::cos(xk_1(2, 0));
+					double nrx, nry;
+					RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, xk_1(2, 0), &nrx, &nry);
+					disp(0, 0) = nrx;
+					disp(1, 0) = nry;
 
 					landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, (xk_1(0, 0) + disp(0, 0)), (xk_1(1, 0) + disp(1, 0)));
 
@@ -134,7 +134,7 @@ void RNKalmanLocalizationTask::task(){
 			disp(0, 0) = 0.0;
 			disp(1, 0) = 0.0;
 		}
-		//printf("Hk\n");
+		//printf("Hk:\n");
 		//Hk.print();
 		/*Hk = Matrix(2 * totalLandmarks, STATE_VARIABLES);
 		int laserIndex = 0, cameraIndex = 0;
@@ -387,18 +387,14 @@ void RNKalmanLocalizationTask::task(){
 			//RNUtils::printLn("-----------> Zl, Variance: %g", gn->getCameraAngleVariance());
 			//zl.print();
 		}
-		//RNUtils::printLn("zl");
-		//zl.print();
 
 		Matrix Sk = Hk * Pk * ~Hk + currentR;
 		Matrix Wk = Pk * ~Hk * !Sk;
 
-		//printf("zl\n");
-		//zl.print();
 
-		Wk = fixFilterGain(Wk, zl);
+		Wk = fixFilterGain(Wk);
 
-		//RNUtils::printLn("Wk");
+		//printf("Wk:\n");
 		//Wk.print();
 
 		char bufferpk1[256], bufferpk[256];
@@ -406,6 +402,8 @@ void RNKalmanLocalizationTask::task(){
 		Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 		sprintf(bufferpk, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
 		xk = xk_1 + Wk * zl;
+		//printf("xk:\n");
+		//xk.print();
 		xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
 		gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 		char buffer[1024];
@@ -416,8 +414,8 @@ void RNKalmanLocalizationTask::task(){
 		
 		
 		//gn->setPosition(newPosition(0, 0), newPosition(1, 0), newPosition(2, 0));
-		bool isInsidePolygon = gn->getCurrentSector()->checkPointXYInPolygon(PointXY(xk(0, 0), xk(1, 0)));
-		if(not isInsidePolygon){
+		//bool isInsidePolygon = gn->getCurrentSector()->checkPointXYInPolygon(PointXY(xk(0, 0), xk(1, 0)));
+		//if(not isInsidePolygon){
 			//gn->loadSector(gn->getCurrenMapId(), gn->getNextSectorId());
 			//RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", gn->getNextSectorId(), gn->getCurrentSector()->getName().c_str());
 			//gn->setNextSectorId(RN_NONE);
@@ -425,18 +423,18 @@ void RNKalmanLocalizationTask::task(){
 			//gn->setLastVisitedNode(0);
 	        //gn->setPosition(newPosition(0, 0) + gn->getNextSectorCoord().getX(), newPosition(1, 0) + gn->getNextSectorCoord().getY(), newPosition(2, 0));
 	        //init();
-		}
+		//}
 	} else {
 		init();
 	}
 }
 
-Matrix RNKalmanLocalizationTask::fixFilterGain(const Matrix wk, const Matrix z){
+Matrix RNKalmanLocalizationTask::fixFilterGain(const Matrix wk){
 	Matrix result = wk;
-	for(int i = 0; i < z.rows_size(); i++){
-		if(z(i, 0) >= -1.0e-6 and z(i, 0) <= 1.0e-6){
-			for(int j = 0; j < wk.rows_size(); j++){
-				result(j, i) = 0.0;
+	for(int i = 0; i < wk.rows_size(); i++){
+		for(int j = 0; j < wk.cols_size(); j++){
+			if(wk(i, j) >= -1.0e-5 and wk(i, j) <= 1.0e-5){
+				result(i, j) = 0.0;
 			}
 		}
 	}
@@ -466,8 +464,10 @@ void RNKalmanLocalizationTask::getObservations(Matrix& observations){
 		Matrix disp = Matrix(2, 1);
 		s_landmark* landmark = gn->getCurrentSector()->landmarkAt(k);
 		if(landmark->type == XML_SENSOR_TYPE_CAMERA_STR){
-			disp(0, 0) = CAMERA_ERROR_POSITION_X * std::cos(xk_1(2, 0)) - CAMERA_ERROR_POSITION_Y * std::sin(xk_1(2, 0));
-			disp(1, 0) = CAMERA_ERROR_POSITION_X * std::sin(xk_1(2, 0)) + CAMERA_ERROR_POSITION_Y * std::cos(xk_1(2, 0));
+			double nrx, nry;
+			RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, xk_1(2, 0), &nrx, &nry);
+			disp(0, 0) = nrx;
+			disp(1, 0) = nry;
 		}
 		landmarkObservation(xk_1, disp, landmark, distance, angle);
 

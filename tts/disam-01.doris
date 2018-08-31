@@ -1,5 +1,5 @@
 function entrance 
-	move(next)
+	goto(#2,#0.9,#5)
 endfunction
 
 function reception

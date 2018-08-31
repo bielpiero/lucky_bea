@@ -16,7 +16,7 @@ private:
 
 	void getObservations(Matrix& observations_sup, Matrix& observations_inf);
 	void landmarkObservation(const Matrix& xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle);
-	Matrix fixFilterGain(const Matrix wk, const Matrix z);
+	Matrix fixFilterGain(const Matrix wk);
 private:
 	
 	static const double CAMERA_ERROR_POSITION_X;

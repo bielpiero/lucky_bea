@@ -24,9 +24,9 @@
 			<site id="1" name="way" x="680" y="270"/>
 			<site id="2" name="way" x="360" y="270"/>
 			<site id="3" name="frame" x="360" y="310"/>
-			<site id="4" name="way" x="100" y="270"/>
-			<site id="5" name="way" x="100" y="110"/>
-			<site id="6" name="door" x="100" y="0" linked-sector-id="1" xcoord="-18" ycoord="1146"/>
+			<site id="4" name="way" x="110" y="270"/>
+			<site id="5" name="way" x="110" y="110"/>
+			<site id="6" name="door" x="110" y="0" linked-sector-id="1" xcoord="-18" ycoord="1146"/>
 			<site id="7" name="door" x="0" y="110" linked-sector-id="4" xcoord="160" ycoord="0"/>
 		</sites>
 		<ways>

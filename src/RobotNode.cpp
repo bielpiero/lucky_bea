@@ -153,7 +153,8 @@ void RobotNode::positionUpdate(void){
     robotRawEncoderPosition(1, 0) = robot->getY()/1e3;
     robotRawEncoderPosition(2, 0) = robot->getTh() * M_PI / 180;
     unlockRawPosition();
-    onPositionUpdate(robotRawEncoderPosition(0, 0), robotRawEncoderPosition(1, 0), robotRawEncoderPosition(2, 0), robot->getVel(), robot->getRotVel());
+    ArPose* currPose = getAltPose();
+    onPositionUpdate(currPose->getX() / 1e3, currPose->getY() / 1e3, currPose->getThRad(), robot->getVel(), robot->getRotVel());
     onSensorsScanCompleted();
 }
 
