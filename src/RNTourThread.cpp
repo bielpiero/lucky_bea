@@ -358,6 +358,7 @@ void RNTourThread::lex(){
 	std::string cnd = "";
 	tokens.clear();
 	unsigned long long ifcounter = 0, forcounter = 0, whilecounter = 0;
+	int parcount = 0;
 	int state = 0, isnumber = 0, varstarted = 0;
 	int functionStarted = 0;
 	int callfunction = 0;
@@ -536,26 +537,40 @@ void RNTourThread::lex(){
 
 			}
 		} else if (tok == ")"){
-			if(state == 1){
+			if(parcount > 0){
+				parcount--;
 				if(ifcondition == 1){
-					tokens.insert(tpos, "CND:" + cnd);
-					tokens.insert(tpos, "BIF:" + std::to_string(ifcounter));
-					tokens.insert(tpos, "BEL:" + std::to_string(ifcounter));
-					tokens.insert(tpos, "EIF:" + std::to_string(ifcounter++));
-					tpos = std::prev(tpos, 2);
-					ifcondition = 0;
-					cnd = "";
-				} else if(str != ""){
-					tokens.insert(tpos, "VAR:" + str);
+					cnd += tok;
+					tok = "";
+				} else if(varstarted == 1){
+					var += tok;
+					tok = "";
+				} else {
+					str += tok;
+					tok = "";
 				}
-			} else if(state == 2){
-				if(isnumber == 1){
-					tokens.insert(tpos, "NUM:" + str);
-					isnumber = 0;
+			} else {
+				if(state == 1){
+					if(ifcondition == 1){
+						tokens.insert(tpos, "CND:" + cnd);
+						tokens.insert(tpos, "BIF:" + std::to_string(ifcounter));
+						tokens.insert(tpos, "BEL:" + std::to_string(ifcounter));
+						tokens.insert(tpos, "EIF:" + std::to_string(ifcounter++));
+						tpos = std::prev(tpos, 2);
+						ifcondition = 0;
+						cnd = "";
+					} else if(str != ""){
+						tokens.insert(tpos, "VAR:" + str);
+					}
+				} else if(state == 2){
+					if(isnumber == 1){
+						tokens.insert(tpos, "NUM:" + str);
+						isnumber = 0;
+					}
 				}
+				state = 0;
+				str = "";
 			}
-			state = 0;
-			str = "";
 			tok = "";
 		} else if(tok == "]"){
 			if(state == 1){
@@ -569,6 +584,9 @@ void RNTourThread::lex(){
 			tok = "";
 		} else if(state > 0){
 			if(ifcondition == 1){
+				if(tok == "(" or tok == " ("){
+					parcount++;
+				}
 				cnd += tok;
 				tok = "";
 			} else if(tok == "#"){
