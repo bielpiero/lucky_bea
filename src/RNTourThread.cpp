@@ -392,6 +392,8 @@ void RNTourThread::lex(){
 				str = "";
 				state = 0;
 				tok = "";
+			} else if(state == 1 and ifcondition == 1){
+				tok = " ";
 			} else if(state == 0 or state == 1){
 				tok = "";
 			} else if (state == 2){
@@ -403,6 +405,7 @@ void RNTourThread::lex(){
 				functionNameStatus = 0;
 				functions.emplace(functionName, wcontent_t());
 				str = "";
+				tok = "";
 			} else if(varstarted == 1 and var != ""){
 				tokens.insert(tpos, "VAR:" + var);
 				varstarted = 0;
@@ -412,6 +415,7 @@ void RNTourThread::lex(){
 				tokens.insert(tpos, "FNC:" + str);
 				callfunction = 0;
 				str = "";
+				tok = "";
 			} else if(state == 2 and isnumber == 1){
 				if(str != ""){
 					tokens.insert(tpos, "NUM:" + str);
@@ -420,8 +424,11 @@ void RNTourThread::lex(){
 				str = "";
 				state = 0;
 				tok = "";
+			} else if(state == 1 and ifcondition == 1){
+				tok = " ";
+			} else {
+				tok = "";
 			}
-			tok = "";
 		} else if(tok == "function"){
 			if(functionStarted == 0){
 				functionStarted = 1;
@@ -435,13 +442,13 @@ void RNTourThread::lex(){
 		} else if(tok == "endfunction"){
 			if(functionStarted == 1){
 				functionStarted = 0;
-				//std::cout << functionName << std::endl;
-				//printList(tokens);
 				wcontent_t currentContent = functions.at(functionName);
 				currentContent.tokens = tokens;
 				functions[functionName] = currentContent;
 				tokens.clear();
-				
+				ifcounter = 0;
+				forcounter = 0; 
+				whilecounter = 0;
 			} else {
 				functionStarted = -1;
 			}
@@ -484,7 +491,7 @@ void RNTourThread::lex(){
 			varstarted = 1;
 			var = "";
 			tok = "";
-		} else if (tok == "(" or tok == "["){
+		} else if ((tok == "(" or tok == "[") and state == 0){
 			state = 1;
 			tok = "";
 		} else if(tok == "=" and state == 0){
@@ -547,10 +554,9 @@ void RNTourThread::lex(){
 					isnumber = 0;
 				}
 			}
+			state = 0;
 			str = "";
 			tok = "";
-			state = 0;
-			
 		} else if(tok == "]"){
 			if(state == 1){
 				tokens.insert(tpos, "OPT:" + str);
@@ -562,7 +568,10 @@ void RNTourThread::lex(){
 			str += tok;
 			tok = "";
 		} else if(state > 0){
-			if(tok == "#"){
+			if(ifcondition == 1){
+				cnd += tok;
+				tok = "";
+			} else if(tok == "#"){
 				tok = "";
 				if(isnumber == 0){
 					isnumber = 1;
