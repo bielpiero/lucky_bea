@@ -356,19 +356,22 @@ void RNTourThread::lex(){
 	std::string str = "";
 	std::string var = "";
 	std::string cnd = "";
+	std::string ret = "VOID";
 	tokens.clear();
 	unsigned long long ifcounter = 0, forcounter = 0, whilecounter = 0;
 	int parcount = 0;
-	int state = 0, isnumber = 0, varstarted = 0;
+	int state = 0, isnumber = 0, varstarted = 0, retstarted = 0;
 	int functionStarted = 0;
-	int callfunction = 0;
-	int ifcondition = 0, elsestate = 0;
+	int infunction = 0, ifstarted = 0;
+	int expr_started = 0, elsestate = 0;
 	int equalfound = 0;
 	std::string functionName = "";
 	int functionNameStatus = 0;
 	for(it = fileContent.begin(); it != fileContent.end(); it++){
 		tok += *it;
+		//std::cout << tok << std::endl;
 		if(*it == ' '){
+			tok = tok.substr(0, tok.size() - 1);
 			if(functionStarted == 1 and functionNameStatus == 1 and str != ""){
 				functionNameStatus = 0;
 				functionName = str;
@@ -376,14 +379,9 @@ void RNTourThread::lex(){
 				str = "";
 				tok = "";
 			} else if(varstarted == 1 and var != ""){
-				tokens.insert(tpos, "VAR:" + var);
+				tokens.insert(tpos, "DVR:" + var);
 				varstarted = 0;
 				var = "";
-				tok = "";
-			} else if (callfunction == 1 and str != ""){
-				tokens.insert(tpos, "FNC:" + str);
-				callfunction = 0;
-				str = "";
 				tok = "";
 			} else if(state == 2 and isnumber == 1){
 				if(str != ""){
@@ -393,29 +391,31 @@ void RNTourThread::lex(){
 				str = "";
 				state = 0;
 				tok = "";
-			} else if(state == 1 and ifcondition == 1){
-				tok = " ";
+			} else if(tok != "" and expr_started == 0 and std::regex_match(tok, std::regex("[a-zA-Z_$][a-zA-Z_$0-9]*"))){
+				tokens.insert(tpos, "VAR:" + tok);
+				tok = "";
+			} else if(state == 1 and expr_started == 1){
+				tok += " ";
 			} else if(state == 0 or state == 1){
 				tok = "";
 			} else if (state == 2){
 				tok = " ";
+			} else if(retstarted == 1 and cnd == ""){
+				tok = "";
 			}
 		} else if(*it == '\n' or *it == '\t'){
+			tok = tok.substr(0, tok.size() - 1);
 			if(functionStarted == 1 and functionNameStatus == 1 and str != ""){
 				functionName = str;
 				functionNameStatus = 0;
 				functions.emplace(functionName, wcontent_t());
+				//updateTokens(functionName);
 				str = "";
 				tok = "";
 			} else if(varstarted == 1 and var != ""){
-				tokens.insert(tpos, "VAR:" + var);
+				tokens.insert(tpos, "DVR:" + var);
 				varstarted = 0;
 				var = "";
-				tok = "";
-			} else if (callfunction == 1 and str != ""){
-				tokens.insert(tpos, "FNC:" + str);
-				callfunction = 0;
-				str = "";
 				tok = "";
 			} else if(state == 2 and isnumber == 1){
 				if(str != ""){
@@ -425,9 +425,19 @@ void RNTourThread::lex(){
 				str = "";
 				state = 0;
 				tok = "";
-			} else if(state == 1 and ifcondition == 1){
-				tok = " ";
-			} else {
+			} else if(tok != "" and expr_started == 0 and std::regex_match(tok, std::regex("[a-zA-Z_$][a-zA-Z_$0-9]*"))){
+				tokens.insert(tpos, "VAR:" + tok);
+				tok = "";
+			} else if(retstarted == 1 and expr_started == 1 and cnd != ""){
+				tokens.insert(tpos, "EXP:" + cnd);
+				retstarted = 0;
+				expr_started = 0;
+				state = 0;
+				cnd = "";
+				tok = "";
+			} else if(state == 1 and expr_started == 1){
+				tok += " ";
+			}  else {
 				tok = "";
 			}
 		} else if(tok == "function"){
@@ -443,7 +453,10 @@ void RNTourThread::lex(){
 		} else if(tok == "endfunction"){
 			if(functionStarted == 1){
 				functionStarted = 0;
+				std::cout << functionName << std::endl;
+				RNUtils::printList<std::string>(tokens);
 				wcontent_t currentContent = functions.at(functionName);
+				currentContent.result = ret;
 				currentContent.tokens = tokens;
 				functions[functionName] = currentContent;
 				tokens.clear();
@@ -456,7 +469,9 @@ void RNTourThread::lex(){
 			tok = "";
 		} else if(tok == "if"){
 			tokens.insert(tpos, "IF");
-			ifcondition = 1;
+			infunction = 1;
+			expr_started = 1;
+			ifstarted = 1;
 			tok = "";
 		} else if(tok == "else"){
 			elsestate++;
@@ -469,36 +484,61 @@ void RNTourThread::lex(){
 			} else {
 				tpos = std::next(tpos, 2);
 			}
-		} else if(tok == "call"){
-			tokens.insert(tpos, "CALL");
-			callfunction = 1;
 			tok = "";
 		} else if(tok == "move"){
 			tokens.insert(tpos, "MOVE");
+			infunction = 1;
 			tok = "";
 		} else if(tok == "goto"){
 			tokens.insert(tpos, "GOTO");
+			infunction = 1;
 			tok = "";
 		} else if(tok == "say"){
 			tokens.insert(tpos, "SAY");
+			infunction = 1;
 			tok = "";
 		} else if(tok == "turn"){
 			tokens.insert(tpos, "TURN");
+			infunction = 1;
 			tok = "";
 		} else if(tok == "attention"){
 			tokens.insert(tpos, "ATTENTION");
+			infunction = 1;
 			tok = "";
 		} else if(tok == "var"){
 			varstarted = 1;
 			var = "";
 			tok = "";
-		} else if ((tok == "(" or tok == "[") and state == 0){
+		} else if(tok == "return"){
+			tokens.insert(tpos, "RETURN");
+			retstarted = 1;
+			expr_started = 1;
+			infunction = 1;
+			state = 1;
+			tok = "";
+		} else if(tok == "(" and state == 0 and functionStarted == 1 and functionNameStatus == 1 and str != ""){
+			functionName = str;
+			functionNameStatus = 0;
+			functions.emplace(functionName, wcontent_t());
+			state = 1;
+			str = "";
+			tok = "";
+		} else if((*it) == '(' and state == 0 and tok != "" and infunction == 0){
+			tok = tok.substr(0, tok.size() - 1);
+			tokens.insert(tpos, "FNC:" + tok);
+			str = "";
+			tok = "";
+		} else if (tok == "(" and state == 0 and infunction == 1){
+			state = 1;
+			tok = "";
+		} else if (tok == "[" and state == 0 and infunction == 1){
 			state = 1;
 			tok = "";
 		} else if(tok == "=" and state == 0){
 			state = 1;
+			tokens.insert(tpos, "EQ");
 			tok = "";
-		} else if (tok == "\""){
+		} else if (tok == "\"" and expr_started == 0){
 			if(state == 1){
 				state = 2;
 				str += tok;
@@ -510,7 +550,7 @@ void RNTourThread::lex(){
 				state = 0;
 			}
 			tok = "";
-		} else if(tok == "#"){ 
+		} else if(tok == "#" and expr_started == 0){ 
 			if(state == 1){
 				state = 2;
 				isnumber = 1;
@@ -539,7 +579,7 @@ void RNTourThread::lex(){
 		} else if (tok == ")"){
 			if(parcount > 0){
 				parcount--;
-				if(ifcondition == 1){
+				if(expr_started == 1){
 					cnd += tok;
 					tok = "";
 				} else if(varstarted == 1){
@@ -551,13 +591,14 @@ void RNTourThread::lex(){
 				}
 			} else {
 				if(state == 1){
-					if(ifcondition == 1){
-						tokens.insert(tpos, "CND:" + cnd);
+					if(ifstarted == 1){
+						tokens.insert(tpos, "EXP:" + cnd);
 						tokens.insert(tpos, "BIF:" + std::to_string(ifcounter));
 						tokens.insert(tpos, "BEL:" + std::to_string(ifcounter));
 						tokens.insert(tpos, "EIF:" + std::to_string(ifcounter++));
 						tpos = std::prev(tpos, 2);
-						ifcondition = 0;
+						ifstarted = 0;
+						expr_started = 0;
 						cnd = "";
 					} else if(str != ""){
 						tokens.insert(tpos, "VAR:" + str);
@@ -568,6 +609,7 @@ void RNTourThread::lex(){
 						isnumber = 0;
 					}
 				}
+				infunction = 0;
 				state = 0;
 				str = "";
 			}
@@ -583,7 +625,7 @@ void RNTourThread::lex(){
 			str += tok;
 			tok = "";
 		} else if(state > 0){
-			if(ifcondition == 1){
+			if(expr_started == 1){
 				if(tok == "(" or tok == " ("){
 					parcount++;
 				}
@@ -601,9 +643,6 @@ void RNTourThread::lex(){
 		} else if (varstarted == 1){
 			var += tok;
 			tok = "";
-		} else if(callfunction == 1){
-			str += tok;
-			tok = "";
 		}
 	}
 }
@@ -613,15 +652,19 @@ void RNTourThread::parse(){
 	std::map<std::string, wcontent_t>::iterator fit_main;
 	fit_main = functions.find("main");
 	if(fit_main != functions.end()){
+		wcontent_t content = fit_main->second;
 		std::map<std::string, std::string> symbols;
-		parse(fit_main->second.tokens, &symbols);
-		fit_main->second.symbols = symbols;
+		parse(fit_main->first, &content);
+		fit_main->second = content;
 	} else {
 		printf("FUNCTION MAIN NOT FOUND\n");
 	}
 }
 
-void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::string, std::string>* functionSymbols){
+void RNTourThread::parse(std::string functionName, wcontent_t* content){
+	std::list<std::string> functionTokens = content->tokens;
+	std::map<std::string, std::string>* functionSymbols = &content->symbols;
+	//RNUtils::printList<std::string>(functionTokens);
 	std::list<std::string>::iterator it = functionTokens.begin();
 	std::stack<std::string> ifIdsStack;
 	while(it != functionTokens.end()){
@@ -715,21 +758,19 @@ void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::st
 					it = std::next(it, 2);
 				}
 			} 
-		} else if((*it) == "CALL"){
-			if(it2 != functionTokens.end() and (*it2).substr(0, 3) == "FNC"){
-				std::string functionName = (*it2).substr(4);
-				std::map<std::string, wcontent_t>::iterator fit_call;
-				fit_call = functions.find(functionName);
-				if(fit_call != functions.end()){
-					std::map<std::string, std::string> symbols;
-					parse(fit_call->second.tokens, &symbols);
-					fit_call->second.symbols = symbols;
-				} else {
-					printf("FUNCTION %s NOT FOUND\n", functionName.c_str());
-				}
-				it = std::next(it, 2);
+		} else if((*it).substr(0, 3) == "FNC"){
+			printf("CALL FUNCTION\n");
+			std::string nextFunctionName = (*it).substr(4);
+			std::map<std::string, wcontent_t>::iterator fit_call;
+			fit_call = functions.find(nextFunctionName);
+			if(fit_call != functions.end()){
+				wcontent_t content = fit_call->second;
+				parse(nextFunctionName, &content);
+				fit_call->second = content;
+			} else {
+				printf("FUNCTION %s NOT FOUND\n", nextFunctionName.c_str());
 			}
-			
+			it = std::next(it, 1);
 		} else if((*it) == "SAY"){
 			if(it2 != functionTokens.end()){
 				if((*it2).substr(0, 3) == "STR"){
@@ -740,7 +781,7 @@ void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::st
 						printf("SAY VAR: %s\n", functionSymbols->at((*it2).substr(4)).c_str());
 						//lips->textToViseme((*it2).substr(4));
 					} else {
-						fprintf(stderr, "Unidefined VAR: %s\n", (*it2).substr(4).c_str());
+						fprintf(stderr, "Undefined VAR: %s\n", (*it2).substr(4).c_str());
 					}
 					it = std::next(it, 2);
 				} else if((*it2).substr(0, 3) == "OPT"){
@@ -753,27 +794,38 @@ void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::st
 					}
 				}
 			} 
-		} else if((*it).substr(0, 3) == "VAR"){
-			if(it2 != functionTokens.end()){
-				if((*it2).substr(0, 3) == "STR" or (*it2).substr(0, 3) == "NUM"){
+		} else if((*it).substr(0, 3) == "DVR"){
+			if(it2 != functionTokens.end() and it3 != functionTokens.end()){
+				if((*it2) == "EQ" and ((*it3).substr(0, 3) == "STR" or (*it3).substr(0, 3) == "NUM")){
+					printf("VAR WITH DATA\n");
 					if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
-						functionSymbols->emplace((*it).substr(4), (*it2));
+						functionSymbols->emplace((*it).substr(4), (*it3));
 					} else {
-						functionSymbols->at((*it).substr(4)) = (*it2);
+						functionSymbols->at((*it).substr(4)) = (*it3);
 					}
-					it = std::next(it, 2);
-				} else if((*it2).substr(0, 3) == "VAR"){
-					if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
+					it = std::next(it, 3);
+				} else if((*it2) == "EQ" and (*it3).substr(0, 3) == "VAR"){
+					printf("VAR FROM OTHER VAR\n");
+					if(functionSymbols->find((*it3).substr(4)) != functionSymbols->end()){
 						if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
-							functionSymbols->emplace((*it).substr(4), functionSymbols->at((*it2).substr(4)));
+							functionSymbols->emplace((*it).substr(4), functionSymbols->at((*it3).substr(4)));
 						} else {
-							functionSymbols->at((*it).substr(4)) = functionSymbols->at((*it2).substr(4));
+							functionSymbols->at((*it).substr(4)) = functionSymbols->at((*it3).substr(4));
 						}
 					} else {
-						fprintf(stderr, "Unidefined VAR: %s\n", (*it2).substr(4).c_str());
+						fprintf(stderr, "Undefined VAR: %s\n", (*it2).substr(4).c_str());
 					}
-					it = std::next(it, 2);
+					it = std::next(it, 3);
+				} else if((*it2) == "EQ" and (*it3).substr(0, 3) == "FNC"){
+					printf("ASSIGNING VALUE OF VAR %s FROM FUNCTION %s\n", (*it).substr(4).c_str(), (*it3).substr(4).c_str());
+					if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
+						functionSymbols->emplace((*it).substr(4), "UNK:nil");
+					} else {
+						fprintf(stderr, "VAR: %s, already exists\n", (*it).substr(4).c_str());
+					}
+					it = std::next(it, 3);
 				} else {
+					printf("DECLARED VAR %s\n", (*it).substr(4).c_str());
 					if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
 						functionSymbols->emplace((*it).substr(4), "UNK:nil");
 					} else {
@@ -781,10 +833,56 @@ void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::st
 					}
 					it++;
 				}
+			} else {
+				printf("DECLARED VAR %s\n", (*it).substr(4).c_str());
+				if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
+					functionSymbols->emplace((*it).substr(4), "UNK:nil");
+				} else {
+					fprintf(stderr, "VAR: %s, already exists\n", (*it).substr(4).c_str());
+				}
+				it++;
 			}
+		} else if((*it).substr(0, 3) == "VAR"){
+			if(functionSymbols->find((*it).substr(4)) != functionSymbols->end()){
+				if((*it2) == "EQ" and ((*it3).substr(0, 3) == "STR" or (*it3).substr(0, 3) == "NUM")){
+					printf("VAR WITH DATA\n");
+					if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
+						functionSymbols->emplace((*it).substr(4), (*it3));
+					} else {
+						functionSymbols->at((*it).substr(4)) = (*it3);
+					}
+					it = std::next(it, 3);
+				} else if((*it2) == "EQ" and (*it3).substr(0, 3) == "VAR"){
+					printf("VAR FROM OTHER VAR\n");
+					if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
+						functionSymbols->at((*it).substr(4)) = functionSymbols->at((*it3).substr(4));
+					} else {
+						fprintf(stderr, "Unidefined VAR: %s\n", (*it2).substr(4).c_str());
+					}
+					it = std::next(it, 3);
+				} else if((*it2) == "EQ" and (*it3).substr(0, 3) == "FNC"){
+					printf("UPDATING VALUE OF VAR %s FROM FUNCTION %s\n", (*it).substr(4).c_str(), (*it3).substr(4).c_str());
+					if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
+						functionSymbols->emplace((*it).substr(4), "UNK:nil");
+					} else {
+						fprintf(stderr, "VAR: %s, already exists\n", (*it).substr(4).c_str());
+					}
+					it = std::next(it, 3);
+				}
+			} else {
+				fprintf(stderr, "Undefined VAR: %s\n", (*it).substr(4).c_str());
+				it++;
+			}
+		} else if((*it) == "RETURN"){
+			if(it2 != functionTokens.end() and (*it2).substr(0, 3) == "EXP"){
+				std::string r = evaluateExpression((*it2).substr(4), *functionSymbols);
+				functions.at(functionName).result = r;
+			}
+			it = functionTokens.end();
 		} else if((*it) == "IF"){
-			bool r = evaluateCondition((*it2).substr(4)); //hacer recursive descent parser
-			if(r){
+			std::string r = evaluateExpression((*it2).substr(4), *functionSymbols); //hacer recursive descent parser
+
+			if(r == "1"){
 				it = std::next(it, 3);
 				ifIdsStack.push((*it3).substr(4));
 			} else {
@@ -819,8 +917,232 @@ void RNTourThread::parse(std::list<std::string> functionTokens, std::map<std::st
 	}
 }
 
-bool RNTourThread::evaluateCondition(std::string condition){
-	return true;
+std::string RNTourThread::evaluateExpression(std::string expr, std::map<std::string, std::string> symbols){
+	std::stack<std::string> exprStack;
+	std::string result = "";
+	std::list<std::string> tokens = tokenizeExpCond(expr);
+	RNUtils::printList<std::string>(tokens);
+	std::list<std::string>::iterator itokens;
+	bool ok_sofar = true;
+	for(itokens = tokens.begin(); itokens != tokens.end() and ok_sofar; itokens++){
+		if((*itokens).substr(0, 3) == "VAR"){
+			std::map<std::string, std::string>::iterator var = symbols.find((*itokens).substr(4));
+			if(var != symbols.end()){
+				*itokens = var->second;
+			} else {
+				fprintf(stderr, "error: Undefined variable %s in this scope\n", (*itokens).substr(4).c_str());
+				ok_sofar = false;
+			}
+		} else if((*itokens).substr(0, 3) == "FNC"){
+			std::map<std::string, wcontent_t>::iterator itFnc;
+			itFnc = functions.find((*itokens).substr(4));
+			if(itFnc != functions.end()){
+				wcontent_t content = itFnc->second;
+				parse(itFnc->first, &content);
+				if(functions.at(itFnc->first).result != "VOID"){
+					*itokens = functions.at(itFnc->first).result;
+				} else {
+					fprintf(stderr, "error: Function %s does not return value\n", (*itokens).substr(4).c_str());
+				}
+				
+			} else {
+				fprintf(stderr, "error: Undefined function %s in this scope\n", (*itokens).substr(4).c_str());
+				ok_sofar = false;
+			}
+		}
+	}
+
+	RNUtils::printList<std::string>(tokens);
+
+	//solveExpParenthesis(&tokens, symbols);
+	result = tokens.front();
+	return result;
+}
+
+void RNTourThread::solveExpParenthesis(std::list<std::string>* tokens){
+	std::list<std::string> mini_tokens;
+	std::list<std::string>::reverse_iterator itoks_s = std::find(tokens->rbegin(), tokens->rend(), "(");
+	int idx_start = RN_NONE, idx_end = RN_NONE;
+	if(itoks_s != tokens->rend()){
+		idx_start = (tokens->size() - 1) - std::distance(tokens->rbegin(), itoks_s);
+	}
+	std::list<std::string>::iterator itoks_e = std::find(std::next(tokens->begin(), idx_start), tokens->end(), ")");
+	if(itoks_e != tokens->end()){
+		idx_end = std::distance(tokens->begin(), itoks_e);
+	}
+	if(idx_start != RN_NONE and idx_end != RN_NONE){
+		mini_tokens.insert(mini_tokens.end(), std::next(tokens->begin(), idx_start + 1), std::next(tokens->begin(), idx_end));
+		RNUtils::printList<std::string>(mini_tokens);
+		solveExp(&mini_tokens);
+		tokens->insert(std::next(tokens->begin(), idx_start), mini_tokens.front());
+		tokens->erase(std::next(tokens->begin(), idx_start), std::next(tokens->begin(), idx_end + 1));
+
+	}
+	
+	std::cout << "Empieza en: " << idx_start << ", y termina en: " << idx_end << std::endl;
+}
+
+void RNTourThread::solveExp(std::list<std::string>* tokens){
+
+}
+
+std::list<std::string> RNTourThread::tokenizeExpCond(std::string expr_cond){
+	std::string::iterator it = expr_cond.begin();
+	std::list<std::string> tokens;
+	std::string tok = "";
+	std::string str = "";
+	int state = 0;
+	int evalfunc = 0;
+	while(it != expr_cond.end()){
+		if(tok == "and" and (*it == '(' or *it == ')' or *it == '\"' or *it == '#')){
+			tokens.emplace_back("AND");
+			tok = "";
+		} else if(tok == "or" and (*it == '(' or *it == ')' or *it == '\"' or *it == '#')){
+			tokens.emplace_back("OR");
+			tok = "";
+		} else if(tok == "not" and (*it == '(' or *it == ')' or *it == '\"' or *it == '#')){
+			tokens.emplace_back("NOT");
+			tok = "";
+		} 
+
+		if(*it == ' '){
+			if(state == 2){
+				if(str != ""){
+					tokens.emplace_back("NUM:" + str);
+				}
+				str = "";
+				state = 0;
+				tok = "";
+			} else if(tok != "" and (tok != "and" and tok != "or" and tok != "not") and std::regex_match(tok, std::regex("[a-zA-Z_$][a-zA-Z_$0-9]*"))){
+				tokens.emplace_back("VAR:" + tok);
+			} else if(tok == "and"){
+				tokens.emplace_back("AND");
+			} else if(tok == "or"){
+				tokens.emplace_back("OR");
+			} else if(tok == "not"){
+				tokens.emplace_back("NOT");
+			}
+			tok = "";
+		} else if(*it == '#'){ 
+			if(state == 0){
+				state = 2;
+			}
+			tok = "";
+		} else if (*it == '\"'){
+			if(state == 0){
+				state = 1;
+			} else if (state == 1){
+				if(str != ""){
+					tokens.emplace_back("STR:" + str);
+				}
+				str = "";
+				state = 0;
+			}
+			tok = "";
+		} else if(*it == '('){
+			if(tok != ""){
+				tokens.emplace_back("FNC:" + tok);
+				evalfunc = 1;
+			} else {
+				tokens.emplace_back("(");
+			}
+			tok = "";
+		
+		} else if(*it == ')'){
+			if(evalfunc == 1){
+				evalfunc = 0;
+			} else {
+				if(tok != "" and std::regex_match(tok, std::regex("[a-zA-Z_$][a-zA-Z_$0-9]*"))){
+					tokens.emplace_back("VAR:" + tok);
+				} else if(state == 2){
+					if(str != ""){
+						tokens.emplace_back("NUM:" + str);
+					}
+					str = "";
+					state = 0;
+				}
+				tokens.emplace_back(")");
+			}
+
+		} else if(*it == '+' or *it == '-' or *it == '*' or *it == '/'){
+			if(tok != "" or str != ""){
+				if(state == 2){
+					if(str != ""){
+						tokens.emplace_back("NUM:" + str);
+					}
+					str = "";
+					state = 0;
+				} else if(tok != "" and std::regex_match(tok, std::regex("[a-zA-Z_$][a-zA-Z_$0-9]*"))){
+					tokens.emplace_back("VAR:" + tok);
+				}
+				tok = "";
+			}
+			std::string oper = "";
+			oper += *it;
+			tokens.emplace_back(oper);
+			tok = "";
+		} else if(*it == '=' or *it == '!' or *it == '<'  or *it == '>'){
+			if(tok != "" or str != ""){
+				if(state == 2){
+					if(str != ""){
+						tokens.emplace_back("NUM:" + str);
+					}
+					str = "";
+					state = 0;
+				} else if(tok != "" and std::regex_match(tok, std::regex("[a-zA-Z_$][a-zA-Z_$0-9]*"))){
+					tokens.emplace_back("VAR:" + tok);
+				}
+				tok = "";
+			}
+			std::string::iterator it2 = std::next(it, 1);
+			if(*it2 == '='){
+				if(*it == '='){
+					tokens.emplace_back("EQU");
+					tok = "";
+				} else if(*it == '!'){
+					tokens.emplace_back("NEQ");
+					tok = "";
+				} else if(*it == '<'){
+					tokens.emplace_back("LEQ");
+					tok = "";
+				} else if(*it == '>'){
+					tokens.emplace_back("GEQ");
+					tok = "";
+				}
+				it++;
+			} else {
+				if(*it == '='){
+					
+				} else if(*it == '!'){
+					
+				} else if(*it == '<'){
+					tokens.emplace_back("LT");
+					tok = "";
+				} else if(*it == '>'){
+					tokens.emplace_back("GT");
+					tok = "";
+				}
+			}
+		} else if(state > 0){
+			str += *it;
+			tok = "";
+		} else if(state == 0){
+			tok += *it;
+		}
+		it++;
+	}
+	if(tok != "" or str != ""){
+		if(tok != "" and std::regex_match(tok, std::regex("[a-zA-Z_$][a-zA-Z_$0-9]*"))){
+			tokens.emplace_back("VAR:" + tok);
+		} else if(state == 2){
+			if(str != ""){
+				tokens.emplace_back("NUM:" + str);
+			}
+			str = "";
+			state = 0;
+		}
+	}
+	return tokens;
 }
 
 std::map<std::string, std::string> RNTourThread::createOptionsMap(std::string opts){

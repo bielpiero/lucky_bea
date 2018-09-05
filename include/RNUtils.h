@@ -33,6 +33,7 @@
 #include <locale>
 #include <algorithm>
 #include <stack>
+#include <regex>
 
 #include "Matrix.h"
 #include "stats.h"

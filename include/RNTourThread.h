@@ -20,22 +20,6 @@ public:
 	void go();   
 	void loadProgram(std::string filename);
 private:
-	void* runThread(void* object);
-	void task();
-
-	void tripTo(int dst_sector, double dst_x, double dst_y);
-	void shortTravel(int origin, int destiny);
-	void longTravel(int origin, int destiny);
-	void moveAround(int direction);
-	int closestNodeTo(const ArPose& pose);
-	void lex();
-	void parse();
-	void parse(std::list<std::string> functionTokens, std::map<std::string, std::string> *functionSymbols);
-	void loadPredifinedSymbols();
-	bool evaluateCondition(std::string condition);
-	std::map<std::string, std::string> createOptionsMap(std::string opts);
-	void processOptions(std::map<std::string, std::string> opts);
-private:
 	GeneralController* gn;
 	std::string name;
 	std::string description;
@@ -53,12 +37,33 @@ private:
 	struct wcontent_t{
 		std::map<std::string, std::string> symbols;
 		std::list<std::string> tokens;
+		std::string result;
 	};
 	std::map<std::string, wcontent_t > functions;
 	std::map<std::string, std::string> globalSymbols;
 
 	std::ifstream file;
 	DorisLipSync* lips;
+private:
+	void* runThread(void* object);
+	void task();
+
+	void tripTo(int dst_sector, double dst_x, double dst_y);
+	void shortTravel(int origin, int destiny);
+	void longTravel(int origin, int destiny);
+	void moveAround(int direction);
+	int closestNodeTo(const ArPose& pose);
+	void lex();
+	void parse();
+	void parse(std::string functionName, wcontent_t* content);
+	void loadPredifinedSymbols();
+	std::string evaluateExpression(std::string condition, std::map<std::string, std::string> symbols);
+	std::map<std::string, std::string> createOptionsMap(std::string opts);
+	void processOptions(std::map<std::string, std::string> opts);
+	std::list<std::string> tokenizeExpCond(std::string expr_cond);
+	void solveExpParenthesis(std::list<std::string>* tokens);
+	void solveExp(std::list<std::string>* tokens);
+
 };
 
 #endif
