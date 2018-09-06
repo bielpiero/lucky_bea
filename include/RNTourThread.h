@@ -64,6 +64,10 @@ private:
 	void solveExpParenthesis(std::list<std::string>* tokens);
 	void solveExp(std::list<std::string>* tokens);
 
+	void factor(std::list<std::string>* tokens);
+	void term(std::list<std::string>* tokens);
+	void simpExpr(std::list<std::string>* tokens);
+
 };
 
 #endif
