@@ -363,7 +363,7 @@ void RNTourThread::lex(){
 	int state = 0, isnumber = 0, varstarted = 0, retstarted = 0;
 	int functionStarted = 0;
 	int infunction = 0, ifstarted = 0;
-	int expr_started = 0, elsestate = 0;
+	int expr_started = 0, elsestate = 0, equal_started = 0;
 	int equalfound = 0;
 	std::string functionName = "";
 	int functionNameStatus = 0;
@@ -432,6 +432,13 @@ void RNTourThread::lex(){
 				tokens.insert(tpos, "EXP:" + cnd);
 				retstarted = 0;
 				expr_started = 0;
+				state = 0;
+				cnd = "";
+				tok = "";
+			} else if(equal_started == 1 and expr_started == 1 and cnd != ""){
+				tokens.insert(tpos, "EXP:" + cnd);
+				expr_started = 0;
+				equal_started = 0;
 				state = 0;
 				cnd = "";
 				tok = "";
@@ -537,6 +544,8 @@ void RNTourThread::lex(){
 		} else if(tok == "=" and state == 0){
 			state = 1;
 			tokens.insert(tpos, "EQ");
+			equal_started = 1;
+			expr_started = 1;
 			tok = "";
 		} else if (tok == "\"" and expr_started == 0){
 			if(state == 1){
@@ -796,32 +805,13 @@ void RNTourThread::parse(std::string functionName, wcontent_t* content){
 			} 
 		} else if((*it).substr(0, 3) == "DVR"){
 			if(it2 != functionTokens.end() and it3 != functionTokens.end()){
-				if((*it2) == "EQ" and ((*it3).substr(0, 3) == "STR" or (*it3).substr(0, 3) == "NUM")){
-					printf("VAR WITH DATA\n");
+				if((*it2) == "EQ" and (*it3).substr(0, 3) == "EXP"){
+					printf("VAR WITH EXP\n");
+					std::string r = evaluateExpression((*it3).substr(4), *functionSymbols);
 					if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
-						functionSymbols->emplace((*it).substr(4), (*it3));
+						functionSymbols->emplace((*it).substr(4), r);
 					} else {
-						functionSymbols->at((*it).substr(4)) = (*it3);
-					}
-					it = std::next(it, 3);
-				} else if((*it2) == "EQ" and (*it3).substr(0, 3) == "VAR"){
-					printf("VAR FROM OTHER VAR\n");
-					if(functionSymbols->find((*it3).substr(4)) != functionSymbols->end()){
-						if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
-							functionSymbols->emplace((*it).substr(4), functionSymbols->at((*it3).substr(4)));
-						} else {
-							functionSymbols->at((*it).substr(4)) = functionSymbols->at((*it3).substr(4));
-						}
-					} else {
-						fprintf(stderr, "Undefined VAR: %s\n", (*it2).substr(4).c_str());
-					}
-					it = std::next(it, 3);
-				} else if((*it2) == "EQ" and (*it3).substr(0, 3) == "FNC"){
-					printf("ASSIGNING VALUE OF VAR %s FROM FUNCTION %s\n", (*it).substr(4).c_str(), (*it3).substr(4).c_str());
-					if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
-						functionSymbols->emplace((*it).substr(4), "UNK:nil");
-					} else {
-						fprintf(stderr, "VAR: %s, already exists\n", (*it).substr(4).c_str());
+						functionSymbols->at((*it).substr(4)) = r;
 					}
 					it = std::next(it, 3);
 				} else {
@@ -844,35 +834,17 @@ void RNTourThread::parse(std::string functionName, wcontent_t* content){
 			}
 		} else if((*it).substr(0, 3) == "VAR"){
 			if(functionSymbols->find((*it).substr(4)) != functionSymbols->end()){
-				if((*it2) == "EQ" and ((*it3).substr(0, 3) == "STR" or (*it3).substr(0, 3) == "NUM")){
-					printf("VAR WITH DATA\n");
-					if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
-						functionSymbols->emplace((*it).substr(4), (*it3));
-					} else {
-						functionSymbols->at((*it).substr(4)) = (*it3);
-					}
-					it = std::next(it, 3);
-				} else if((*it2) == "EQ" and (*it3).substr(0, 3) == "VAR"){
-					printf("VAR FROM OTHER VAR\n");
-					if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
-						functionSymbols->at((*it).substr(4)) = functionSymbols->at((*it3).substr(4));
-					} else {
-						fprintf(stderr, "Unidefined VAR: %s\n", (*it2).substr(4).c_str());
-					}
-					it = std::next(it, 3);
-				} else if((*it2) == "EQ" and (*it3).substr(0, 3) == "FNC"){
-					printf("UPDATING VALUE OF VAR %s FROM FUNCTION %s\n", (*it).substr(4).c_str(), (*it3).substr(4).c_str());
-					if(functionSymbols->find((*it).substr(4)) == functionSymbols->end()){
-						functionSymbols->emplace((*it).substr(4), "UNK:nil");
-					} else {
-						fprintf(stderr, "VAR: %s, already exists\n", (*it).substr(4).c_str());
-					}
+				if((*it2) == "EQ" and (*it3).substr(0, 3) == "EXP"){
+					printf("UPDATING VALUE OF VAR %s FROM EXP\n", (*it).substr(4).c_str());
+					std::string r = evaluateExpression((*it3).substr(4), *functionSymbols);
+					functionSymbols->at((*it).substr(4)) = r;
 					it = std::next(it, 3);
 				}
 			} else {
 				fprintf(stderr, "Undefined VAR: %s\n", (*it).substr(4).c_str());
 				it++;
 			}
+
 		} else if((*it) == "RETURN"){
 			if(it2 != functionTokens.end() and (*it2).substr(0, 3) == "EXP"){
 				std::string r = evaluateExpression((*it2).substr(4), *functionSymbols);
