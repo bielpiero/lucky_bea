@@ -36,7 +36,9 @@ private:
 	std::vector<std::string> sequence;
 	struct wcontent_t{
 		std::map<std::string, std::string> symbols;
+		std::list<std::string> arguments;
 		std::list<std::string> tokens;
+		int requiredArguments;
 		std::string result;
 	};
 	std::map<std::string, wcontent_t > functions;
