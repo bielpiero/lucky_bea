@@ -74,11 +74,11 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	laserTask = new RNLaserTask(this);
 	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
 	//rfidTask = new RNRFIdentificationTask(this);
-	dialogs = new RNDialogsTask(this);
-	gestures = new RNGesturesTask(this);
+	//dialogs = new RNDialogsTask(this);
+	//gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
-	emotions = new RNEmotionsTask(this);
-	tourThread = new RNTourThread(this);
+	//emotions = new RNEmotionsTask(this);
+	//tourThread = new RNTourThread(this);
 	//eyesCameras = new RNCameraTask(this);
 
 	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
@@ -88,17 +88,15 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	}
 	
 	////Tasks added:
-	//tasks->addTask(globalLocalization);
 	tasks->addTask(laserTask);
 	//tasks->addTask(omnidirectionalTask);
 	//tasks->addTask(rfidTask);
-	tasks->addTask(dialogs);
-	tasks->addTask(gestures);
+	//tasks->addTask(dialogs);
+	//tasks->addTask(gestures);
 	//tasks->addTask(armGestures);
-	tasks->addTask(emotions);
-	tasks->addTask(localization);
-
+	//tasks->addTask(emotions);
 	//tasks->addTask(eyesCameras);
+	tasks->addTask(localization);
 	
 	
 	//Start all tasks;

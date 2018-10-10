@@ -418,12 +418,12 @@ int RNRFIdentificationTask::addROSpec(void){
             case 1:
             	powerIndexAntenna1 = 40;
                 pRFTransmitter->setTransmitPower(powerIndexAntenna1); // (value * .25) + 10.0 = -30.25 dBm // max power when using PoE
-                pRFReceiver->setReceiverSensitivity(42); // 1 --> -80 dBm;
+                pRFReceiver->setReceiverSensitivity(30); // 1 --> -80 dBm;
                 break;
             case 2:
-            	powerIndexAntenna2 = 60;
+            	powerIndexAntenna2 = 40;
                 pRFTransmitter->setTransmitPower(powerIndexAntenna2); // (value * .25) + 10.0 = -27.75 dBm
-                pRFReceiver->setReceiverSensitivity(42); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
+                pRFReceiver->setReceiverSensitivity(30); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
                 break;
         }
 

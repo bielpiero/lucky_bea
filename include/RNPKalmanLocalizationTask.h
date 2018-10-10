@@ -22,6 +22,20 @@ private:
 	static const double CAMERA_ERROR_POSITION_X;
 	static const double CAMERA_ERROR_POSITION_Y;
 	static const float MULTIPLIER_FACTOR;
+
+	static const float odom_dist_sup;
+	static const float odom_dist_inf;
+	static const float odom_angl_sup;
+	static const float odom_angl_inf;
+
+	static const float camera_angl_sup;
+	static const float camera_angl_inf;
+
+	static const float laser_dist_sup;
+	static const float laser_dist_inf;
+	static const float laser_angl_sup;
+	static const float laser_angl_inf;
+
 	int laserLandmarksCount;
 	int cameraLandmarksCount;
 
@@ -48,6 +62,9 @@ private:
 	Matrix pk_inf_1;
 	Matrix Pk_sup;
 	Matrix Pk_inf;
+
+	Matrix currentR_sup;
+    Matrix currentR_inf;
 };
 
 #endif

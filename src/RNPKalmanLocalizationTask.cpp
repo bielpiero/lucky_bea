@@ -3,7 +3,20 @@
 const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.25;
 const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.014;
 
-const float RNPKalmanLocalizationTask::MULTIPLIER_FACTOR = 4;
+//const float RNPKalmanLocalizationTask::MULTIPLIER_FACTOR = 4;
+
+const float RNPKalmanLocalizationTask::odom_dist_sup = 0.044;
+const float RNPKalmanLocalizationTask::odom_dist_inf = 0.060;
+const float RNPKalmanLocalizationTask::odom_angl_sup = 0.066;
+const float RNPKalmanLocalizationTask::odom_angl_inf = 0.100;
+
+const float RNPKalmanLocalizationTask::camera_angl_sup = 0.045;
+const float RNPKalmanLocalizationTask::camera_angl_inf = 0.085;
+
+const float RNPKalmanLocalizationTask::laser_dist_sup = 0.0175;
+const float RNPKalmanLocalizationTask::laser_dist_inf = 0.0250;
+const float RNPKalmanLocalizationTask::laser_angl_sup = 0.0200;
+const float RNPKalmanLocalizationTask::laser_angl_inf = 0.0475;
 
 RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
@@ -21,22 +34,39 @@ void RNPKalmanLocalizationTask::init(){
 		Bk = Matrix(3, 2);
 		CG = Matrix(3, 1);
 		Pk_sup = gn->getP();
-		Pk_inf = MULTIPLIER_FACTOR * gn->getP(); 
+		Pk_inf = gn->getP(); 
 
 		laserLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_LASER_STR);
 		cameraLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_CAMERA_STR);
-
-		laserTMDistance = gn->getLaserDistanceAlpha() / std::sqrt(gn->getLaserDistanceVariance());
-		laserTMAngle = gn->getLaserAngleAlpha() / std::sqrt(gn->getLaserAngleVariance());
-		//cameraTMDistance = gn->getCameraDistanceAlpha() / std::sqrt(gn->getCameraDistanceVariance());
-		cameraTMDistance = 0.1;
-		cameraTMAngle = gn->getCameraAngleAlpha() / std::sqrt(gn->getCameraAngleVariance());
 
 		xk_sup = gn->getRawEncoderPosition();
 		xk_inf = gn->getRawEncoderPosition();
 		//gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 		//gn->unlockLaserLandmarks();
 		//gn->unlockVisualLandmarks();
+
+		int laserIndex = 0, cameraIndex = 0;
+		if(gn->isLaserSensorActivated()){
+			cameraIndex = 2 * laserLandmarksCount; 
+		}
+		int sizeR = (gn->isLaserSensorActivated() ? 2 * laserLandmarksCount : 0) + (gn->isCameraSensorActivated() ? cameraLandmarksCount : 0);
+        currentR_sup = Matrix(sizeR, sizeR);
+        currentR_inf = Matrix(sizeR, sizeR);
+
+		// currentR_sup
+		for (int kkk = laserIndex; kkk < cameraIndex; kkk += 2){
+			currentR_sup(kkk, kkk) = std::pow(laser_dist_sup, 2) / 3.0;
+			currentR_sup(kkk + 1, kkk + 1) = std::pow(laser_angl_sup, 2) / 3.0;
+
+			currentR_inf(kkk, kkk) = std::pow(laser_dist_inf, 2) / 3.0;
+			currentR_inf(kkk + 1, kkk + 1) = std::pow(laser_angl_inf, 2) / 3.0;
+		}
+		for (int kkk = cameraIndex; kkk < sizeR; kkk++){
+			currentR_sup(kkk, kkk) = std::pow(camera_angl_sup, 2) / 3.0;
+
+			currentR_inf(kkk, kkk) = std::pow(camera_angl_inf, 2) / 3.0;
+		}
+
 		enableLocalization = true;
 
 	} else {
@@ -62,26 +92,17 @@ void RNPKalmanLocalizationTask::task(){
 		
 		// Obtener desplazamiento realizado
 		gn->getIncrementPosition(&deltaDistance, &deltaAngle);
+
+		//printf("pk_sup_1:\n");
+		//pk_sup_1.print();
+		//printf("pk_inf_1:\n");
+		//pk_inf_1.print();
+
 		
-		// Actualización de las estimaciones de la posición según la odometría (pos anterior + incremento)
-		RNUtils::getOdometryPose(xk_sup, deltaDistance, deltaAngle, xk_sup_1);
-		RNUtils::getOdometryPose(xk_inf, deltaDistance, deltaAngle, xk_inf_1);
-		/** Centro de gravedad */
-		/* NOTAS: FERNANDO MATIA. Anteriormente calculaba el centro de gravedad de theta en la predicción (como ahora) y posteriormente en la corrección calculaba el centro de gravedad de X e Y.
-		 * Actualmente creo que es mejor hacerlo aquí los 3 cálculos por la razón que he escrito en la nota anterior, si lo hago aquí los calculo a partir del resultado de la corrección, si calculo
-		 * X e Y después estoy utilizando una estimación sobre la odometría sin corrección*/
-
-		printf("pk_sup_1:\n");
-		pk_sup_1.print();
-		printf("pk_inf_1:\n");
-		pk_inf_1.print();
-
-		CG(0, 0) = (2 * xk_sup_1(0, 0) * std::sqrt(std::abs(pk_sup_1(0, 0))) + 2 * xk_inf_1(0, 0) * std::sqrt(std::abs(pk_inf_1(0, 0))) + xk_sup_1(0, 0) * std::sqrt(std::abs(pk_inf_1(0, 0))) + xk_inf_1(0, 0) * std::sqrt(std::abs(pk_sup_1(0, 0)))) / (3 * (std::sqrt(std::abs(pk_sup_1(0, 0))) + sqrt(std::abs(pk_inf_1(0, 0)))));
-		CG(1, 0) = (2 * xk_sup_1(1, 0) * std::sqrt(std::abs(pk_sup_1(1, 1))) + 2 * xk_inf_1(1, 0) * std::sqrt(std::abs(pk_inf_1(1, 1))) + xk_sup_1(1, 0) * std::sqrt(std::abs(pk_inf_1(1, 1))) + xk_inf_1(1, 0) * std::sqrt(std::abs(pk_sup_1(1, 1)))) / (3 * (std::sqrt(std::abs(pk_sup_1(1, 1))) + sqrt(std::abs(pk_inf_1(1, 1)))));
-		CG(2, 0) = (2 * xk_sup_1(2, 0) * std::sqrt(std::abs(pk_sup_1(2, 2))) + 2 * xk_inf_1(2, 0) * std::sqrt(std::abs(pk_inf_1(2, 2))) + xk_sup_1(2, 0) * std::sqrt(std::abs(pk_inf_1(2, 2))) + xk_inf_1(2, 0) * std::sqrt(std::abs(pk_sup_1(2, 2)))) / (3 * (std::sqrt(std::abs(pk_sup_1(2, 2))) + sqrt(std::abs(pk_inf_1(2, 2)))));
+		CG(2, 0) = (2 * xk_sup_1(2, 0) * std::sqrt(pk_sup_1(2, 2)) + 2 * xk_inf_1(2, 0) * std::sqrt(pk_inf_1(2, 2)) + xk_sup_1(2, 0) * std::sqrt(pk_inf_1(2, 2)) + xk_inf_1(2, 0) * std::sqrt(pk_sup_1(2, 2))) / (3 * (std::sqrt(pk_sup_1(2, 2)) + sqrt(pk_inf_1(2, 2))));
 		CG(2, 0) = RNUtils::fixAngleRad(CG(2, 0));
-		printf("CG:\n");
-		CG.print();
+		//printf("CG:\n");
+		//CG.print();
 		/** Jacobianos */
 		// Jacobiano del movimiento
 		Ak(0, 2) = -deltaDistance * std::sin(CG(2, 0) + deltaAngle/2.0);
@@ -96,36 +117,28 @@ void RNPKalmanLocalizationTask::task(){
 
 		Bk(2, 0) = 0.0;
 		Bk(2, 1) = 1.0;
+
+		// Actualización de las estimaciones de la posición según la odometría (pos anterior + incremento)
+		RNUtils::getOdometryPose(xk_sup, deltaDistance, deltaAngle, xk_sup_1);
+		RNUtils::getOdometryPose(xk_inf, deltaDistance, deltaAngle, xk_inf_1);
 		
 		/** Matriz ruido desplazamiento */	
-		Matrix currentQ_sup = gn->getQ();
-		Matrix currentQ_inf = MULTIPLIER_FACTOR * gn->getQ();
-		if(deltaDistance == 0.0 and deltaAngle == 0.0){
-			currentQ_sup = Matrix(2, 2);
-			currentQ_inf = Matrix(2,2);
-		}
-
-		/*	NOTAS: Borrar esto si no hace falta
-		Matrix currentQ_sup = Matrix(2,2);
-		Matrix currentQ_inf = Matrix(2,2);
-		
-		// Si ha habido movimiento se utiliza la matriz de ruido del movimiento, si no se deja en 0, 0
-		if(deltaDistance != 0.0 or deltaAngle != 0.0)
-		{
-			currentQ_sup(0,0) = pow(odom_x_sup, 2);
-			currentQ_sup(1,1) = pow(odom_y_sup, 2);
+		Matrix currentQ_sup = Matrix(2, 2);
+		Matrix currentQ_inf = Matrix(2, 2);
+		if(deltaDistance != 0.0 and deltaAngle != 0.0){
+			currentQ_sup(0, 0) = pow(odom_dist_sup, 2) / 3.0;
+			currentQ_sup(1, 1) = pow(odom_angl_sup, 2) / 3.0;
 			
-			currentQ_inf(0,0) = pow(odom_x_inf, 2);
-			currentQ_inf(1,1) = pow(odom_y_inf, 2);
-		}
-		*/
-		
+			currentQ_inf(0, 0) = pow(odom_dist_inf, 2) / 3.0;
+			currentQ_inf(1, 1) = pow(odom_angl_inf, 2) / 3.0;
+		}	
 
 		/** Fiabilidad de la estimación por odometría */
 		Pk_sup = (Ak * pk_sup_1 * ~Ak) + (Bk * currentQ_sup * ~Bk);
 		Pk_inf = (Ak * pk_inf_1 * ~Ak) + (Bk * currentQ_inf * ~Bk);
 		
-		
+		CG(0, 0) = (2 * xk_sup_1(0, 0) * std::sqrt(Pk_sup(0, 0)) + 2 * xk_inf_1(0, 0) * std::sqrt(Pk_inf(0, 0)) + xk_sup_1(0, 0) * std::sqrt(Pk_inf(0, 0)) + xk_inf_1(0, 0) * std::sqrt(Pk_sup(0, 0))) / (3 * (std::sqrt(Pk_sup(0, 0)) + sqrt(Pk_inf(0, 0))));
+        CG(1, 0) = (2 * xk_sup_1(1, 0) * std::sqrt(Pk_sup(1, 1)) + 2 * xk_inf_1(1, 0) * std::sqrt(Pk_inf(1, 1)) + xk_sup_1(1, 0) * std::sqrt(Pk_inf(1, 1)) + xk_inf_1(1, 0) * std::sqrt(Pk_sup(1, 1))) / (3 * (std::sqrt(Pk_sup(1, 1)) + sqrt(Pk_inf(1, 1))));
 		
 		
 		/** *** CORRECCIÓN *** */		
@@ -204,8 +217,8 @@ void RNPKalmanLocalizationTask::task(){
 			disp(0, 0) = 0.0; //< Siempre hay que reiniciarlas pues para el láser no hay que transformar S.Ref
 			disp(1, 0) = 0.0;
 		}
-		printf("Hk:\n");
-		Hk.print();
+		//printf("Hk:\n");
+		//Hk.print();
 		/** Predicción de cuál debe ser la medida de los sensores según la posición estimada */
 		Matrix zkl_sup;
 		Matrix zkl_inf;
@@ -232,14 +245,36 @@ void RNPKalmanLocalizationTask::task(){
 			rsize = gn->getLaserLandmarks()->size();
 				
 			// Para todas las marcas del laser
-			/** Con el láser la baliza no otorga información sobre su ID, hay que averiguar qué baliza es
-			*  El método que se va a utilizar para ello es Mahalanobis
-			* NOTAS FERNANDO MATIA
-			*  EKF Fuzzy tiene dos estimaciones, NO se puede aceptar una baliza para una de las estimaciones y para la otra no. Es decir, las balizas aceptadas son para ambas estimaciones.
-			*  Por lo tanto no es necesario aplicar el análisis con ambas estimaciones. Se va a aplicar solo con la estimación sup, esta es la estimación de la zona posible = donde se 
-			*  considera que va a estar el robot. Adicionalmente la estimación superior, al tener menos margen de error, produce distancias de Mahalanobis mayores; así el análisis es 
-			*  más severo y todas las balizas aceptadas para la estimación superior deben valer para la estimación inferior (zona NO imposible) 
-			*  Tampoco tiene sentido usar el CG(1, 0)a que es necesario aplicar la predicción de la medida zkl*/
+            /** Con el láser la baliza no otorga información sobre su ID, hay que averiguar qué baliza es.
+             *  El método que se va a utilizar para ello es Mahalanobis. 
+             *  Se calcula para cada baliza detectada: (medida_tomada - medida_predicha) usando la baliza encontrada y cada una de las balizas posibles (teóricamente).
+             *  La baliza teórica correspondiente a la baliza encontrada será la que produzca menor error (menor distancia de Mahalanobis)
+             * 
+             *  Ejemplo: Estamos en una sala con 3 balizas (a, b, c) y detectamos 2 (x, y). 
+             *  - Se calcula Zkl y su D.Mahalanobis con la información de x y la información que se obtendría de a
+             *  - "     "     "     "                                     x                                      b
+             *  - "     "     "     "                                     x                                      c
+             *  - La baliza x corresponderá a la baliza a, b o c que tenga una menor D.Mahalanobis
+             *  - Lo mismo con y
+             *  
+             * 
+             *  NOTAS: EKF Fuzzy tiene dos estimaciones. SÍ se puede dar el caso de que cada una de las estimaciones sup/inf obtenga catalogaciones diferentes. 
+             *  ¿Cómo afectaría una catalogación distinta para cada estimación?
+             *    + La corrección es específica para cada estimación
+             *    - Que la corrección sea específica para cada estimación NO hace que esta sea mejor. De hecho puede mantenerlas separadas
+             *    - Si una corrige bien y la otra mal se potencia que el trapecio se deforme
+             * 
+             *  ¿Cómo afectaría usar para ambos la misma?
+             *    + Si acierta las dos estimaciones corrigen bien. Si falla ambas corrigen mal. -> Esto favorece que los trapecios se mantengane estables 
+             *    + Respeta el hecho de que una medida es única, la misma para ambas estimaciones
+             *   ESTA PARECE LA MÁS ACORDE
+             * 
+             *  ¿Tiene sentido calcular esto respecto al centro de gravedad en lugar de respecto a las estimaciones?
+             *    + Si el centro de gravedad está más ajustado con la posición real -> es beneficioso aplicar esto en el CG pues se va a realizar una corrección mejor
+             *    - Habría que obtener la posición predicha respecto del CG
+             *    - Para obtener omega (Sk, matriz de fiabilidad de la inovación en la medida), habría que tener un ruido acorde al CG. 
+             *   NO SE PUEDE!!!!
+             */
 			for (int i = 0; i < gn->getLaserLandmarks()->size(); i++){
 				RNLandmark* lndmrk = gn->getLaserLandmarks()->at(i);
 
@@ -255,8 +290,8 @@ void RNPKalmanLocalizationTask::task(){
 				*/
 				// NOTAS: TIENE QUE RECIBIR LA SUPERIOR 
 				Matrix smallR_sup(2, 2);
-				smallR_sup(0, 0) = gn->getLaserDistanceVariance();
-				smallR_sup(1, 1) = gn->getLaserAngleVariance();
+				smallR_sup(0,0) = pow(laser_dist_sup, 2) / 3.0;
+                smallR_sup(1,1) = pow(laser_angl_sup, 2) / 3.0;
 
 
 				/** Medidas tomadas para esta baliza */
@@ -293,7 +328,7 @@ void RNPKalmanLocalizationTask::task(){
 					//RNUtils::printLn("Euclidean Distance[%d]: %f", j, euclideanDistances.at(j));	
 				}
 
-				/** Descarte por Mahalanobis. Se descartan medidas según Mahalanobis. De las medidas restantes se selecciona la más pequeña*/
+				/** Descarte por Mahalanobis. Se selecciona la más pequeña */
 				float minorDistance = std::numeric_limits<float>::infinity();
 				int indexFound = RN_NONE;
 				for (int j = 0; j < euclideanDistances.size(); j++){
@@ -329,26 +364,28 @@ void RNPKalmanLocalizationTask::task(){
 					}
 					
 					//RNUtils::printLn("markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, Error: {d: %f, a: %f}", indexFound, lndmrk->getPointsXMean() , lndmrk->getPointsYMean() , zkl(indexFound , 0), zkl(indexFound , 1), zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
-					
-					/** NOTAS: FALTA CUIDADO (Fernando Matia)
-					* 
-					* 
-					* 
-					*  
-					* 
-					* 
-					*
-					double mdDistance = std::abs(zl(2 * indexFound, 0) / std::sqrt(gn->getLaserDistanceVariance()));
+
+
+
+
+
+					/** NOTAS: Esto NO es mahalanobis. Es simplemente la inovación de la distancia o o o o o o o  del ángulo entre su varianza. NO juzga ambas a la vez
+					 * - corrección distancia / varianza distancia
+					 * - corrección ángulo / varianza ángulo
+					 * 
+					 * Simplemente podría aplicar que si la inovación es mayor que un rango a fregar
+					 * Si el error / varianción típica láser 
+					 * 
+                    double mdDistance = std::abs(zl(2 * indexFound, 0) / std::sqrt(gn->getLaserDistanceVariance()));
 					double mdAngle = std::abs(zl(2 * indexFound + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
 					//printf("Mhd: (%d), %lg, %lg, nud: %lg, nua: %lg\n", i, mdDistance, mdAngle, zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
 					if (mdDistance > laserTMDistance or mdAngle > laserTMAngle)
 					{
-						//distanceThreshold = (máxima zl que permite un buen matching)/sigma
-						//RNUtils::printLn("landmark %d rejected...", indexFound);
 						zl(2 * indexFound, 0) = 0.0;
 						zl(2 * indexFound + 1, 0) = 0.0;
-						rsize--;
-					}*/
+						rsize--; //< Esto solo me indica cuantas balizas he usado
+					}		
+					*/	
 				
 				}
 			}
@@ -410,87 +447,13 @@ void RNPKalmanLocalizationTask::task(){
 							}
 						}
 					}
-				} else { 
-					/** NOTAS: FALTA CUIDADO 
-					 * 
-					 * 
-					 * 
-					 * 
-					 * 
-					 * */
-					RNUtils::printLn("1a ADAPTACIÓN DEL CÓDIGO, LA ACEPTACIÓN POR MAHALANOBIS DE CÁMARA ESTÁ IGNORADA");
 				}
 			}
 			
-			/** NOTAS: FALTA CUIDADO (Fernando Matía)
-			 * 
-			 * 
-			 * 
-			 *  
-			 * 
-			 * 
-			 *
-			//Calculates Mahalanobis distance to determine whether a measurement is acceptable.				
-			//for (int i = cameraIndex; i < (cameraIndex + cameraLandmarksCount); i++){
-			for (int i = cameraIndex; i < zkl.rows_size(); i++)
-			{
-				//double mdDistance = std::abs(zl(2 * i, 0) / std::sqrt(gn->getCameraDistanceVariance()));
-				//double mdDistance = 0;
-				double mdAngle = std::abs(zl(i + laserOffset, 0) / std::sqrt(gn->getCameraAngleVariance()));
-				//printf("Mh: (%d): %g. nu: %g\n", i, mdAngle, zl(i + laserOffset, 0));
-				if (mdAngle > cameraTMAngle){
-					//RNUtils::printLn("Landmark %d rejected...", (int)zkl(i, 3));
-					//distanceThreshold = (máxima zl que permite un buen matching)/sigma
-					//zl(2 * i, 0) = 0;
-					zl(i + laserOffset, 0) = 0;
-					vsize--;
-				}
-			}	
-			*/
-			
+		
 			gn->getVisualLandmarks()->clear();
 			gn->unlockVisualLandmarks();
 		}
-		
-
-
-		/** Matriz de ruido de los sensores esteroceptivos */
-		/* Basándome en Hk = Matrix(sizeH, STATE_VARIABLES); */
-		Matrix currentR_sup = gn->getR();
-		Matrix currentR_inf = MULTIPLIER_FACTOR * gn->getR();
-		
-
-
-		// Nota: como esto es un añadido de Víctor Jiménez, por lo que pueda pasar, se ha cambiado el nombre de las variables duplicando la última letra (Indexx)
-		/* NOTAS: Borrar si no es necesario, añadido pr Víctor
-		int laserIndexx = 0, cameraIndexx = 0;
-		if(gn->isLaserSensorActivated()){
-			cameraIndexx = 2 * laserLandmarksCount; 
-		}
-		
-		// NOTAS: COMPROBAR ESTO CUIDADO
-		// currentQ_sup
-		for (int kkk = laserIndexx; kkk < cameraIndexx; kkk += 2)
-		{
-			currentR_sup(kkk, kkk) = pow(laser_dist_sup, 2);
-			currentR_sup(kkk + 1, kkk + 1) = pow(laser_angl_sup, 2);
-		}
-		for (int kkk = cameraIndex; kkk < zkl_sup.rows_size(); kkk ++)
-		{
-			currentR_sup(kkk, kkk) = pow(camera_angl_sup, 2);
-		}
-		
-		// currentQ_inf
-		for (int kkk = laserIndexx; kkk < cameraIndexx; kkk += 2)
-		{
-			currentR_inf(kkk, kkk) = pow(laser_dist_inf, 2);
-			currentR_inf(kkk + 1, kkk + 1) = pow(laser_angl_inf, 2);
-		}
-		for (int kkk = cameraIndex; kkk < zkl_sup.rows_size(); kkk ++)
-		{
-			currentR_inf(kkk, kkk) = pow(camera_angl_inf, 2);
-		}
-		*/
 		
 		/** Matrices S y W */
 		Matrix Sk_sup = Hk * Pk_sup * ~Hk + currentR_sup;
@@ -522,7 +485,9 @@ void RNPKalmanLocalizationTask::task(){
 		sprintf(bufferxk1_inf, "%.4lf\t%.4lf\t%.4lf", xk_inf_1(0, 0), xk_inf_1(1, 0), xk_inf_1(2, 0));
 
 		xk_sup = xk_sup_1 + Wk_sup * zl_sup;
+		xk_sup(2, 0) = RNUtils::fixAngleRad(xk_sup(2, 0));
 		xk_inf = xk_inf_1 + Wk_inf * zl_inf;
+		xk_inf(2, 0) = RNUtils::fixAngleRad(xk_inf(2, 0));
 
 		sprintf(bufferxk_sup, "%.4lf\t%.4lf\t%.4lf", xk_sup(0, 0), xk_sup(1, 0), xk_sup(2, 0));
 		sprintf(bufferxk_inf, "%.4lf\t%.4lf\t%.4lf", xk_inf(0, 0), xk_inf(1, 0), xk_inf(2, 0));

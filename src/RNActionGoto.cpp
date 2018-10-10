@@ -43,8 +43,8 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 	if(this->currentState == STATE_GOING_TO_GOAL){
 
 		float deltaThetaLocal = 0.0, distanceLocal = 0.0;
-		//ArPose* currPose = new ArPose(myRobot->getPose());
-		ArPose* currPose = rn->getAltPose();
+		ArPose* currPose = new ArPose(myRobot->getPose());
+		//ArPose* currPose = rn->getAltPose();
 		//RNUtils::printLn("{currpose: {x: %f, y: %f, th: %f}}", currPose.getX(), currPose.getY(), currPose.getThRad());
 		//RNUtils::printLn("{goal: {x: %f, y: %f, th: %f}}", goal.getX(), goal.getY(), goal.getThRad());
 		if(currPose){
