@@ -1,23 +1,21 @@
 <sectors sequence="0,1,0">
 	<sector id="0" name="Mobile Robots" width="895" height="458" polygon="m 0 0 l 0 458 l 895 0 l 0 -458 z" adjacency="1,4">
 		<landmarks>
-			<landmark id="0" type="laser" x="33" y="30" z="0"/>
-			<landmark id="1" type="laser" x="52" y="230" z="0"/>
-			<landmark id="2" type="laser" x="200" y="110" z="0"/>
-			<landmark id="3" type="laser" x="200" y="390" z="0"/>
-			<landmark id="4" type="laser" x="360" y="110" z="0"/>
-			<landmark id="5" type="laser" x="360" y="390" z="0"/>
-			<landmark id="6" type="laser" x="600" y="110" z="0"/>
-			<landmark id="7" type="laser" x="600" y="386" z="0"/>
-			<landmark id="8" type="laser" x="714" y="217" z="0"/>
-			<landmark id="9" type="laser" x="714" y="338" z="0"/>
-			<landmark id="10" type="laser" x="165" y="30" z="0"/>
+			<landmark id="0" type="laser" x="33" y="23" z="0"/>
+			<landmark id="1" type="laser" x="52" y="223" z="0"/>
+			<landmark id="2" type="laser" x="120" y="143" z="0"/>
+			<landmark id="3" type="laser" x="200" y="383" z="0"/>
+			<landmark id="4" type="laser" x="360" y="103" z="0"/>
+			<landmark id="5" type="laser" x="360" y="383" z="0"/>
+			<landmark id="6" type="laser" x="480" y="103" z="0"/>
+			<landmark id="7" type="laser" x="480" y="383" z="0"/>
+			<landmark id="8" type="laser" x="714" y="209" z="0"/>
+			<landmark id="9" type="laser" x="714" y="330" z="0"/>
+			<landmark id="10" type="laser" x="165" y="23" z="0"/>
 		</landmarks>
 		<features>
-			
 			<feature id="0" name="door" width="120" height="10" x="100" y="0"/>
 			<feature id="1" name="door" width="10" height="80" x="0" y="65"/>
-
 		</features>
 		<sites sequence="6,5,4,2">
 			<site id="0" name="charger" x="680" y="110"/>
@@ -39,6 +37,11 @@
 			<way st="6" adjacency="5"/>
 			<way st="7" adjacency="5"/>
 		</ways>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" side="right"/>
+			<tag id="e280-1160-6000-0207-28b5-6834" name="door" side="right"/>
+		</tags>
+
 	</sector>
 	<sector id="4" name="MR-FM Hallway" width="160" height="400" polygon="m 0 0 l 0 400 l 160 0 l 0 -400 z" adjacency="5,6">
 		<landmarks>
@@ -54,6 +57,7 @@
 
 		</sites>
 		<ways/>
+		<tags/>
 	</sector>
 	<sector id="6" name="FM Office" width="310" height="420" polygon="m 0 0 l 0 420 l 310 0 l 0 -420 z" adjacency="4">
 		<landmarks>
@@ -68,6 +72,7 @@
 
 		</sites>
 		<ways/>
+		<tags/>
 	</sector>
 	<sector id="5" name="PdlP Office" width="310" height="420" polygon="m 0 0 l 0 420 l 310 0 l 0 -420 z" adjacency="4">
 		<landmarks>
@@ -80,6 +85,7 @@
 
 		</sites>
 		<ways/>
+		<tags/>
 	</sector>
 	<sector id="1" name="Computer Vision" width="1030" height="1146" reference="2" polygon="m 0 0 l 0 1146 l 1030 0 l 0 -1146 z" adjacency="0,2,7,8">
 		<landmarks>
@@ -125,6 +131,16 @@
 			<way st="6" adjacency="5"/>
 			<way st="7" adjacency="5"/>
 		</ways>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-2cd4" name="crossway" side="right"/>
+			<tag id="e280-1160-6000-0207-28b5-2cc4" name="crossway" side="left"/>
+			<tag id="e280-1160-6000-0207-28b5-6844" name="crossway" side="left"/>
+			<tag id="e280-1160-6000-0207-28b5-6854" name="crossway" side="right"/>
+			<tag id="e280-1160-6000-0207-28b5-2cf4" name="crossway" side="right"/>
+			<tag id="e280-1160-6000-0207-28b5-2ce4" name="crossway" side="left"/>
+			<tag id="e280-1160-6000-0207-28b5-2ca4" name="hallway" side="left"/>
+			<tag id="e280-1160-6000-0207-28b5-6834" name="hallway" side="right"/>
+		</tags>
 	</sector>
 	<sector id="7" name="Workshop Place" width="400" height="400" polygon="m 0 0 l 0 400 l 400 0 l 0 -400 z" adjacency="1">
 		<landmarks>
@@ -135,6 +151,7 @@
 		</features>
 		<sites sequence="0,1,3"/>
 		<ways/>
+		<tags/>
 	</sector>
 	<sector id="8" name="AM Office" width="400" height="400" polygon="m 0 0 l 0 400 l 400 0 l 0 -400 z" adjacency="1">
 		<landmarks>
@@ -145,6 +162,7 @@
 		</features>
 		<sites sequence="0,1,3"/>
 		<ways/>
+		<tags/>
 	</sector>
 	<sector id="2" name="Main Hallway" width="180" height="1059" polygon="m 0 0 l 0 1059 l 180 0 l 0 -1059 z" adjacency="1,3,9,10,11,12">
 		<landmarks>
@@ -188,6 +206,10 @@
 			<way st="8" adjacency="7"/>
 			<way st="9" adjacency="7"/>
 		</ways>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-6864" name="hallway" side="left"/>
+			<tag id="e280-1160-6000-0207-28b5-6884" name="hallway" side="right"/>
+		</tags>
 	</sector>
 	<sector id="10" name="Computer Room" width="1340" height="500" polygon="m 0 0 l 0 500 l 1340 0 l 0 -500 z" adjacency="2">
 		<landmarks>
@@ -197,6 +219,8 @@
 			<feature id="0" name="door" width="10" height="80" x="0" y="60" linked-sector-id="7" xcoord="420" ycoord="0"/>
 		</features>
 		<sites sequence="0,1,3"/>
+		<ways/>
+		<tags/>
 	</sector>
 	<sector id="9" name="Teleoperation" width="1340" height="500" polygon="m 0 0 l 0 500 l 1340 0 l 0 -500 z" adjacency="2">
 		<landmarks>
@@ -207,6 +231,7 @@
 		</features>
 		<sites sequence="0,1,3"/>
 		<ways/>
+		<tags/>
 	</sector>
 	<sector id="11" name="EP Office" width="120" height="300" polygon="m 0 0 l 0 300 l 120 0 l 0 -300 z" adjacency="2">
 		<landmarks/>
@@ -216,6 +241,7 @@
 		</features>
 		<sites sequence="0,1,3"/>
 		<ways/>
+		<tags/>
 	</sector>
 	<sector id="12" name="Bathrooms" width="120" height="300" polygon="m 0 0 l 0 300 l 120 0 l 0 -300 z" adjacency="2">
 		<landmarks>
@@ -226,6 +252,8 @@
 			<feature id="1" name="door" width="10" height="80" x="160" y="60" linked-sector-id="12" xcoord="-160" ycoord="0"/>
 		</features>
 		<sites sequence="0,1,3"/>
+		<ways/>
+		<tags/>
 	</sector>
 	<sector id="3" name="Main Receiver" width="256" height="610" polygon="m 0 0 l 0 610 l 256 0 l 0 -610 z" adjacency="2,13,14,15,16">
 		<landmarks>
@@ -241,6 +269,7 @@
 
 		</sites>
 		<ways/>
+		<tags/>
 	</sector>
 	<sector id="16" name="Cybernetics Workshop" width="350" height="1000" polygon="m 0 0 l 0 350 l 1000 0 l 0 -350 z" adjacency="3">
 		<landmarks>
@@ -251,6 +280,8 @@
 			<feature id="1" name="door" width="10" height="80" x="160" y="60" linked-sector-id="13" xcoord="-160" ycoord="0"/>
 		</features>
 		<sites sequence="0,1,3"/>
+		<ways/>
+		<tags/>
 	</sector>
 	<sector id="15" name="Cybernetics Hall" width="350" height="1000" polygon="m 0 0 l 0 350 l 1000 0 l 0 -350 z" adjacency="3">
 		<landmarks>
@@ -262,6 +293,7 @@
 		</features>
 		<sites sequence="0,1,3"/>
 		<ways/>
+		<tags/>
 	</sector>
 	<sector id="14" name="JdC Office" width="350" height="1000" polygon="m 0 0 l 0 350 l 1000 0 l 0 -350 z" adjacency="3">
 		<landmarks>
@@ -272,6 +304,8 @@
 			<feature id="1" name="door" width="10" height="80" x="160" y="60" linked-sector-id="13" xcoord="-160" ycoord="0"/>
 		</features>
 		<sites sequence="0,1,3"/>
+		<ways/>
+		<tags/>
 	</sector>
 	<sector id="13" name="ASLab" width="350" height="1000" polygon="m 0 0 l 0 350 l 1000 0 l 0 -350 z" adjacency="3">
 		<landmarks>
@@ -283,6 +317,7 @@
 		</features>
 		<sites sequence="0,1,3"/>
 		<ways/>
+		<tags/>
 	</sector>
 </sectors>
 

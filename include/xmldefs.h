@@ -35,6 +35,8 @@
 #define XML_ELEMENT_SITE_STR "site"
 #define XML_ELEMENT_WAYS_STR "ways"
 #define XML_ELEMENT_WAY_STR "way"
+#define XML_ELEMENT_TAGS_STR "tags"
+#define XML_ELEMENT_TAG_STR "tag"
 
 #define XML_ELEMENT_VISEMES_STR "Visemes"
 #define XML_ELEMENT_VISEME_STR "Viseme"
@@ -83,6 +85,7 @@
 #define XML_ATTRIBUTE_LINKED_FEATURE_ID_STR "linked-feature-id"
 #define XML_ATTRIBUTE_LINKED_SECTOR_ID_STR "linked-sector-id"
 #define XML_ATTRIBUTE_REFERENCE_STR "reference"
+#define XML_ATTRIBUTE_SIDE_STR "side"
 
 #define XML_ATTRIBUTE_ALPHA_STR "alpha"
 #define XML_ATTRIBUTE_TRAP_X1_STR "x1"

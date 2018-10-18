@@ -110,8 +110,8 @@ void RNKalmanLocalizationTask::task(){
 					Hk(zIndex, 1) = -(currLandmark->ypos - xk_1(1, 0))/landmarkDistance;
 					Hk(zIndex, 2) = 0.0;
 
-					Hk(zIndex + 1, 0) = (currLandmark->ypos - xk_1(1, 0))/landmarkDistance;
-					Hk(zIndex + 1, 1) = -(currLandmark->xpos - xk_1(0, 0))/landmarkDistance;
+					Hk(zIndex + 1, 0) = (currLandmark->ypos - xk_1(1, 0))/std::pow(landmarkDistance, 2);
+					Hk(zIndex + 1, 1) = -(currLandmark->xpos - xk_1(0, 0))/std::pow(landmarkDistance, 2);
 					Hk(zIndex + 1, 2) = -1.0;
 				}
 			}
@@ -126,8 +126,8 @@ void RNKalmanLocalizationTask::task(){
 
 					landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, (xk_1(0, 0) + disp(0, 0)), (xk_1(1, 0) + disp(1, 0)));
 
-					Hk(zIndex, 0) = (currLandmark->ypos - (xk_1(1, 0) + disp(1, 0)))/landmarkDistance;
-					Hk(zIndex, 1) = -(currLandmark->xpos - (xk_1(0, 0) + disp(0, 0)))/landmarkDistance;
+					Hk(zIndex, 0) = (currLandmark->ypos - (xk_1(1, 0) + disp(1, 0)))/std::pow(landmarkDistance, 2);
+					Hk(zIndex, 1) = -(currLandmark->xpos - (xk_1(0, 0) + disp(0, 0)))/std::pow(landmarkDistance, 2);
 					Hk(zIndex, 2) = -1.0;
 				}
 			}

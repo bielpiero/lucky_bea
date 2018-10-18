@@ -71,9 +71,9 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
-	laserTask = new RNLaserTask(this);
+	//laserTask = new RNLaserTask(this);
 	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
-	//rfidTask = new RNRFIdentificationTask(this);
+	rfidTask = new RNRFIdentificationTask(this);
 	//dialogs = new RNDialogsTask(this);
 	//gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
@@ -88,9 +88,9 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	}
 	
 	////Tasks added:
-	tasks->addTask(laserTask);
+	//tasks->addTask(laserTask);
 	//tasks->addTask(omnidirectionalTask);
-	//tasks->addTask(rfidTask);
+	tasks->addTask(rfidTask);
 	//tasks->addTask(dialogs);
 	//tasks->addTask(gestures);
 	//tasks->addTask(armGestures);
@@ -916,6 +916,17 @@ void GeneralController::loadSector(int mapId, int sectorId){
 							tempWay->adjacencies.push_back(std::stoi(adyList.at(i)));
 						}
 						currentSector->addWay(tempWay);
+					}
+				}
+
+				xml_node<>* tags_root_node = sector_node->first_node(XML_ELEMENT_TAGS_STR);
+				if(tags_root_node->first_node() !=  NULL){
+					for(xml_node<>* tag_node = tags_root_node->first_node(XML_ELEMENT_TAG_STR); tag_node; tag_node = tag_node->next_sibling()){
+						s_tag* tempTag = new s_tag;
+						tempTag->id = std::string(tag_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+						tempTag->name = std::string(tag_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());;
+						tempTag->side = std::string(tag_node->first_attribute(XML_ATTRIBUTE_SIDE_STR)->value());;
+						currentSector->addTag(tempTag);
 					}
 				}
     		}

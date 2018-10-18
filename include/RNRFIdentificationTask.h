@@ -8,7 +8,7 @@
 #include "rfid/ltkcpp.h"
 #include "rfid/impinj_ltkcpp.h"
 
-#define RFID_READER_VARIABLE_LENGTH 6
+#define RFID_READER_VARIABLE_LENGTH 4
 #define TID_OP_SPEC_ID          123
 #define USER_MEMORY_OP_SPEC_ID  321
 
@@ -24,13 +24,16 @@ public:
 	~RFData() {}
 
 	std::string getTagKey(void){ return tagKey; }
-	std::string getTimestamp(void){ return timestamp; }
+	unsigned long long getTimestamp(void){ return timestamp; }
 
-	void setTimestamp(std::string timestamp){
+	void setTimestamp(unsigned long long timestamp, int mode = 0){
+		if(mode == 0){
+			this->lastTimestamp = this->timestamp;
+		}
 		this->timestamp = timestamp;
 	}
 
-	void setAntenna(int antenna){
+	void setAntenna(std::string antenna){
 		this->antenna = antenna;
 	}
 
@@ -40,33 +43,38 @@ public:
 		this->dopplerFrequency = dopplerFrequency;
 		convertToDistance();
 	}
-
+	bool isRemovable(){ return ((timestamp - lastTimestamp) > 3e6); }
 	double getRSSI(void){ return rssi; }
 	double getPhaseAngle(void){ return angle; }
 	double getDistance(void){ return distance; }
 	double getDopplerFrequency(void){ return dopplerFrequency; }
-	int getAntenna(void){ return antenna; }
+	std::string getAntenna(void){ return antenna; }
 
 	void initializeFromString(std::string data){
 		if(data != ""){
-			std::vector<std::string> info = RNUtils::split((char*)data.c_str(), ",");
-			if(info.size() == RFID_READER_VARIABLE_LENGTH){
-				tagKey = info.at(0);
-				timestamp = info.at(5);
-				dopplerFrequency = std::atof(info.at(4).c_str());
-				angle = std::atof(info.at(3).c_str());
-				rssi = (double)std::atof(info.at(2).c_str());
-				antenna = std::atoi(info.at(1).c_str());
-				convertToDistance();
+			std::vector<std::string> info = RNUtils::split(data, ",");
+			/*for(int i = 0; i < info.size(); i++){
+				printf("[%d]: %s\n", i, info.at(i).c_str());
+			}*/
+			tagKey = std::string(info.at(0));
+			if(info.at(1) == "1"){
+				antenna = std::string(SEMANTIC_SIDE_LEFT_STR);
+			} else {
+				antenna = std::string(SEMANTIC_SIDE_RIGHT_STR);
 			}
+			rssi = (double)std::stof(info.at(2));
+			timestamp = std::stoull(info.at(3));
+			lastTimestamp = timestamp;
+			//convertToDistance();
+			
 		} else {
 			distance = 0.0;
 			tagKey = "";
-			timestamp = "";
+			timestamp = 0;
 			rssi = -1.0;
 			angle = 0.0;
 			dopplerFrequency = 0.0;
-			antenna = RN_NONE;
+			antenna = std::string(SEMANTIC_SIDE_LEFT_STR);
 		}
 	}
 
@@ -101,12 +109,13 @@ private:
 	}
 private:
 	std::string tagKey;
-	std::string timestamp;
+	unsigned long long timestamp;
+	unsigned long long lastTimestamp;
 	double rssi;
 	double distance;
 	double angle;
 	double dopplerFrequency;
-	int antenna;
+	std::string antenna;
 
 };
 
@@ -123,8 +132,8 @@ public:
 	virtual void kill();
 
 private:
-	RFData* findByKeyAntenna(std::string key, int antenna);
-
+	RFData* findByKeyAntenna(std::string key, std::string antenna);
+	void checkForActions();
 	int connectTo(const char* reader);
 	int enableImpinjExtensions();
 	int resetDeviceConfiguration();
@@ -165,6 +174,9 @@ private:
 	int powerIndexAntenna1;
 	int powerIndexAntenna2;
 
+	bool isAtHallway;
+	bool isAtDoor;
+
 	unsigned short powerLevelIndex;
 	unsigned int deviceModelNumber;
 	short transmitPowerValue;
@@ -174,8 +186,7 @@ private:
 
 	AntennaDataList* antennasList;
 	std::FILE* file;
-	std::vector<RFData*>* rfids;
-	std::vector<RNLandmark*>* landmarks;
+	std::list<RFData*>* rfids;
 };
 
 #endif

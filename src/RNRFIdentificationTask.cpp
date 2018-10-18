@@ -12,10 +12,11 @@ RNRFIdentificationTask::RNRFIdentificationTask(const GeneralController* gn, cons
 	messageId = 0;
 	readerDescriptor = RN_NONE;
 	this->deviceInitialized = false;
-	landmarks = new std::vector<RNLandmark*>();
-	rfids = new std::vector<RFData*>();
+	rfids = new std::list<RFData*>();
 	powerIndexAntenna1 = 1;
 	antennasList = new AntennaDataList();
+	isAtHallway = false;
+	isAtDoor = false;
 	//file = std::fopen("data-rfid-1.00m.txt", "w+");
 	
 }
@@ -42,29 +43,93 @@ RNRFIdentificationTask::~RNRFIdentificationTask(){
 void RNRFIdentificationTask::task(){
 	if(this->deviceInitialized){
 		std::string data = "";
-		//if(startROSpec() == 0){
-			if(getDataFromDevice(data) == 0){
-				
-				/*RFData* detected = new RFData(data);
-				RFData* found = NULL;
-				if((found = findByKeyAntenna(detected->getTagKey(), detected->getAntenna())) == NULL){
-					if(detected->getTagKey() != ""){
-						rfids->push_back(detected);	
-					}
-				} else {
-					found->update(detected->getRSSI(), detected->getPhaseAngle(), detected->getDopplerFrequency());
-					found->setTimestamp(detected->getTimestamp());
-					delete detected;
-				}*/
-			}
+		if(getDataFromDevice(data) == 0){
 			
-			for (int i = 0; i < rfids->size(); ++i){
-				RNUtils::printLn("[%d]: %s", i, rfids->at(i)->toString());
+			RFData* detected = new RFData(data);
+			RFData* found = NULL;
+			if((found = findByKeyAntenna(detected->getTagKey(), detected->getAntenna())) == NULL){
+				if(detected->getTagKey() != ""){
+					rfids->emplace_back(detected);	
+				}
+			} else {
+				found->update(detected->getRSSI(), detected->getPhaseAngle(), detected->getDopplerFrequency());
+				std::chrono::microseconds us;
+				us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
+				found->setTimestamp((unsigned long long)us.count());
+				delete detected;
 			}
-		//}	
+		}
+		std::list<RFData*>::iterator i;
+		for (i = rfids->begin(); i != rfids->end(); i++){
+			std::chrono::microseconds us;
+			us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
+			(*i)->setTimestamp((unsigned long long)us.count(), 1);
+		}
+		checkForActions();
 	} else {
 		init();
 	}	
+}
+
+void RNRFIdentificationTask::checkForActions(){
+	if(gn and gn->getCurrentSector()){
+		std::list<RFData*>::iterator it = rfids->begin();
+		while(it != rfids->end()){
+			RFData* tag = (*it);
+			bool deleted = false;
+			s_tag* t = gn->getCurrentSector()->findTagById(tag->getTagKey());
+			if(t != NULL){
+				if(t->name == std::string(SEMANTIC_HALLWAY_STR)){
+					RNUtils::printLn("Tag ------> Hallway: %s", tag->getTagKey().c_str());
+					if(not isAtHallway){
+						if(t->side == tag->getAntenna()){
+							RNUtils::printLn("Entrando a un pasillo... activando Hallway Controller");
+							isAtHallway = true;
+						}
+					} else {
+						if(t->side != tag->getAntenna()){
+							RNUtils::printLn("saliendo a un pasillo... desactivando Hallway Controller");
+							isAtHallway = false;
+						}
+					}
+					delete *it;
+					it = rfids->erase(it);
+					deleted = true;
+				} else if(t->name == std::string(SEMANTIC_CROSSWAY_STR)){
+					RNUtils::printLn("Tag ------> CROSSWAY: %s", tag->getTagKey().c_str());
+
+				} else if(t->name == std::string(SEMANTIC_OBSTACLE_STR)){
+					RNUtils::printLn("Tag ------> OBSTACLE: %s", tag->getTagKey().c_str());
+
+				} else if(t->name == std::string(SEMANTIC_PERSON_STR)){
+					RNUtils::printLn("Tag ------> PERSON: %s", tag->getTagKey().c_str());
+
+				} else if(t->name == std::string(SEMANTIC_NARROW_HALLWAY_STR)){
+					RNUtils::printLn("Tag ------> NARROW: %s", tag->getTagKey().c_str());
+					
+				} else if(t->name == std::string(SEMANTIC_FEATURE_DOOR_STR)){
+					RNUtils::printLn("Tag ------> DOOR: %s", tag->getTagKey().c_str());
+					if(not isAtDoor){
+						RNUtils::printLn("Entrando a una puerta... activando Hallway Controller");
+						isAtDoor = true;
+					} else {
+						if(tag->isRemovable()){
+							RNUtils::printLn("Saliendo de la puerta... desactivando Hallway Controller");
+							isAtDoor = false;
+							delete *it;
+							it = rfids->erase(it);
+							deleted = true;
+						}
+					}
+				}
+			} else {
+				RNUtils::printLn("Tag %s not found in database", tag->getTagKey().c_str());
+			}
+			if(not deleted){
+				it++;
+			}
+		}
+	}
 }
 
 void RNRFIdentificationTask::kill(){
@@ -777,7 +842,7 @@ void RNRFIdentificationTask::getOneTagData(LLRP::CTagReportData* tag, std::strin
 	}
 	
 	data = bufferOut.str();
-	RNUtils::printLn("Final STR: %s, %d", data.c_str(), data.length());
+	//RNUtils::printLn("Final STR: %s, %d", data.c_str(), data.length());
 	bufferOut.clear();
 }
 
@@ -906,7 +971,7 @@ LLRP::CMessage* RNRFIdentificationTask::transact(LLRP::CMessage* msg, int timeou
 		message = conn->transact(msg, timeout);
 		if(message == NULL){
 			const LLRP::CErrorDetails* error = conn->getRecvError();
-			RNUtils::printLn("Error: Receive Message failed (%s)", error->m_pWhatStr ? error->m_pWhatStr : "No reason");
+			//RNUtils::printLn("Error: Receive Message failed (%s)", error->m_pWhatStr ? error->m_pWhatStr : "No reason");
 		}
 	}
 	return message;
@@ -918,7 +983,7 @@ LLRP::CMessage* RNRFIdentificationTask::recvMessage(int msecMax){
 		message = conn->recvMessage(msecMax);
 		if(message == NULL){
 			const LLRP::CErrorDetails* error = conn->getRecvError();
-			RNUtils::printLn("Error: Receive Message failed (%s)", error->m_pWhatStr ? error->m_pWhatStr : "No reason");
+			//RNUtils::printLn("Error: Receive Message failed (%s)", error->m_pWhatStr ? error->m_pWhatStr : "No reason");
 			if(NULL != error->m_pRefType){
 	            RNUtils::printLn("ERROR: ... reference type %s\n", error->m_pRefType->m_pName);
 	        }
@@ -931,13 +996,14 @@ LLRP::CMessage* RNRFIdentificationTask::recvMessage(int msecMax){
 	return message;
 }
 
-RFData* RNRFIdentificationTask::findByKeyAntenna(std::string key, int antenna){
+RFData* RNRFIdentificationTask::findByKeyAntenna(std::string key, std::string antenna){
 	RFData* rfid = NULL;
 	bool found = false;
-	for (int i = 0; i < rfids->size() and not found; i++){
-		if (rfids->at(i)->getTagKey() == key and rfids->at(i)->getAntenna() == antenna){
+	std::list<RFData*>::iterator i;
+	for (i = rfids->begin(); i != rfids->end() and not found; i++){
+		if ((*i)->getTagKey() == key and (*i)->getAntenna() == antenna){
 			found = true;
-			rfid = rfids->at(i);
+			rfid = (*i);
 		}
 	}
 	return rfid;

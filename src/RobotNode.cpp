@@ -155,9 +155,9 @@ void RobotNode::positionUpdate(void){
     unlockRawPosition();
     ArPose* currPose = getAltPose();
 
-    onPositionUpdate(currPose->getX() / 1e3, currPose->getY() / 1e3, currPose->getThRad(), robot->getVel(), robot->getRotVel());
+    //onPositionUpdate(currPose->getX() / 1e3, currPose->getY() / 1e3, currPose->getThRad(), robot->getVel(), robot->getRotVel());
     //onPositionUpdate(robotRawEncoderPosition(0, 0), robotRawEncoderPosition(1, 0), robotRawEncoderPosition(2, 0), robot->getVel(), robot->getRotVel());
-    onSensorsScanCompleted();
+    //onSensorsScanCompleted();
 }
 
 ArRobotConnector* RobotNode::getRobotConnector() const{

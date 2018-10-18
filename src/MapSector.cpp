@@ -3,10 +3,11 @@
 MapSector::MapSector(){
 	sitesCyclic = false;
 	this->polygonDefinition = "";
-	landmarks = new std::vector<s_landmark*>();
-	features = new std::vector<s_feature*>();
-	sites = new std::vector<s_site*>();
-	ways = new std::vector<s_way*>();
+	landmarks = new std::list<s_landmark*>();
+	features = new std::list<s_feature*>();
+	sites = new std::list<s_site*>();
+	ways = new std::list<s_way*>();
+	tags = new std::list<s_tag*>();
 	polygon = new std::vector<PointXY*>();
 }
 
@@ -21,6 +22,9 @@ MapSector::~MapSector(){
     delete sites;
 
     deleteAllWays();
+    delete ways;
+
+    deleteAllTags();
     delete ways;
 
     deletePolygon();
@@ -71,14 +75,6 @@ double MapSector::getHeight(){
 	return this->height; 
 }
 
-void MapSector::setIfSitesCyclic(bool sitesCyclic){ 
-	this->sitesCyclic = sitesCyclic; 
-}
-
-double MapSector::isSitesCyclic(){ 
-	return this->sitesCyclic; 
-}
-
 void MapSector::setSequence(std::string sequence){ 
 	this->sequence = sequence; 
 }
@@ -88,122 +84,151 @@ std::string MapSector::getSequence(){
 }
 
 void MapSector::addSite(s_site* site){ 
-	sites->push_back(site); 
+	sites->emplace_back(site); 
 }
 
 void MapSector::addWay(s_way* way){ 
-	ways->push_back(way); 
+	ways->emplace_back(way); 
 }
 
 void MapSector::addFeature(s_feature* feature){ 
-	features->push_back(feature); 
+	features->emplace_back(feature); 
 }
 
 void MapSector::addLandmark(s_landmark* landmark){ 
-	landmarks->push_back(landmark); 
+	landmarks->emplace_back(landmark); 
 }
 
-s_site* MapSector::siteAt(int index) { 
-	return sites->at(index); 
+void MapSector::addTag(s_tag* tag){ 
+	tags->emplace_back(tag); 
 }
 
-s_way* MapSector::wayAt(int index) { 
-	return ways->at(index); 
+s_site* MapSector::siteAt(int index) {
+	return *(std::next(sites->begin(), index));
 }
 
-s_feature* MapSector::featureAt(int index) { 
-	return features->at(index); 
+s_way* MapSector::wayAt(int index) {
+	return *(std::next(ways->begin(), index));
 }
 
-s_landmark* MapSector::landmarkAt(int index) { 
-	return landmarks->at(index); 
+s_feature* MapSector::featureAt(int index) {
+	return *(std::next(features->begin(), index));
+}
+
+s_landmark* MapSector::landmarkAt(int index) {
+	return *(std::next(landmarks->begin(), index));
+}
+
+s_tag* MapSector::tagAt(int index) {
+	return *(std::next(tags->begin(), index));
 }
 
 s_site* MapSector::findSiteById(int id) { 
 	bool found = false;
-	int index = RN_NONE;
-	for (int i = 0; i < sites->size() and not found; i++){
-		if(sites->at(i)->id == id){
+	s_site* s = NULL;
+	std::list<s_site*>::iterator it;
+	for (it = sites->begin(); it != sites->end() and not found; it++){
+		if((*it)->id == id){
 			found = true;
-			index = i;
+			s = *it;
 		}
 	}
-	if(index != RN_NONE){
-		return sites->at(index);
-	} else {
-		return NULL;
-	}
+
+	return s;
 }
 
-s_feature* MapSector::findFeatureById(int id) { 
+s_feature* MapSector::findFeatureById(int id) {
 	bool found = false;
-	int index = RN_NONE;
-	for (int i = 0; i < features->size() and not found; i++){
-		if(features->at(i)->id == id){
+	s_feature* f = NULL;
+	std::list<s_feature*>::iterator it;
+	for (it = features->begin(); it != features->end() and not found; it++){
+		if((*it)->id == id){
 			found = true;
-			index = i;
+			f = *it;
 		}
 	}
-	if(index != RN_NONE){
-		return features->at(index);
-	} else {
-		return NULL;
-	}
+
+	return f;
 }
 
-std::vector<s_site*> MapSector::findSitesByName(std::string name){
-	int index = RN_NONE;
-	std::vector<s_site*> values; 
-	for (int i = 0; i < sites->size(); i++){
-		if(sites->at(i)->name == name){
-			values.push_back(sites->at(i));
+s_tag* MapSector::findTagById(std::string id) {
+	bool found = false;
+	s_tag* t = NULL;
+	std::list<s_tag*>::iterator it;
+	for (it = tags->begin(); it != tags->end() and not found; it++){
+		if((*it)->id == id){
+			found = true;
+			t = *it;
 		}
 	}
+
+	return t;
+}
+
+std::list<s_site*> MapSector::findSitesByName(std::string name){
+	bool found = false;
+	std::list<s_site*> values; 
+	std::list<s_site*>::iterator it;
+	for (it = sites->begin(); it != sites->end() and not found; it++){
+		if((*it)->name == name){
+			values.emplace_back(*it);
+		}
+	}
+	
 	return values;
 }
 
-std::vector<s_feature*> MapSector::findFeaturesByName(std::string name){
-	int index = RN_NONE;
-	std::vector<s_feature*> values;
-	for (int i = 0; i < features->size(); i++){
-		if(features->at(i)->name.find(name) < features->at(i)->name.length()){
-			values.push_back(features->at(i));
+std::list<s_feature*> MapSector::findFeaturesByName(std::string name){
+	bool found = false;
+	std::list<s_feature*> values;
+	std::list<s_feature*>::iterator it;
+	for (it = features->begin(); it != features->end() and not found; it++){
+		if((*it)->name == name){
+			values.emplace_back(*it);
 		}
 	}
 	return values;
 }
 
 void MapSector::deleteSite(s_site* obj) { 
-	sites->erase(std::remove(sites->begin(), sites->end(), obj), sites->end()); 
+	sites->remove(obj); 
 }
 
 void MapSector::deleteWay(s_way* obj) { 
-	ways->erase(std::remove(ways->begin(), ways->end(), obj), ways->end()); 
+	ways->remove(obj); 
 }
 
 void MapSector::deleteFeature(s_feature* obj) { 
-	features->erase(std::remove(features->begin(), features->end(), obj), features->end()); 
+	features->remove(obj); 
 }
 
 void MapSector::deleteLandmark(s_landmark* obj) { 
-	landmarks->erase(std::remove(landmarks->begin(), landmarks->end(), obj), landmarks->end()); 
+	landmarks->remove(obj); 
+}
+
+void MapSector::deleteTag(s_tag* obj) { 
+	tags->remove(obj); 
 }
 
 void MapSector::deleteSiteAt(int index) { 
-	sites->erase(sites->begin() + index); 
+	sites->erase(std::next(sites->begin(), index)); 
 }
 
 void MapSector::deleteWayAt(int index) { 
-	ways->erase(ways->begin() + index); 
+	ways->erase(std::next(ways->begin(), index)); 
 }
 
 void MapSector::deleteFeatureAt(int index) { 
-	features->erase(features->begin() + index); 
+	features->erase(std::next(features->begin(), index));
 }
 
 void MapSector::deleteLandmarkAt(int index) { 
-	landmarks->erase(landmarks->begin() + index); 
-}	
+	landmarks->erase(std::next(landmarks->begin(), index)); 
+}
+
+void MapSector::deleteTagAt(int index) { 
+	tags->erase(std::next(tags->begin(), index)); 
+}
 
 size_t MapSector::sitesSize() { 
 	return sites->size(); 
@@ -221,10 +246,15 @@ size_t MapSector::landmarksSize() {
 	return landmarks->size(); 
 }
 
+size_t MapSector::tagsSize() { 
+	return tags->size(); 
+}
+
 size_t MapSector::landmarksSizeByType(std::string type){
 	size_t count = 0;
-	for(int i = 0; i < landmarks->size(); i++){
-		if(landmarks->at(i)->type == type){
+	std::list<s_landmark*>::iterator it;
+	for(it = landmarks->begin(); it != landmarks->end(); it++){
+		if((*it)->type == type){
 			count++;
 		}
 	}
@@ -233,11 +263,14 @@ size_t MapSector::landmarksSizeByType(std::string type){
 }
 
 s_landmark* MapSector::landmarkByTypeAndId(std::string type, int id){
+	bool found = false;
 	s_landmark* l = NULL;
-	for(int i = 0; i < landmarks->size(); i++){
-		if(landmarks->at(i)->type == type){
-			if(id == landmarks->at(i)->id){
-				l = landmarks->at(i);
+	std::list<s_landmark*>::iterator it;
+	for(it = landmarks->begin(); it != landmarks->end() and not found; it++){
+		if((*it)->type == type){
+			if(id == (*it)->id){
+				l = *it;
+				found = true;
 			}
 		}
 	}
@@ -245,36 +278,46 @@ s_landmark* MapSector::landmarkByTypeAndId(std::string type, int id){
 	return l;
 }
 
-void MapSector::deleteAllSites() {  
-	for (int i = 0; i < sites->size(); i++) {
-        delete sites->at(i);
+void MapSector::deleteAllSites() { 
+	while(!sites->empty()) {
+        delete sites->front();
+        sites->pop_front();
     }
-    sites->clear();
     RNUtils::printLn("Deleted all sites..");
 }
 
-void MapSector::deleteAllWays() {  
-	for (int i = 0; i < ways->size(); i++) {
-        delete ways->at(i);
+void MapSector::deleteAllWays() { 
+	while(!ways->empty()) {
+        delete ways->front();
+        ways->pop_front();
     }
-    ways->clear();
+
     RNUtils::printLn("Deleted all ways..");
 }
 
 void MapSector::deleteAllFeatures(){
-	for (int i = 0; i < features->size(); i++) {
-        delete features->at(i);
+	while(!features->empty()) {
+        delete features->front();
+        features->pop_front();
     }
-    features->clear();
+	
     RNUtils::printLn("Deleted all features..");
 }
 
 void MapSector::deleteAllLandmarks(){
-	for (int i = 0; i < landmarks->size(); i++) {
-        delete landmarks->at(i);
+	while(!landmarks->empty()) {
+        delete landmarks->front();
+        landmarks->pop_front();
     }
-    landmarks->clear();
     RNUtils::printLn("Deleted all landmarks..");
+}
+
+void MapSector::deleteAllTags(){
+	while(!tags->empty()) {
+        delete tags->front();
+        tags->pop_front();
+    }
+    RNUtils::printLn("Deleted all tags..");
 }
 
 void MapSector::deletePolygon(){

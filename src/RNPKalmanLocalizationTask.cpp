@@ -10,7 +10,7 @@ const float RNPKalmanLocalizationTask::odom_dist_inf = 0.060;
 const float RNPKalmanLocalizationTask::odom_angl_sup = 0.066;
 const float RNPKalmanLocalizationTask::odom_angl_inf = 0.100;
 
-const float RNPKalmanLocalizationTask::camera_angl_sup = 0.045;
+const float RNPKalmanLocalizationTask::camera_angl_sup = 0.030;
 const float RNPKalmanLocalizationTask::camera_angl_inf = 0.085;
 
 const float RNPKalmanLocalizationTask::laser_dist_sup = 0.0175;
@@ -33,8 +33,27 @@ void RNPKalmanLocalizationTask::init(){
 		Ak = Matrix::eye(3);
 		Bk = Matrix(3, 2);
 		CG = Matrix(3, 1);
-		Pk_sup = gn->getP();
-		Pk_inf = gn->getP(); 
+		Pk_sup = Matrix(3, 3);
+		Pk_inf = Matrix(3, 3);
+		Pk_sup(0,0) = std::pow(0.02, 2)/3;   Pk_sup(1,1) = std::pow(0.02, 2)/3;   Pk_sup(2,2) = std::pow(0.087, 2)/3;
+		Pk_inf(0,0) = std::pow(0.03, 2)/3;   Pk_inf(1,1) = std::pow(0.03, 2)/3;   Pk_inf(2,2) = std::pow(0.012, 2)/3;
+
+/*
+P Biel
+- desv tip X: 0.0238
+- desv tip Y 0.0238
+- desv tip Theta 0.102063 (5.73 grados)
+
+P superior:
+- desv tip X: 0.02
+- desv tip Y: 0.02
+- desv tip Theta: 0.087 (5 grados)
+
+P infierior:
+- desv tip X: 0.03
+- desv tip Y: 0.03
+- desv tip Theta: 0.012 (7 grados)
+*/
 
 		laserLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_LASER_STR);
 		cameraLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_CAMERA_STR);
@@ -99,7 +118,7 @@ void RNPKalmanLocalizationTask::task(){
 		//pk_inf_1.print();
 
 		
-		CG(2, 0) = (2 * xk_sup_1(2, 0) * std::sqrt(pk_sup_1(2, 2)) + 2 * xk_inf_1(2, 0) * std::sqrt(pk_inf_1(2, 2)) + xk_sup_1(2, 0) * std::sqrt(pk_inf_1(2, 2)) + xk_inf_1(2, 0) * std::sqrt(pk_sup_1(2, 2))) / (3 * (std::sqrt(pk_sup_1(2, 2)) + sqrt(pk_inf_1(2, 2))));
+		CG(2, 0) = (2 * xk_sup_1(2, 0) * std::sqrt(3*pk_sup_1(2, 2)) + 2 * xk_inf_1(2, 0) * std::sqrt(3*pk_inf_1(2, 2)) + xk_sup_1(2, 0) * std::sqrt(3*pk_inf_1(2, 2)) + xk_inf_1(2, 0) * std::sqrt(3*pk_sup_1(2, 2))) / (3 * (std::sqrt(3*pk_sup_1(2, 2)) + sqrt(3*pk_inf_1(2, 2))));
 		CG(2, 0) = RNUtils::fixAngleRad(CG(2, 0));
 		//printf("CG:\n");
 		//CG.print();
@@ -137,8 +156,8 @@ void RNPKalmanLocalizationTask::task(){
 		Pk_sup = (Ak * pk_sup_1 * ~Ak) + (Bk * currentQ_sup * ~Bk);
 		Pk_inf = (Ak * pk_inf_1 * ~Ak) + (Bk * currentQ_inf * ~Bk);
 		
-		CG(0, 0) = (2 * xk_sup_1(0, 0) * std::sqrt(Pk_sup(0, 0)) + 2 * xk_inf_1(0, 0) * std::sqrt(Pk_inf(0, 0)) + xk_sup_1(0, 0) * std::sqrt(Pk_inf(0, 0)) + xk_inf_1(0, 0) * std::sqrt(Pk_sup(0, 0))) / (3 * (std::sqrt(Pk_sup(0, 0)) + sqrt(Pk_inf(0, 0))));
-        CG(1, 0) = (2 * xk_sup_1(1, 0) * std::sqrt(Pk_sup(1, 1)) + 2 * xk_inf_1(1, 0) * std::sqrt(Pk_inf(1, 1)) + xk_sup_1(1, 0) * std::sqrt(Pk_inf(1, 1)) + xk_inf_1(1, 0) * std::sqrt(Pk_sup(1, 1))) / (3 * (std::sqrt(Pk_sup(1, 1)) + sqrt(Pk_inf(1, 1))));
+		CG(0, 0) = (2 * xk_sup_1(0, 0) * std::sqrt(3*Pk_sup(0, 0)) + 2 * xk_inf_1(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_sup_1(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_inf_1(0, 0) * std::sqrt(3*Pk_sup(0, 0))) / (3 * (std::sqrt(3*Pk_sup(0, 0)) + sqrt(3*Pk_inf(0, 0))));
+        CG(1, 0) = (2 * xk_sup_1(1, 0) * std::sqrt(3*Pk_sup(1, 1)) + 2 * xk_inf_1(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_sup_1(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_inf_1(1, 0) * std::sqrt(3*Pk_sup(1, 1))) / (3 * (std::sqrt(3*Pk_sup(1, 1)) + sqrt(3*Pk_inf(1, 1))));
 		
 		
 		/** *** CORRECCIÓN *** */		
@@ -188,8 +207,8 @@ void RNPKalmanLocalizationTask::task(){
 					Hk(zIndex, 1) = -(currLandmark->ypos - (CG(1, 0) + disp(1, 0)))/landmarkDistance;
 					Hk(zIndex, 2) = 0.0;
 
-					Hk(zIndex + 1, 0) = (currLandmark->ypos - (CG(1, 0) + disp(1, 0)))/landmarkDistance;
-					Hk(zIndex + 1, 1) = -(currLandmark->xpos - (CG(0, 0) + disp(0, 0)))/landmarkDistance;
+					Hk(zIndex + 1, 0) = (currLandmark->ypos - (CG(1, 0) + disp(1, 0)))/std::pow(landmarkDistance, 2);
+					Hk(zIndex + 1, 1) = -(currLandmark->xpos - (CG(0, 0) + disp(0, 0)))/std::pow(landmarkDistance, 2);
 					Hk(zIndex + 1, 2) = -1.0;
 				}
 			}
@@ -209,8 +228,8 @@ void RNPKalmanLocalizationTask::task(){
 
 					landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, (CG(0, 0) + disp(0, 0)), (CG(1, 0) + disp(1, 0)));
 
-					Hk(zIndex, 0) = (currLandmark->ypos - (CG(1, 0) + disp(1, 0)))/landmarkDistance;
-					Hk(zIndex, 1) = -(currLandmark->xpos - (CG(0, 0) + disp(0, 0)))/landmarkDistance;
+					Hk(zIndex, 0) = (currLandmark->ypos - (CG(1, 0) + disp(1, 0)))/std::pow(landmarkDistance, 2);
+					Hk(zIndex, 1) = -(currLandmark->xpos - (CG(0, 0) + disp(0, 0)))/std::pow(landmarkDistance, 2);
 					Hk(zIndex, 2) = -1.0;
 				}
 			}
