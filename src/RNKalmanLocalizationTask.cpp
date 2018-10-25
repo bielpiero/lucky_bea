@@ -374,7 +374,7 @@ void RNKalmanLocalizationTask::task(){
 				//double mdDistance = 0;
 				double mdAngle = std::abs(zl(i + laserOffset, 0) / std::sqrt(gn->getCameraAngleVariance()));
 				//printf("Mh: (%d): %g. nu: %g\n", i, mdAngle, zl(i + laserOffset, 0));
-				if (/*mdDistance > cameraTMDistance or */mdAngle > cameraTMAngle){
+				if (mdAngle > cameraTMAngle){
 					//RNUtils::printLn("Landmark %d rejected...", (int)zkl(i, 3));
 					//distanceThreshold = (máxima zl que permite un buen matching)/sigma
 					//zl(2 * i, 0) = 0;

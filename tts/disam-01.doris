@@ -1,8 +1,8 @@
-function entrance 
+function entrance()
 	goto(#2,#0.9,#5)
 endfunction
 
-function reception
+function reception()
 	say[attention=front; face=happy]("Hola chicos")
 	say[attention=right; face=surprise]("biénvenidos al centro de automática y robótica de la universidad politécnica de madrid")
 	say[attention=left; face=suspect]("seguidme por favor que os mostraré el laboratorio, los distintos grupos que hay, os explicaré que hace cada grupo y lo mas importante, os mostraré donde he nacido y quién es mi creador.")
@@ -18,8 +18,5 @@ function reception
 endfunction
 
 function main
-	call entrance
+	entrance()
 endfunction
-
-when RfidTagsReceived(tags)
-endwhen

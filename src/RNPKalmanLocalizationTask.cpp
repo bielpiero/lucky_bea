@@ -57,7 +57,7 @@ P infierior:
 
 		laserLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_LASER_STR);
 		cameraLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_CAMERA_STR);
-
+		cameraTMAngle = 0.05 / camera_angl_sup;
 		xk_sup = gn->getRawEncoderPosition();
 		xk_inf = gn->getRawEncoderPosition();
 		//gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
@@ -469,6 +469,17 @@ void RNPKalmanLocalizationTask::task(){
 				}
 			}
 			
+			for (int i = cameraIndex; i < zl_sup.rows_size(); i++){
+				double mdAngleSup = std::abs(zl_sup(i + laserOffset, 0)) / camera_angl_sup;
+				double mdAngleInf = std::abs(zl_inf(i + laserOffset, 0)) / camera_angl_inf;
+				if (mdAngleSup > cameraTMAngle or mdAngleInf > cameraTMAngle){
+					//RNUtils::printLn("Landmark %d rejected...", (int)zkl(i, 3));
+					zl_sup(i + laserOffset, 0) = 0;
+					zl_inf(i + laserOffset, 0) = 0;
+					vsize--;
+				}
+
+			}
 		
 			gn->getVisualLandmarks()->clear();
 			gn->unlockVisualLandmarks();
@@ -512,11 +523,16 @@ void RNPKalmanLocalizationTask::task(){
 		sprintf(bufferxk_inf, "%.4lf\t%.4lf\t%.4lf", xk_inf(0, 0), xk_inf(1, 0), xk_inf(2, 0));
 
 		char buffer[1024];
-		sprintf(buffer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\n", bufferxk1_sup, bufferxk1_inf, bufferxk_sup, bufferxk_inf, bufferpk1_sup, bufferpk1_inf, bufferpk_sup, bufferpk_inf, rsize, vsize);
+		sprintf(buffer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d;\n", bufferxk1_sup, bufferxk1_inf, bufferxk_sup, bufferxk_inf, bufferpk1_sup, bufferpk1_inf, bufferpk_sup, bufferpk_inf, rsize, vsize);
 		if(test != NULL){
 			fprintf(test, "%s", buffer);
 		}
 
+		CG(0, 0) = (2 * xk_sup(0, 0) * std::sqrt(3*Pk_sup(0, 0)) + 2 * xk_inf(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_sup(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_inf(0, 0) * std::sqrt(3*Pk_sup(0, 0))) / (3 * (std::sqrt(3*Pk_sup(0, 0)) + sqrt(3*Pk_inf(0, 0))));
+        CG(1, 0) = (2 * xk_sup(1, 0) * std::sqrt(3*Pk_sup(1, 1)) + 2 * xk_inf(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_sup(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_inf(1, 0) * std::sqrt(3*Pk_sup(1, 1))) / (3 * (std::sqrt(3*Pk_sup(1, 1)) + sqrt(3*Pk_inf(1, 1))));
+		CG(2, 0) = (2 * xk_sup(2, 0) * std::sqrt(3*Pk_sup(2, 2)) + 2 * xk_inf(2, 0) * std::sqrt(3*Pk_inf(2, 2)) + xk_sup(2, 0) * std::sqrt(3*Pk_inf(2, 2)) + xk_inf(2, 0) * std::sqrt(3*Pk_sup(2, 2))) / (3 * (std::sqrt(3*Pk_sup(2, 2)) + sqrt(3*Pk_inf(2, 2))));
+		CG(2, 0) = RNUtils::fixAngleRad(CG(2, 0));
+		gn->setAltPose(ArPose(CG(0, 0), CG(1, 0), CG(2, 0) * 180/M_PI));
 	} else {
 		init();
 	}

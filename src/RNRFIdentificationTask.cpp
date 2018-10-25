@@ -13,12 +13,13 @@ RNRFIdentificationTask::RNRFIdentificationTask(const GeneralController* gn, cons
 	readerDescriptor = RN_NONE;
 	this->deviceInitialized = false;
 	rfids = new std::list<RFData*>();
+	peopleTags = new std::list<s_person_tag*>();
 	powerIndexAntenna1 = 1;
 	antennasList = new AntennaDataList();
 	isAtHallway = false;
 	isAtDoor = false;
 	//file = std::fopen("data-rfid-1.00m.txt", "w+");
-	
+	loadPeopleTagFile();
 }
 
 RNRFIdentificationTask::~RNRFIdentificationTask(){
@@ -78,10 +79,11 @@ void RNRFIdentificationTask::checkForActions(){
 			RFData* tag = (*it);
 			bool deleted = false;
 			s_tag* t = gn->getCurrentSector()->findTagById(tag->getTagKey());
+			s_person_tag* pt = *std::find_if(peopleTags->begin(), peopleTags->end(), [&tag](s_person_tag* item) -> bool { return item->id == tag->getTagKey(); });
 			if(t != NULL){
 				if(t->name == std::string(SEMANTIC_HALLWAY_STR)){
 					RNUtils::printLn("Tag ------> Hallway: %s", tag->getTagKey().c_str());
-					if(not isAtHallway){
+					if(tag->getRSSI() > MAX_RSSI_ENVIRONMENT_VALUE and not isAtHallway){
 						if(t->side == tag->getAntenna()){
 							RNUtils::printLn("Entrando a un pasillo... activando Hallway Controller");
 							isAtHallway = true;
@@ -95,31 +97,40 @@ void RNRFIdentificationTask::checkForActions(){
 					delete *it;
 					it = rfids->erase(it);
 					deleted = true;
-				} else if(t->name == std::string(SEMANTIC_CROSSWAY_STR)){
-					RNUtils::printLn("Tag ------> CROSSWAY: %s", tag->getTagKey().c_str());
+				} else if(t->name == std::string(SEMANTIC_CROSSWAY_STR) and tag->getRSSI() > MAX_RSSI_ENVIRONMENT_VALUE){
+					RNUtils::printLn("Tag ------> CROSSWAY: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 
-				} else if(t->name == std::string(SEMANTIC_OBSTACLE_STR)){
-					RNUtils::printLn("Tag ------> OBSTACLE: %s", tag->getTagKey().c_str());
-
-				} else if(t->name == std::string(SEMANTIC_PERSON_STR)){
-					RNUtils::printLn("Tag ------> PERSON: %s", tag->getTagKey().c_str());
-
-				} else if(t->name == std::string(SEMANTIC_NARROW_HALLWAY_STR)){
-					RNUtils::printLn("Tag ------> NARROW: %s", tag->getTagKey().c_str());
+				} else if(t->name == std::string(SEMANTIC_NARROW_HALLWAY_STR) and tag->getRSSI() > MAX_RSSI_ENVIRONMENT_VALUE){
+					RNUtils::printLn("Tag ------> NARROW: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 					
 				} else if(t->name == std::string(SEMANTIC_FEATURE_DOOR_STR)){
-					RNUtils::printLn("Tag ------> DOOR: %s", tag->getTagKey().c_str());
+					RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
+
 					if(not isAtDoor){
-						RNUtils::printLn("Entrando a una puerta... activando Hallway Controller");
-						isAtDoor = true;
+						if(tag->getRSSI() > MAX_RSSI_ENVIRONMENT_VALUE){
+							RNUtils::printLn("Entrando a una puerta... activando Hallway Controller");
+							isAtDoor = true;
+						}
 					} else {
-						if(tag->isRemovable()){
+						if(tag->isRemovable() or tag->getRSSI() < MIN_RSSI_ENVIRONMENT_VALUE){
 							RNUtils::printLn("Saliendo de la puerta... desactivando Hallway Controller");
 							isAtDoor = false;
 							delete *it;
 							it = rfids->erase(it);
 							deleted = true;
 						}
+					}
+				}
+			} else if(pt != NULL){
+				if(tag->getRSSI() > -75 and tag->getRSSI() < -50){
+					RNUtils::printLn("Tag ------> PERSON: %s, @%f", pt->holderName.c_str(), tag->getRSSI());
+				} else {
+					if(tag->isRemovable()){
+						RNUtils::printLn("Bye %s", pt->holderName.c_str());
+						isAtDoor = false;
+						delete *it;
+						it = rfids->erase(it);
+						deleted = true;
 					}
 				}
 			} else {
@@ -130,6 +141,32 @@ void RNRFIdentificationTask::checkForActions(){
 			}
 		}
 	}
+}
+
+void RNRFIdentificationTask::loadPeopleTagFile(){
+	xml_document<> doc;
+    xml_node<> * root_node;
+
+    // Read the xml file into a vector
+    ifstream theFile (XML_PEOPLE_TAGS_FILE_PATH);
+    vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
+    buffer.push_back('\0');
+
+     // Parse the buffer using the xml file parsing library into doc
+    doc.parse<0>(&buffer[0]);
+
+    // Find our root node
+    root_node = doc.first_node(XML_ELEMENT_TAGS_STR);
+
+     for (xml_node<> * tag_node = root_node->first_node(XML_ELEMENT_TAG_STR); tag_node; tag_node = tag_node->next_sibling()){
+        s_person_tag* tag = new s_person_tag;
+        tag->id = std::string(tag_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+        tag->active = std::atoi(tag_node->first_attribute(XML_TAG_LIST_ATTRIBUTE_ACTIVE_STR)->value());
+        tag->holderName = std::string(tag_node->first_attribute(XML_TAG_LIST_ATTRIBUTE_HOLDER_NAME_STR)->value());
+        tag->holderId = std::string(tag_node->first_attribute(XML_TAG_LIST_ATTRIBUTE_HOLDER_ID_STR)->value());
+        peopleTags->emplace_back(tag);
+    }
+    theFile.close();
 }
 
 void RNRFIdentificationTask::kill(){
@@ -481,14 +518,14 @@ int RNRFIdentificationTask::addROSpec(void){
         switch (i)
         {
             case 1:
-            	powerIndexAntenna1 = 40;
+            	powerIndexAntenna1 = 61;
                 pRFTransmitter->setTransmitPower(powerIndexAntenna1); // (value * .25) + 10.0 = -30.25 dBm // max power when using PoE
-                pRFReceiver->setReceiverSensitivity(30); // 1 --> -80 dBm;
+                pRFReceiver->setReceiverSensitivity(12); // 1 --> -80 dBm;
                 break;
             case 2:
-            	powerIndexAntenna2 = 40;
+            	powerIndexAntenna2 = 61;
                 pRFTransmitter->setTransmitPower(powerIndexAntenna2); // (value * .25) + 10.0 = -27.75 dBm
-                pRFReceiver->setReceiverSensitivity(30); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
+                pRFReceiver->setReceiverSensitivity(12); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
                 break;
         }
 

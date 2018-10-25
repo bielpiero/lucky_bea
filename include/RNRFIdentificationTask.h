@@ -8,6 +8,8 @@
 #include "rfid/ltkcpp.h"
 #include "rfid/impinj_ltkcpp.h"
 
+#define XML_PEOPLE_TAGS_FILE_PATH "conf/BeaTagsList.xml"
+
 #define RFID_READER_VARIABLE_LENGTH 4
 #define TID_OP_SPEC_ID          123
 #define USER_MEMORY_OP_SPEC_ID  321
@@ -15,6 +17,20 @@
 #define TRANSMISSION_POWER_INDEX_1 81
 #define TRANSMISSION_POWER_INDEX_2 71
 #define FRONT_2_BACK_RATIO 18
+
+#define MAX_RSSI_ENVIRONMENT_VALUE -36
+#define MIN_RSSI_ENVIRONMENT_VALUE -38
+
+#define XML_TAG_LIST_ATTRIBUTE_ACTIVE_STR "active"
+#define XML_TAG_LIST_ATTRIBUTE_HOLDER_NAME_STR "holder-name"
+#define XML_TAG_LIST_ATTRIBUTE_HOLDER_ID_STR "holder-id"
+
+struct s_person_tag{
+	std::string id;
+	int active;
+	std::string holderName;
+	std::string holderId;
+};
 
 class RFData{	
 public: 
@@ -133,6 +149,9 @@ public:
 
 private:
 	RFData* findByKeyAntenna(std::string key, std::string antenna);
+
+	void loadPeopleTagFile();
+
 	void checkForActions();
 	int connectTo(const char* reader);
 	int enableImpinjExtensions();
@@ -187,6 +206,7 @@ private:
 	AntennaDataList* antennasList;
 	std::FILE* file;
 	std::list<RFData*>* rfids;
+	std::list<s_person_tag*>* peopleTags;
 };
 
 #endif
