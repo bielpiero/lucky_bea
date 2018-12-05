@@ -55,11 +55,7 @@ void RNKalmanLocalizationTask::task(){
 		xk_1 = xk;
 		double deltaDistance = 0.0, deltaAngle = 0.0;
 		gn->getIncrementPosition(&deltaDistance, &deltaAngle);
-		/*char buff[1024];
-		sprintf(buff, "%f\t%f\t%f\t%f\t%f\n", gn->getRobot()->getX(), gn->getRobot()->getY(), gn->getRobot()->getTh() * M_PI / 180.0, deltaDistance, deltaAngle);
-		if(test != NULL){
-			fprintf(test, "%s", buff);
-		}*/
+
 		Ak(0, 2) = -deltaDistance * std::sin(xk_1(2, 0) + deltaAngle/2.0);
 		Ak(1, 2) = deltaDistance * std::cos(xk_1(2, 0) + deltaAngle/2.0);
 
@@ -79,6 +75,8 @@ void RNKalmanLocalizationTask::task(){
 		RNUtils::getOdometryPose(xk, deltaDistance, deltaAngle, xk_1);
 
 		Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
+
+		
 		int totalLandmarks = 0;
 		if(gn->isLaserSensorActivated()){
 			totalLandmarks += laserLandmarksCount;
@@ -134,50 +132,11 @@ void RNKalmanLocalizationTask::task(){
 			disp(0, 0) = 0.0;
 			disp(1, 0) = 0.0;
 		}
-		//printf("Hk:\n");
-		//Hk.print();
-		/*Hk = Matrix(2 * totalLandmarks, STATE_VARIABLES);
-		int laserIndex = 0, cameraIndex = 0;
-		if(gn->isLaserSensorActivated()){
-			cameraIndex += laserLandmarksCount;
-
-		}
 		
-		for(int i = 0, zIndex = 0; i < gn->getCurrentSector()->landmarksSize(); i++){
-			Matrix disp = Matrix(2, 1);
-			if(gn->isLaserSensorActivated()){
-				if(gn->getCurrentSector()->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
-					zIndex = 2 * laserIndex;
-					laserIndex++;
-				}
-			}
-			if(gn->isCameraSensorActivated()){
-				if(gn->getCurrentSector()->landmarkAt(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
-					zIndex = 2 * cameraIndex;
-					cameraIndex++;
-
-					disp(0, 0) = CAMERA_ERROR_POSITION_X;
-					disp(1, 0) = CAMERA_ERROR_POSITION_Y;
-				}
-			}
-			
-			s_landmark* currLandmark = gn->getCurrentSector()->landmarkAt(i);
-			double landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, (xk_1(0, 0) + disp(0, 0)), (xk_1(1, 0) + disp(1, 0)));
-
-			Hk(zIndex, 0) = -(currLandmark->xpos - (xk_1(0, 0) + disp(0, 0)))/landmarkDistance;
-			Hk(zIndex, 1) = -(currLandmark->ypos - (xk_1(1, 0) + disp(1, 0)))/landmarkDistance;
-			Hk(zIndex, 2) = 0.0;
-
-			Hk(zIndex + 1, 0) = (currLandmark->ypos - (xk_1(1, 0) + disp(1, 0)))/landmarkDistance;
-			Hk(zIndex + 1, 1) = -(currLandmark->xpos - (xk_1(0, 0) + disp(0, 0)))/landmarkDistance;
-			Hk(zIndex + 1, 2) = -1.0;
-		}*/
 
 		Matrix zkl;
 		getObservations(zkl);
-		//printf("Zkl\n");
-		//zkl.print();
-		//Matrix zl(2 * totalLandmarks, 1);
+		
 		Matrix zl(sizeH, 1);
 
 		laserIndex = 0;
@@ -187,11 +146,7 @@ void RNKalmanLocalizationTask::task(){
 			cameraIndex = laserLandmarksCount;
 		}
 
-		/*if(gn->isLaserSensorActivated()){
-			cameraIndex += laserLandmarksCount;
-
-		}
-		*/
+		
 		int rsize = 0, vsize = 0;
 		if(gn->isLaserSensorActivated()){
 			gn->lockLaserLandmarks();
@@ -225,10 +180,9 @@ void RNKalmanLocalizationTask::task(){
 					Matrix mdk = ~(measure - obs) * omega * (measure - obs);
 					float md = std::sqrt(mdk(0, 0));
 
-					//float ed = std::sqrt(std::pow(zkl(j, 0), 2.0) + std::pow(lndmrk->getPointsXMean(), 2.0) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
+					
 					euclideanDistances.push_back(std::pair<int, float>(j, md));
 					
-					//RNUtils::printLn("Euclidean Distance[%d]: %f", j, euclideanDistances.at(j));	
 				}
 
 				float minorDistance = std::numeric_limits<float>::infinity();
@@ -253,9 +207,9 @@ void RNKalmanLocalizationTask::task(){
 					
 					double mdDistance = std::abs(zl(2 * indexFound, 0) / std::sqrt(gn->getLaserDistanceVariance()));
 					double mdAngle = std::abs(zl(2 * indexFound + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
-					//printf("Mhd: (%d), %lg, %lg, nud: %lg, nua: %lg\n", i, mdDistance, mdAngle, zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
+
 					if (mdDistance > laserTMDistance or mdAngle > laserTMAngle){
-						//distanceThreshold = (máxima zl que permite un buen matching)/sigma
+	
 						//RNUtils::printLn("landmark %d rejected...", indexFound);
 						zl(2 * indexFound, 0) = 0.0;
 						zl(2 * indexFound + 1, 0) = 0.0;
@@ -300,17 +254,7 @@ void RNKalmanLocalizationTask::task(){
 							double distanceFixed = lndmrk->getPointsXMean();
 							double angleFixed = lndmrk->getPointsYMean();
 							
-							//zl(2 * j, 0) = distanceFixed - zkl(j, 0);
-							//zl(2 * j, 0) = 0.0;
-							/*if(distanceFixed > 1.0){
-								currentR(2 * j, 2 * j) = currentR(2 * j, 2 * j) * std::exp(std::abs(distanceFixed - zkl(j, 0)));
-							}*/
-							/*zl(2 * j + 1, 0) = angleFixed - zkl(j, 1);
-							if(zl(2 * j + 1, 0) > M_PI){
-								zl(2 * j + 1, 0) = zl(2 * j + 1, 0) - 2 * M_PI;
-							} else if(zl(2 * j + 1, 0) < -M_PI){
-								zl(2 * j + 1, 0) = zl(2 * j + 1, 0) + 2 * M_PI;
-							}*/
+
 							zl(j + laserOffset, 0) = angleFixed - zkl(j, 1);
 							if(zl(j + laserOffset, 0) > M_PI){
 								zl(j + laserOffset, 0) = zl(j + laserOffset, 0) - 2 * M_PI;
@@ -320,72 +264,22 @@ void RNKalmanLocalizationTask::task(){
 							//RNUtils::printLn("MapId: %d, SectorId: %d, markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, Error: {a: %f}", lndmrk->getMapId(), lndmrk->getSectorId(), lndmrk->getMarkerId(), distanceFixed, angleFixed, zkl(j, 0), zkl(j, 1), zl(j + laserOffset, 0));
 						}
 					}
-				} else { 
-					std::vector<std::pair<int, double> > cameraDistances;
-					//for (int j = cameraIndex; j < (cameraIndex + cameraLandmarksCount); j++){
-					for (int j = cameraIndex; j < zkl.rows_size(); j++){
-						//double cd = std::sqrt(std::pow(zkl(j, 0), 2.0) + std::pow(lndmrk->getPointsXMean(), 2.0) - (2 * zkl(j, 0) * lndmrk->getPointsXMean() * std::cos(lndmrk->getPointsYMean() - zkl(j, 1))));
-						double cd = std::abs(lndmrk->getPointsYMean() - zkl(j, 1));
-						cameraDistances.push_back(std::pair<int, double>(j, cd));
-						//RNUtils::printLn("Mahalanobis visual Distance[%d]: %f for %f rad", j, cd, zkl(j, 1));
-					}
-
-					double minorDifference = std::numeric_limits<double>::infinity();
-					int indexFound = RN_NONE;
-					for (int j = 0; j < cameraDistances.size(); j++){
-						if(cameraDistances.at(j).second < minorDifference){
-							minorDifference = cameraDistances.at(j).second;
-							indexFound = cameraDistances.at(j).first;
-						}
-					}
-
-					if(indexFound > RN_NONE){
-						//double distanceFixed = (zkl(j, 2) - gn->getRobotHeight()) * std::tan(extraParameter->second);
-						double distanceFixed = lndmrk->getPointsXMean();
-						double angleFixed = lndmrk->getPointsYMean();
-						/*double xr = CAMERA_ERROR_POSITION_X + distanceFixed * std::cos(angleFixed);
-						double yr = CAMERA_ERROR_POSITION_Y + distanceFixed * std::sin(angleFixed);
-						distanceFixed = std::sqrt(std::pow(xr, 2) + std::pow(yr, 2));
-						angleFixed = std::atan2(yr, xr);*/
-
-						//zl(2 * indexFound, 0) = distanceFixed - zkl(indexFound, 0);
-
-						/*zl(2 * indexFound + 1, 0) = angleFixed - zkl(indexFound, 1);
-						if(zl(2 * indexFound + 1, 0) > M_PI){
-							zl(2 * indexFound + 1, 0) = zl(2 * indexFound + 1, 0) - 2 * M_PI;
-						} else if(zl(2 * indexFound + 1, 0) < -M_PI){
-							zl(2 * indexFound + 1, 0) = zl(2 * indexFound + 1, 0) + 2 * M_PI;
-						}*/
-
-						zl(indexFound + laserOffset, 0) = angleFixed - zkl(indexFound + laserOffset, 1);
-						if(zl(indexFound + laserOffset, 0) > M_PI){
-							zl(indexFound + laserOffset, 0) = zl(indexFound + laserOffset, 0) - 2 * M_PI;
-						} else if(zl(indexFound + laserOffset, 0) < -M_PI){
-							zl(indexFound + laserOffset, 0) = zl(indexFound + laserOffset, 0) + 2 * M_PI;
-						}
-					}
-
 				}
 			}
 			//Calculates Mahalanobis distance to determine whether a measurement is acceptable.				
-			//for (int i = cameraIndex; i < (cameraIndex + cameraLandmarksCount); i++){
 			for (int i = cameraIndex; i < zkl.rows_size(); i++){
-				//double mdDistance = std::abs(zl(2 * i, 0) / std::sqrt(gn->getCameraDistanceVariance()));
-				//double mdDistance = 0;
+				
 				double mdAngle = std::abs(zl(i + laserOffset, 0) / std::sqrt(gn->getCameraAngleVariance()));
-				//printf("Mh: (%d): %g. nu: %g\n", i, mdAngle, zl(i + laserOffset, 0));
+
 				if (mdAngle > cameraTMAngle){
 					//RNUtils::printLn("Landmark %d rejected...", (int)zkl(i, 3));
-					//distanceThreshold = (máxima zl que permite un buen matching)/sigma
-					//zl(2 * i, 0) = 0;
 					zl(i + laserOffset, 0) = 0;
 					vsize--;
 				}
 			}	
 			gn->getVisualLandmarks()->clear();
 			gn->unlockVisualLandmarks();
-			//RNUtils::printLn("-----------> Zl, Variance: %g", gn->getCameraAngleVariance());
-			//zl.print();
+
 		}
 
 		Matrix Sk = Hk * Pk * ~Hk + currentR;
