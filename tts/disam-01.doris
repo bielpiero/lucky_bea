@@ -1,5 +1,5 @@
-function entrance()
-	goto(#2,#0.9,#5)
+function rm_lab()
+	goto(#-1,#4.8,#2.23)
 endfunction
 
 function reception()
@@ -17,6 +17,6 @@ function reception()
 	say("iré explicando como surgió el centro de automática y robótica.")
 endfunction
 
-function main
-	entrance()
+function main()
+	rm_lab()
 endfunction

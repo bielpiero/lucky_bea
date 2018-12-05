@@ -30,6 +30,9 @@ private:
 	static const double SECURITY_DISTANCE;
 	static const double LASER_MAX_RANGE;
 	static const double LANDMARK_RADIUS;
+
+	/** VICTOR */
+	std::FILE* test;
 };
 
 #endif

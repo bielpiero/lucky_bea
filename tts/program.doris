@@ -1,0 +1,99 @@
+var finishedTour = 0
+
+onRfidTagsDetected(rfidEvent)
+onSectorChange(newSectorEvent)
+
+function rfidEvent(tagsList)
+	for(var i = #0 : i < sizeof(tagsList) : i = i + #1)
+		if(tagsList[i] == "e280-1160-6000-0207-28b5-2a04")
+			say("Esa caja que estáis viendo al fondo, ahi me guardan para cuando tengo que salir de la universidad")
+			say[face=afraid]("Esa caja me da mucho miedo")
+		endif
+	endfor
+
+endfunction
+
+function newSectorEvent(sectorId)
+	if(sectorId == #0)
+		say[face=happy]("Estamos ahora en el sitio donde fui creada. Esta es la sala de Robots Móviles")
+		explainRobotsMoviles()
+	else 
+		if(sectorId == #4)
+			say[face=happy]("Estamos entrando a la sala de visión por computador y máquinas inteligentes")
+			explainVision4UAVS()
+		else
+			if(sectorId == #7)
+				say[face=happy]("Aquí en este pasillo hay muchas salas, y también están los servicios")
+				explainHallway()
+			else
+				if(sectorId == #12)
+					say[face=sad]("Lamentablemente hemos llegado al final de nuestro recorrido")
+					finishedTour = 1
+				endif
+			endif
+		endif
+	endif
+endfunction
+
+function explainRobotsMoviles()
+	say[face=happy]("Como podeis observar aqui esta mi predecesor Urbano, no es tan avanzado como yo pero si puede hacer muchas cosas")
+	say[face=sad]("Lamentablemente esta un poco mayor y ya no se mueve tanto")
+	say[face=surprise]("pero sin lamentarnos mucho vamos a otro sitio y os muestro donde ha estado Urbano viajando y yo aun no he podido ir")
+	move(next)
+	say[face=surprise]("aqui en este poster se puede ver que Urbano ha llegado hasta el museo de ciencias de Valencia")
+	say("tambien pueden ver a Blacky, un robot mas antiguo que Urbano.")
+	move(next)
+	say[face=happy]("por este pasillo, esta la salida de emergencia. pero tranquilos, aun no nos vamos a ir.")
+	move(next)
+endfunction
+
+function explainVision4UAVS()
+	say[face=happy]("Seguidme por aqui que vamos a conocer a Carlitos")
+	move(next)
+	say("Carlitos es un robot submarino que se puede teleoperar. todo su sistema de comunicacion es por cables y esta pensado para tareas de rescate")
+	move(next)
+	say("mientras nos vamos a otro sitio, os comento que Carlitos al ser un robot submarino, puede ir a la ducha todos los dias.")
+	say[face=sad]("no como yo")
+	move(next)
+	say[face=happy]("aqui estamos entrando a los robots que vuelan, los drones")
+	say[face=happy]("estos hacen sus vuelos basados en vision artificial")
+	say("aunque yo tambien tengo vision artificial, estos chicos hacen cosas mucho mas avanzadas")
+	move(next)
+endfunction
+
+function explainHallway()
+	move(next)
+	say("y aqui a nuestra izquierda están los chicos de Robots teleoperados")
+	say("ellos están enfocados a hacer control de robots remotos, tratando de disminuir el tiempo de acción y es tanta la interacción humano y robot que parece que el operador esta realmente en el sitio")
+	move(next)
+	say("seguidamente a la derecha esta el despacho del profesor Pinto")
+	move(next)
+	say("luego aqui también a la derecha estan los servicios")
+	say("el que quiera usarlos, puede ir ahora")
+	move(next)
+	say("y por último tenemos la sala de prácticas")
+	move(next)
+endfunction
+
+function welcome()
+	say[attention=front; face=happy]("Hola chicos")
+	say[attention=right; face=surprise]("bienvenidos al centro de automática y robatica de la universidad politécnica de madrid")
+	say[attention=left; face=suspect]("seguidme por favor que os mostraré el laboratorio, los distintos grupos que hay, os explicaré que hace cada grupo y lo mas importante, os mostraré donde he nacido y quién es mi creador.")
+	turn(#90)
+	say("coloquemos nuestra atencion a la izquierda")
+	say("subiendo por las escaleras estan los despachos de los profesores.")
+	say("como mi creador me odia y no me ha colocado piernas, no puedo mostrarles la parte de arriba todavía.")
+	say("a la derecha estan los principales despachos de los grupos de investigación.")
+	move(next)
+	say("vamos para ahí. iremos hasta el final del todo y mientras caminamos") 
+	say[mood=sad]("y yo rodando")
+	say("iré explicando como está organizado el centro de automatica y robotica.")
+endfunction
+
+function main()
+	goto(#2, #2, #3)
+	welcome()
+	while(not finishedTour)
+		wait()
+	endwhile
+endfunction

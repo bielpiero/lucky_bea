@@ -1,3 +1,11 @@
+
+
+/** VERSIÓN QUE USA SOLO EL LÁSER PARA CORREGIR 
+ *  El láser no es capaz de identificar las balizas, por lo que hay que hacer una identificación
+ */
+
+
+
 #include "RNPKalmanLocalizationTask.h"
 
 const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.25;
@@ -5,22 +13,22 @@ const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.014;
 
 //const float RNPKalmanLocalizationTask::MULTIPLIER_FACTOR = 4;
 
-const float RNPKalmanLocalizationTask::odom_dist_sup = 0.044;
-const float RNPKalmanLocalizationTask::odom_dist_inf = 0.060;
-const float RNPKalmanLocalizationTask::odom_angl_sup = 0.066;
-const float RNPKalmanLocalizationTask::odom_angl_inf = 0.100;
+const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_sup = 0.045; 
+const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_inf = 0.075;
+const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_sup = 0.065; 
+const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_inf = 0.115;
 
-const float RNPKalmanLocalizationTask::camera_angl_sup = 0.030;
-const float RNPKalmanLocalizationTask::camera_angl_inf = 0.085;
+const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_sup = 0.017; 
+const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_inf = 0.040;
+const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.025; 
+const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.065;
 
-const float RNPKalmanLocalizationTask::laser_dist_sup = 0.0175;
-const float RNPKalmanLocalizationTask::laser_dist_inf = 0.0250;
-const float RNPKalmanLocalizationTask::laser_angl_sup = 0.0200;
-const float RNPKalmanLocalizationTask::laser_angl_inf = 0.0475;
+const float mahalanobis_limit = 5.9915;
 
 RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
 	test = std::fopen("laser_camera_pkalman.txt","w+");
+	test2 = std::fopen("medidas_sensores_pkalman.txt","w+");
 	this->startThread();
 }
 
@@ -29,66 +37,55 @@ RNPKalmanLocalizationTask::~RNPKalmanLocalizationTask(){
 }
 
 void RNPKalmanLocalizationTask::init(){
-	if(gn != NULL and gn->initializeKalmanVariables() == 0){
+	if(gn != NULL and gn->initializeKalmanVariables() == 0)
+	{
+		printf("Inicializacion\n");
+		/** Posición inicial */
+		xk_sup = gn->getRawEncoderPosition();
+		xk_inf = gn->getRawEncoderPosition();
+		xk_pred_sup = Matrix(3, 1);
+		xk_pred_inf = Matrix(3, 1);
+
+
+		/** Definicioń de matrices */
 		Ak = Matrix::eye(3);
 		Bk = Matrix(3, 2);
 		CG = Matrix(3, 1);
 		Pk_sup = Matrix(3, 3);
 		Pk_inf = Matrix(3, 3);
-		Pk_sup(0,0) = std::pow(0.02, 2)/3;   Pk_sup(1,1) = std::pow(0.02, 2)/3;   Pk_sup(2,2) = std::pow(0.087, 2)/3;
-		Pk_inf(0,0) = std::pow(0.03, 2)/3;   Pk_inf(1,1) = std::pow(0.03, 2)/3;   Pk_inf(2,2) = std::pow(0.012, 2)/3;
+		Q_sup = Matrix(2,2);
+		Q_inf = Matrix(2,2);
 
-/*
-P Biel
-- desv tip X: 0.0238
-- desv tip Y 0.0238
-- desv tip Theta 0.102063 (5.73 grados)
+		
+		/** Inicialización de matrices  */
+		/* FIABILIDAD INICIAL
+	 		P Biel
+			- desv tip X: 0.0238
+			- desv tip Y 0.0238
+			- desv tip Theta 0.102063 (5.73 grados)
 
-P superior:
-- desv tip X: 0.02
-- desv tip Y: 0.02
-- desv tip Theta: 0.087 (5 grados)
+			P superior:
+			- desv tip X: 0.02
+			- desv tip Y: 0.02
+			- desv tip Theta: 0.087 (5 grados)
 
-P infierior:
-- desv tip X: 0.03
-- desv tip Y: 0.03
-- desv tip Theta: 0.012 (7 grados)
-*/
+			P infierior:
+			- desv tip X: 0.03
+			- desv tip Y: 0.03
+			- desv tip Theta: 0.122 (7 grados)
+		*/
+		Pk_sup(0,0) = std::pow(0.10, 2) / 3.0;   Pk_sup(1,1) = std::pow(0.10, 2) / 3.0;   Pk_sup(2,2) = std::pow(2*M_PI/180.0, 2) / 3.0;
+		Pk_inf(0,0) = std::pow(0.15, 2) / 3.0;   Pk_inf(1,1) = std::pow(0.15, 2) / 3.0;   Pk_inf(2,2) = std::pow(4*M_PI/180.0, 2) / 3.0;
 
+		// Balizas láser existentes en este sector
 		laserLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_LASER_STR);
-		cameraLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_CAMERA_STR);
-		cameraTMAngle = 0.05 / camera_angl_sup;
-		xk_sup = gn->getRawEncoderPosition();
-		xk_inf = gn->getRawEncoderPosition();
-		//gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
-		//gn->unlockLaserLandmarks();
-		//gn->unlockVisualLandmarks();
 
-		int laserIndex = 0, cameraIndex = 0;
-		if(gn->isLaserSensorActivated()){
-			cameraIndex = 2 * laserLandmarksCount; 
-		}
-		int sizeR = (gn->isLaserSensorActivated() ? 2 * laserLandmarksCount : 0) + (gn->isCameraSensorActivated() ? cameraLandmarksCount : 0);
-        currentR_sup = Matrix(sizeR, sizeR);
-        currentR_inf = Matrix(sizeR, sizeR);
-
-		// currentR_sup
-		for (int kkk = laserIndex; kkk < cameraIndex; kkk += 2){
-			currentR_sup(kkk, kkk) = std::pow(laser_dist_sup, 2) / 3.0;
-			currentR_sup(kkk + 1, kkk + 1) = std::pow(laser_angl_sup, 2) / 3.0;
-
-			currentR_inf(kkk, kkk) = std::pow(laser_dist_inf, 2) / 3.0;
-			currentR_inf(kkk + 1, kkk + 1) = std::pow(laser_angl_inf, 2) / 3.0;
-		}
-		for (int kkk = cameraIndex; kkk < sizeR; kkk++){
-			currentR_sup(kkk, kkk) = std::pow(camera_angl_sup, 2) / 3.0;
-
-			currentR_inf(kkk, kkk) = std::pow(camera_angl_inf, 2) / 3.0;
-		}
-
+		/** Activar localización */
 		enableLocalization = true;
 
-	} else {
+	} 
+	else 
+	{
 		enableLocalization = false;
 	}
 }
@@ -100,440 +97,479 @@ void RNPKalmanLocalizationTask::kill(){
 }
 
 void RNPKalmanLocalizationTask::task(){
-	if(enableLocalization){
-		xk_sup_1 = xk_sup;
-		xk_inf_1 = xk_inf;
+	if(enableLocalization)
+	{
+		printf("1.\n");
+		/** Guardar valores de la última estimación */
+		x_sup_1 = xk_sup;
+		x_inf_1 = xk_inf;
 		
-		pk_sup_1 = Pk_sup;
-		pk_inf_1 = Pk_inf;
+		P_sup_1 = Pk_sup;
+		P_inf_1 = Pk_inf;
+
+
 		/** Odometría */
 		double deltaDistance = 0.0, deltaAngle = 0.0;
 		
 		// Obtener desplazamiento realizado
 		gn->getIncrementPosition(&deltaDistance, &deltaAngle);
 
-		//printf("pk_sup_1:\n");
-		//pk_sup_1.print();
-		//printf("pk_inf_1:\n");
-		//pk_inf_1.print();
-
-		
-		CG(2, 0) = (2 * xk_sup_1(2, 0) * std::sqrt(3*pk_sup_1(2, 2)) + 2 * xk_inf_1(2, 0) * std::sqrt(3*pk_inf_1(2, 2)) + xk_sup_1(2, 0) * std::sqrt(3*pk_inf_1(2, 2)) + xk_inf_1(2, 0) * std::sqrt(3*pk_sup_1(2, 2))) / (3 * (std::sqrt(3*pk_sup_1(2, 2)) + sqrt(3*pk_inf_1(2, 2))));
+		/** ***** PREDICCIÓN ***** **/	
+		printf("Movimiento lineal: %.4f, angular %.4f\n", deltaDistance, deltaAngle);
+		// Actualización de las estimaciones de la posición según la odometría (pos anterior + incremento)
+		RNUtils::getOdometryPose(x_sup_1, deltaDistance, deltaAngle, xk_pred_sup);
+		RNUtils::getOdometryPose(x_inf_1, deltaDistance, deltaAngle, xk_pred_inf);
+		xk_pred_sup(2,0) = RNUtils::fixAngleRad(xk_pred_sup(2,0));
+		xk_pred_inf(2,0) = RNUtils::fixAngleRad(xk_pred_inf(2,0));
+		/* Lo que hace RNUtils
+			xk1 = xk + deltaDistance * std::cos(thk + (deltaDegrees / 2.0));
+    		yk1 = yk + deltaDistance * std::sin(thk + (deltaDegrees / 2.0));
+    		thk1 = thk + deltaDegrees */
+				
+		/** Centro gravedad del ángulo */
+		CG(2, 0) = (2 * x_sup_1(2, 0) * std::sqrt(3*P_sup_1(2, 2)) + 2 * x_inf_1(2, 0) * std::sqrt(3*P_inf_1(2, 2)) + x_sup_1(2, 0) * std::sqrt(3*P_inf_1(2, 2)) + x_inf_1(2, 0) * std::sqrt(3*P_sup_1(2, 2))) / (3 * (std::sqrt(3*P_sup_1(2, 2)) + sqrt(3*P_inf_1(2, 2))));
 		CG(2, 0) = RNUtils::fixAngleRad(CG(2, 0));
-		//printf("CG:\n");
-		//CG.print();
-		/** Jacobianos */
-		// Jacobiano del movimiento
+			
+		/** Matrices jacobianas */
+		// Ak ya está inicializada como una matriz I -> Solo hay que cambiar dos valores
 		Ak(0, 2) = -deltaDistance * std::sin(CG(2, 0) + deltaAngle/2.0);
 		Ak(1, 2) = deltaDistance * std::cos(CG(2, 0) + deltaAngle/2.0);
 
-		// Jacobiano del ruido de la odometría
 		Bk(0, 0) = std::cos(CG(2, 0) + deltaAngle/2.0);
 		Bk(0, 1) = -0.5 * deltaDistance * std::sin(CG(2, 0) + deltaAngle/2.0);
-
 		Bk(1, 0) = std::sin(CG(2, 0) + deltaAngle/2.0);
 		Bk(1, 1) = 0.5 * deltaDistance * std::cos(CG(2, 0) + deltaAngle/2.0);
-
 		Bk(2, 0) = 0.0;
 		Bk(2, 1) = 1.0;
 
-		// Actualización de las estimaciones de la posición según la odometría (pos anterior + incremento)
-		RNUtils::getOdometryPose(xk_sup, deltaDistance, deltaAngle, xk_sup_1);
-		RNUtils::getOdometryPose(xk_inf, deltaDistance, deltaAngle, xk_inf_1);
-		
 		/** Matriz ruido desplazamiento */	
-		Matrix currentQ_sup = Matrix(2, 2);
-		Matrix currentQ_inf = Matrix(2, 2);
-		if(deltaDistance != 0.0 and deltaAngle != 0.0){
-			currentQ_sup(0, 0) = pow(odom_dist_sup, 2) / 3.0;
-			currentQ_sup(1, 1) = pow(odom_angl_sup, 2) / 3.0;
-			
-			currentQ_inf(0, 0) = pow(odom_dist_inf, 2) / 3.0;
-			currentQ_inf(1, 1) = pow(odom_angl_inf, 2) / 3.0;
+		if(deltaDistance == 0.0 and deltaAngle == 0.0) //< Si hay movimiento predecimos
+		{
+			Q_sup(0, 0) = 0.0;
+			Q_sup(1, 1) = 0.0;
+
+			Q_inf(0, 0) = 0.0;
+			Q_inf(1, 1) = 0.0;
+		}
+		else
+		{
+			Q_sup(0, 0) = std::pow(incertidumbre_odom_dist_sup, 2) / 3.0;
+			Q_sup(1, 1) = std::pow(incertidumbre_odom_angl_sup, 2) / 3.0;
+		
+			Q_inf(0, 0) = std::pow(incertidumbre_odom_dist_inf, 2) / 3.0;
+			Q_inf(1, 1) = std::pow(incertidumbre_odom_angl_inf, 2) / 3.0;
 		}	
 
 		/** Fiabilidad de la estimación por odometría */
-		Pk_sup = (Ak * pk_sup_1 * ~Ak) + (Bk * currentQ_sup * ~Bk);
-		Pk_inf = (Ak * pk_inf_1 * ~Ak) + (Bk * currentQ_inf * ~Bk);
-		
-		CG(0, 0) = (2 * xk_sup_1(0, 0) * std::sqrt(3*Pk_sup(0, 0)) + 2 * xk_inf_1(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_sup_1(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_inf_1(0, 0) * std::sqrt(3*Pk_sup(0, 0))) / (3 * (std::sqrt(3*Pk_sup(0, 0)) + sqrt(3*Pk_inf(0, 0))));
-        CG(1, 0) = (2 * xk_sup_1(1, 0) * std::sqrt(3*Pk_sup(1, 1)) + 2 * xk_inf_1(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_sup_1(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_inf_1(1, 0) * std::sqrt(3*Pk_sup(1, 1))) / (3 * (std::sqrt(3*Pk_sup(1, 1)) + sqrt(3*Pk_inf(1, 1))));
-		
-		
-		/** *** CORRECCIÓN *** */		
-		
-		int totalLandmarks = 0; //< Número de total de balizas posibles
-		
-		// Comprobar qué sensores están activos
-		if(gn->isLaserSensorActivated()){
-			totalLandmarks += laserLandmarksCount;
-		}
+		Pk_pred_sup = (Ak * P_sup_1 * ~Ak) + (Bk * Q_sup * ~Bk);
+		Pk_pred_inf = (Ak * P_inf_1 * ~Ak) + (Bk * Q_inf * ~Bk);
 
-		if(gn->isCameraSensorActivated()){
-			totalLandmarks += cameraLandmarksCount;
-		}
-
-		/** Matriz de observación 
-		 * Los sensores existentes son cámara y láser. Se puede usar uno de ambos o ambos a la vez.
-		 * En caso de usar ambos a la vez la matriz H estára "dividida" en dos secciones: la correspondiente al laser y la correspondiente a la cámara
-		 * Así las posiciones en la Matriz H serán adjudicadas por este orden: primero el láser y luego la cámara */
-		// El tamaño de la matriz de observación es el número de balizas y el número de variables de estado (x,y,theta)
-		int sizeH = (gn->isLaserSensorActivated() ? 2 * laserLandmarksCount : 0) + (gn->isCameraSensorActivated() ? cameraLandmarksCount : 0);
-		Hk = Matrix(sizeH, STATE_VARIABLES);
 		
-		// Variables para establecer las posiciones para el laser y la cámara en H
-		int laserIndex = 0, cameraIndex = 0;
-		if(gn->isLaserSensorActivated()){
-			cameraIndex = 2 * laserLandmarksCount;
-		}
+
+
+		printf("2.\n");
+
+		/** ***** CORRECCIÓN ***** **/
+		/* En esta versión solo hay corrección de la cámara */
+
+		// Variables 
+		int vsize = 0; //< contador de balizas encontradas
+		int vsize_used = 0; //< contador usadas
+		Matrix disp = Matrix(2, 1); //< Matriz de rotación
+		bool landmark_used = false; //< Flag para detectar si hemos usado la baliza	
+
+		Matrix real_observations = Matrix(2,1);
+		Matrix observations_sup = Matrix(2*laserLandmarksCount,1);
+		Matrix observations_inf = Matrix(2*laserLandmarksCount,1);
+		double distance = 0.0, angle = 0.0;
+
+		Matrix single_inno_sup = Matrix(2,1);
+		Matrix single_inno_inf = Matrix(2,1);
 		
-		// Se recorren todas las balizas existentes en el sector actual comprobando si corresponden con alguna baliza percibida
-		for(int i = 0, zIndex = 0; i < gn->getCurrentSector()->landmarksSize(); i++){
-			Matrix disp = Matrix(2, 1);//< Matriz de rotación
-			double landmarkDistance;
-			s_landmark* currLandmark = gn->getCurrentSector()->landmarkAt(i);
-			
-			// Si el laser está activo
-			if(gn->isLaserSensorActivated()){
-				// Si la baliza actual es del tipo laser
-				if(gn->getCurrentSector()->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){ //< XML_SENSOR..._LASER...= "laser"
-					// Índice para alojar 
-					zIndex = 2 * laserIndex; //< El láser toma dos medidas distancia y ángulo
-					laserIndex++;
+		Matrix fullHk = Matrix(2*laserLandmarksCount, 3); 
+		Matrix singleHk = Matrix(2,3); // 2 -> distancia y ángulo
+		double landmarkDistance = 0.0; //< Es el denominador de la matriz H (corresponde a la distancia)
 
-					landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, (CG(0, 0) + disp(0, 0)), (CG(1, 0) + disp(1, 0)));
+		Matrix smallR_inf = Matrix(2,2);
+		smallR_inf(0,0) = std::pow(incertidumbre_laser_dist_inf, 2) / 3.0;
+		smallR_inf(1,1) = std::pow(incertidumbre_laser_angl_inf, 2) / 3.0;
 
-					Hk(zIndex, 0) = -(currLandmark->xpos - (CG(0, 0) + disp(0, 0)))/landmarkDistance;
-					Hk(zIndex, 1) = -(currLandmark->ypos - (CG(1, 0) + disp(1, 0)))/landmarkDistance;
-					Hk(zIndex, 2) = 0.0;
+		double mahalanobis_distance = 1000.0;
+		int i_mahalanobis = -1;
+		Matrix smallObservations_inf(2, 1);
 
-					Hk(zIndex + 1, 0) = (currLandmark->ypos - (CG(1, 0) + disp(1, 0)))/std::pow(landmarkDistance, 2);
-					Hk(zIndex + 1, 1) = -(currLandmark->xpos - (CG(0, 0) + disp(0, 0)))/std::pow(landmarkDistance, 2);
-					Hk(zIndex + 1, 2) = -1.0;
-				}
-			}
-			
-			// Si la cámara está activa
-			if(gn->isCameraSensorActivated()){
-				// Si la baliza actual es del tipo camera
-				if(gn->getCurrentSector()->landmarkAt(i)->type == XML_SENSOR_TYPE_CAMERA_STR){ //< XML_SENSOR..._CAMERA... = "camera"
-					// El índice de la cámara va a empezar después de todas las balizas del láser
-					zIndex = cameraIndex;
-					cameraIndex++;
 
-					/** NOTA SOBRE EL ROBOT :
-					 * La cámara no se encuentra localizada en el centro del robot, es necesario hacer una transformación entre el S.Ref de la cámara y el S.Ref del robot */
-					disp(0, 0) = CAMERA_ERROR_POSITION_X * std::cos(CG(2, 0)) - CAMERA_ERROR_POSITION_Y * std::sin(CG(2, 0));
-					disp(1, 0) = CAMERA_ERROR_POSITION_X * std::sin(CG(2, 0)) + CAMERA_ERROR_POSITION_Y * std::cos(CG(2, 0));
 
-					landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, (CG(0, 0) + disp(0, 0)), (CG(1, 0) + disp(1, 0)));
-
-					Hk(zIndex, 0) = (currLandmark->ypos - (CG(1, 0) + disp(1, 0)))/std::pow(landmarkDistance, 2);
-					Hk(zIndex, 1) = -(currLandmark->xpos - (CG(0, 0) + disp(0, 0)))/std::pow(landmarkDistance, 2);
-					Hk(zIndex, 2) = -1.0;
-				}
-			}
-			disp(0, 0) = 0.0; //< Siempre hay que reiniciarlas pues para el láser no hay que transformar S.Ref
-			disp(1, 0) = 0.0;
-		}
-		//printf("Hk:\n");
-		//Hk.print();
-		/** Predicción de cuál debe ser la medida de los sensores según la posición estimada */
-		Matrix zkl_sup;
-		Matrix zkl_inf;
-		getObservations(zkl_sup, zkl_inf);
+		/** Centro de Gravedad*/
+		CG(0, 0) = (2 * xk_pred_sup(0, 0) * std::sqrt(3*Pk_pred_sup(0, 0)) + 2 * xk_pred_inf(0, 0) * std::sqrt(3*Pk_pred_inf(0, 0)) + xk_pred_sup(0, 0) * std::sqrt(3*Pk_pred_inf(0, 0)) + xk_pred_inf(0, 0) * std::sqrt(3*Pk_pred_sup(0, 0))) / (3 * (std::sqrt(3*Pk_pred_sup(0, 0)) + sqrt(3*Pk_pred_inf(0, 0))));
+        CG(1, 0) = (2 * xk_pred_sup(1, 0) * std::sqrt(3*Pk_pred_sup(1, 1)) + 2 * xk_pred_inf(1, 0) * std::sqrt(3*Pk_pred_inf(1, 1)) + xk_pred_sup(1, 0) * std::sqrt(3*Pk_pred_inf(1, 1)) + xk_pred_inf(1, 0) * std::sqrt(3*Pk_pred_sup(1, 1))) / (3 * (std::sqrt(3*Pk_pred_sup(1, 1)) + sqrt(3*Pk_pred_inf(1, 1))));
 		
-		
-		/** Cálculo del error por la medida */
-		//zl = Observaciones reales realizadas - Oservaciones predichas 
-		Matrix zl_sup(sizeH, 1);
-		Matrix zl_inf(sizeH, 1);
 
-		laserIndex = 0;
-		cameraIndex = 0; 
+        /** PROCESO EN EL QUE SE OBTIENE LA INFORMACIÓN DE LA MATRIZ H Y LAS MATRICES DE INNOVACIÓN */
+		if(gn->isLaserSensorActivated())
+		{
+			/** Balizas detectadas */
+			gn->lockLaserLandmarks(); // Bloqueamos detección
 
-		if(gn->isLaserSensorActivated()){
-			cameraIndex = laserLandmarksCount;
-		}
-		
-		int rsize = 0, vsize = 0;
-		
-		// Si el láser está activo
-		if(gn->isLaserSensorActivated()){
-			gn->lockLaserLandmarks();
-			rsize = gn->getLaserLandmarks()->size();
+			// Balizas detectadas
+			vsize = gn->getLaserLandmarks()->size();
+
+
+			/** Cálculo de todas las observaciones hechas por la estimación superior e inferior
+				Cálculo de H completo */
+			for(int i = 0; i < laserLandmarksCount; i++)
+			{
+				s_landmark* landmark = gn -> getCurrentSector() -> landmarkAt(i);
+
+				// Observaciones superiores
+				landmarkObservation(xk_pred_sup, disp, landmark, distance, angle);
+				angle = RNUtils::fixAngleRad(angle);
+				observations_sup(i*2, 0) = distance;
+				observations_sup(i*2 + 1, 0) = angle;
+
+				// Observaciones inferiores
+				landmarkObservation(xk_pred_inf, disp, landmark, distance, angle);
+				angle = RNUtils::fixAngleRad(angle);
+				observations_inf(i*2, 0) = distance;
+				observations_inf(i*2 + 1, 0) = angle;
+
+				// Matriz H
+				landmarkDistance = RNUtils::distanceTo(landmark->xpos, landmark->ypos, (CG(0, 0) + disp(0, 0)), (CG(1, 0) + disp(1, 0)));
 				
-			// Para todas las marcas del laser
-            /** Con el láser la baliza no otorga información sobre su ID, hay que averiguar qué baliza es.
-             *  El método que se va a utilizar para ello es Mahalanobis. 
-             *  Se calcula para cada baliza detectada: (medida_tomada - medida_predicha) usando la baliza encontrada y cada una de las balizas posibles (teóricamente).
-             *  La baliza teórica correspondiente a la baliza encontrada será la que produzca menor error (menor distancia de Mahalanobis)
-             * 
-             *  Ejemplo: Estamos en una sala con 3 balizas (a, b, c) y detectamos 2 (x, y). 
-             *  - Se calcula Zkl y su D.Mahalanobis con la información de x y la información que se obtendría de a
-             *  - "     "     "     "                                     x                                      b
-             *  - "     "     "     "                                     x                                      c
-             *  - La baliza x corresponderá a la baliza a, b o c que tenga una menor D.Mahalanobis
-             *  - Lo mismo con y
-             *  
-             * 
-             *  NOTAS: EKF Fuzzy tiene dos estimaciones. SÍ se puede dar el caso de que cada una de las estimaciones sup/inf obtenga catalogaciones diferentes. 
-             *  ¿Cómo afectaría una catalogación distinta para cada estimación?
-             *    + La corrección es específica para cada estimación
-             *    - Que la corrección sea específica para cada estimación NO hace que esta sea mejor. De hecho puede mantenerlas separadas
-             *    - Si una corrige bien y la otra mal se potencia que el trapecio se deforme
-             * 
-             *  ¿Cómo afectaría usar para ambos la misma?
-             *    + Si acierta las dos estimaciones corrigen bien. Si falla ambas corrigen mal. -> Esto favorece que los trapecios se mantengane estables 
-             *    + Respeta el hecho de que una medida es única, la misma para ambas estimaciones
-             *   ESTA PARECE LA MÁS ACORDE
-             * 
-             *  ¿Tiene sentido calcular esto respecto al centro de gravedad en lugar de respecto a las estimaciones?
-             *    + Si el centro de gravedad está más ajustado con la posición real -> es beneficioso aplicar esto en el CG pues se va a realizar una corrección mejor
-             *    - Habría que obtener la posición predicha respecto del CG
-             *    - Para obtener omega (Sk, matriz de fiabilidad de la inovación en la medida), habría que tener un ruido acorde al CG. 
-             *   NO SE PUEDE!!!!
-             */
-			for (int i = 0; i < gn->getLaserLandmarks()->size(); i++){
+				fullHk(i*2, 0) = -(landmark->xpos - (CG(0, 0) + disp(0, 0)))/landmarkDistance;
+				fullHk(i*2, 1) = -(landmark->ypos - (CG(1, 0) + disp(1, 0)))/landmarkDistance;
+				fullHk(i*2, 2) = 0.0;
+
+				fullHk(i*2+1, 0) = (landmark->ypos - (CG(1, 0) + disp(1, 0)))/std::pow(landmarkDistance, 2);
+				fullHk(i*2+1, 1) = -(landmark->xpos - (CG(0, 0) + disp(0, 0)))/std::pow(landmarkDistance, 2);
+				fullHk(i*2+1, 2) = -1.0;
+			}
+
+			/** Obtención de las observaciones tomadas
+				Cálculo de la innovación 
+				Cálculo de la matriz H final (solo tiene las balizas detectadas) */
+			for(int i = 0; i < vsize; i++)
+			{
+
+				// Puntero apuntando a la baliza actual
 				RNLandmark* lndmrk = gn->getLaserLandmarks()->at(i);
 
-				std::vector<std::pair<int, float> > euclideanDistances;
-				
-				/** Matriz de ruido del láser */
+				// Medidas de la baliza detectada
+				real_observations(0,0) = lndmrk->getPointsXMean();
+				real_observations(1,0) = RNUtils::fixAngleRad(lndmrk->getPointsYMean());
+				printf("Baliza detectada. Distancia = %.3f, angulo = %.3f\n", real_observations(0,0), real_observations(1,0)*180.0/M_PI);
 
-				/* NOTAS: Borrar si no se usa, añadido por Víctor
-				// Solo se va a utilizar la baliza actual por lo que las dimensiones son 2, 2
-				Matrix smallR_sup(2, 2); 
-				smallR_sup(0,0) = pow(laser_dist_sup, 2);
-				smallR_sup(1,1) = pow(laser_angl_sup, 2);
-				*/
-				// NOTAS: TIENE QUE RECIBIR LA SUPERIOR 
-				Matrix smallR_sup(2, 2);
-				smallR_sup(0,0) = pow(laser_dist_sup, 2) / 3.0;
-                smallR_sup(1,1) = pow(laser_angl_sup, 2) / 3.0;
+				mahalanobis_distance = 1000.0;
+				i_mahalanobis = -1;
 
-
-				/** Medidas tomadas para esta baliza */
-				Matrix measure(2, 1);
-				// Distancia
-				measure(0, 0) = lndmrk->getPointsXMean();
-				// Ángulo
-				measure(1, 0) = lndmrk->getPointsYMean();
-				
-				// Para los índices relativos al laser
-				for (int j = laserIndex; j < cameraIndex; j++){
-					// Matriz de observación relativa al láser
-					Matrix smallHk(2, 3);
-					smallHk(0, 0) = Hk(2 * j, 0);
-					smallHk(0, 1) = Hk(2 * j, 1);
-					smallHk(0, 2) = Hk(2 * j, 2);
-					smallHk(1, 0) = Hk(2 * j + 1, 0);
-					smallHk(1, 1) = Hk(2 * j + 1, 1);
-					smallHk(1, 2) = Hk(2 * j + 1, 2);
+				// Comparación con cada una de las existentes en el mapa
+				for(int j = 0; j < laserLandmarksCount; j++)
+				{
+					singleHk(0, 0) = fullHk(2*j, 0);
+					singleHk(0, 1) = fullHk(2*j, 1);
+					singleHk(0, 2) = fullHk(2*j, 2);
+					singleHk(1, 0) = fullHk(2*j+1, 0);
+					singleHk(1, 1) = fullHk(2*j+1, 1);
+					singleHk(1, 2) = fullHk(2*j+1, 2);
 					
 					// Fiabilidad de medida_tomada - medida_estimada
-					Matrix omega = smallHk * Pk_sup * ~smallHk + smallR_sup;
+					Matrix omega_inf = singleHk * Pk_pred_inf * ~singleHk + smallR_inf;
 					
 					// Medida predicha según la posición estimada por odometría
-					Matrix obs(2, 1);
-					obs(0, 0) = zkl_sup(j, 0);
-					obs(1, 0) = zkl_sup(j, 1);
+					smallObservations_inf(0, 0) = observations_inf(2*j, 0);
+					smallObservations_inf(1, 0) = observations_inf(2*j+1, 0);
 					
 					// Distancia de Mahalanobis
-					Matrix mdk = ~(measure - obs) * omega * (measure - obs);
+					Matrix mdk = ~(real_observations - smallObservations_inf) * !omega_inf * (real_observations - smallObservations_inf);
 					float md = std::sqrt(mdk(0, 0));
-					euclideanDistances.push_back(std::pair<int, float>(j, md));
-					
-					//RNUtils::printLn("Euclidean Distance[%d]: %f", j, euclideanDistances.at(j));	
-				}
-
-				/** Descarte por Mahalanobis. Se selecciona la más pequeña */
-				float minorDistance = std::numeric_limits<float>::infinity();
-				int indexFound = RN_NONE;
-				for (int j = 0; j < euclideanDistances.size(); j++){
-					if(euclideanDistances.at(j).second < minorDistance){
-						minorDistance = euclideanDistances.at(j).second;
-						indexFound = euclideanDistances.at(j).first;
-					}	
-				}
-				
-				//RNUtils::printLn("Matched landmark: {idx : %d, MHD: %f}", indexFound, minorDistance);
-				
-				/** Medida realizada - medida estimada_(sup/inf) */
-				// Si se ha identificado una baliza
-				if(indexFound > RN_NONE){
-					// Distancia sup e inf
-					zl_sup(2 * indexFound, 0) = lndmrk->getPointsXMean() - zkl_sup(indexFound, 0);
-					zl_inf(2 * indexFound, 0) = lndmrk->getPointsXMean() - zkl_inf(indexFound, 0);
-					
-					// Ángulo sup
-					zl_sup(2 * indexFound + 1, 0) = lndmrk->getPointsYMean() - zkl_sup(indexFound, 1);
-					if(zl_sup(2 * indexFound + 1, 0) > M_PI){
-						zl_sup(2 * indexFound + 1, 0) = zl_sup(2 * indexFound + 1, 0) - 2 * M_PI;
-					} else if(zl_sup(2 * indexFound + 1, 0) < -M_PI){
-						zl_sup(2 * indexFound + 1, 0) = zl_sup(2 * indexFound + 1, 0) + 2 * M_PI;
-					}
-					
-					// Ángulo inf
-					zl_inf(2 * indexFound + 1, 0) = lndmrk->getPointsYMean() - zkl_inf(indexFound, 1);
-					if(zl_inf(2 * indexFound + 1, 0) > M_PI){
-						zl_inf(2 * indexFound + 1, 0) = zl_inf(2 * indexFound + 1, 0) - 2 * M_PI;
-					} else if(zl_inf(2 * indexFound + 1, 0) < -M_PI){
-						zl_inf(2 * indexFound + 1, 0) = zl_inf(2 * indexFound + 1, 0) + 2 * M_PI;
-					}
-					
-					//RNUtils::printLn("markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, Error: {d: %f, a: %f}", indexFound, lndmrk->getPointsXMean() , lndmrk->getPointsYMean() , zkl(indexFound , 0), zkl(indexFound , 1), zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
-
-
-
-
-
-					/** NOTAS: Esto NO es mahalanobis. Es simplemente la inovación de la distancia o o o o o o o  del ángulo entre su varianza. NO juzga ambas a la vez
-					 * - corrección distancia / varianza distancia
-					 * - corrección ángulo / varianza ángulo
-					 * 
-					 * Simplemente podría aplicar que si la inovación es mayor que un rango a fregar
-					 * Si el error / varianción típica láser 
-					 * 
-                    double mdDistance = std::abs(zl(2 * indexFound, 0) / std::sqrt(gn->getLaserDistanceVariance()));
-					double mdAngle = std::abs(zl(2 * indexFound + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
-					//printf("Mhd: (%d), %lg, %lg, nud: %lg, nua: %lg\n", i, mdDistance, mdAngle, zl(2 * indexFound, 0), zl(2 * indexFound + 1, 0));
-					if (mdDistance > laserTMDistance or mdAngle > laserTMAngle)
+					//printf("  Mahalanobis -> %f > %f\n", md, mahalanobis_limit);
+					// Guardar la más pequeña
+					if(md < mahalanobis_distance)
 					{
-						zl(2 * indexFound, 0) = 0.0;
-						zl(2 * indexFound + 1, 0) = 0.0;
-						rsize--; //< Esto solo me indica cuantas balizas he usado
-					}		
-					*/	
-				
-				}
-			}
-			gn->unlockLaserLandmarks();
-		}
-
-		// Si la cámara está activa
-		if(gn->isCameraSensorActivated()){
-			gn->lockVisualLandmarks();
-			int laserOffset = gn->isLaserSensorActivated() ? laserLandmarksCount : 0;
-
-			vsize = gn->getVisualLandmarks()->size();
-			
-			// Para cada una de las balizas de la cámara
-			for (int i = 0; i < gn->getVisualLandmarks()->size(); i++){
-				RNLandmark* lndmrk = gn->getVisualLandmarks()->at(i);
-				// Variable que indica si una baliza es aceptada o no
-				bool validQR = true;
-
-				/** Si la información de la baliza es lógica es aceptada */
-				if (lndmrk->getMapId() > RN_NONE && lndmrk->getSectorId() > RN_NONE && lndmrk->getMarkerId() > RN_NONE){
-					//Compares the current landmark with the remaining landmarks
-					for (int j = 0; j < gn->getVisualLandmarks()->size() and (validQR); j++){
-						if (j != i){ //< Que no se compare con ella misma
-							/** Si la id de la baliza NO es única es rechazada por el momento, posteriormente se la "juzgará" con Mahalanobis*/
-							if (lndmrk->getMarkerId() == gn->getVisualLandmarks()->at(j)->getMarkerId()){
-								validQR = false;
-								//RNUtils::printLn("Current landmark doesn't have a unique ID. Applying Mahalanobis distance...");
-							}
-						}
-					}
-				} else {
-					validQR = false;
-				}
-
-				/** If the current landmark has a unique id, checks if there's a match with the database*/
-				if (validQR){
-					// Para cada baliza de la cámara. zkl_sup y zkl_inf tienen las mismas dimensiones
-					for (int j = cameraIndex; j < zkl_sup.rows_size(); j++){
-						// Si la baliza actual corresponde con una existente, comparando IDs
-						if((lndmrk->getMapId() == gn->getCurrentSector()->getMapId()) and (lndmrk->getSectorId() == gn->getCurrentSector()->getId()) and (lndmrk->getMarkerId() == ((int)zkl_sup(j, 3)))){
-							/** Medidas tomadas para esta baliza */
-							double distanceFixed = lndmrk->getPointsXMean();
-							double angleFixed = lndmrk->getPointsYMean();
-							
-							/** Medida realizada - medida estimada_(sup/inf) */
-							zl_sup(j + laserOffset, 0) = angleFixed - zkl_sup(j, 1);
-							if(zl_sup(j + laserOffset, 0) > M_PI){
-								zl_sup(j + laserOffset, 0) = zl_sup(j + laserOffset, 0) - 2 * M_PI;
-							} else if(zl_sup(j + laserOffset, 0) < -M_PI){
-								zl_sup(j + laserOffset, 0) = zl_sup(j + laserOffset, 0) + 2 * M_PI;
-							}
-							
-							zl_inf(j + laserOffset, 0) = angleFixed - zkl_inf(j, 1);
-							if(zl_inf(j + laserOffset, 0) > M_PI){
-								zl_inf(j + laserOffset, 0) = zl_inf(j + laserOffset, 0) - 2 * M_PI;
-							} else if(zl_inf(j + laserOffset, 0) < -M_PI){
-								zl_inf(j + laserOffset, 0) = zl_inf(j + laserOffset, 0) + 2 * M_PI;
-							}
-						}
+						mahalanobis_distance = md;
+						i_mahalanobis = j*2;
 					}
 				}
+				printf("Distancia mahalanobis: %f\n", mahalanobis_distance);
+				if(i_mahalanobis == -1 || mahalanobis_distance > mahalanobis_limit)
+				{
+					if(i_mahalanobis == -1)
+						printf("WOoooW i_mahal = -1\n");
+					if(mahalanobis_distance > mahalanobis_limit)
+						printf("Descartada por mahalanobis -> %f > %f\n", mahalanobis_distance, mahalanobis_limit);
+					continue;
+				}	
+
+				// Una vez se ha identificado la baliza a la que corresponde (i_mahalanobis) se calcula la innovación y la H que se va a usar
+				singleHk(0, 0) = fullHk(i_mahalanobis, 0);
+				singleHk(0, 1) = fullHk(i_mahalanobis, 1);
+				singleHk(0, 2) = fullHk(i_mahalanobis, 2);
+				singleHk(1, 0) = fullHk(i_mahalanobis+1, 0);
+				singleHk(1, 1) = fullHk(i_mahalanobis+1, 1);
+				singleHk(1, 2) = fullHk(i_mahalanobis+1, 2);
+				v_single_H.push_back(singleHk);
+				printf("Baliza sup elegida. Distanc = %.3f, angulo = %.3f\n", observations_sup(i_mahalanobis, 0), observations_sup(i_mahalanobis+1, 0)*180/M_PI);
+				printf("Baliza inf elegida. Distanc = %.3f, angulo = %.3f\n", observations_inf(i_mahalanobis, 0), observations_inf(i_mahalanobis+1, 0)*180/M_PI);
+
+
+				single_inno_sup(0, 0) = real_observations(0,0) - observations_sup(i_mahalanobis, 0);
+				single_inno_sup(1, 0) = real_observations(1,0) - observations_sup(i_mahalanobis+1, 0);
+				single_inno_sup(1, 0) = RNUtils::fixAngleRad(single_inno_sup(1, 0));
+				printf("Inno sup: dist = %f, ang = %f\n", single_inno_sup(0,0), single_inno_sup(1,0)*180/M_PI);
+							
+				single_inno_inf(0, 0) = real_observations(0,0) - observations_inf(i_mahalanobis, 0);
+				single_inno_inf(1, 0) = real_observations(1,0) - observations_inf(i_mahalanobis+1, 0); 
+				single_inno_inf(1, 0) = RNUtils::fixAngleRad(single_inno_inf(1, 0));
+				printf("Inno inf: dist = %f, ang = %f\n", single_inno_inf(0,0), single_inno_inf(1,0)*180/M_PI);
+
+				v_single_inno_sup.push_back(single_inno_sup);
+				v_single_inno_inf.push_back(single_inno_inf);		
+
+				// Baliza usada
+				vsize_used ++;		
+			}
+		} // if(gn->isLaserSensorActivated())
+
+
+		printf("Balizas detectadas = %d.   Balizas usadas = %d\n", vsize, vsize_used);
+		gn->unlockLaserLandmarks();
+		printf("3.\n");
+		printf("4.\n");
+
+
+		/** CORRECCIÓN final*/
+		// Si se han obtenido observaciones se corrige, si no, no
+		if(vsize_used > 0)
+		{
+			// Ahora sí vamos a construir las matrices enteras
+
+			// Inicializar tamaño matrices
+			R_sup = Matrix(2*vsize_used, 2*vsize_used);
+			R_inf = Matrix(2*vsize_used, 2*vsize_used);
+
+			Matrix Hk = Matrix(2*vsize_used,3);
+			Matrix innovacion_sup = Matrix(2*vsize_used,1);
+			Matrix innovacion_inf = Matrix(2*vsize_used,1);
+			
+			// Rellenamos
+			for(int i = 0; i < vsize_used; i++)
+			{
+				if(i == 0)
+					printf("5.\n");
+
+				// Matrices de ruido
+				R_sup(2*i, 2*i) = std::pow(incertidumbre_laser_dist_sup, 2) / 3.0;
+				R_sup(2*i+1, 2*i+1) = std::pow(incertidumbre_laser_angl_sup, 2) / 3.0;
+
+				R_inf(2*i, 2*i) = std::pow(incertidumbre_laser_dist_inf, 2) / 3.0;
+				R_inf(2*i+1, 2*i+1) = std::pow(incertidumbre_laser_angl_inf, 2) / 3.0;
+
+				// Matriz de observación
+				singleHk = v_single_H.at(i);
+				Hk(2*i,0) = singleHk(0,0);
+				Hk(2*i,1) = singleHk(0,1);
+				Hk(2*i,2) = singleHk(0,2);
+				Hk(2*i+1,0) = singleHk(1,0);
+				Hk(2*i+1,1) = singleHk(1,1);
+				Hk(2*i+1,2) = singleHk(1,2);
+
+				// Matrices de innovacion
+				single_inno_sup = v_single_inno_sup.at(i);
+				single_inno_inf = v_single_inno_inf.at(i);
+
+				innovacion_sup(2*i,0) = single_inno_sup(0,0);
+				innovacion_sup(2*i+1,0) = single_inno_sup(1,0);
+
+				innovacion_inf(2*i,0) = single_inno_inf(0,0);
+				innovacion_inf(2*i+1,0) = single_inno_inf(1,0);
+			}
+
+			// AHORA SÍ CORRECCIÓN DE EKF
+			Matrix Sk_sup = Hk * Pk_pred_sup * ~Hk + R_sup;
+			Matrix Sk_inf = Hk * Pk_pred_inf * ~Hk + R_inf;
+
+
+			// NOTA: Hay que tratar el caso de 1 sola observación a parte, porque la clase Matrix no permite algunos cálculos de matriz(1,1)
+			Matrix Wk_sup, Wk_inf;
+			try
+			{
+				Wk_sup = Pk_pred_sup * ~Hk * !Sk_sup;
+				Wk_inf = Pk_pred_inf * ~Hk * !Sk_inf;
+			}
+			catch(const std::exception& e)
+			{
+				printf("Error. Hay %d medidas \n", vsize_used);	
+			}
+
+
+			Pk_sup = Pk_pred_sup - Wk_sup*Sk_sup*~Wk_sup;
+			Pk_inf = Pk_pred_inf - Wk_inf*Sk_inf*~Wk_inf;
+
+
+			try
+			{
+
+			Matrix correccion_sup = Wk_sup * innovacion_sup;
+			Matrix correccion_inf = Wk_inf * innovacion_inf;
+			correccion_sup.print();
+			correccion_inf.print();
+
+			}catch(const std::exception& e)
+			{
+				printf("Algo raro con print matriz correcion");	
 			}
 			
-			for (int i = cameraIndex; i < zl_sup.rows_size(); i++){
-				double mdAngleSup = std::abs(zl_sup(i + laserOffset, 0)) / camera_angl_sup;
-				double mdAngleInf = std::abs(zl_inf(i + laserOffset, 0)) / camera_angl_inf;
-				if (mdAngleSup > cameraTMAngle or mdAngleInf > cameraTMAngle){
-					//RNUtils::printLn("Landmark %d rejected...", (int)zkl(i, 3));
-					zl_sup(i + laserOffset, 0) = 0;
-					zl_inf(i + laserOffset, 0) = 0;
-					vsize--;
-				}
 
-			}
-		
-			gn->getVisualLandmarks()->clear();
-			gn->unlockVisualLandmarks();
+
+			xk_sup = xk_pred_sup + Wk_sup * innovacion_sup;
+			xk_sup(2, 0) = RNUtils::fixAngleRad(xk_sup(2, 0));
+
+			xk_inf = xk_pred_inf + Wk_inf * innovacion_inf;
+			xk_inf(2, 0) = RNUtils::fixAngleRad(xk_inf(2, 0));
 		}
+		else
+		{
+			printf("No se corrige\n");
+			xk_sup = xk_pred_sup;
+			xk_inf = xk_pred_inf;
+			Pk_sup = Pk_pred_sup;
+			Pk_inf = Pk_pred_inf;
+		}
+		printf("6.\n");
 		
-		/** Matrices S y W */
-		Matrix Sk_sup = Hk * Pk_sup * ~Hk + currentR_sup;
-		Matrix Sk_inf = Hk * Pk_inf * ~Hk + currentR_inf;
+
+		/** Liberar los vectores */
+		v_single_H.clear();
+		v_single_inno_sup.clear();
+		v_single_inno_inf.clear();
 		
-		Matrix Wk_sup = Pk_sup * ~Hk * !Sk_sup;
-		Matrix Wk_inf = Pk_inf * ~Hk * !Sk_inf;
 
-		Wk_sup = fixFilterGain(Wk_sup);
-		Wk_inf = fixFilterGain(Wk_inf);
+		/** ***** GUARDAR INFO ***** **/
+		/** Info estimación */
+		char buffer_Pk_pred_sup[256], buffer_Pk_sup[256];
+		char buffer_Pk_pred_inf[256], buffer_Pk_inf[256];
 
+		sprintf(buffer_Pk_pred_sup, "%.15lf\t%.15lf\t%.15lf", Pk_pred_sup(0, 0), Pk_pred_sup(1, 1), Pk_pred_sup(2, 2));
+		sprintf(buffer_Pk_pred_inf, "%.15lf\t%.15lf\t%.15lf", Pk_pred_inf(0, 0), Pk_pred_inf(1, 1), Pk_pred_inf(2, 2));
+		
+		sprintf(buffer_Pk_sup, "%.15lf\t%.15lf\t%.15lf", Pk_sup(0, 0), Pk_sup(1, 1), Pk_sup(2, 2));
+		sprintf(buffer_Pk_inf, "%.15lf\t%.15lf\t%.15lf", Pk_inf(0, 0), Pk_inf(1, 1), Pk_inf(2, 2));
 
-		/** Corrección y fiabilidad */
-		char bufferpk1_sup[256], bufferpk_sup[256];
-		char bufferpk1_inf[256], bufferpk_inf[256];
+		char buffer_xk_pred_sup[256], buffer_xk_sup[256];
+		char buffer_xk_pred_inf[256], buffer_xk_inf[256];
 
-		sprintf(bufferpk1_sup, "%.4e\t%.4e\t%.4e", Pk_sup(0, 0), Pk_sup(1, 1), Pk_sup(2, 2));
-		sprintf(bufferpk1_inf, "%.4e\t%.4e\t%.4e", Pk_inf(0, 0), Pk_inf(1, 1), Pk_inf(2, 2));
+		sprintf(buffer_xk_pred_sup, "%.15lf\t%.15lf\t%.15lf", xk_pred_sup(0, 0), xk_pred_sup(1, 0), xk_pred_sup(2, 0));
+		sprintf(buffer_xk_pred_inf, "%.15lf\t%.15lf\t%.15lf", xk_pred_inf(0, 0), xk_pred_inf(1, 0), xk_pred_inf(2, 0));
 
-		Pk_sup = (Matrix::eye(3) - Wk_sup * Hk) * Pk_sup;
-		Pk_inf = (Matrix::eye(3) - Wk_inf * Hk) * Pk_inf;
-		sprintf(bufferpk_sup, "%.4e\t%.4e\t%.4e", Pk_sup(0, 0), Pk_sup(1, 1), Pk_sup(2, 2));
-		sprintf(bufferpk_inf, "%.4e\t%.4e\t%.4e", Pk_inf(0, 0), Pk_inf(1, 1), Pk_inf(2, 2));
-
-		char bufferxk1_sup[256], bufferxk_sup[256];
-		char bufferxk1_inf[256], bufferxk_inf[256];
-
-		sprintf(bufferxk1_sup, "%.4lf\t%.4lf\t%.4lf", xk_sup_1(0, 0), xk_sup_1(1, 0), xk_sup_1(2, 0));
-		sprintf(bufferxk1_inf, "%.4lf\t%.4lf\t%.4lf", xk_inf_1(0, 0), xk_inf_1(1, 0), xk_inf_1(2, 0));
-
-		xk_sup = xk_sup_1 + Wk_sup * zl_sup;
-		xk_sup(2, 0) = RNUtils::fixAngleRad(xk_sup(2, 0));
-		xk_inf = xk_inf_1 + Wk_inf * zl_inf;
-		xk_inf(2, 0) = RNUtils::fixAngleRad(xk_inf(2, 0));
-
-		sprintf(bufferxk_sup, "%.4lf\t%.4lf\t%.4lf", xk_sup(0, 0), xk_sup(1, 0), xk_sup(2, 0));
-		sprintf(bufferxk_inf, "%.4lf\t%.4lf\t%.4lf", xk_inf(0, 0), xk_inf(1, 0), xk_inf(2, 0));
+		sprintf(buffer_xk_sup, "%.15lf\t%.15lf\t%.15lf", xk_sup(0, 0), xk_sup(1, 0), xk_sup(2, 0));
+		sprintf(buffer_xk_inf, "%.15lf\t%.15lf\t%.15lf", xk_inf(0, 0), xk_inf(1, 0), xk_inf(2, 0));
 
 		char buffer[1024];
-		sprintf(buffer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d;\n", bufferxk1_sup, bufferxk1_inf, bufferxk_sup, bufferxk_inf, bufferpk1_sup, bufferpk1_inf, bufferpk_sup, bufferpk_inf, rsize, vsize);
-		if(test != NULL){
+		sprintf(buffer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\n", buffer_xk_pred_sup, buffer_xk_pred_inf, buffer_xk_sup, buffer_xk_inf, buffer_Pk_pred_sup, buffer_Pk_pred_inf, buffer_Pk_sup, buffer_Pk_inf, vsize_used, vsize_used);
+		if(test != NULL)
+		{
 			fprintf(test, "%s", buffer);
-		}
 
+		}
+		printf("7.\n");
+
+
+		/** Info balizas detectadas*/
+		/*for(int i = 0; i < gn->getLaserLandmarks()->size(); i++)
+		{
+			printf("7. %d\n", i);
+			// Puntero apuntando a la baliza actual
+			RNLandmark* lndmrk = gn->getLaserLandmarks()->at(i);
+
+			// Medidas de la baliza detectada
+			float dist = lndmrk->getPointsXMean();
+			float ang = RNUtils::fixAngleRad(lndmrk->getPointsYMean());
+			fprintf(test2, "%f\t %f\t", dist, ang);
+		}
+		printf("7.b\n");
+		// Como no siempre vamos a tener el mismo número de medidas, para escribir en el fichero relleno todas las que faltan con 0
+		for(int i = gn->getLaserLandmarks()->size(); i < laserLandmarksCount; i++)
+		{
+			fprintf(test2, "%f\t %f\t", 0.0, 0.0);
+		}*/
+		printf("8.\n");
+
+
+		/** ***** PUBLICACIÓN DE UNA POSICIÓN CRISP PARA UN POSIBLE CONTROLADOR ***** **/
 		CG(0, 0) = (2 * xk_sup(0, 0) * std::sqrt(3*Pk_sup(0, 0)) + 2 * xk_inf(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_sup(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_inf(0, 0) * std::sqrt(3*Pk_sup(0, 0))) / (3 * (std::sqrt(3*Pk_sup(0, 0)) + sqrt(3*Pk_inf(0, 0))));
         CG(1, 0) = (2 * xk_sup(1, 0) * std::sqrt(3*Pk_sup(1, 1)) + 2 * xk_inf(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_sup(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_inf(1, 0) * std::sqrt(3*Pk_sup(1, 1))) / (3 * (std::sqrt(3*Pk_sup(1, 1)) + sqrt(3*Pk_inf(1, 1))));
 		CG(2, 0) = (2 * xk_sup(2, 0) * std::sqrt(3*Pk_sup(2, 2)) + 2 * xk_inf(2, 0) * std::sqrt(3*Pk_inf(2, 2)) + xk_sup(2, 0) * std::sqrt(3*Pk_inf(2, 2)) + xk_inf(2, 0) * std::sqrt(3*Pk_sup(2, 2))) / (3 * (std::sqrt(3*Pk_sup(2, 2)) + sqrt(3*Pk_inf(2, 2))));
 		CG(2, 0) = RNUtils::fixAngleRad(CG(2, 0));
-		gn->setAltPose(ArPose(CG(0, 0), CG(1, 0), CG(2, 0) * 180/M_PI));
-	} else {
+		printf("9.\n");
+				
+		gn->setAltPose(ArPose(CG(0, 0), CG(1, 0), CG(2, 0)*180/M_PI));
+		printf("10.\n");
+
+
+		// Anterior
+		printf("Pos anterior sup: %.8f, %.8f, %.8f\n", x_sup_1(0, 0), x_sup_1(1, 0), x_sup_1(2, 0));
+		printf("Pos anterior inf: %.8f, %.8f, %.8f\n", x_inf_1(0, 0), x_inf_1(1, 0), x_inf_1(2, 0));
+		printf("Fiabilidad anterior sup: %.8f, %.8f, %.8f\n", P_sup_1(0, 0), P_sup_1(1, 1), P_sup_1(2, 2));
+		printf("Fiabilidad anterior inf: %.8f, %.8f, %.8f\n", P_inf_1(0, 0), P_inf_1(1, 1), P_inf_1(2, 2));
+		// Predicha
+		printf("Pos predicha sup: %.8f, %.8f, %.8f\n", xk_pred_sup(0, 0), xk_pred_sup(1, 0), xk_pred_sup(2, 0));
+		printf("Pos predicha inf: %.8f, %.8f, %.8f\n", xk_pred_inf(0, 0), xk_pred_inf(1, 0), xk_pred_inf(2, 0));
+		printf("Fiabilidad predicha sup: %.8f, %.8f, %.8f\n", Pk_pred_sup(0, 0), Pk_pred_sup(1, 1), Pk_pred_sup(2, 2));
+		printf("Fiabilidad predicha inf: %.8f, %.8f, %.8f\n", Pk_pred_inf(0, 0), Pk_pred_inf(1, 1), Pk_pred_inf(2, 2));
+		// Corregida
+		printf("Pos corregida sup: %.8f, %.8f, %.8f\n", xk_sup(0, 0), xk_sup(1, 0), xk_sup(2, 0));
+		printf("Pos corregida inf: %.8f, %.8f, %.8f\n", xk_inf(0, 0), xk_inf(1, 0), xk_inf(2, 0));
+		printf("Fiabilidad corregida sup: %.8f, %.8f, %.8f\n", Pk_sup(0, 0), Pk_sup(1, 1), Pk_sup(2, 2));
+		printf("Fiabilidad corregida inf: %.8f, %.8f, %.8f\n", Pk_inf(0, 0), Pk_inf(1, 1), Pk_inf(2, 2));
+
+		/** COMPROBAR TRAPECIOS DEFORMES **/
+		float x1 = xk_inf(0, 0) - std::sqrt(3*Pk_inf(0, 0));
+		float x2 = xk_sup(0, 0) - std::sqrt(3*Pk_sup(0, 0));
+		float x3 = xk_sup(0, 0) + std::sqrt(3*Pk_sup(0, 0));
+		float x4 = xk_inf(0, 0) + std::sqrt(3*Pk_inf(0, 0));
+
+		float y1 = xk_inf(1, 0) - std::sqrt(3*Pk_inf(1, 1));
+		float y2 = xk_sup(1, 0) - std::sqrt(3*Pk_sup(1, 1));
+		float y3 = xk_sup(1, 0) + std::sqrt(3*Pk_sup(1, 1));
+		float y4 = xk_inf(1, 0) + std::sqrt(3*Pk_inf(1, 1));
+
+		float th1 = xk_inf(2, 0) - std::sqrt(3*Pk_inf(2, 2));
+		float th2 = xk_sup(2, 0) - std::sqrt(3*Pk_sup(2, 2));
+		float th3 = xk_sup(2, 0) + std::sqrt(3*Pk_sup(2, 2));
+		float th4 = xk_inf(2, 0) + std::sqrt(3*Pk_inf(2, 2));
+
+			printf("trapecio X: %.4f, %.4f, %.4f %.4f\n", x1, x2, x3, x4);
+			printf("trapecio Y: %.4f, %.4f, %.4f %.4f\n", y1, y2, y3, y4);
+			printf("trapecio Th (grados): %.3f, %.3f, %.3f %.3f\n", th1*180/M_PI, th2*180/M_PI, th3*180/M_PI, th4*180/M_PI);
+
+		static int cont_deforme_x = 0;
+		static int cont_deforme_y = 0;
+		static int cont_deforme_th = 0;
+
+		if(x1 > x2 || x3 > x4)
+		{
+			printf(" TRAPECIO DEFORME X: %.6f, %.6f, %.6f %.6f\n", x1, x2, x3, x4);
+			cont_deforme_x ++;
+		}
+		if(y1 > y2 || y3 > y4)
+		{
+			printf(" TRAPECIO DEFORME Y: %.6f, %.6f, %.6f %.6f\n", y1, y2, y3, y4);
+			cont_deforme_y ++;
+		}
+		if(th1 > th2 || th3 > th4)
+		{
+			printf(" TRAPECIO DEFORME TH: %.6f, %.6f, %.6f %.6f\n", th1, th2, th3, th4);
+			cont_deforme_th ++;			
+		}
+		printf("Contadores trapecios deformes: x = %d, y = %d, th = %d\n", cont_deforme_x, cont_deforme_y, cont_deforme_th);
+
+		printf("11.\n");
+		printf("CG: (%.8f, %.8f, %.8f)\n\n\n", CG(0, 0), CG(1, 0), CG(2, 0) * 180.0/M_PI);
+
+
+	} 
+	else 
+	{
 		init();
 	}
 	RNUtils::sleep(10);
@@ -555,97 +591,13 @@ Matrix RNPKalmanLocalizationTask::fixFilterGain(const Matrix wk){
 	return result;
 }
 
-
-/** Predecir las observaciones.
- * 1º Se obtienen los datos de todas las varibles del sector
- * 2º Se predice dónde van a estar esas balizas
- * Sobreescribe las 4 columnas: (0=distancia, 1=angulo, 2=zpos, 3=id)
- * @param observations_sup Puntero a una matriz vacia que va a almacenar las predicciones de las observaciones superiores
- * @param observations_inf Puntero a una matriz vacia que va a almacenar las predicciones de las observaciones inferiores
+/** Calcula las observaciones de la baliza en base a la posición
+* @param & Matriz Xk (Posición del robot en cuestión)
+* @param & Matriz disp (Matriz de rotación para relacionar la posición de la cámara con la posición del robot)
+* @param estructura baliza (Baliza en cuestión)
+* @param & distancia calculada
+* @param & ángulo calculado
 */
-void RNPKalmanLocalizationTask::getObservations(Matrix& observations_sup, Matrix& observations_inf)
-{
-	int totalLandmarks = 0;
-	int laserIndex = 0, cameraIndex = 0;
-	
-	// Balizas existentes totales 
-	if(gn->isLaserSensorActivated()){
-		totalLandmarks += laserLandmarksCount;
-		cameraIndex += laserLandmarksCount;
-	}
-	if(gn->isCameraSensorActivated()){
-		totalLandmarks += cameraLandmarksCount;
-	}
-
-	/** Matrices (sup, inf) que van a almacenar todas las posibles predicciones de medidas*/
-	Matrix result_sup(totalLandmarks, 4);
-	Matrix result_inf(totalLandmarks, 4);
-
-	// Información de todas las balizas del sector actual
-	for(int k = 0; k < gn->getCurrentSector()->landmarksSize(); k++){
-		int zIndex = RN_NONE; //< RN_NONE = -1
-		double distance_sup = 0, angle_sup = 0, distance_inf = 0, angle_inf = 0;
-		Matrix disp = Matrix(2, 1); //< Matriz transformación S.Ref cámara - S.Ref robot
-		
-		// Baliza siendo actualmente tratada
-		s_landmark* landmark = gn->getCurrentSector()->landmarkAt(k);
-		
-		// Si la baliza es del tipo cámara se hace la transformación S.Ref cámara - S.Ref robot 
-		if(landmark->type == XML_SENSOR_TYPE_CAMERA_STR){
-			disp(0, 0) = CAMERA_ERROR_POSITION_X * std::cos(CG(2, 0)) - CAMERA_ERROR_POSITION_Y * std::sin(CG(2, 0));
-			disp(1, 0) = CAMERA_ERROR_POSITION_X * std::sin(CG(2, 0)) + CAMERA_ERROR_POSITION_Y * std::cos(CG(2, 0));
-		}
-		
-		/** Predicción de las medidas para esta baliza 
-		 * Devuelve la distancia y el ángulo predicho*/
-		landmarkObservation(xk_sup_1, disp, landmark, distance_sup, angle_sup);
-		landmarkObservation(xk_inf_1, disp, landmark, distance_inf, angle_inf);
-
-		// Índices para respetar el orden 1º laser, 2º cámara
-		if(gn->isLaserSensorActivated()){
-			if(landmark->type == XML_SENSOR_TYPE_LASER_STR)
-			{
-				zIndex = laserIndex;
-				laserIndex++;
-			}
-		}
-		if(gn->isCameraSensorActivated()){
-			if(landmark->type == XML_SENSOR_TYPE_CAMERA_STR){
-				zIndex = cameraIndex;
-				cameraIndex++;
-			}
-		}
-		
-		// Si hay balizas 
-		if(zIndex > RN_NONE){
-			result_sup(zIndex, 0) = distance_sup;
-			result_inf(zIndex, 0) = distance_inf;
-			
-			if(angle_sup > M_PI){
-				angle_sup = angle_sup - 2 * M_PI;
-			} else if(angle_sup < -M_PI){
-				angle_sup = angle_sup + 2 * M_PI;
-			}
-			result_sup(zIndex, 1) = angle_sup;
-			
-			if(angle_inf > M_PI){
-				angle_inf = angle_inf - 2 * M_PI;
-			} else if(angle_inf < -M_PI){
-				angle_inf = angle_inf + 2 * M_PI;
-			}
-			result_inf(zIndex, 1) = angle_inf;
-			
-			result_sup(zIndex, 2) = landmark->zpos;
-			result_inf(zIndex, 2) = landmark->zpos;
-			
-			result_sup(zIndex, 3) = (double)landmark->id;
-			result_inf(zIndex, 3) = (double)landmark->id;
-		}
-	}
-	observations_sup = result_sup;
-	observations_inf = result_inf;
-}
-
 void RNPKalmanLocalizationTask::landmarkObservation(const Matrix& Xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle){
 	distance = std::sqrt(std::pow(landmark->xpos - (Xk(0, 0) + disp(0, 0)), 2) + std::pow(landmark->ypos - (Xk(1, 0) + disp(1, 0)), 2));
 	angle = std::atan2(landmark->ypos - (Xk(1, 0) + disp(1, 0)), landmark->xpos - (Xk(0, 0) + disp(0, 0))) - Xk(2, 0);

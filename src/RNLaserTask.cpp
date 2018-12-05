@@ -4,6 +4,9 @@ const double RNLaserTask::SECURITY_DISTANCE = 0.5;
 const double RNLaserTask::LASER_MAX_RANGE = 11.6;
 const double RNLaserTask::LANDMARK_RADIUS = 0.045;
 
+			/** VICTOR */
+			int cont_victor = 0;
+
 RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
 	this->gn = gn;
 	laserConnector = new ArLaserConnector(rn->getArgumentParser(), rn->getRobot(), rn->getRobotConnector());
@@ -18,13 +21,18 @@ RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* de
 	} else {
 		laserActive = true;
 		printf("Connected to SICK LMS200 laser.\n");
-		
 	}
 
 	laserDataScan = NULL;
 	laserLandmarks = NULL;
 
 	//pthread_mutex_init(&mutexSensorsReadingsLocker, NULL);
+
+
+
+
+		        /** VICTOR */
+					test = std::fopen("laser_measures.txt","w+");
 }
 
 
@@ -45,9 +53,24 @@ void RNLaserTask::getLaserScan(void){
         } else {
 		  laserDataScan->clear();
         }
+
+		        /** VICTOR */
+		        cont_victor ++;
+
 		for(std::list<ArSensorReading*>::const_iterator it = currentReadings->begin(); it != currentReadings->end(); ++it){
 			laserDataScan->addRange((double)(*it)->getRange() / 1000, (double)(*it)->getExtraInt());
+
+				/** VICTOR */
+				if(cont_victor < 100)
+					fprintf(test, "%f\t", (double)(*it)->getRange() / 1000);
 		}
+
+					fprintf(test, "\n");
+
+
+
+
+
         //rn->onLaserScanCompleted(laserDataScan);
         laser->unlockDevice();
         

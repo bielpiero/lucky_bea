@@ -82,14 +82,15 @@ void RNRFIdentificationTask::checkForActions(){
 			s_person_tag* pt = *std::find_if(peopleTags->begin(), peopleTags->end(), [&tag](s_person_tag* item) -> bool { return item->id == tag->getTagKey(); });
 			if(t != NULL){
 				if(t->name == std::string(SEMANTIC_HALLWAY_STR)){
-					RNUtils::printLn("Tag ------> Hallway: %s", tag->getTagKey().c_str());
 					if(tag->getRSSI() > MAX_RSSI_ENVIRONMENT_VALUE and not isAtHallway){
 						if(t->side == tag->getAntenna()){
+							RNUtils::printLn("Tag ------> Hallway: %s", tag->getTagKey().c_str());
 							RNUtils::printLn("Entrando a un pasillo... activando Hallway Controller");
 							isAtHallway = true;
 						}
 					} else {
 						if(t->side != tag->getAntenna()){
+							RNUtils::printLn("Tag ------> Hallway: %s", tag->getTagKey().c_str());
 							RNUtils::printLn("saliendo a un pasillo... desactivando Hallway Controller");
 							isAtHallway = false;
 						}
@@ -104,15 +105,15 @@ void RNRFIdentificationTask::checkForActions(){
 					RNUtils::printLn("Tag ------> NARROW: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 					
 				} else if(t->name == std::string(SEMANTIC_FEATURE_DOOR_STR)){
-					RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
-
 					if(not isAtDoor){
 						if(tag->getRSSI() > MAX_RSSI_ENVIRONMENT_VALUE){
+							RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 							RNUtils::printLn("Entrando a una puerta... activando Hallway Controller");
 							isAtDoor = true;
 						}
 					} else {
 						if(tag->isRemovable() or tag->getRSSI() < MIN_RSSI_ENVIRONMENT_VALUE){
+							RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 							RNUtils::printLn("Saliendo de la puerta... desactivando Hallway Controller");
 							isAtDoor = false;
 							delete *it;

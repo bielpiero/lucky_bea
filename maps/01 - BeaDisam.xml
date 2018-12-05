@@ -1,17 +1,17 @@
 <sectors sequence="0,1,0">
 	<sector id="0" name="Mobile Robots" width="895" height="458" polygon="m 0 0 l 0 458 l 895 0 l 0 -458 z" adjacency="1,4">
 		<landmarks>
-			<landmark id="0" type="laser" x="33" y="23" z="0"/>
-			<landmark id="1" type="laser" x="52" y="223" z="0"/>
-			<landmark id="2" type="laser" x="200" y="103" z="0"/>
-			<landmark id="3" type="laser" x="200" y="383" z="0"/>
-			<landmark id="4" type="laser" x="360" y="103" z="0"/>
-			<landmark id="5" type="laser" x="360" y="383" z="0"/>
-			<landmark id="6" type="laser" x="480" y="103" z="0"/>
-			<landmark id="7" type="laser" x="480" y="383" z="0"/>
-			<landmark id="8" type="laser" x="714" y="209" z="0"/>
-			<landmark id="9" type="laser" x="714" y="330" z="0"/>
-			<landmark id="10" type="laser" x="165" y="23" z="0"/>
+			<landmark id="0" type="laser" x="040" y="023" z="0"/>
+			<landmark id="1" type="laser" x="159" y="023" z="0"/>
+			<landmark id="2" type="laser" x="080" y="182" z="0"/>
+			<landmark id="3" type="laser" x="080" y="341" z="0"/>
+			<landmark id="4" type="laser" x="239" y="381" z="0"/>
+			<landmark id="5" type="laser" x="358" y="142" z="0"/>
+			<landmark id="6" type="laser" x="517" y="142" z="0"/>
+			<landmark id="7" type="laser" x="438" y="341" z="0"/>
+			<landmark id="8" type="laser" x="557" y="381" z="0"/>
+			<landmark id="9" type="laser" x="716" y="341" z="0"/>
+			<landmark id="10" type="laser" x="716" y="223" z="0"/>
 		</landmarks>
 		<features>
 			<feature id="0" name="door" width="120" height="10" x="100" y="0"/>

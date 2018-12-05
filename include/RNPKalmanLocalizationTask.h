@@ -23,18 +23,18 @@ private:
 	static const double CAMERA_ERROR_POSITION_Y;
 	static const float MULTIPLIER_FACTOR;
 
-	static const float odom_dist_sup;
-	static const float odom_dist_inf;
-	static const float odom_angl_sup;
-	static const float odom_angl_inf;
+	static const float incertidumbre_odom_dist_sup;
+	static const float incertidumbre_odom_dist_inf;
+	static const float incertidumbre_odom_angl_sup;
+	static const float incertidumbre_odom_angl_inf;
 
-	static const float camera_angl_sup;
-	static const float camera_angl_inf;
+	static const float incertidumbre_camera_angl_sup;
+	static const float incertidumbre_camera_angl_inf;
 
-	static const float laser_dist_sup;
-	static const float laser_dist_inf;
-	static const float laser_angl_sup;
-	static const float laser_angl_inf;
+	static const float incertidumbre_laser_dist_sup;
+	static const float incertidumbre_laser_dist_inf;
+	static const float incertidumbre_laser_angl_sup;
+	static const float incertidumbre_laser_angl_inf;
 
 	int laserLandmarksCount;
 	int cameraLandmarksCount;
@@ -46,25 +46,37 @@ private:
 
 	bool enableLocalization;
 
-	Matrix CG;
 
 	std::FILE* test;
+	std::FILE* test2;
+
+	// k = current
 	Matrix xk_sup;		// current position
 	Matrix xk_inf;
-	Matrix xk_sup_1;	// previous position
-	Matrix xk_inf_1;
+	Matrix xk_pred_sup;
+	Matrix xk_pred_inf;
+	Matrix x_sup_1;		// previous position
+	Matrix x_inf_1;
 
 	Matrix Ak;
 	Matrix Bk;
 	Matrix Hk;
 
-	Matrix pk_sup_1;
-	Matrix pk_inf_1;
+	Matrix P_sup_1;
+	Matrix P_inf_1;
+	Matrix Pk_pred_sup;
+	Matrix Pk_pred_inf;
 	Matrix Pk_sup;
 	Matrix Pk_inf;
 
-	Matrix currentR_sup;
-    Matrix currentR_inf;
+	Matrix R_sup;
+    Matrix R_inf;
+	Matrix Q_sup;
+	Matrix Q_inf;
+
+	Matrix CG;
+
+	vector<Matrix> v_single_inno_sup, v_single_inno_inf, v_single_H;
 };
 
 #endif

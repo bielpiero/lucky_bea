@@ -30,8 +30,12 @@ public:
 
 	double getLastInput(void);
 	void reset(void);
+private:
+	std::vector<PointXY> ramerDouglasPeucker(std::vector<PointXY> data);
+	float identifyWall(const std::vector<PointXY>& data);
 
 private:
+
 	fl::Engine* engine;
 	fl::InputVariable* laserLeftZone;
 	fl::InputVariable* laserFrontZone;
@@ -83,6 +87,39 @@ private:
 
 	//int counterLeftDoorCheckIterations;
 	//int counterRightDoorCheckIterations;
+
+
+	/** VÍCTOR JIMÉNEZ BERMEJO */
+	std::vector<PointXY> pointsLeft, pointsRight;
+
+	// To use the information of the identified walls there must be a security distance to surrounders
+	const float FRONT_SECURITY_RANGE = 1.5; // meters
+	const float SIDE_SECURITY_RANGE = 0.5;
+
+	// Douglas-Peucker erases does points that are in a range of EPS 
+	const float EPS = 0.05; 
+
+	// Use the information of a specific area
+	const float MAX_MAP_X = 3.0; // meters
+	const float MAX_MAP_Y = 5.0; 
+
+	//// Filters for the lines obtained 
+
+	// In the perfect situation the robot is in the same orientation than the hallway -> desired angle = 90º
+	// But it can face situations where he has rotated for example -> there must be a range for errors
+	const float EXPECTED_LINE_ANGLE = M_PI / 2.0; // 90º -> radians
+	const float ACCEPTABLE_ERROR_ANGLE= M_PI / 6.0;
+
+	// Lines that length less than a value are discarted
+	const float MAX_LINE_DISTANCE = 0.5; // meters
+	const float MIN_LINE_DISTANCE = 0.5; // meters
+
+	// Reliability of each score 
+	const float DISTANCE_PERCENTAGE = 0.65;
+	const float ANGLE_PERCENTAGE = 0.35;
+
+	// Lines get a score from 0 to 100
+	const float MIN_ACCEPTABLE_SCORE = 50.0;
 };
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef RN_TOUR_TASK_H
 #define RN_TOUR_TASK_H
 
+#include "definitions.h"
 #include "RNAsyncTask.h"
 #include "GeneralController.h"
 #include "RNGraph.h"
@@ -41,8 +42,14 @@ private:
 		int requiredArguments;
 		std::string result;
 	};
+	struct wevent_t{
+		int requiredArguments;
+		std::string eventFunction;
+	};
 	std::map<std::string, wcontent_t > functions;
 	std::map<std::string, std::string> globalSymbols;
+
+	std::map<std::string, wevent_t> events;
 
 	std::ifstream file;
 	DorisLipSync* lips;
@@ -55,9 +62,12 @@ private:
 	void longTravel(int origin, int destiny);
 	void moveAround(int direction);
 	int closestNodeTo(const ArPose& pose);
+
 	void lex();
+	void parseEvents();
 	void parse();
 	void parse(std::string functionName, wcontent_t* content);
+	void parseEvents(std::string eventName, wevent_t* content, int cont);
 	void loadPredifinedSymbols();
 	std::string evaluateExpression(std::string condition, std::map<std::string, std::string> symbols);
 	std::map<std::string, std::string> createOptionsMap(std::string opts);
@@ -65,6 +75,12 @@ private:
 	std::list<std::string> tokenizeExpCond(std::string expr_cond);
 	void solveExpParenthesis(std::list<std::string>* tokens);
 	void solveExp(std::list<std::string>* tokens);
+
+	/** New
+	  */
+	std::string arrayValue(std::map<std::string, std::string> simbolos, std::string nombre, std::string position);
+	std::string assignArray(std::map<std::string, std::string> simbolo, std::string array, std::string pos, std::string exprs);
+	std::string assignSize(std::string word_size);
 
 	void factor(std::list<std::string>* tokens);
 	void term(std::list<std::string>* tokens);
