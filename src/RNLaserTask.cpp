@@ -4,8 +4,6 @@ const double RNLaserTask::SECURITY_DISTANCE = 0.5;
 const double RNLaserTask::LASER_MAX_RANGE = 11.6;
 const double RNLaserTask::LANDMARK_RADIUS = 0.045;
 
-			/** VICTOR */
-			int cont_victor = 0;
 
 RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
 	this->gn = gn;
@@ -27,12 +25,6 @@ RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* de
 	laserLandmarks = NULL;
 
 	//pthread_mutex_init(&mutexSensorsReadingsLocker, NULL);
-
-
-
-
-		        /** VICTOR */
-					test = std::fopen("laser_measures.txt","w+");
 }
 
 
@@ -54,22 +46,9 @@ void RNLaserTask::getLaserScan(void){
 		  laserDataScan->clear();
         }
 
-		        /** VICTOR */
-		        cont_victor ++;
-
 		for(std::list<ArSensorReading*>::const_iterator it = currentReadings->begin(); it != currentReadings->end(); ++it){
 			laserDataScan->addRange((double)(*it)->getRange() / 1000, (double)(*it)->getExtraInt());
-
-				/** VICTOR */
-				if(cont_victor < 100)
-					fprintf(test, "%f\t", (double)(*it)->getRange() / 1000);
 		}
-
-					fprintf(test, "\n");
-
-
-
-
 
         //rn->onLaserScanCompleted(laserDataScan);
         laser->unlockDevice();
@@ -162,34 +141,36 @@ void RNLaserTask::getReflectiveLandmarks(){
 		Matrix Pc(2, 1);
 		Pc(0, 0) = laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS;
 		Pc(1, 0) = laserLandmarks->at(i)->getPointsYMean();
+		laserLandmarks->at(i)->setPointsXMean(Pc(0, 0));
+		laserLandmarks->at(i)->setPointsYMean(Pc(1, 0));
 
 		//fprintf(file, "$MEAN_LASER_RAW\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
 		for(int j = 0; j < laserLandmarks->at(i)->size(); j++){
 			Zk(j, 0) = laserLandmarks->at(i)->getPointAt(j)->getX();
-			Zke(j, 0) = Pc(0, 0) * cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) - LANDMARK_RADIUS * cos(asin((Pc(0, 0) / LANDMARK_RADIUS) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY())));
+			Zke(j, 0) = Pc(0, 0) * std::cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) - LANDMARK_RADIUS * std::cos(std::asin((Pc(0, 0) / LANDMARK_RADIUS) * std::sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY())));
 
 			//fprintf(file, "$LASER_POINT\t%d\t%d\t%f\t%f\t%f\n", (i + 1), (j + 1), Zk(j, 0), Zke(j, 0), laserLandmarks->at(i)->getPointAt(j)->getY());
 
-			double calc = (1 / LANDMARK_RADIUS) * (1 / std::sqrt(1 - ((std::pow(Pc(0, 0), 2) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2))/(std::pow(LANDMARK_RADIUS, 2)))));
-			Hkl(j, 0) = cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + Pc(0, 0) * std::pow(sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2) * calc;
-			Hkl(j, 1) = -Pc(0, 0) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + std::pow(Pc(0, 0), 2) * sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) * cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) * calc;
+			double calc = (1 / LANDMARK_RADIUS) * (1 / std::sqrt(1 - ((std::pow(Pc(0, 0), 2) * std::pow(std::sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2))/(std::pow(LANDMARK_RADIUS, 2)))));
+			Hkl(j, 0) = std::cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + Pc(0, 0) * std::pow(std::sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()), 2) * calc;
+			Hkl(j, 1) = -Pc(0, 0) * std::sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) + std::pow(Pc(0, 0), 2) * std::sin(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) * std::cos(Pc(1, 0) - laserLandmarks->at(i)->getPointAt(j)->getY()) * calc;
 		}
 
 		Matrix Skl = Hkl * Pkl * ~Hkl + Rkl;
 		Matrix Wkl = Pkl * ~Hkl * !Skl;
 		Pc = Pc + (Wkl * (Zk - Zke));
-		//fprintf(file, "$MEAN_LASER_FIXED\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
-		laserLandmarks->at(i)->setPointsXMean(Pc(0, 0));
-		laserLandmarks->at(i)->setPointsYMean(Pc(1, 0));
+		fprintf(stdout, "$MEAN_LASER_FIXED\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
+		if(not std::isnan(Pc(0, 0)) and not std::isnan(Pc(1, 0))){
+			laserLandmarks->at(i)->setPointsXMean(Pc(0, 0));
+			laserLandmarks->at(i)->setPointsYMean(Pc(1, 0));
+		}
+		
 
 		//RNUtils::printLn("Questa Merda dopo della correzione [%d] è {d: %f, a: %f}", i, laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, laserLandmarks->at(i)->getPointsYMean());
 		
 	}
 	gn->unlockLaserLandmarks();
 	//gn->setLaserLandmarks(laserLandmarks);
-	
-	
-	
 }
 
 void RNLaserTask::task(){

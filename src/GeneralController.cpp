@@ -51,7 +51,6 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	
 	P = Matrix(3, 3);
 	Q = Matrix(2, 2);
-	R = Matrix(3, 3);
 
 	xmlFaceFullPath = RNUtils::getApplicationPath() + XML_FILE_PATH;
 	xmlMapsFullPath = RNUtils::getApplicationPath() + XML_FILE_MAPS_PATH;
@@ -2289,67 +2288,8 @@ int GeneralController::initializeKalmanVariables(){
 		if(rfidSensorActivated){
 			totalLandmarks += rfidLandmarksCount;
 		}
-		int sizeR = (laserSensorActivated ? 2 * laserLandmarksCount : 0) + (cameraSensorActivated ? cameraLandmarksCount : 0);
-		R = Matrix(sizeR, sizeR);
-		int laserIndex = 0, cameraIndex = 0;
-
-		if(laserSensorActivated){
-			cameraIndex = 2 * laserLandmarksCount;
-		}
-
-		for(int i = 0; i < currentSector->landmarksSize(); i++){
-			if(laserSensorActivated){
-				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
-					R(2 * laserIndex, 2 * laserIndex) = this->laserDistanceVariance;
-					R(2 * laserIndex + 1, 2 * laserIndex + 1) = this->laserAngleVariance;
-					laserIndex++;
-				}
-			}
-
-			if(cameraSensorActivated){
-				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
-					R(cameraIndex, cameraIndex) = this->cameraAngleVariance;
-					cameraIndex++;
-				}
-			}
-		}
- 		
-		/*R = Matrix(2 * totalLandmarks, 2 * totalLandmarks);
 		
-		int laserIndex = 0, cameraIndex = 0, rfidIndex = 0;
-		if(laserSensorActivated){
-			cameraIndex += laserLandmarksCount;
-			rfidIndex += laserLandmarksCount;
-		}
-		if(cameraSensorActivated){
-			rfidIndex += cameraLandmarksCount;
-		}
-
-		for(int i = 0; i < currentSector->landmarksSize(); i++){
-			if(laserSensorActivated){
-				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
-					R(2 * laserIndex, 2 * laserIndex) = this->laserDistanceVariance;
-					R(2 * laserIndex + 1, 2 * laserIndex + 1) = this->laserAngleVariance;
-					laserIndex++;
-				}	
-			}
-
-			if(cameraSensorActivated){
-				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
-					R(2 * cameraIndex, 2 * cameraIndex) = this->cameraDistanceVariance;
-					R(2 * cameraIndex + 1, 2 * cameraIndex + 1) = this->cameraAngleVariance;
-					cameraIndex++;
-				}
-			}
-
-			if(rfidSensorActivated){
-				if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_RFID_STR){
-					R(2 * rfidIndex, 2 * rfidIndex) = rfidUX;
-					R(2 * rfidIndex + 1, 2 * rfidIndex + 1) = rfidUTh;
-					rfidIndex++;
-				}
-			}
-		}*/
+ 		
 		kalmanFuzzy->clear();
 		kalmanFuzzy->push_back(xxKK);
 		kalmanFuzzy->push_back(xyKK);
@@ -2401,11 +2341,6 @@ Matrix GeneralController::getP(){
 Matrix GeneralController::getQ(){
 	return Q;
 }
-
-Matrix GeneralController::getR(){
-	return R;
-}
-
 
 double GeneralController::getLaserDistanceAlpha(){
 	return laserDistanceAlpha;

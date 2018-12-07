@@ -301,7 +301,7 @@ public:
 
 	Matrix getP();
 	Matrix getQ();
-	Matrix getR();
+
 
 	double getLaserDistanceAlpha();
 	double getLaserAngleAlpha();
@@ -362,7 +362,7 @@ private:
 	
 	Matrix P;
 	Matrix Q;
-	Matrix R;
+
 
 	double laserDistanceAlpha;
 	double laserAngleAlpha;
