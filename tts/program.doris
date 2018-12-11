@@ -10,7 +10,6 @@ function rfidEvent(tagsList)
 			say[face=afraid]("Esa caja me da mucho miedo")
 		endif
 	endfor
-
 endfunction
 
 function newSectorEvent(sectorId)

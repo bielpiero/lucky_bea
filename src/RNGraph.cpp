@@ -194,9 +194,10 @@ std::list<int> RNGraph::shortestPath(const int& src, const int& dst) const{
         RNAdyacencyList* ady = this->getAdyacencies(start);
         if(not ady->empty()){
             for(int i = 0; i < ady->size(); i++){
-                float d = dist.find(start)->second + ady->at(i)->getWeight();
-                float dstN = dist.find(ady->at(i)->getDestination()) != dist.end() ? dist.find(ady->at(i)->getDestination())->second : std::numeric_limits<float>::max();
-                bool selectedNode = std::find(selected.begin(), selected.end(), ady->at(i)->getDestination()) == selected.end();
+                RNGraphEdge* edge = ady->at(i);
+                float d = dist.find(start)->second + edge->getWeight();
+                float dstN = dist.find(edge->getDestination()) != dist.end() ? dist.find(edge->getDestination())->second : std::numeric_limits<float>::max();
+                bool selectedNode = std::find_if(selected.begin(), selected.end(), [edge](int n){ return n == edge->getDestination(); }) == selected.end();
                 printf("Node Origin: %d, Node Destiny: %d, Dist: %f, DistN: %f, selectedNode: %d\n", start, ady->at(i)->getDestination(), d, dstN, (int)selectedNode);
                 if((d < dstN) and selectedNode) {
                     if(dist.find(ady->at(i)->getDestination()) != dist.end()){

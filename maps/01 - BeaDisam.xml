@@ -6,13 +6,13 @@
 			<landmark id="2" type="laser" x="080" y="183" z="0"/>
 			<landmark id="3" type="laser" x="080" y="343" z="0"/>
 			<landmark id="4" type="laser" x="200" y="103" z="0"/>
-			<landmark id="5" type="laser" x="200" y="383" z="0"/>
+			<landmark id="5" type="laser" x="200" y="343" z="0"/>
 			<landmark id="6" type="laser" x="360" y="143" z="0"/>
-			<landmark id="7" type="laser" x="520" y="143" z="0"/>
-			<landmark id="8" type="laser" x="400" y="383" z="0"/>
-			<landmark id="9" type="laser" x="600" y="383" z="0"/>
-			<landmark id="10" type="laser" x="716" y="341" z="0"/>
-			<landmark id="11" type="laser" x="716" y="223" z="0"/>
+			<landmark id="7" type="laser" x="360" y="303" z="0"/>
+			<landmark id="8" type="laser" x="520" y="143" z="0"/>
+			<landmark id="9" type="laser" x="520" y="303" z="0"/>
+			<landmark id="10" type="laser" x="720" y="183" z="0"/>
+			<landmark id="11" type="laser" x="720" y="303" z="0"/>
 		</landmarks>
 		<features>
 			<feature id="0" name="door" width="120" height="10" x="100" y="0"/>

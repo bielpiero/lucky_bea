@@ -3,6 +3,11 @@
 
 #define REGEX_STR "[a-zA-Z_$][a-zA-Z_$0-9]*"
 
+#define TOK_TRUE "NUM:1"
+#define TOK_FALSE "NUM:0"
+
+#define NULLPTR "UNK:nil"
+
 #define RW_FUNCTION_STR "function"
 #define RW_END_FUNCTION_STR "endfunction"
 #define RW_IF_STR "if"
@@ -54,6 +59,10 @@
 #define TOK_OPT2PTS_STR "OPT:"
 #define TOK_FACE2PTS_STR "FACE:"
 #define TOK_ATTN2PTS_STR "ATTN:"
+#define TOK_ARR2PTS_STR "ARR:"
+#define TOK_POS2PTS_STR "POS:"
+#define TOK_ARR_STR "ARR"
+#define TOK_POS_STR "POS"
 #define TOK_STR_STR "STR"
 #define TOK_VAR_STR "VAR"
 #define TOK_NUM_STR "NUM"
@@ -65,7 +74,6 @@
 #define TOK_DVR_STR "DVR"
 #define TOK_EXP_STR "EXP"
 #define TOK_BEL_STR "BEL"
-#define TOK_NUM2P1_STR "NUM:1"
 #define TOK_EIF_STR "EIF"
 #define TOK_EWH_STR "EWH"
 #define TOK_VOID_STR "VOID"
