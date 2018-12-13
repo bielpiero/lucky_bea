@@ -53,6 +53,8 @@ private:
 
 	std::ifstream file;
 	DorisLipSync* lips;
+	RNRFIdentificationTask* rfid;
+	RNEmotionsTask* emotions;
 private:
 	void* runThread(void* object);
 	void task();

@@ -14,38 +14,39 @@ const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.014;
 //const float RNPKalmanLocalizationTask::MULTIPLIER_FACTOR = 4;
 
 // Valores cambiados a ojo para concordar con cada iteracción
-const float centro_odom_dist_sup = 0.0; //- 0.016;
-const float centro_odom_dist_inf = 0.0; //- 0.016;
-const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_sup = 0.01; //0.020; 
-const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_inf = 0.03; //0.060;
-const float centro_odom_angl_sup = 0.0005; //- 0.005;
-const float centro_odom_angl_inf = 0.0005; //- 0.005;
-const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_sup = 0.005; //0.065; 
-const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_inf = 0.02; //0.115;
+const float centro_odom_dist_sup = 0.0; 
+const float centro_odom_dist_inf = 0.0; 
+const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_sup = 0.001;  
+const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_inf = 0.002; 
+const float centro_odom_angl_sup = 0.0; 
+const float centro_odom_angl_inf = 0.0; 
+const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_sup = 0.0005; 
+const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_inf = 0.0010; 
 
-const float centro_laser_dist_sup = 0.010;
-const float centro_laser_dist_inf = 0.010;
-const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_sup = 0.020; 
-const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_inf = 0.030;
-const float centro_laser_angl_sup = 0.0;//- 0.010;
-const float centro_laser_angl_inf = 0.0;//- 0.010;
-const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.0125; 
-const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.020;
+const float centro_laser_dist_sup = 0.06;
+const float centro_laser_dist_inf = 0.06;
+const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_sup = 0.02; 
+const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_inf = 0.06; 
+const float centro_laser_angl_sup = 0.0005;
+const float centro_laser_angl_inf = 0.0005;
+const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.05; 
+const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.10;
 
 
 // Chi cuadradi 2 var: 5% = 5.9915; 10% = 4.6052; 15% = 3.7946
-const float mahalanobis_limit = 3.7946;
+const float mahalanobis_limit = 5.9915;
 
 // Esto surge a raíz de unos casos en los que me encuentro con una innovación en el ángulo de 6 grados, 9 grados, 15 grados
 // Chi cuadradi 1 var: 5% = 3.8415; 10% = 2.7055; 15% = 2.0722
-const double mahalanobis_dist_limit = 2.7055;  
-const double mahalanobis_angle_limit = 2.7055; 
+const double mahalanobis_dist_limit = 3.8415;  
+const double mahalanobis_angle_limit = 3.8415; 
 
 
 RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
 	test = std::fopen("laser_camera_pkalman.txt","w+");
 	test2 = std::fopen("medidas_sensores_pkalman.txt","w+");
+	test3 = std::fopen("diferencias_atan2.txt","w+");
 	this->startThread();
 }
 
@@ -121,12 +122,17 @@ void RNPKalmanLocalizationTask::task(){
 
 	
 	bool mostrar_toda_info = false;
+	static int cont_iteraciones = 0;
 
 
 
 	if(enableLocalization)
 	{
+		cont_iteraciones ++;
+		printf("Iteraciones = %d\n", cont_iteraciones);
 		printf("1.\n");
+
+		
 		/** Guardar valores de la última estimación */
 		x_sup_1 = xk_sup;
 		x_inf_1 = xk_inf;
@@ -169,7 +175,7 @@ void RNPKalmanLocalizationTask::task(){
 
 				
 		/** Centro gravedad del ángulo */
-		CG(2, 0) = (2 * x_sup_1(2, 0) * std::sqrt(3*P_sup_1(2, 2)) + 2 * x_inf_1(2, 0) * std::sqrt(3*P_inf_1(2, 2)) + x_sup_1(2, 0) * std::sqrt(3*P_inf_1(2, 2)) + x_inf_1(2, 0) * std::sqrt(3*P_sup_1(2, 2))) / (3 * (std::sqrt(3*P_sup_1(2, 2)) + sqrt(3*P_inf_1(2, 2))));
+		CG(2, 0) = (2 * x_sup_1(2, 0) * std::sqrt(3*P_sup_1(2, 2)) + 2 * x_inf_1(2, 0) * std::sqrt(3*P_inf_1(2, 2)) + x_sup_1(2, 0) * std::sqrt(3*P_inf_1(2, 2)) + x_inf_1(2, 0) * std::sqrt(3*P_sup_1(2, 2))) / (3 * (std::sqrt(3*P_sup_1(2, 2)) + std::sqrt(3*P_inf_1(2, 2))));
 		CG(2, 0) = RNUtils::fixAngleRad(CG(2, 0));
 			
 		/** Matrices jacobianas */
@@ -231,19 +237,27 @@ void RNPKalmanLocalizationTask::task(){
 		Matrix singleHk = Matrix(2,3); // 2 -> distancia y ángulo
 		double landmarkDistance = 0.0; //< Es el denominador de la matriz H (corresponde a la distancia)
 
+		Matrix smallR_sup = Matrix(2,2);
+		smallR_sup(0,0) = std::pow(incertidumbre_laser_dist_sup, 2) / 3.0;
+		smallR_sup(1,1) = std::pow(incertidumbre_laser_angl_sup, 2) / 3.0;
+
 		Matrix smallR_inf = Matrix(2,2);
 		smallR_inf(0,0) = std::pow(incertidumbre_laser_dist_inf, 2) / 3.0;
 		smallR_inf(1,1) = std::pow(incertidumbre_laser_angl_inf, 2) / 3.0;
 
-		double mahalanobis_distance = 1000.0;
+
+		double mahalanobis_distance_inf = 1000.0;
+		double mahalanobis_distance_sup = 1000.0;
+
 		int i_mahalanobis = -1;
+		Matrix smallObservations_sup(2, 1);
 		Matrix smallObservations_inf(2, 1);
 
 
 
 		/** Centro de Gravedad*/
-		CG(0, 0) = (2 * xk_pred_sup(0, 0) * std::sqrt(3*Pk_pred_sup(0, 0)) + 2 * xk_pred_inf(0, 0) * std::sqrt(3*Pk_pred_inf(0, 0)) + xk_pred_sup(0, 0) * std::sqrt(3*Pk_pred_inf(0, 0)) + xk_pred_inf(0, 0) * std::sqrt(3*Pk_pred_sup(0, 0))) / (3 * (std::sqrt(3*Pk_pred_sup(0, 0)) + sqrt(3*Pk_pred_inf(0, 0))));
-        CG(1, 0) = (2 * xk_pred_sup(1, 0) * std::sqrt(3*Pk_pred_sup(1, 1)) + 2 * xk_pred_inf(1, 0) * std::sqrt(3*Pk_pred_inf(1, 1)) + xk_pred_sup(1, 0) * std::sqrt(3*Pk_pred_inf(1, 1)) + xk_pred_inf(1, 0) * std::sqrt(3*Pk_pred_sup(1, 1))) / (3 * (std::sqrt(3*Pk_pred_sup(1, 1)) + sqrt(3*Pk_pred_inf(1, 1))));
+		CG(0, 0) = (2 * xk_pred_sup(0, 0) * std::sqrt(3*Pk_pred_sup(0, 0)) + 2 * xk_pred_inf(0, 0) * std::sqrt(3*Pk_pred_inf(0, 0)) + xk_pred_sup(0, 0) * std::sqrt(3*Pk_pred_inf(0, 0)) + xk_pred_inf(0, 0) * std::sqrt(3*Pk_pred_sup(0, 0))) / (3 * (std::sqrt(3*Pk_pred_sup(0, 0)) + std::sqrt(3*Pk_pred_inf(0, 0))));
+        CG(1, 0) = (2 * xk_pred_sup(1, 0) * std::sqrt(3*Pk_pred_sup(1, 1)) + 2 * xk_pred_inf(1, 0) * std::sqrt(3*Pk_pred_inf(1, 1)) + xk_pred_sup(1, 0) * std::sqrt(3*Pk_pred_inf(1, 1)) + xk_pred_inf(1, 0) * std::sqrt(3*Pk_pred_sup(1, 1))) / (3 * (std::sqrt(3*Pk_pred_sup(1, 1)) + std::sqrt(3*Pk_pred_inf(1, 1))));
 		
 
         /** PROCESO EN EL QUE SE OBTIENE LA INFORMACIÓN DE LA MATRIZ H Y LAS MATRICES DE INNOVACIÓN */
@@ -300,9 +314,11 @@ void RNPKalmanLocalizationTask::task(){
 				// Medidas de la baliza detectada
 				real_observations(0,0) = lndmrk->getPointsXMean();
 				real_observations(1,0) = RNUtils::fixAngleRad(lndmrk->getPointsYMean());
-				printf("Baliza detectada. Distancia = %.6f, angulo = %.6f\n", real_observations(0,0), real_observations(1,0)*180.0/M_PI);
+				printf("-Baliza detectada. Distancia = %.6f, angulo = %.6f\n", real_observations(0,0), real_observations(1,0)*180.0/M_PI);
+				/** Escribir en fichero CONTINÚA MÁS ABAJO*/fprintf(test2, "%lf\t%lf\t", real_observations(0,0), real_observations(1,0));
 
-				mahalanobis_distance = 1000.0;
+				mahalanobis_distance_inf = 1000.0;
+				mahalanobis_distance_sup = 1000.0;
 				i_mahalanobis = -1;
 
 				// Comparación con cada una de las existentes en el mapa
@@ -326,44 +342,63 @@ void RNPKalmanLocalizationTask::task(){
 					single_inno_inf(1, 0) = RNUtils::fixAngleRad(single_inno_inf(1, 0));
 
 					// Distancia de Mahalanobis
-					Matrix mdk = ~single_inno_inf * !omega_inf * single_inno_inf;
-					float md = std::sqrt(mdk(0, 0));
+					Matrix mdk_inf = ~single_inno_inf * !omega_inf * single_inno_inf;
+					float md_inf = std::sqrt(mdk_inf(0, 0));
 					//printf("  Mahalanobis -> %f > %f\n", md, mahalanobis_limit);
+
+
+					// Fiabilidad de medida_tomada - medida_estimada
+					Matrix omega_sup = singleHk * Pk_pred_sup * ~singleHk + smallR_sup;
+					
+					// Medida predicha según la posición estimada por odometría
+					smallObservations_sup(0, 0) = observations_sup(2*j, 0);
+					smallObservations_sup(1, 0) = observations_sup(2*j+1, 0);
+					
+					single_inno_sup = real_observations - smallObservations_sup;
+					single_inno_sup(1, 0) = RNUtils::fixAngleRad(single_inno_sup(1, 0));
+
+					// Distancia de Mahalanobis
+					Matrix mdk_sup = ~single_inno_sup * !omega_sup * single_inno_sup;
+					float md_sup = std::sqrt(mdk_sup(0, 0));
+					//printf("  Mahalanobis -> %f > %f\n", md, mahalanobis_limit);
+
+
 					// Guardar la más pequeña
-					if(md < mahalanobis_distance)
+					if(md_inf < mahalanobis_distance_inf)
 					{
-						mahalanobis_distance = md;
+						mahalanobis_distance_inf = md_inf;
+						mahalanobis_distance_sup = md_sup;
 						i_mahalanobis = j*2;
 					}
 				}
-				//printf("Distancia mahalanobis: %f\n", mahalanobis_distance);
+				//printf("Distancia mahalanobis: %f\n", mahalanobis_distance_inf);
 
 
 				/** Filtrado de medidas atípicas por conjunto de innovación (dist y ángulo) y de forma independiente */
 				// Evaluación conjunta
-				if(i_mahalanobis == -1 || mahalanobis_distance > mahalanobis_limit)
+				if(i_mahalanobis == -1 || mahalanobis_distance_inf > mahalanobis_limit || mahalanobis_distance_sup > mahalanobis_limit)
 				{
 					if(i_mahalanobis == -1)
 						printf("WooooW i_mahal = -1\n");
-					if(mahalanobis_distance >= mahalanobis_limit)
+					if(mahalanobis_distance_inf >= mahalanobis_limit || mahalanobis_distance_sup >= mahalanobis_limit)
 					{
-						printf("Descartada por mahalanobis -> %f > %f\n", mahalanobis_distance, mahalanobis_limit);
-						printf("Medida: %f, %f. Predicha: %f, %f\n", real_observations(0,0), real_observations(1,0), observations_inf(i_mahalanobis,0), observations_inf(i_mahalanobis+1,0));
+						printf("Descartada por mahalanobis -> %f || %f > %f\n", mahalanobis_distance_sup, mahalanobis_distance_inf, mahalanobis_limit);
+						printf("Medida: %f, %f. Predicha INF: %f, %f\n", real_observations(0,0), real_observations(1,0), observations_inf(i_mahalanobis,0), observations_inf(i_mahalanobis+1,0));
 					}
 					continue;
 				}	
-				
+				/*
 				// Evaluación individual
 				double mahalanobis_dist = std::abs(real_observations(0,0) - observations_inf(i_mahalanobis,0)) / incertidumbre_laser_dist_inf;
 				double mahalanobis_angle = std::abs(real_observations(1,0) - observations_inf(i_mahalanobis+1,0)) / incertidumbre_laser_angl_inf;
 
-				if(mahalanobis_dist > laserTMDistance || mahalanobis_angle > laserTMAngle)
+				if(mahalanobis_dist > mahalanobis_dist_limit || mahalanobis_angle > mahalanobis_angle_limit)
 				{
 					printf(" Descartado por innovacion individual absurda.\n");
 					printf("mahalanobis_dist = %f, limite = %f.   mahalanobis_angle = %f, limite = %f\n", mahalanobis_dist, mahalanobis_dist_limit, mahalanobis_angle, mahalanobis_angle_limit);
 					continue;
 				}
-				
+				*/
 
 
 				// Una vez se ha identificado la baliza a la que corresponde (i_mahalanobis) se calcula la innovación y la H que se va a usar
@@ -375,8 +410,8 @@ void RNPKalmanLocalizationTask::task(){
 				singleHk(1, 2) = fullHk(i_mahalanobis+1, 2);
 				v_single_H.push_back(singleHk);
 
-				printf("Matriz de observacion single elegida para esta baliza:\n");
-				singleHk.print();
+				//printf("Matriz de observacion single elegida para esta baliza:\n");
+				//singleHk.print();
 
 				printf("Baliza sup elegida. Distanc = %.3f, angulo = %.3f\n", observations_sup(i_mahalanobis, 0), observations_sup(i_mahalanobis+1, 0)*180/M_PI);
 				printf("Baliza inf elegida. Distanc = %.3f, angulo = %.3f\n", observations_inf(i_mahalanobis, 0), observations_inf(i_mahalanobis+1, 0)*180/M_PI);
@@ -390,7 +425,7 @@ void RNPKalmanLocalizationTask::task(){
 				single_inno_inf(0, 0) = real_observations(0,0) - observations_inf(i_mahalanobis, 0);
 				single_inno_inf(1, 0) = real_observations(1,0) - observations_inf(i_mahalanobis+1, 0); 
 				single_inno_inf(1, 0) = RNUtils::fixAngleRad(single_inno_inf(1, 0));
-				printf("Inno inf: dist = %f, ang = %f rad = %f grados\n", single_inno_inf(0,0), single_inno_sup(1,0), single_inno_inf(1,0)*180/M_PI);
+				printf("Inno inf: dist = %f, ang = %f rad = %f grados\n", single_inno_inf(0,0), single_inno_inf(1,0), single_inno_inf(1,0)*180/M_PI);
 
 				v_single_inno_sup.push_back(single_inno_sup);
 				v_single_inno_inf.push_back(single_inno_inf);		
@@ -398,6 +433,17 @@ void RNPKalmanLocalizationTask::task(){
 				// Baliza usada
 				vsize_used ++;		
 			}
+
+			/** Escribir fichero EMPEZÓ MÁS ARRIBA */
+			// Para escribir siempre el mismo número de datos relleno lo que falta con ceros
+			for(int j = vsize; j < laserLandmarksCount; j++)
+			{
+				fprintf(test2, "%lf\t%lf\t", 0.0, 0.0);
+			}
+			printf("existentes :%d. Detectadas: %d. usadas: %d\n", laserLandmarksCount, vsize, vsize_used);
+			fprintf(test2, "\n");
+
+
 		} // if(gn->isLaserSensorActivated())
 
 
@@ -502,17 +548,17 @@ void RNPKalmanLocalizationTask::task(){
 				printf("Error. Hay %d medidas \n", vsize_used);	
 			}
 
-			Pk_sup = Pk_pred_sup - Wk_sup*Sk_sup*~Wk_sup;
-			Pk_inf = Pk_pred_inf - Wk_inf*Sk_inf*~Wk_inf;
 			
-
-
+			// Corrección de la estimación
 			xk_sup = xk_pred_sup + Wk_sup * innovacion_sup;
 			xk_sup(2, 0) = RNUtils::fixAngleRad(xk_sup(2, 0));
 
 			xk_inf = xk_pred_inf + Wk_inf * innovacion_inf;
 			xk_inf(2, 0) = RNUtils::fixAngleRad(xk_inf(2, 0));
 
+			// Fiabilidad de la estimación corregida
+			Pk_sup = Pk_pred_sup - Wk_sup*Sk_sup*~Wk_sup;
+			Pk_inf = Pk_pred_inf - Wk_inf*Sk_inf*~Wk_inf;
 
 
 
@@ -584,7 +630,7 @@ void RNPKalmanLocalizationTask::task(){
 		sprintf(buffer_xk_inf, "%.15lf\t%.15lf\t%.15lf", xk_inf(0, 0), xk_inf(1, 0), xk_inf(2, 0));
 
 		char buffer[1024];
-		sprintf(buffer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\n", buffer_xk_pred_sup, buffer_xk_pred_inf, buffer_xk_sup, buffer_xk_inf, buffer_Pk_pred_sup, buffer_Pk_pred_inf, buffer_Pk_sup, buffer_Pk_inf, vsize_used, vsize_used);
+		sprintf(buffer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%lf\t%lf\n", buffer_xk_pred_sup, buffer_xk_pred_inf, buffer_xk_sup, buffer_xk_inf, buffer_Pk_pred_sup, buffer_Pk_pred_inf, buffer_Pk_sup, buffer_Pk_inf, vsize_used, vsize_used, deltaDistance, deltaAngle);
 		if(test != NULL)
 		{
 			fprintf(test, "%s", buffer);
@@ -592,30 +638,11 @@ void RNPKalmanLocalizationTask::task(){
 		}
 
 
-		/** Info balizas detectadas*/
-		/*for(int i = 0; i < gn->getLaserLandmarks()->size(); i++)
-		{
-			printf("7. %d\n", i);
-			// Puntero apuntando a la baliza actual
-			RNLandmark* lndmrk = gn->getLaserLandmarks()->at(i);
-
-			// Medidas de la baliza detectada
-			float dist = lndmrk->getPointsXMean();
-			float ang = RNUtils::fixAngleRad(lndmrk->getPointsYMean());
-			fprintf(test2, "%f\t %f\t", dist, ang);
-		}
-		printf("7.b\n");
-		// Como no siempre vamos a tener el mismo número de medidas, para escribir en el fichero relleno todas las que faltan con 0
-		for(int i = gn->getLaserLandmarks()->size(); i < laserLandmarksCount; i++)
-		{
-			fprintf(test2, "%f\t %f\t", 0.0, 0.0);
-		}*/
-
 
 		/** ***** PUBLICACIÓN DE UNA POSICIÓN CRISP PARA UN POSIBLE CONTROLADOR ***** **/
-		CG(0, 0) = (2 * xk_sup(0, 0) * std::sqrt(3*Pk_sup(0, 0)) + 2 * xk_inf(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_sup(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_inf(0, 0) * std::sqrt(3*Pk_sup(0, 0))) / (3 * (std::sqrt(3*Pk_sup(0, 0)) + sqrt(3*Pk_inf(0, 0))));
-        CG(1, 0) = (2 * xk_sup(1, 0) * std::sqrt(3*Pk_sup(1, 1)) + 2 * xk_inf(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_sup(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_inf(1, 0) * std::sqrt(3*Pk_sup(1, 1))) / (3 * (std::sqrt(3*Pk_sup(1, 1)) + sqrt(3*Pk_inf(1, 1))));
-		CG(2, 0) = (2 * xk_sup(2, 0) * std::sqrt(3*Pk_sup(2, 2)) + 2 * xk_inf(2, 0) * std::sqrt(3*Pk_inf(2, 2)) + xk_sup(2, 0) * std::sqrt(3*Pk_inf(2, 2)) + xk_inf(2, 0) * std::sqrt(3*Pk_sup(2, 2))) / (3 * (std::sqrt(3*Pk_sup(2, 2)) + sqrt(3*Pk_inf(2, 2))));
+		CG(0, 0) = (2 * xk_sup(0, 0) * std::sqrt(3*Pk_sup(0, 0)) + 2 * xk_inf(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_sup(0, 0) * std::sqrt(3*Pk_inf(0, 0)) + xk_inf(0, 0) * std::sqrt(3*Pk_sup(0, 0))) / (3 * (std::sqrt(3*Pk_sup(0, 0)) + std::sqrt(3*Pk_inf(0, 0))));
+        CG(1, 0) = (2 * xk_sup(1, 0) * std::sqrt(3*Pk_sup(1, 1)) + 2 * xk_inf(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_sup(1, 0) * std::sqrt(3*Pk_inf(1, 1)) + xk_inf(1, 0) * std::sqrt(3*Pk_sup(1, 1))) / (3 * (std::sqrt(3*Pk_sup(1, 1)) + std::sqrt(3*Pk_inf(1, 1))));
+		CG(2, 0) = (2 * xk_sup(2, 0) * std::sqrt(3*Pk_sup(2, 2)) + 2 * xk_inf(2, 0) * std::sqrt(3*Pk_inf(2, 2)) + xk_sup(2, 0) * std::sqrt(3*Pk_inf(2, 2)) + xk_inf(2, 0) * std::sqrt(3*Pk_sup(2, 2))) / (3 * (std::sqrt(3*Pk_sup(2, 2)) + std::sqrt(3*Pk_inf(2, 2))));
 		CG(2, 0) = RNUtils::fixAngleRad(CG(2, 0));
 		printf("9.\n");
 				
@@ -638,6 +665,8 @@ void RNPKalmanLocalizationTask::task(){
 		printf("Pos corregida inf: %.8f, %.8f, %.8f\n", xk_inf(0, 0), xk_inf(1, 0), xk_inf(2, 0));
 		printf("Fiabilidad corregida sup: %.8f, %.8f, %.8f\n", Pk_sup(0, 0), Pk_sup(1, 1), Pk_sup(2, 2));
 		printf("Fiabilidad corregida inf: %.8f, %.8f, %.8f\n", Pk_inf(0, 0), Pk_inf(1, 1), Pk_inf(2, 2));
+		// Desfase entre superior e inferior
+		printf("Desfase centros superior e inferior: %.8f, %.8f, %.8f\n", xk_sup(0, 0) - xk_inf(0, 0), xk_sup(1, 0) - xk_inf(1, 0), xk_sup(2, 0) - xk_inf(2, 0));
 		
 
 
@@ -731,7 +760,23 @@ void RNPKalmanLocalizationTask::landmarkObservation(const Matrix& Xk, const Matr
 {
 	distance = std::sqrt(std::pow(landmark->xpos - (Xk(0, 0) + disp(0, 0)), 2) + std::pow(landmark->ypos - (Xk(1, 0) + disp(1, 0)), 2));
 
-	angle = std::atan2(landmark->ypos - (Xk(1, 0) + disp(1, 0)), landmark->xpos - (Xk(0, 0) + disp(0, 0))) - Xk(2, 0);
+	if(landmark->xpos >= Xk(0,0) and landmark->ypos >= Xk(1,0))
+		angle = std::atan2( std::abs(landmark->ypos - (Xk(1, 0) + disp(1, 0))), std::abs(landmark->xpos - (Xk(0, 0) + disp(0, 0))) ) - Xk(2, 0);
+	else if(landmark->xpos < Xk(0,0) and landmark->ypos >= Xk(1,0))
+		angle = 180.0*M_PI/180.0 - std::atan2( std::abs(landmark->ypos - (Xk(1, 0) + disp(1, 0))), std::abs(landmark->xpos - (Xk(0, 0) + disp(0, 0))) ) - Xk(2, 0);
+	else if(landmark->xpos < Xk(0,0) and landmark->ypos < Xk(1,0))
+		angle = 180.0*M_PI/180.0 + std::atan2( std::abs(landmark->ypos - (Xk(1, 0) + disp(1, 0))), std::abs(landmark->xpos - (Xk(0, 0) + disp(0, 0))) ) - Xk(2, 0);
+	else if(landmark->xpos >= Xk(0,0) and landmark->ypos < Xk(1,0))
+		angle = 360.0*M_PI/180.0 - std::atan2( std::abs(landmark->ypos - (Xk(1, 0) + disp(1, 0))), std::abs(landmark->xpos - (Xk(0, 0) + disp(0, 0))) ) - Xk(2, 0);
+	else
+		angle = std::atan2(landmark->ypos - (Xk(1, 0) + disp(1, 0)), landmark->xpos - (Xk(0, 0) + disp(0, 0))) - Xk(2, 0);
+
+	angle = RNUtils::fixAngleRad(angle);
+
+	double angle2 = std::atan2(landmark->ypos - (Xk(1, 0) + disp(1, 0)), landmark->xpos - (Xk(0, 0) + disp(0, 0))) - Xk(2, 0);
+
+	fprintf(test3, "%f\t %f\n", angle, angle2);
+
 }
 
 void RNPKalmanLocalizationTask::OnMessageReceivedWithData(unsigned char* cad, int length){

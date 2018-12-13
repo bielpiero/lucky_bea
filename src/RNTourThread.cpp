@@ -8,7 +8,8 @@ RNTourThread::RNTourThread(const GeneralController* gn, const char* name, const 
 
 	this->gn = (GeneralController*)gn;
 	this->lips = this->gn->getTTS();
-
+	this->rfid = this->gn->getRfidTask();
+	this->emotions = this->gn->getEmotionsTask();
 	executingTask = goRequested = killed = false;
 
 	xmlSectorsPath = RNUtils::getApplicationPath() + XML_FILE_SECTORS_PATH;

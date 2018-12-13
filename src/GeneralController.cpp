@@ -2424,6 +2424,18 @@ void GeneralController::setRFIDLandmarks(RNLandmarkList* landmarks){
 	unlockRFIDLandmarks();
 }
 
+RNRFIdentificationTask* GeneralController::getRfidTask(){
+	return rfidTask;
+}
+
+RNEmotionsTask* GeneralController::getEmotionsTask(){
+	return emotions;
+}
+
+RNLaserTask* GeneralController::getLaserTask(){
+	return laserTask;
+}
+
 PointXY GeneralController::getNextSectorCoord(){
 	return this->nextSectorCoord;
 }

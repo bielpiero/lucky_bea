@@ -32,7 +32,7 @@ private:
 	static const double LANDMARK_RADIUS;
 
 	/** VICTOR */
-	std::FILE* test;
+	std::FILE* test2;
 };
 
 #endif

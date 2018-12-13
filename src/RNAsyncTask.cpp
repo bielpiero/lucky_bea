@@ -1,7 +1,7 @@
 #include "RNAsyncTask.h"
 
 RNAsyncTask::RNAsyncTask(){
-	func = new RNRetFunPointerClass1<void* ,RNAsyncTask, void*>(this, &RNAsyncTask::runThread, NULL);
+	func = new RNRetFunPointerC1<void* ,RNAsyncTask, void*>(this, &RNAsyncTask::runThread, NULL);
 }
 
 RNAsyncTask::~RNAsyncTask(){

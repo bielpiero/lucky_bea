@@ -49,6 +49,7 @@ private:
 
 	std::FILE* test;
 	std::FILE* test2;
+	std::FILE* test3;
 
 	// k = current
 	Matrix xk_sup;		// current position

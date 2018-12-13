@@ -334,6 +334,10 @@ public:
 	void setRobotPosition(Matrix pose);
 	void setRobotPosition(double x, double y, double theta);
 	void moveRobot(double lin_vel, double angular_vel);
+
+	RNRFIdentificationTask* getRfidTask();
+	RNEmotionsTask* getEmotionsTask();
+	RNLaserTask* getLaserTask();
 private:
 	
 	RobotDataStreamer* spdWSServer;
