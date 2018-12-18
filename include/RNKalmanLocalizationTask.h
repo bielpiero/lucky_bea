@@ -32,6 +32,8 @@ private:
 
 	bool enableLocalization;
 
+	MapSector* currentSector;
+
 	std::FILE* test;
 	Matrix xk;		// current position
 	Matrix xk_1;	// previous position

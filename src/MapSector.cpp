@@ -31,6 +31,30 @@ MapSector::~MapSector(){
     delete polygon;
 }
 
+MapSector* MapSector::clone(){
+	MapSector* copy = new MapSector();
+	copy->id = this->id;
+	copy->mapId = this->mapId;
+	copy->width = this->width;
+	copy->height = this->height;
+	copy->name = this->name;
+	copy->sitesCyclic = this->sitesCyclic;
+	copy->polygonDefinition = this->polygonDefinition;
+	copy->landmarks->resize(this->landmarks->size());
+	copy->features->resize(this->features->size());
+	copy->sites->resize(this->sites->size());
+	copy->ways->resize(this->ways->size());
+	copy->tags->resize(this->tags->size());
+	copy->polygon->reserve(this->polygon->size());
+	std::copy(this->landmarks->begin(), this->landmarks->end(), copy->landmarks->begin());
+	std::copy(this->features->begin(), this->features->end(), copy->features->begin());
+	std::copy(this->sites->begin(), this->sites->end(), copy->sites->begin());
+	std::copy(this->ways->begin(), this->ways->end(), copy->ways->begin());
+	std::copy(this->tags->begin(), this->tags->end(), copy->tags->begin());
+	std::copy(this->polygon->begin(), this->polygon->end(), copy->polygon->begin());
+	return copy;
+}
+
 void MapSector::setId(int id){ 
 	this->id = id; 
 }
@@ -283,7 +307,6 @@ void MapSector::deleteAllSites() {
         delete sites->front();
         sites->pop_front();
     }
-    RNUtils::printLn("Deleted all sites..");
 }
 
 void MapSector::deleteAllWays() { 
@@ -291,8 +314,6 @@ void MapSector::deleteAllWays() {
         delete ways->front();
         ways->pop_front();
     }
-
-    RNUtils::printLn("Deleted all ways..");
 }
 
 void MapSector::deleteAllFeatures(){
@@ -300,8 +321,6 @@ void MapSector::deleteAllFeatures(){
         delete features->front();
         features->pop_front();
     }
-	
-    RNUtils::printLn("Deleted all features..");
 }
 
 void MapSector::deleteAllLandmarks(){
@@ -309,7 +328,6 @@ void MapSector::deleteAllLandmarks(){
         delete landmarks->front();
         landmarks->pop_front();
     }
-    RNUtils::printLn("Deleted all landmarks..");
 }
 
 void MapSector::deleteAllTags(){
@@ -317,7 +335,6 @@ void MapSector::deleteAllTags(){
         delete tags->front();
         tags->pop_front();
     }
-    RNUtils::printLn("Deleted all tags..");
 }
 
 void MapSector::deletePolygon(){
@@ -325,7 +342,6 @@ void MapSector::deletePolygon(){
         delete polygon->at(i);
     }
     polygon->clear();
-    RNUtils::printLn("Deleted all polygon points..");
 }
 
 void MapSector::setPolygon(std::string polygon){

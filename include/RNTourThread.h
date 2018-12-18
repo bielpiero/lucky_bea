@@ -20,6 +20,7 @@ public:
 	int createCurrentSectorGraph();
 	void go();   
 	void loadProgram(std::string filename);
+	void rfidTagsEvent(std::list<std::string> tags);
 private:
 	GeneralController* gn;
 	std::string name;
@@ -28,6 +29,7 @@ private:
 	bool goRequested;
 	bool killed;
 	bool programLoaded;
+	MapSector* currentSector;
 	RNGraph* currentMapGraph;
 	RNGraph* currentSectorGraph;
 	
@@ -43,8 +45,12 @@ private:
 		std::string result;
 	};
 	struct wevent_t{
-		int requiredArguments;
+		int argCount;
 		std::string eventFunction;
+		wevent_t(int _argCount = 0){
+			argCount = _argCount;
+		}
+
 	};
 	std::map<std::string, wcontent_t > functions;
 	std::map<std::string, std::string> globalSymbols;
@@ -55,6 +61,8 @@ private:
 	DorisLipSync* lips;
 	RNRFIdentificationTask* rfid;
 	RNEmotionsTask* emotions;
+
+	RNFunPointer1C<RNTourThread, std::list<std::string> >* rfidEvent;
 private:
 	void* runThread(void* object);
 	void task();
@@ -66,10 +74,8 @@ private:
 	int closestNodeTo(const ArPose& pose);
 
 	void lex();
-	void parseEvents();
 	void parse();
 	void parse(std::string functionName, wcontent_t* content);
-	void parseEvents(std::string eventName, wevent_t* content, int cont);
 	void loadPredifinedSymbols();
 	std::string evaluateExpression(std::string condition, std::map<std::string, std::string> symbols);
 	std::map<std::string, std::string> createOptionsMap(std::string opts);

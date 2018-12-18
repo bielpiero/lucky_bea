@@ -47,6 +47,7 @@ RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn
 	test = std::fopen("laser_camera_pkalman.txt","w+");
 	test2 = std::fopen("medidas_sensores_pkalman.txt","w+");
 	test3 = std::fopen("diferencias_atan2.txt","w+");
+	currentSector = NULL;
 	this->startThread();
 }
 
@@ -96,7 +97,11 @@ void RNPKalmanLocalizationTask::init(){
 		Pk_inf(0,0) = std::pow(0.15, 2) / 3.0;   Pk_inf(1,1) = std::pow(0.15, 2) / 3.0;   Pk_inf(2,2) = std::pow(4*M_PI/180.0, 2) / 3.0;
 
 		// Balizas láser existentes en este sector
-		laserLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_LASER_STR);
+		if(currentSector != NULL){
+			delete currentSector;
+		}
+		currentSector = gn->getCurrentSector();
+		laserLandmarksCount = currentSector->landmarksSizeByType(XML_SENSOR_TYPE_LASER_STR);
 
 
 		laserTMDistance = gn->getLaserDistanceAlpha() / incertidumbre_laser_dist_inf;
@@ -104,6 +109,7 @@ void RNPKalmanLocalizationTask::init(){
 
 		/** Activar localización */
 		enableLocalization = true;
+		delete currentSector;
 
 	} 
 	else 
@@ -140,7 +146,6 @@ void RNPKalmanLocalizationTask::task(){
 		P_sup_1 = Pk_sup;
 		P_inf_1 = Pk_inf;
 
-		
 		/** Odometría */
 		double deltaDistance = 0.0, deltaAngle = 0.0;
 		
@@ -274,7 +279,7 @@ void RNPKalmanLocalizationTask::task(){
 				Cálculo de H completo */
 			for(int i = 0; i < laserLandmarksCount; i++)
 			{
-				s_landmark* landmark = gn -> getCurrentSector() -> landmarkAt(i);
+				s_landmark* landmark = currentSector->landmarkAt(i);
 
 				// Observaciones superiores
 				landmarkObservation(xk_pred_sup, disp, landmark, distance, angle);
@@ -723,8 +728,6 @@ void RNPKalmanLocalizationTask::task(){
 
 		printf("11.\n");
 		printf("CG: (%.8f, %.8f, %.8f)\n\n\n", CG(0, 0), CG(1, 0), CG(2, 0) * 180.0/M_PI);
-
-
 	} 
 	else 
 	{

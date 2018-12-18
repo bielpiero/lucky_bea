@@ -65,6 +65,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	pthread_mutex_init(&rfidLandmarksLocker, NULL);
 	pthread_mutex_init(&visualLandmarksLocker, NULL);
 	pthread_mutex_init(&rawPositionLocker, NULL);
+	pthread_mutex_init(&currentSectorLocker, NULL);
 	
 	this->tts = new DorisLipSync(this->maestroControllers, this->getFaceId());
 
@@ -72,7 +73,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	laserTask = new RNLaserTask(this);
 	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
-	//rfidTask = new RNRFIdentificationTask(this);
+	rfidTask = new RNRFIdentificationTask(this);
 	dialogs = new RNDialogsTask(this);
 	gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
@@ -89,7 +90,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	////Tasks added:
 	tasks->addTask(laserTask);
 	//tasks->addTask(omnidirectionalTask);
-	//tasks->addTask(rfidTask);
+	tasks->addTask(rfidTask);
 	tasks->addTask(dialogs);
 	tasks->addTask(gestures);
 	//tasks->addTask(armGestures);
@@ -156,6 +157,8 @@ GeneralController::~GeneralController(void){
 	delete visualLandmarks;
 	RNUtils::printLn("Deleted visualLandmarks...");
 
+	pthread_mutex_destroy(&currentSectorLocker);
+	RNUtils::printLn("Deleted currentSectorLocker...");
 	pthread_mutex_destroy(&rawPositionLocker);
 	RNUtils::printLn("Deleted rawPositionLocker...");
 	pthread_mutex_destroy(&laserLandmarksLocker);
@@ -321,7 +324,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x11:
 
 			if(granted){
-				if(currentSector != NULL){
+				if(getCurrentSector() != NULL){
 					tourThread->go();
 				} else {
 					RNUtils::printLn("Command 0x11. No current sector available to start tour to ", getClientIPAddress(socketIndex));
@@ -338,7 +341,7 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 		case 0x13:
 			if(granted){
 				getPositions(cad, x, y, theta);
-				if(currentSector != NULL){
+				if(getCurrentSector() != NULL){
 					setRobotPosition(x, y, theta);
 					sendMsg(socketIndex, 0x13, (char*)jsonRobotOpSuccess.c_str(), (unsigned int)jsonRobotOpSuccess.length());
 				} else {
@@ -380,8 +383,10 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(cad != NULL){
 				getMapSectorId(cad, mapId, sectorId);
 			} else {
+				pthread_mutex_lock(&currentSectorLocker);
 				sectorId = currentSector->getId();
 				mapId = currentSector->getMapId();
+				pthread_mutex_unlock(&currentSectorLocker);
 			}
 			getSectorInformationLandmarks(mapId, sectorId, sectorInformation);
 			sendMsg(socketIndex, 0x17, (char*)sectorInformation.c_str(), (unsigned int)sectorInformation.length()); 
@@ -390,8 +395,10 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(cad != NULL){
 				getMapSectorId(cad, mapId, sectorId);
 			} else {
+				pthread_mutex_lock(&currentSectorLocker);
 				sectorId = currentSector->getId();
 				mapId = currentSector->getMapId();
+				pthread_mutex_unlock(&currentSectorLocker);
 			}
 			getSectorInformationFeatures(mapId, sectorId, sectorInformation);
 			sendMsg(socketIndex, 0x18, (char*)sectorInformation.c_str(), (unsigned int)sectorInformation.length()); 
@@ -400,8 +407,10 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(cad != NULL){
 				getMapSectorId(cad, mapId, sectorId);
 			} else {
+				pthread_mutex_lock(&currentSectorLocker);
 				sectorId = currentSector->getId();
 				mapId = currentSector->getMapId();
+				pthread_mutex_unlock(&currentSectorLocker);
 			}
 			getSectorInformationSites(mapId, sectorId, sectorInformation);
 			sendMsg(socketIndex, 0x19, (char*)sectorInformation.c_str(), (unsigned int)sectorInformation.length()); 
@@ -410,8 +419,10 @@ void GeneralController::onMsg(int socketIndex, char* cad, unsigned long long int
 			if(cad != NULL){
 				getMapSectorId(cad, mapId, sectorId);
 			} else {
+				pthread_mutex_lock(&currentSectorLocker);
 				sectorId = currentSector->getId();
 				mapId = currentSector->getMapId();
+				pthread_mutex_unlock(&currentSectorLocker);
 			}
 			getSectorInformationSitesSequence(mapId, sectorId, sectorInformation);
 			sendMsg(socketIndex, 0x1A, (char*)sectorInformation.c_str(), (unsigned int)sectorInformation.length()); 
@@ -777,10 +788,10 @@ void GeneralController::getMapId(char* cad, int& mapId){
 }
 
 void GeneralController::loadSector(int mapId, int sectorId){
-
 	if(localization != NULL){
-		localization->kill();
+		localization->kill();	
 	}
+	pthread_mutex_lock(&currentSectorLocker);
 	std::string filename;
 	bool reloadMap = true;
 	getMapFilename(mapId, filename);
@@ -933,6 +944,8 @@ void GeneralController::loadSector(int mapId, int sectorId){
 
     }
     the_file.close();
+    RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", sectorId, currentSector->getName().c_str());
+	pthread_mutex_unlock(&currentSectorLocker);
     if(tourThread){
     	if(reloadMap){
     		tourThread->createCurrentMapGraph();
@@ -942,8 +955,9 @@ void GeneralController::loadSector(int mapId, int sectorId){
     if(localization != NULL){
 		localization->reset();	
 	}
+	
     RNUtils::getTimestamp(mappingSectorTimestamp);
-    RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", sectorId, currentSector->getName().c_str());
+    
     
 
 }
@@ -1985,8 +1999,9 @@ void GeneralController::setRobotPosition(Matrix Xk){
 }
 
 void GeneralController::moveRobotToPosition(double x, double y, double theta){
-
+	pthread_mutex_lock(&currentSectorLocker);
 	this->gotoPosition(x, y, theta, (currentSector != NULL ? currentSector->isHallway() : false));
+	pthread_mutex_unlock(&currentSectorLocker);
 }
 
 void GeneralController::onBumpersUpdate(std::vector<bool> front, std::vector<bool> rear){
@@ -2053,6 +2068,7 @@ void GeneralController::onSonarsDataUpdate(std::vector<PointXY*>* data){
 
 void GeneralController::onBatteryChargeStateChanged(char battery){
 	if(!setChargerPosition && ((int)battery) > 0){
+		pthread_mutex_lock(&currentSectorLocker);
 		if(currentSector != NULL){
 			
 			for(int i = 0; i< currentSector->featuresSize(); i++){
@@ -2065,6 +2081,7 @@ void GeneralController::onBatteryChargeStateChanged(char battery){
 				}
 			}
 		}
+		pthread_mutex_unlock(&currentSectorLocker);
 	}
 }
 
@@ -2073,6 +2090,7 @@ void GeneralController::onSecurityDistanceWarningSignal(){
 }
 
 void GeneralController::onSecurityDistanceStopSignal(){
+	pthread_mutex_lock(&currentSectorLocker);
 	if(currentSector != NULL){
 		std::vector<std::string> spltdSequence = RNUtils::split((char*)currentSector->getSequence().c_str(), ",");
 		if(lastSiteVisitedIndex > 0 and (lastSiteVisitedIndex < spltdSequence.size() - 1)){
@@ -2080,6 +2098,7 @@ void GeneralController::onSecurityDistanceStopSignal(){
 			RNUtils::printLn("Doris Stopped. Could not achieve next goal from current position...");
 		}
 	}
+	pthread_mutex_unlock(&currentSectorLocker);
 }
 
 void GeneralController::getInitialLocation(){
@@ -2207,6 +2226,7 @@ void GeneralController::getInitialLocation(){
 
 int GeneralController::initializeKalmanVariables(){
 	int result = RN_NONE;
+	pthread_mutex_lock(&currentSectorLocker);
 	if(currentSector == NULL){
 		getInitialLocation();
 	}
@@ -2299,7 +2319,8 @@ int GeneralController::initializeKalmanVariables(){
 		kalmanFuzzy->push_back(vThK1);
 
 		result = 0;
-	} 
+	}
+	pthread_mutex_unlock(&currentSectorLocker);
 	return result;
 }
 
@@ -2375,7 +2396,13 @@ double GeneralController::getCameraAngleVariance(){
 }
 
 MapSector* GeneralController::getCurrentSector(){
-	return currentSector;
+	MapSector* copy = NULL;
+	pthread_mutex_lock(&currentSectorLocker);
+	if(currentSector){
+		copy = currentSector->clone();
+	}
+	pthread_mutex_unlock(&currentSectorLocker);
+	return copy;
 }
 
 int GeneralController::getNextSectorId(){
@@ -2528,11 +2555,12 @@ void GeneralController::onSensorsScanCompleted(){
 	std::ostringstream buffer_str;
 	int mapId = RN_NONE;
 	int sectorId = RN_NONE;
+	pthread_mutex_lock(&currentSectorLocker);
 	if(currentSector != NULL){
 		mapId = currentSector->getMapId();
 		sectorId = currentSector->getId();
 	}
-	
+	pthread_mutex_unlock(&currentSectorLocker);
 	buffer_str.clear();
 	buffer_str << "$DORIS|" << mapId << "," 
 				<< sectorId << "," 

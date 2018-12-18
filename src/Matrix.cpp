@@ -185,6 +185,7 @@ Matrix Matrix::inv(){
 			result(j, i) = (Z(j, 0) - sum) / U(j, j);
 		}
 	}
+	
 
 	return result;
 }

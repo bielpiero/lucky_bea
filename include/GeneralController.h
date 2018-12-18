@@ -411,6 +411,7 @@ private:
 	pthread_mutex_t rfidLandmarksLocker;
 	pthread_mutex_t visualLandmarksLocker;
 	pthread_mutex_t rawPositionLocker;
+	pthread_mutex_t currentSectorLocker;
 
 	void getMapId(char* cad, int& mapId);
 	

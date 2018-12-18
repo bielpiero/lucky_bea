@@ -1,7 +1,7 @@
 var finishedTour = 0
 
 onRfidTagsDetected(rfidEvent)
-onSectorChange(newSectorEvent)
+onSectorChanged(newSectorEvent)
 
 function rfidEvent(tagsList)
 	for(var i = #0 : i < sizeof(tagsList) : i = i + #1)

@@ -74,7 +74,7 @@ private:
     Matrix R_inf;
 	Matrix Q_sup;
 	Matrix Q_inf;
-
+	MapSector* currentSector;
 	Matrix CG;
 
 	vector<Matrix> v_single_inno_sup, v_single_inno_inf, v_single_H;

@@ -52,7 +52,8 @@ void RNRecurrentTask::kill(){
         goRequested = false;
         executingTask = false;
         killed = true;
-        unlock();           
+        unlock();       
+        RNUtils::printLn("Thread %s has been killed...", this->getTaskName().c_str());    
         //onKilled();
     }
 }
@@ -82,7 +83,7 @@ void* RNRecurrentTask::runThread(void* object){
             executingTask = false;
             unlock();
         }
-        RNUtils::sleep(20);
+        RNUtils::sleep(30);
     }
     stop();
     threadFinished();

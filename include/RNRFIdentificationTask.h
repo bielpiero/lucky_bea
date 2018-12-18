@@ -147,6 +147,8 @@ public:
 	virtual void task();
 	virtual void kill();
 
+	void addTagsCallback(RNFunPointer* func);
+	void remTagsCallback(RNFunPointer* func);
 private:
 	RFData* findByKeyAntenna(std::string key, std::string antenna);
 
@@ -184,11 +186,14 @@ private:
 	LLRP::CMessage* transact(LLRP::CMessage* msg, int timeout = 2000);
 	LLRP::CMessage* recvMessage(int msecMax);
 
+	void runTagsCallbacks(std::list<std::string> l);
 private:
 	GeneralController* gn;
 	unsigned int messageId;
 	bool deviceInitialized;
 	int readerDescriptor;
+
+	MapSector* currentSector;
 
 	int powerIndexAntenna1;
 	int powerIndexAntenna2;
@@ -207,6 +212,8 @@ private:
 	std::FILE* file;
 	std::list<RFData*>* rfids;
 	std::list<s_person_tag*>* peopleTags;
+
+	std::list<RNFunPointer*> tagsSubscribers;
 };
 
 #endif

@@ -90,6 +90,8 @@ public:
 	MapSector();
 	~MapSector();
 
+	MapSector* clone();
+
 	void setId(int id);
 	int getId();
 

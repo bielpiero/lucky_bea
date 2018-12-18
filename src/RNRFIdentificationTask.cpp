@@ -19,6 +19,7 @@ RNRFIdentificationTask::RNRFIdentificationTask(const GeneralController* gn, cons
 	isAtHallway = false;
 	isAtDoor = false;
 	//file = std::fopen("data-rfid-1.00m.txt", "w+");
+	currentSector = NULL;
 	loadPeopleTagFile();
 }
 
@@ -35,6 +36,7 @@ RNRFIdentificationTask::~RNRFIdentificationTask(){
 			RNUtils::printLn("Disconnected from RF Speedway Reader...");
 		}
 		delete conn;
+		delete currentSector;
 	}
 	/*if(!file){
 		std::fclose(file);
@@ -73,12 +75,14 @@ void RNRFIdentificationTask::task(){
 }
 
 void RNRFIdentificationTask::checkForActions(){
-	if(gn and gn->getCurrentSector()){
+	currentSector = gn->getCurrentSector();
+	if(gn and currentSector){
+		std::list<std::string> remTags;
 		std::list<RFData*>::iterator it = rfids->begin();
 		while(it != rfids->end()){
 			RFData* tag = (*it);
 			bool deleted = false;
-			s_tag* t = gn->getCurrentSector()->findTagById(tag->getTagKey());
+			s_tag* t = currentSector->findTagById(tag->getTagKey());
 			s_person_tag* pt = *std::find_if(peopleTags->begin(), peopleTags->end(), [&tag](s_person_tag* item) -> bool { return item->id == tag->getTagKey(); });
 			if(t != NULL){
 				if(t->name == std::string(SEMANTIC_HALLWAY_STR)){
@@ -134,14 +138,37 @@ void RNRFIdentificationTask::checkForActions(){
 						deleted = true;
 					}
 				}
-			} else {
-				RNUtils::printLn("Tag %s not found in database", tag->getTagKey().c_str());
 			}
 			if(not deleted){
-				it++;
+				remTags.emplace_back(tag->getTagKey());
+				delete *it;
+				it = rfids->erase(it);
+				//it++;
 			}
 		}
+		if(remTags.size() > 0){
+			runTagsCallbacks(remTags);
+		}
+		
 	}
+	delete currentSector;
+}
+
+void RNRFIdentificationTask::runTagsCallbacks(std::list<std::string> tags){
+	std::list<RNFunPointer*>::iterator subsIt;
+		for(subsIt = tagsSubscribers.begin(); subsIt != tagsSubscribers.end(); subsIt++){
+			if(dynamic_cast<RNFunPointer1<std::list<std::string> >* >(*subsIt) != NULL){
+				((RNFunPointer1<std::list<std::string> >*)(*subsIt))->invoke(tags);
+			}
+		}
+}
+
+void RNRFIdentificationTask::addTagsCallback(RNFunPointer* func){
+	tagsSubscribers.emplace_back(func);
+}
+
+void RNRFIdentificationTask::remTagsCallback(RNFunPointer* func){
+	tagsSubscribers.remove(func);
 }
 
 void RNRFIdentificationTask::loadPeopleTagFile(){

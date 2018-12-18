@@ -6,6 +6,9 @@
 #define TOK_TRUE "NUM:1"
 #define TOK_FALSE "NUM:0"
 
+#define EVENT_ON_RFID_TAGS_DETECTED_STR "onRfidTagsDetected"
+#define EVENT_ON_SECTOR_CHANGED_STR "onSectorChanged"
+
 #define NULLPTR "UNK:nil"
 
 #define RW_FUNCTION_STR "function"
@@ -29,6 +32,7 @@
 #define RW_FOR_STR "for"
 #define RW_ENDFOR_STR "endfor"
 #define RW_SIZEOF_STR "sizeof"
+#define RW_WAIT_STR "wait"
 
 #define TOK_SIZEOF_STR "SIZEOF"
 #define TOK_IF_STR "IF"
@@ -40,6 +44,7 @@
 #define TOK_TURN_STR "TURN"
 #define TOK_ATTENTION_STR "ATTENTION"
 #define TOK_RETURN_STR "RETURN"
+#define TOK_WAIT_STR "WAIT"
 #define TOK_DVR2PTS_STR "DVR:"
 #define TOK_NUM2PTS_STR "NUM:"
 #define TOK_ARG2PTS_STR "ARG:"
@@ -54,8 +59,8 @@
 #define TOK_EIF2PTS_STR "EIF:"
 #define TOK_BWH2PTS_STR "BWH:"
 #define TOK_BFOR2PTS_STR "BFOR:"
-#define TOK_EWH2PTS_STR "EWH:"
 #define TOK_EFOR2PTS_STR "EFOR:"
+#define TOK_EWH2PTS_STR "EWH:"
 #define TOK_OPT2PTS_STR "OPT:"
 #define TOK_FACE2PTS_STR "FACE:"
 #define TOK_ATTN2PTS_STR "ATTN:"
@@ -76,6 +81,7 @@
 #define TOK_BEL_STR "BEL"
 #define TOK_EIF_STR "EIF"
 #define TOK_EWH_STR "EWH"
+#define TOK_EFOR_STR "EFOR"
 #define TOK_VOID_STR "VOID"
 #define TOK_AND_STR "AND"
 #define TOK_OR_STR "OR"

@@ -1,22 +1,17 @@
-function rm_lab()
-	goto(#-1,#4.8,#2.23)
-endfunction
 
-function reception()
-	say[attention=front; face=happy]("Hola chicos")
-	say[attention=right; face=surprise]("biénvenidos al centro de automática y robótica de la universidad politécnica de madrid")
-	say[attention=left; face=suspect]("seguidme por favor que os mostraré el laboratorio, los distintos grupos que hay, os explicaré que hace cada grupo y lo mas importante, os mostraré donde he nacido y quién es mi creador.")
-	turn(#90)
-	say("coloquemos nuestra atención a la izquierda")
-	say("subiendo por las escaleras están los despachos de los profesores.")
-	say("como mi creador me odia y no me ha puesto piernas, no puedo mostrarles la parte de arriba todavía.")
-	say("a la derecha están los principales despachos de los grupos de investigación.")
-	move(next)
-	say("vamos para ahí. iremos hasta el final del todo y mientras caminamos") 
-	say[mood=sad]("y yo rodando")
-	say("iré explicando como surgió el centro de automática y robótica.")
+onRfidTagsDetected(rfidEvent)
+
+function rfidEvent(tagsList)
+	var i = #0
+
+		if(tagsList[#0] == "e280-1160-6000-0207-28b5-6824")
+			say("Holo yaiza, estoy funcionando")
+		endif
+		i = i + #1
 endfunction
 
 function main()
-	rm_lab()
+	while(#1)
+		wait(#1000)
+	endw
 endfunction
