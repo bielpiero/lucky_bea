@@ -3,11 +3,12 @@ onRfidTagsDetected(rfidEvent)
 
 function rfidEvent(tagsList)
 	var i = #0
-
-		if(tagsList[#0] == "e280-1160-6000-0207-28b5-6824")
-			say("Holo yaiza, estoy funcionando")
+	while(i < sizeof(tagsList))
+		if(tagsList[i] == "e280-1160-6000-0207-28b5-6824")
+			say("Holo Biel, estoy funcionando")
 		endif
 		i = i + #1
+	endw
 endfunction
 
 function main()

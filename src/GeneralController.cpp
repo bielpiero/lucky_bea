@@ -73,7 +73,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	laserTask = new RNLaserTask(this);
 	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
-	rfidTask = new RNRFIdentificationTask(this);
+	//rfidTask = new RNRFIdentificationTask(this);
 	dialogs = new RNDialogsTask(this);
 	gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
@@ -90,7 +90,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	////Tasks added:
 	tasks->addTask(laserTask);
 	//tasks->addTask(omnidirectionalTask);
-	tasks->addTask(rfidTask);
+	//tasks->addTask(rfidTask);
 	tasks->addTask(dialogs);
 	tasks->addTask(gestures);
 	//tasks->addTask(armGestures);
@@ -954,6 +954,9 @@ void GeneralController::loadSector(int mapId, int sectorId){
     }
     if(localization != NULL){
 		localization->reset();	
+	}
+	if(rfidTask){
+		rfidTask->reset();
 	}
 	
     RNUtils::getTimestamp(mappingSectorTimestamp);

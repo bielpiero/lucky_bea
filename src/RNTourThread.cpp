@@ -1019,7 +1019,7 @@ void RNTourThread::parse(){
 }
 
 void RNTourThread::rfidTagsEvent(std::list<std::string> tags){
-	std::string tagsArray = "";
+	std::string tagsArray = TOK_ARR2PTS_STR;
 	std::list<std::string>::iterator itTags;
 	for(itTags = tags.begin(); itTags != tags.end(); itTags++){
 		tagsArray += TOK_STR2PTS_STR + *itTags;
@@ -2060,7 +2060,7 @@ std::string RNTourThread::arrayValue(std::map<std::string, std::string> symbols,
 	if(busca != symbols.end()){
 		
 		contenido = busca->second;
-		cont_indices = RNUtils::split(contenido, ",");
+		cont_indices = RNUtils::split(contenido.substr(4), ",");
 	} else {
 		fprintf(stderr, "error: Undefined variable in this scope\n");
 	}
@@ -2154,16 +2154,15 @@ std::string RNTourThread::assignSize(std::string word_size){
 	if(len == 0){
 		if(chain.substr(0,3) == TOK_STR_STR){
 			size = chain.substr(4).size();
-			fprintf(stderr,"The length of the string is %i \n", size);
 		} else if(chain.substr(0,3) == TOK_NUM_STR) {
 			size = 1;
-			fprintf(stderr,"The length of the string is %i \n", size);
+		} else if(chain.substr(0, 3) == TOK_ARR_STR){
+			size = 1;
 		}
 	} else {
 		for(int i = 0; i <=len ; i++){
 			size++;
 		}
-		fprintf(stderr,"The length of the vector is %i \n", size);
 	}
 	val =  TOK_NUM2PTS_STR + std::to_string(size);
 	return val;

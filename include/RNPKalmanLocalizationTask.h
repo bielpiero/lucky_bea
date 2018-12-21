@@ -77,7 +77,7 @@ private:
 	MapSector* currentSector;
 	Matrix CG;
 
-	vector<Matrix> v_single_inno_sup, v_single_inno_inf, v_single_H;
+	vector<Matrix> v_innovation_sup, v_innovation_inf, v_Hk;
 };
 
 #endif

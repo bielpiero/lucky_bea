@@ -67,6 +67,7 @@ void RNRFIdentificationTask::task(){
 			std::chrono::microseconds us;
 			us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
 			(*i)->setTimestamp((unsigned long long)us.count(), 1);
+
 		}
 		checkForActions();
 	} else {
@@ -75,7 +76,7 @@ void RNRFIdentificationTask::task(){
 }
 
 void RNRFIdentificationTask::checkForActions(){
-	currentSector = gn->getCurrentSector();
+	
 	if(gn and currentSector){
 		std::list<std::string> remTags;
 		std::list<RFData*>::iterator it = rfids->begin();
@@ -83,7 +84,11 @@ void RNRFIdentificationTask::checkForActions(){
 			RFData* tag = (*it);
 			bool deleted = false;
 			s_tag* t = currentSector->findTagById(tag->getTagKey());
-			s_person_tag* pt = *std::find_if(peopleTags->begin(), peopleTags->end(), [&tag](s_person_tag* item) -> bool { return item->id == tag->getTagKey(); });
+			s_person_tag* pt = NULL;
+			std::list<s_person_tag*>::iterator pit = std::find_if(peopleTags->begin(), peopleTags->end(), [&tag](s_person_tag* item){ return item->id == tag->getTagKey(); });
+			if(pit != peopleTags->end()){
+				pt = *pit;
+			}
 			if(t != NULL){
 				if(t->name == std::string(SEMANTIC_HALLWAY_STR)){
 					if(tag->getRSSI() > MAX_RSSI_ENVIRONMENT_VALUE and not isAtHallway){
@@ -138,29 +143,34 @@ void RNRFIdentificationTask::checkForActions(){
 						deleted = true;
 					}
 				}
-			}
-			if(not deleted){
+			} else {
+				std::cout << "Agregando el tag <" << tag->getTagKey() << ">" << std::endl;
 				remTags.emplace_back(tag->getTagKey());
 				delete *it;
 				it = rfids->erase(it);
-				//it++;
+				deleted = true;	
+			}
+			if(not deleted){
+				
+				it++;
 			}
 		}
+		std::cout << "SIZE RFIDS: " << std::endl;
 		if(remTags.size() > 0){
 			runTagsCallbacks(remTags);
+			remTags.clear();
 		}
 		
 	}
-	delete currentSector;
 }
 
 void RNRFIdentificationTask::runTagsCallbacks(std::list<std::string> tags){
 	std::list<RNFunPointer*>::iterator subsIt;
-		for(subsIt = tagsSubscribers.begin(); subsIt != tagsSubscribers.end(); subsIt++){
-			if(dynamic_cast<RNFunPointer1<std::list<std::string> >* >(*subsIt) != NULL){
-				((RNFunPointer1<std::list<std::string> >*)(*subsIt))->invoke(tags);
-			}
+	for(subsIt = tagsSubscribers.begin(); subsIt != tagsSubscribers.end(); subsIt++){
+		if(dynamic_cast<RNFunPointer1<std::list<std::string> >* >(*subsIt) != NULL){
+			((RNFunPointer1<std::list<std::string> >*)(*subsIt))->invoke(tags);
 		}
+	}
 }
 
 void RNRFIdentificationTask::addTagsCallback(RNFunPointer* func){
@@ -220,6 +230,10 @@ int RNRFIdentificationTask::init(void){
 							if(enableROSpec() == 0){
 								
 								this->deviceInitialized = true;
+								if(currentSector){
+									delete currentSector;
+								}
+								currentSector = gn->getCurrentSector();
 								
 							} else {
 								result = RN_NONE;
