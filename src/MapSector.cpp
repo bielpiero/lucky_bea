@@ -25,7 +25,7 @@ MapSector::~MapSector(){
     delete ways;
 
     deleteAllTags();
-    delete ways;
+    delete tags;
 
     deletePolygon();
     delete polygon;
@@ -40,18 +40,51 @@ MapSector* MapSector::clone(){
 	copy->name = this->name;
 	copy->sitesCyclic = this->sitesCyclic;
 	copy->polygonDefinition = this->polygonDefinition;
-	copy->landmarks->resize(this->landmarks->size());
+
+	std::list<s_landmark*>::iterator lit = landmarks->begin();
+	while(lit != landmarks->end()){
+		copy->landmarks->emplace_back(new s_landmark(**lit));
+		lit++;
+	}
+	std::list<s_feature*>::iterator fit = features->begin();
+	while(fit != features->end()){
+		copy->features->emplace_back(new s_feature(**fit));
+		fit++;
+	}
+	std::list<s_site*>::iterator sit = sites->begin();
+	while(sit != sites->end()){
+		copy->sites->emplace_back(new s_site(**sit));
+		sit++;
+	} 
+	std::list<s_way*>::iterator wit = ways->begin();
+	while(wit != ways->end()){
+		copy->ways->emplace_back(new s_way(**wit));
+		wit++;
+	}
+	std::list<s_tag*>::iterator tit = tags->begin();
+	while(tit != tags->end()){
+		copy->tags->emplace_back(new s_tag(**tit));
+		tit++;
+	} 
+	std::vector<PointXY*>::iterator pit = polygon->begin();
+	while(pit != polygon->end()){
+		copy->polygon->push_back(new PointXY(**pit));
+		pit++;
+	}
+	/*copy->landmarks->resize(this->landmarks->size());
 	copy->features->resize(this->features->size());
 	copy->sites->resize(this->sites->size());
 	copy->ways->resize(this->ways->size());
 	copy->tags->resize(this->tags->size());
 	copy->polygon->reserve(this->polygon->size());
+
+
 	std::copy(this->landmarks->begin(), this->landmarks->end(), copy->landmarks->begin());
 	std::copy(this->features->begin(), this->features->end(), copy->features->begin());
 	std::copy(this->sites->begin(), this->sites->end(), copy->sites->begin());
 	std::copy(this->ways->begin(), this->ways->end(), copy->ways->begin());
 	std::copy(this->tags->begin(), this->tags->end(), copy->tags->begin());
-	std::copy(this->polygon->begin(), this->polygon->end(), copy->polygon->begin());
+	std::copy(this->polygon->begin(), this->polygon->end(), copy->polygon->begin());*/
 	return copy;
 }
 
@@ -307,6 +340,7 @@ void MapSector::deleteAllSites() {
         delete sites->front();
         sites->pop_front();
     }
+    printf("Deleted all sites\n");
 }
 
 void MapSector::deleteAllWays() { 
@@ -314,6 +348,7 @@ void MapSector::deleteAllWays() {
         delete ways->front();
         ways->pop_front();
     }
+    printf("Deleted all ways\n");
 }
 
 void MapSector::deleteAllFeatures(){
@@ -321,6 +356,7 @@ void MapSector::deleteAllFeatures(){
         delete features->front();
         features->pop_front();
     }
+    printf("Deleted all features\n");
 }
 
 void MapSector::deleteAllLandmarks(){
@@ -328,6 +364,7 @@ void MapSector::deleteAllLandmarks(){
         delete landmarks->front();
         landmarks->pop_front();
     }
+    printf("Deleted all landmarks\n");
 }
 
 void MapSector::deleteAllTags(){
@@ -335,6 +372,7 @@ void MapSector::deleteAllTags(){
         delete tags->front();
         tags->pop_front();
     }
+    printf("Deleted all tags\n");
 }
 
 void MapSector::deletePolygon(){
@@ -342,6 +380,7 @@ void MapSector::deletePolygon(){
         delete polygon->at(i);
     }
     polygon->clear();
+    printf("Deleted polygon\n");
 }
 
 void MapSector::setPolygon(std::string polygon){

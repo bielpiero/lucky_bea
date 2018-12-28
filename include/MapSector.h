@@ -4,7 +4,8 @@
 #include "RNUtils.h"
 #include "semdefs.h"
 
-struct s_landmark{
+class s_landmark{
+public:
 	int id;
 	std::string type;
 	double varMinX;
@@ -29,27 +30,69 @@ struct s_landmark{
 		ypos = 0;
 		zpos = 0;
 	}
+	s_landmark(const s_landmark &lmrk){
+		id = lmrk.id;
+		type = lmrk.type;
+		varMinX = lmrk.varMinX;
+		varMaxX = lmrk.varMaxX;
+		varMinY = lmrk.varMinY;
+		varMaxY = lmrk.varMaxY;
+		varMinZ = lmrk.varMinZ;
+		varMaxZ = lmrk.varMaxZ;
+		xpos = lmrk.xpos;
+		ypos = lmrk.ypos;
+		zpos = lmrk.zpos;
+	}
 };
 
-struct s_feature{
+class s_feature{
+public:
 	int id;
 	std::string name;
 	double width;
 	double height;
 	double xpos;
 	double ypos;
+	s_feature(){
+		id = RN_NONE;
+		name = "";
+		width = 0.0;
+		height = 0.0;
+		xpos = 0.0;
+		ypos = 0.0;
+	}
+
+	s_feature(const s_feature& ftr){
+		id = ftr.id;
+		name = ftr.name;
+		width = ftr.width;
+		height = ftr.height;
+		xpos = ftr.xpos;
+		ypos = ftr.ypos;
+	}
 };
 
-struct s_way{
+class s_way{
+public:
 	int st;
 	std::vector<int> adjacencies;
 	s_way(){
 		st = RN_NONE;
 		adjacencies = std::vector<int>();
 	}
+
+	s_way(const s_way& w){
+		st = w.st;
+		std::vector<int>::const_iterator ait = w.adjacencies.begin();
+		while(ait != w.adjacencies.end()){
+			adjacencies.push_back(*ait);
+			ait++;
+		}
+	}
 };
 
-struct s_site{
+class s_site{
+public:
 	int id;
 	std::string name;
 	double xpos;
@@ -57,12 +100,43 @@ struct s_site{
 	int linkedSectorId;
     double xcoord;
     double ycoord;
+
+    s_site(){
+    	id = RN_NONE;
+    	name = "";
+    	xpos = 0.0;
+    	ypos = 0.0;
+    	linkedSectorId = RN_NONE;
+    	xcoord = 0.0;
+    	ycoord = 0.0;
+    }
+
+    s_site(const s_site& st){
+    	id = st.id;
+    	name = st.name;
+    	xpos = st.xpos;
+    	ypos = st.ypos;
+    	linkedSectorId = st.linkedSectorId;
+    	xcoord = st.xcoord;
+    	ycoord = st.ycoord;
+    }
 };
 
 struct s_tag{
 	std::string id;
 	std::string side;
 	std::string name;
+	s_tag(){
+		id = "";
+		side = "";
+		name = "";
+	}
+
+	s_tag(const s_tag& tg){
+		id = tg.id;
+		side = tg.side;
+		name = tg.name;
+	}
 };
 
 class MapSector{

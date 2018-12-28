@@ -1,15 +1,17 @@
-var finishedTour = 0
+var finishedTour = #0
 
 onRfidTagsDetected(rfidEvent)
 onSectorChanged(newSectorEvent)
 
 function rfidEvent(tagsList)
-	for(var i = #0 : i < sizeof(tagsList) : i = i + #1)
+	var i = #0
+	while(i < sizeof(tagsList))
 		if(tagsList[i] == "e280-1160-6000-0207-28b5-2a04")
 			say("Esa caja que estáis viendo al fondo, ahi me guardan para cuando tengo que salir de la universidad")
 			say[face=afraid]("Esa caja me da mucho miedo")
 		endif
-	endfor
+		i = i + #1
+	endw
 endfunction
 
 function newSectorEvent(sectorId)
@@ -27,7 +29,7 @@ function newSectorEvent(sectorId)
 			else
 				if(sectorId == #12)
 					say[face=sad]("Lamentablemente hemos llegado al final de nuestro recorrido")
-					finishedTour = 1
+					finishedTour = #1
 				endif
 			endif
 		endif
@@ -91,8 +93,4 @@ endfunction
 
 function main()
 	goto(#2, #2, #3)
-	welcome()
-	while(not finishedTour)
-		wait()
-	endwhile
 endfunction

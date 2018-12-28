@@ -86,6 +86,7 @@ private:
 
 	/** New
 	  */
+	void processGlobalVariables(std::list<std::string> tokens);
 	std::string arrayValue(std::map<std::string, std::string> simbolos, std::string nombre, std::string position);
 	std::string assignArray(std::map<std::string, std::string> simbolo, std::string array, std::string pos, std::string exprs);
 	std::string assignSize(std::string word_size);

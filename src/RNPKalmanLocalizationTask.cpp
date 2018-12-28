@@ -20,8 +20,8 @@ const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_sup = 0.005;
 const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_inf = 0.010; 
 const float centro_odom_angl_sup = 0.0; 
 const float centro_odom_angl_inf = 0.0; 
-const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_sup = 0.0008; 
-const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_inf = 0.0015; 
+const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_sup = 0.005; 
+const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_inf = 0.010; 
 
 const float centro_laser_dist_sup = 0.0;
 const float centro_laser_dist_inf = 0.0;
@@ -29,8 +29,8 @@ const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_sup = 0.06;
 const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_inf = 0.12; 
 const float centro_laser_angl_sup = 0.0;
 const float centro_laser_angl_inf = 0.0;
-const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.15; 
-const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.30;
+const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.07; 
+const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.15;
 
 const float centro_camera_angl_sup = 0.0;
 const float centro_camera_angl_inf = 0.0;
@@ -42,6 +42,11 @@ const float singleMahalanobisLimit = 3.2189;
 const float fullMahalanobisLimit = 5.9915;
 
 const int stateLenght = 3;
+
+
+int cont_deforme_x = 0;
+int cont_deforme_y = 0;
+int cont_deforme_th = 0;
 
 
 RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
@@ -109,6 +114,9 @@ void RNPKalmanLocalizationTask::init(){
 		laserLandmarksCount = currentSector->landmarksSizeByType(XML_SENSOR_TYPE_LASER_STR);
 		cameraLandmarksCount = gn->getCurrentSector()->landmarksSizeByType(XML_SENSOR_TYPE_CAMERA_STR);
 
+		cont_deforme_x = 0;
+		cont_deforme_y = 0;
+		cont_deforme_th = 0;
 
 		/** Activar localización */
 		enableLocalization = true;
@@ -243,7 +251,7 @@ printf("3.\n");
 				num_possibleObservations += cameraLandmarksCount;
 				num_possibleLandmarks += cameraLandmarksCount;
 			}
-
+	
 			if(num_possibleObservations > 0)
 			{
 				/** Centro de gravedad*/
@@ -257,7 +265,7 @@ printf("3.\n");
 				int i_laser = 0, i_camera = 0;
 				if(gn->isLaserSensorActivated())
 				{
-					i_camera = 1 + laserLandmarksCount;
+					i_camera = laserLandmarksCount;
 				}
 
 				Matrix completeObservations_sup = Matrix(num_possibleObservations,1);
@@ -284,7 +292,7 @@ printf("3.\n");
 
 							landmarkObservation(xk_pred_inf, disp, teoricalLandmark, distance, angle);
 							completeObservations_inf(i_laser*2, 0) = distance + centro_laser_dist_inf;
-							completeObservations_inf(i_laser*2+1, 0) =RNUtils::fixAngleRad(angle + centro_laser_angl_inf);
+							completeObservations_inf(i_laser*2+1, 0) = RNUtils::fixAngleRad(angle + centro_laser_angl_inf);
 
 							/** Matriz H */
 							d = std::sqrt( std::pow(teoricalLandmark->xpos - (CG(0,0) + disp(0,0)), 2) + std::pow(teoricalLandmark->ypos - (CG(1,0) + disp(0,0)), 2) );
@@ -303,7 +311,7 @@ printf("3.\n");
 						if(gn->isCameraSensorActivated())
 						{
 							/** Matriz de rotación */
-							Matrix disp = Matrix(2, 1);
+							disp = Matrix(2, 1);
 							double nrx, nry;
 							RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, CG(2, 0), &nrx, &nry);
 							disp(0, 0) = nrx;
@@ -311,8 +319,8 @@ printf("3.\n");
 						
 							/** Observaciones */
 							landmarkObservation(xk_pred_sup, disp, teoricalLandmark, distance, angle);
-							completeObservations_sup(i_camera, 0) =RNUtils::fixAngleRad(angle + centro_camera_angl_sup);
-							completeObservations_inf(i_camera, 0) =RNUtils::fixAngleRad(angle + centro_camera_angl_inf);
+							completeObservations_sup(i_camera, 0) = RNUtils::fixAngleRad(angle + centro_camera_angl_sup);
+							completeObservations_inf(i_camera, 0) = RNUtils::fixAngleRad(angle + centro_camera_angl_inf);
 
 							/** Matriz H */
 							d = std::sqrt( std::pow(teoricalLandmark->xpos - (CG(0,0) + disp(0,0)), 2) + std::pow(teoricalLandmark->ypos - (CG(1,0) + disp(0,0)), 2) );
@@ -475,6 +483,8 @@ printf("5.\n");
 
 				for(int i = 0; i < cameraLandmarksDetected; i++)
 				{
+
+printf("5b. %d\n",i);	
 					RNLandmark* cameraLandmark = gn->getVisualLandmarks()->at(i);
 
 					validQR = true;
@@ -506,21 +516,25 @@ printf("5.\n");
 							// Buscamos si alguna de las balizas de este sector coincide el QR con el detectado
 							bool landmark_used = false;
 
-							for(int j = laserLandmarksCount; j < (laserLandmarksCount + cameraLandmarksCount) and !landmark_used; j++)
+							for(int j = 2*laserLandmarksCount; j < (2*laserLandmarksCount + cameraLandmarksCount) and !landmark_used; j++)
 							{
+
 								if(cameraLandmark->getMarkerId() == gn->getCurrentSector()->landmarkAt(j)->id)
 								{
 									landmark_used = true;
 									cameraLandmarksAccepted ++;
+									printf("id baliza visual = %d\n", cameraLandmark->getMarkerId());
 
-									cameraRealObservations = RNUtils::fixAngleRad(cameraLandmark->getPointsYMean());
+									cameraRealObservations(0,0) = RNUtils::fixAngleRad(cameraLandmark->getPointsYMean());
 
-									cameraHk(0,0) = completeHk(2*j,0);
-									cameraHk(0, 1) = completeHk(2*j, 1);
-									cameraHk(0, 2) = completeHk(2*j, 2);
+									cameraHk(0, 0) = completeHk(j, 0);
+									cameraHk(0, 1) = completeHk(j, 1);
+									cameraHk(0, 2) = completeHk(j, 2);
 
-									cameraInnovation_sup = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_sup(j*2,0) );
-									cameraInnovation_inf = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_inf(j*2,0) );
+									cameraInnovation_sup(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_sup(j,0) );
+									cameraInnovation_inf(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_inf(j,0) );
+
+printf("5b. innovacion_sup = %f\n",cameraInnovation_sup(0,0));
 
 									v_Hk.push_back(cameraHk);
 									v_innovation_sup.push_back(cameraInnovation_sup);
@@ -530,6 +544,12 @@ printf("5.\n");
 						}
 					}
 				}// for todas las balizas VISUALES detectadas
+				
+
+	printf("completeHk\n");
+	completeHk.print();
+
+
 
 printf("6.\n");
 				totalLandmarksAccepted = laserLandmarksAccepted + cameraLandmarksAccepted;
@@ -598,27 +618,27 @@ printf("7.\n");
 					}
 	
 	printf("laser accepted: %d. camera accepted: %d\n",laserLandmarksAccepted, cameraLandmarksAccepted);
-					for(int i = laserLandmarksAccepted; i < (laserLandmarksAccepted + cameraLandmarksAccepted); i++)
-					{						
-						printf("ESTAMOS CONSTRUYENDO COSAS DE LA CAMARA\n");
+					for(int i = 2*laserLandmarksAccepted; i < (2*laserLandmarksAccepted + cameraLandmarksAccepted); i++)
+					{					
 						cameraHk = v_Hk.at(i);
 						cameraInnovation_sup = v_innovation_sup.at(i);
 						cameraInnovation_inf = v_innovation_inf.at(i);
 						
 						// Construir matrices finales
-						Hk(2*i,0) = cameraHk(0,0);
-						Hk(2*i,1) = cameraHk(0,1);
-						Hk(2*i,2) = cameraHk(0,2);
+						Hk(i,0) = cameraHk(0,0);
+						Hk(i,1) = cameraHk(0,1);
+						Hk(i,2) = cameraHk(0,2);
 
-						innovation_sup(2*i,0) = cameraInnovation_sup(0,0);
+						innovation_sup(i,0) = cameraInnovation_sup(0,0);
 
-						innovation_inf(2*i,0) = cameraInnovation_inf(0,0);
+						innovation_inf(i,0) = cameraInnovation_inf(0,0);
 
-						R_sup(2*i, 2*i) = std::pow(incertidumbre_camera_angl_sup, 2) / 3.0;
+						R_sup(i, i) = std::pow(incertidumbre_camera_angl_sup, 2) / 3.0;
 
-						R_inf(2*i, 2*i) = std::pow(incertidumbre_camera_angl_inf, 2) / 3.0;
+						R_inf(i, i) = std::pow(incertidumbre_camera_angl_inf, 2) / 3.0;
 					}
 	
+
 					/** AHORA SÍ CORRECCIÓN DE EKF */
 					Matrix Sk_sup = Hk * Pk_pred_sup * ~Hk + R_sup;
 					Matrix Sk_inf = Hk * Pk_pred_inf * ~Hk + R_inf;
@@ -654,6 +674,20 @@ printf("7.\n");
 						Pk_inf = Pk_pred_inf - Wk_inf*Sk_inf*~Wk_inf;
 
 						corrected = true;		
+
+
+printf("Matriz H usada: \n");
+	Hk.print();
+	printf("Matriz R_sup usada\n");
+	R_sup.print();
+	printf("Innovacion sup usada\n");
+	innovation_sup.print();
+	printf("Matriz Wk_sup\n");
+	Wk_sup.print();
+	
+
+
+
 
 						if(std::isnan(Pk_sup(0,0)) or (Pk_sup(0,0) == 0.0))
 						{
@@ -703,6 +737,22 @@ printf("8.\n");
 			printf("     SI se corrige\n");
 		}
 
+
+		if(Pk_sup(0,0) < 0 || Pk_sup(1,1) < 0 || Pk_sup(2,2) < 0 || Pk_inf(0,0) < 0 || Pk_inf(1,1) < 0 || Pk_inf(2,2) < 0)
+		{
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+			printf("\t\tVALORES DE FIABILIDAD NEGATIVOS \n");
+		}
 
 
 
@@ -805,9 +855,6 @@ printf("10.\n");
 			printf("trapecio Th (grados): %.3f, %.3f, %.3f %.3f\n", th1*180/M_PI, th2*180/M_PI, th3*180/M_PI, th4*180/M_PI);
 		*/
 
-		static int cont_deforme_x = 0;
-		static int cont_deforme_y = 0;
-		static int cont_deforme_th = 0;
 
 		if(corrected or predicted)
 		{

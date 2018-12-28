@@ -73,7 +73,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	laserTask = new RNLaserTask(this);
 	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
-	//rfidTask = new RNRFIdentificationTask(this);
+	rfidTask = new RNRFIdentificationTask(this);
 	dialogs = new RNDialogsTask(this);
 	gestures = new RNGesturesTask(this);
 	//armGestures = new RNArmTask(this);
@@ -90,7 +90,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	////Tasks added:
 	tasks->addTask(laserTask);
 	//tasks->addTask(omnidirectionalTask);
-	//tasks->addTask(rfidTask);
+	tasks->addTask(rfidTask);
 	tasks->addTask(dialogs);
 	tasks->addTask(gestures);
 	//tasks->addTask(armGestures);
@@ -2229,17 +2229,30 @@ void GeneralController::getInitialLocation(){
 
 int GeneralController::initializeKalmanVariables(){
 	int result = RN_NONE;
+	bool currentSectorIsNull = true;
+
 	pthread_mutex_lock(&currentSectorLocker);
-	if(currentSector == NULL){
+	currentSectorIsNull = currentSector == NULL;
+	pthread_mutex_unlock(&currentSectorLocker);
+
+	if(currentSectorIsNull){
 		getInitialLocation();
 	}
-	if(currentSector != NULL){
+
+	pthread_mutex_lock(&currentSectorLocker);
+	currentSectorIsNull = currentSector == NULL;
+	pthread_mutex_unlock(&currentSectorLocker);
+
+	if(not currentSectorIsNull){
 		double uX, uY, uTh;
 		Matrix rpk = getRawEncoderPosition();
 		rpk.print();
+		
+		pthread_mutex_lock(&currentSectorLocker);
 		int laserLandmarksCount = currentSector->landmarksSizeByType(XML_SENSOR_TYPE_LASER_STR);
 		int cameraLandmarksCount = currentSector->landmarksSizeByType(XML_SENSOR_TYPE_CAMERA_STR);
 		int rfidLandmarksCount = currentSector->landmarksSizeByType(XML_SENSOR_TYPE_RFID_STR);
+		pthread_mutex_unlock(&currentSectorLocker);
 
 		int totalLandmarks = 0;
 
@@ -2323,7 +2336,7 @@ int GeneralController::initializeKalmanVariables(){
 
 		result = 0;
 	}
-	pthread_mutex_unlock(&currentSectorLocker);
+	
 	return result;
 }
 

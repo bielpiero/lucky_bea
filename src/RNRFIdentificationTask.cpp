@@ -25,10 +25,11 @@ RNRFIdentificationTask::RNRFIdentificationTask(const GeneralController* gn, cons
 
 RNRFIdentificationTask::~RNRFIdentificationTask(){
 	if(conn != NULL){
+		RNUtils::printLn("Deletin' RNRFIdentificationTask...");
 		if(readerDescriptor == 0){
-			if(stopROSpec() == 0){
+			/*if(stopROSpec() == 0){
 				RNUtils::printLn("Success: Enabled readers operation specifications on %s OK...", DEVICE_NAME);
-			}
+			}*/
 			if(resetToDefaultConfiguration() == 0){
 				RNUtils::printLn("Success: resetConfiguration on %s OK...", DEVICE_NAME);
 			}
@@ -144,7 +145,7 @@ void RNRFIdentificationTask::checkForActions(){
 					}
 				}
 			} else {
-				std::cout << "Agregando el tag <" << tag->getTagKey() << ">" << std::endl;
+				//std::cout << "Agregando el tag <" << tag->getTagKey() << ">" << std::endl;
 				remTags.emplace_back(tag->getTagKey());
 				delete *it;
 				it = rfids->erase(it);
@@ -155,7 +156,7 @@ void RNRFIdentificationTask::checkForActions(){
 				it++;
 			}
 		}
-		std::cout << "SIZE RFIDS: " << std::endl;
+		
 		if(remTags.size() > 0){
 			runTagsCallbacks(remTags);
 			remTags.clear();

@@ -531,6 +531,7 @@ void RNTourThread::lex(){
 				functionName = "";
 				functionNameStatus = 1;
 				functionarguments = 1;
+				processGlobalVariables(tokens);
 				tokens.clear();
 			} else {
 				functionStarted = -1;
@@ -1079,52 +1080,76 @@ void RNTourThread::parse(std::string functionName, wcontent_t* content){
 				px = std::stof((*it3).substr(4));
 				if(functionSymbols->find((*it4).substr(4)) != functionSymbols->end()){
 					py = std::stof(functionSymbols->at((*it4).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it4).substr(4)) != globalSymbols.end()){
+					py = std::stof(globalSymbols.at((*it4).substr(4)).substr(4));
 				}
 			} else if((*it2).substr(0, 3) == TOK_NUM_STR and (*it3).substr(0, 3) == TOK_VAR_STR and (*it4).substr(0, 3) == TOK_NUM_STR){
 				sector = std::stoi((*it2).substr(4));
 				if(functionSymbols->find((*it3).substr(4)) != functionSymbols->end()){
 					px = std::stof(functionSymbols->at((*it3).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it3).substr(4)) != globalSymbols.end()){
+					px = std::stof(globalSymbols.at((*it3).substr(4)).substr(4));
 				}
 				py = std::stof((*it4).substr(4));
 			} else if((*it2).substr(0, 3) == TOK_NUM_STR and (*it3).substr(0, 3) == TOK_VAR_STR and (*it4).substr(0, 3) == TOK_VAR_STR){
 				sector = std::stoi((*it2).substr(4));
 				if(functionSymbols->find((*it3).substr(4)) != functionSymbols->end()){
 					px = std::stof(functionSymbols->at((*it3).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it3).substr(4)) != globalSymbols.end()){
+					px = std::stof(globalSymbols.at((*it3).substr(4)).substr(4));
 				}
 				if(functionSymbols->find((*it4).substr(4)) != functionSymbols->end()){
 					py = std::stof(functionSymbols->at((*it4).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it4).substr(4)) != globalSymbols.end()){
+					py = std::stof(globalSymbols.at((*it4).substr(4)).substr(4));
 				}
 			} else if((*it2).substr(0, 3) == TOK_VAR_STR and (*it3).substr(0, 3) == TOK_NUM_STR and (*it4).substr(0, 3) == TOK_NUM_STR){
 				if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
 					sector = std::stoi(functionSymbols->at((*it2).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it2).substr(4)) != globalSymbols.end()){
+					sector = std::stoi(globalSymbols.at((*it2).substr(4)).substr(4));
 				}
 				px = std::stof((*it3).substr(4));
 				py = std::stof((*it4).substr(4));
 			} else if((*it2).substr(0, 3) == TOK_VAR_STR and (*it3).substr(0, 3) == TOK_NUM_STR and (*it4).substr(0, 3) == TOK_VAR_STR){
 				if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
 					sector = std::stoi(functionSymbols->at((*it2).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it2).substr(4)) != globalSymbols.end()){
+					sector = std::stoi(globalSymbols.at((*it2).substr(4)).substr(4));
 				}
 				px = std::stof((*it3).substr(4));
 				if(functionSymbols->find((*it4).substr(4)) != functionSymbols->end()){
 					py = std::stof(functionSymbols->at((*it4).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it4).substr(4)) != globalSymbols.end()){
+					py = std::stof(globalSymbols.at((*it4).substr(4)).substr(4));
 				}
 			} else if((*it2).substr(0, 3) == TOK_VAR_STR and (*it3).substr(0, 3) == TOK_VAR_STR and (*it4).substr(0, 3) == TOK_NUM_STR){
 				if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
 					sector = std::stoi(functionSymbols->at((*it2).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it2).substr(4)) != globalSymbols.end()){
+					sector = std::stoi(globalSymbols.at((*it2).substr(4)).substr(4));
 				}
 				if(functionSymbols->find((*it3).substr(4)) != functionSymbols->end()){
 					px = std::stof(functionSymbols->at((*it3).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it3).substr(4)) != globalSymbols.end()){
+					px = std::stof(globalSymbols.at((*it3).substr(4)).substr(4));
 				}
 				py = std::stof((*it4).substr(4));
 			} else if((*it2).substr(0, 3) == TOK_VAR_STR and (*it3).substr(0, 3) == TOK_VAR_STR and (*it4).substr(0, 3) == TOK_VAR_STR){
 				if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
 					sector = std::stoi(functionSymbols->at((*it2).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it2).substr(4)) != globalSymbols.end()){
+					sector = std::stoi(globalSymbols.at((*it2).substr(4)).substr(4));
 				}
 				if(functionSymbols->find((*it3).substr(4)) != functionSymbols->end()){
 					px = std::stof(functionSymbols->at((*it3).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it3).substr(4)) != globalSymbols.end()){
+					px = std::stof(globalSymbols.at((*it3).substr(4)).substr(4));
 				}
 				if(functionSymbols->find((*it4).substr(4)) != functionSymbols->end()){
 					py = std::stof(functionSymbols->at((*it4).substr(4)).substr(4));
+				} else if(globalSymbols.find((*it4).substr(4)) != globalSymbols.end()){
+					py = std::stof(globalSymbols.at((*it4).substr(4)).substr(4));
 				}
 			}
 			printf("Going to Sector: %d, {x: %f, y: %f}\n", sector, px, py);
@@ -1178,6 +1203,9 @@ void RNTourThread::parse(std::string functionName, wcontent_t* content){
 				} else if((*it2).substr(0, 3) == TOK_VAR_STR){
 					if(functionSymbols->find((*it2).substr(4)) != functionSymbols->end()){
 						printf("SAY VAR: %s\n", functionSymbols->at((*it2).substr(4)).c_str());
+						//lips->textToViseme((*it2).substr(4));
+					} else if(globalSymbols.find((*it2).substr(4)) != globalSymbols.end()){
+						printf("SAY VAR: %s\n", globalSymbols.at((*it2).substr(4)).c_str());
 						//lips->textToViseme((*it2).substr(4));
 					} else {
 						fprintf(stderr, "Undefined VAR: %s\n", (*it2).substr(4).c_str());
@@ -1443,10 +1471,10 @@ std::string RNTourThread::evaluateExpression(std::string expr, std::map<std::str
 			
 			std::list<std::string>::iterator it2 = std::next(itokens, 1);
 			std::map<std::string, std::string>::iterator var = symbols.find((*itokens).substr(4));
+			std::map<std::string, std::string>::iterator gvar = globalSymbols.find((*itokens).substr(4));
 			if(var != symbols.end()){
 				if(it2 == tokens.end() or ((*it2).substr(0, 3) != TOK_POS_STR and (*it2) != TOK_EQ_STR)){
 					*itokens = var->second;
-
 				} else if((*it2) == TOK_EQ_STR){
 					
 					std::list<std::string>::iterator it3 = std::next(itokens, 2);
@@ -1457,30 +1485,38 @@ std::string RNTourThread::evaluateExpression(std::string expr, std::map<std::str
 					*itokens = chain;
 				}
 
+			} else if(gvar != globalSymbols.end()){
+				if(it2 == tokens.end() or ((*it2).substr(0, 3) != TOK_POS_STR and (*it2) != TOK_EQ_STR)){
+					*itokens = gvar->second;
+				} else if((*it2) == TOK_EQ_STR){
+					std::list<std::string>::iterator it3 = std::next(itokens, 2);
+					std::string rad = evaluateExpression((*it3).substr(4), symbols);
+					it3 = tokens.erase(it3);
+					it2 = tokens.erase(it2);
+					std::string chain = rad + "," + (*itokens).substr(4);
+					*itokens = chain;
+				}
 			} else {
 				fprintf(stderr, "error: Undefined variable %s in this scope\n", (*itokens).substr(4).c_str());
 				ok_sofar = false;
 			}
 		
 		} else if((*itokens).substr(0, 3) == TOK_POS_STR){	
-			
 			std::list<std::string>::iterator it2 = std::prev(itokens,1); //MIO
 			
 			std::map<std::string, std::string>::iterator var_array = symbols.find((*it2).substr(4));
-			
+			std::map<std::string, std::string>::iterator gvar_array = globalSymbols.find((*it2).substr(4));
 			if(var_array != symbols.end()){
-				
 				*it2 = arrayValue(symbols, (*it2).substr(4), (*itokens).substr(4)); // FUNCION POR DEFINIR
-				//itokens = tokens.erase(itokens); // BORRAR LO QUE ESTABA MARCANDO it2
 				itokens = tokens.erase(itokens);
-				//std::cout << *it2 << std::endl ;
-			}else {
+			} else if(gvar_array != globalSymbols.end()){
+				*it2 = arrayValue(globalSymbols, (*it2).substr(4), (*itokens).substr(4)); // FUNCION POR DEFINIR
+				itokens = tokens.erase(itokens);
+			} else {
 				fprintf(stderr, "error: Undefined variable %s in this scope\n", (*it2).substr(4).c_str());
 				ok_sofar = false;
-
-
 			}		
-		 } else if((*itokens) == TOK_SIZEOF_STR){
+		} else if((*itokens) == TOK_SIZEOF_STR){
 		 	std::list<std::string>::iterator it3 = std::next(itokens,1);
 
 		 	if((*it3).substr(0,3) == TOK_EXP_STR){
@@ -2141,6 +2177,34 @@ std::string RNTourThread::assignArray(std::map<std::string, std::string> symbol,
     } else {
 		fprintf(stderr, "error: Undefined variable in this scope\n");
 	}  
+}
+
+void RNTourThread::processGlobalVariables(std::list<std::string> tokens){
+	std::list<std::string>::iterator tokenIt = tokens.begin();
+	while(tokenIt != tokens.end()){
+		std::list<std::string>::iterator it2 = std::next(tokenIt, 1);
+		std::list<std::string>::iterator it3 = std::next(tokenIt, 2);
+		if((*tokenIt).substr(0, 3) == TOK_DVR_STR){
+			if(it2 != tokens.end() and it3 != tokens.end()){
+				if((*it2) == TOK_EQ_STR and (*it3).substr(0, 3) == TOK_EXP_STR){
+					//printf("DECLARED GLOBAL VAR %s WITH INITIALIZATION\n", (*tokenIt).substr(4).c_str());
+					std::string r = evaluateExpression((*it3).substr(4), globalSymbols);
+					if(globalSymbols.find((*tokenIt).substr(4)) == globalSymbols.end()){
+						globalSymbols.emplace((*tokenIt).substr(4), r);
+					}
+					tokenIt = std::next(tokenIt, 3);
+				} else if((*it2) == TOK_EQ_STR and (*it3).substr(0, 3) == TOK_ARR_STR){
+					//printf("DECLARED ARRAY VAR %s\n", (*tokenIt).substr(4).c_str());
+					if(globalSymbols.find((*tokenIt).substr(4)) == globalSymbols.end()){
+						globalSymbols.emplace((*tokenIt).substr(4),*it3);
+					}
+					tokenIt = std::next(tokenIt, 3);
+				}
+			}
+		} else {
+			tokenIt++;
+		}
+	}
 }
 
 std::string RNTourThread::assignSize(std::string word_size){
