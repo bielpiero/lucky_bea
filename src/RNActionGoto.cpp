@@ -52,7 +52,8 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 				distanceLocal = 0.0;
 				deltaThetaLocal = -currPose->getTh() + this->goal.getTh();
 			} else {
-				distanceLocal = currPose->findDistanceTo(this->goal);
+				distanceLocal = RNUtils::distanceTo(this->goal.getX(), this->goal.getY(), currPose->getX(), currPose->getY());
+				//distanceLocal = currPose->findDistanceTo(this->goal);
 		    	deltaThetaLocal = ArMath::subAngle(currPose->findAngleTo(this->goal), currPose->getTh());
 		    }
 	    	//RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
@@ -73,10 +74,6 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 		}*/
 
     	if((deltaThetaLocal > minimumAngle or deltaThetaLocal < -minimumAngle) or (distanceLocal > minimumDistance or distanceLocal < -minimumDistance)){
-    		//turn to point to goal
-    		//myDesired->setVel(0);
-    		//linearController->reset();
-    		//int iter = angularController->getSystemInput(deltaThetaLocal, &angVel);
     		speedController->getSystemInput(distanceLocal/1e3, RNUtils::deg2Rad(deltaThetaLocal), &linearSpeed, &angularSpeed);
     		//RNUtils::printLn("{lin-vel: %f, rot-vel: %f}", linearSpeed, RNUtils::rad2Deg(angularSpeed));
 			myDesired->setRotVel(RNUtils::rad2Deg(angularSpeed));
@@ -84,9 +81,6 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
     	} else {
     		myDesired->setVel(0);
     		myDesired->setRotVel(0);
-    		//angularController->reset();
-    		//linearController->reset();
-    		RNUtils::printLn("Doris Stopped by this condition of goal achieved...");
     		currentState = STATE_ACHIEVED_GOAL;
     	}
     } else {

@@ -1,18 +1,3 @@
-
-onRfidTagsDetected(rfidEvent)
-
-function rfidEvent(tagsList)
-	var i = #0
-	while(i < sizeof(tagsList))
-		if(tagsList[i] == "e280-1160-6000-0207-28b5-6824")
-			say("Holo Biel, estoy funcionando")
-		endif
-		i = i + #1
-	endw
-endfunction
-
 function main()
-	while(#1)
-		wait(#1000)
-	endw
+	goto(#2, #2, #3)
 endfunction

@@ -12,13 +12,13 @@ RNFuzzySpeedController::RNFuzzySpeedController(const char* name, const char* des
 	distanceError->setEnabled(true);
 	distanceError->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
 	distanceError->setLockValueInRange(false);
-	distanceError->addTerm(new fl::Triangle("NVeryFar", -std::numeric_limits<double>::infinity(), -0.750, -0.250));
-	distanceError->addTerm(new fl::Triangle("NFar", -0.750, -0.250, -0.070));
-	distanceError->addTerm(new fl::Triangle("NNear", -0.250, -0.070, -0.05));
-	distanceError->addTerm(new fl::Trapezoid("Zero", -0.070, -0.05, 0.050, 0.070));
-	distanceError->addTerm(new fl::Triangle("PNear", 0.005, 0.070, 0.250));
-	distanceError->addTerm(new fl::Triangle("PFar", 0.010, 0.250, 0.750));
-	distanceError->addTerm(new fl::Triangle("PVeryFar", 0.250, 0.750, std::numeric_limits<double>::infinity()));
+	distanceError->addTerm(new fl::Triangle("NVeryFar", -std::numeric_limits<double>::infinity(), -0.750, -0.450));
+	distanceError->addTerm(new fl::Triangle("NFar", -0.750, -0.450, -0.150));
+	distanceError->addTerm(new fl::Triangle("NNear", -0.450, -0.150, -0.030));
+	distanceError->addTerm(new fl::Trapezoid("Zero", -0.150, -0.030, 0.030, 0.150));
+	distanceError->addTerm(new fl::Triangle("PNear", 0.030, 0.150, 0.450));
+	distanceError->addTerm(new fl::Triangle("PFar", 0.150, 0.450, 0.750));
+	distanceError->addTerm(new fl::Triangle("PVeryFar", 0.450, 0.750, std::numeric_limits<double>::infinity()));
 	engine->addInputVariable(distanceError);
 
 	//radians
@@ -49,13 +49,13 @@ RNFuzzySpeedController::RNFuzzySpeedController(const char* name, const char* des
 	linearVelocity->setDefuzzifier(new fl::Centroid(100));
 	linearVelocity->setDefaultValue(0.0);
 	linearVelocity->setLockPreviousValue(false);
-	linearVelocity->addTerm(new fl::Triangle("FastBackwards", -80.000, -60.000, -40.000));
-	linearVelocity->addTerm(new fl::Triangle("Backwards", -60.000, -40.000, 20.000));
-	linearVelocity->addTerm(new fl::Triangle("MediumBackwards", -40.000, -20.000, 0.000));
-	linearVelocity->addTerm(new fl::Triangle("Zero", -20.000, 0.000, 20.000));
-	linearVelocity->addTerm(new fl::Triangle("MediumForward", 0.000, 20.000, 40.000));
-	linearVelocity->addTerm(new fl::Triangle("Forward", 20.000, 40.000, 60.000));
-	linearVelocity->addTerm(new fl::Triangle("FastForward", 40.000, 60.000, 80.000));
+	linearVelocity->addTerm(new fl::Triangle("FastBackwards", -120.000, -90.000, -60.000));
+	linearVelocity->addTerm(new fl::Triangle("Backwards", -90.000, -60.000, -30.000));
+	linearVelocity->addTerm(new fl::Triangle("MediumBackwards", -60.000, -30.000, 0.000));
+	linearVelocity->addTerm(new fl::Triangle("Zero", -30.000, 0.000, 30.000));
+	linearVelocity->addTerm(new fl::Triangle("MediumForward", 0.000, 30.000, 60.000));
+	linearVelocity->addTerm(new fl::Triangle("Forward", 30.000, 60.000, 90.000));
+	linearVelocity->addTerm(new fl::Triangle("FastForward", 30.000, 90.000, 160.000));
 	engine->addOutputVariable(linearVelocity);
 
 	

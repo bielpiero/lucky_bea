@@ -250,36 +250,20 @@ double RNUtils::dBmTomilliwatts(const double& dBm){
 }
 
 double RNUtils::distanceTo(const double& x1, const double& y1, const double& x2, const double& y2){
-	return std::sqrt(std::pow(x1 - x2, 2) + std::pow(y1 - y2, 2));
+	return std::sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2)));
+}
+
+double RNUtils::angleTo(const double& x1, const double& y1, const double& x2, const double& y2){
+	return std::atan2((y1 - y2), (x1 - x2));
 }
 
 double RNUtils::deg2Rad(double degrees){
-	while(degrees > 360.0){
-		degrees -= 360.0;
-	}
 	double result = (degrees * M_PI / 180.0);
-	if(result > M_PI){
-		while(result > M_PI){
-			result = result - 2 * M_PI;
-		}	
-	} else if(result < -M_PI){
-		while(result < -M_PI){
-			result = result + 2 * M_PI;
-		}
-	}
-	return result;
+	return fixAngleRad(result);
 }
 
 double RNUtils::rad2Deg(double rad){
-	if(rad > M_PI){
-		while(rad > M_PI){
-			rad = rad - 2 * M_PI;
-		}	
-	} else if(rad < -M_PI){
-		while(rad < -M_PI){
-			rad = rad + 2 * M_PI;
-		}
-	}
+	rad = fixAngleRad(rad);
 	return (rad * 180.0 / M_PI);
 }
 

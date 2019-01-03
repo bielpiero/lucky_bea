@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <stack>
 #include <regex>
+#include <queue>
 
 #include "Matrix.h"
 #include "stats.h"
@@ -275,6 +276,7 @@ public: // functions
 	static void getOdometryPose(const ArPose& posk, const double& deltaDistance, const double& deltaDegrees, ArPose* posk1);
 	
 	static double distanceTo(const double& x1, const double& y1, const double& x2, const double& y2);
+	static double angleTo(const double& x1, const double& y1, const double& x2, const double& y2);
 	static double deg2Rad(double degrees);
 	static double rad2Deg(double rad);
 

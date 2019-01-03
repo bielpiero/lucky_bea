@@ -109,10 +109,10 @@ void RNRFIdentificationTask::checkForActions(){
 					it = rfids->erase(it);
 					deleted = true;
 				} else if(t->name == std::string(SEMANTIC_CROSSWAY_STR) and tag->getRSSI() > MAX_RSSI_ENVIRONMENT_VALUE){
-					RNUtils::printLn("Tag ------> CROSSWAY: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
+					//RNUtils::printLn("Tag ------> CROSSWAY: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 
 				} else if(t->name == std::string(SEMANTIC_NARROW_HALLWAY_STR) and tag->getRSSI() > MAX_RSSI_ENVIRONMENT_VALUE){
-					RNUtils::printLn("Tag ------> NARROW: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
+					//RNUtils::printLn("Tag ------> NARROW: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 					
 				} else if(t->name == std::string(SEMANTIC_FEATURE_DOOR_STR)){
 					if(not isAtDoor){

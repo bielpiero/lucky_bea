@@ -4,7 +4,7 @@
 #include "RNUtils.h"
 #include "semdefs.h"
 
-class s_landmark{
+struct s_landmark{
 public:
 	int id;
 	std::string type;
@@ -45,7 +45,7 @@ public:
 	}
 };
 
-class s_feature{
+struct s_feature{
 public:
 	int id;
 	std::string name;
@@ -72,7 +72,7 @@ public:
 	}
 };
 
-class s_way{
+struct s_way{
 public:
 	int st;
 	std::vector<int> adjacencies;
@@ -91,7 +91,7 @@ public:
 	}
 };
 
-class s_site{
+struct s_site{
 public:
 	int id;
 	std::string name;

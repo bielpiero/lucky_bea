@@ -189,7 +189,7 @@ void RNKalmanLocalizationTask::task(){
 					int zklIndex = RN_NONE;
 					for(int j = (2 * laserLandmarksCount); i < zkl.rows_size() and (zklIndex == RN_NONE); j++){
 						s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, (int)zkl(j, 3));
-						if(currLandmark->type == XML_SENSOR_TYPE_CAMERA_STR){
+						if(currLandmark != NULL and currLandmark->type == XML_SENSOR_TYPE_CAMERA_STR){
 							if(currLandmark->id == lndmrk->getMarkerId()){
 								double nrx, nry;
 								Matrix disp = Matrix(2, 1);

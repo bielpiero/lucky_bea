@@ -155,12 +155,15 @@ int RNTourThread::createCurrentSectorGraph(){
 		}
 		for (int w = 0; w < currentSector->waysSize(); w++){
 			int siteId = currentSector->wayAt(w)->st;
+			s_site* siteNodeA = currentSector->findSiteById(siteId);
 			for(int i = 0; i < currentSector->wayAt(w)->adjacencies.size(); i++){
 				int siteAdy = currentSector->wayAt(w)->adjacencies.at(i);
-				if(currentSectorGraph->addEdge(siteId, siteAdy) != RN_OK){
+				s_site* siteNodeB = currentSector->findSiteById(siteAdy);
+				double d_weight = RNUtils::distanceTo(siteNodeA->xpos, siteNodeA->ypos, siteNodeB->xpos, siteNodeB->ypos);
+				if(currentSectorGraph->addEdge(siteId, siteAdy, d_weight) != RN_OK){
 					RNUtils::printLn("Could not add edge between site %d and site %d", siteId, siteAdy);
 				}
-				if(currentSectorGraph->addEdge(siteAdy, siteId) != RN_OK){
+				if(currentSectorGraph->addEdge(siteAdy, siteId, d_weight) != RN_OK){
 					RNUtils::printLn("Could not add edge between site %d and site %d", siteAdy, siteId);
 				}
 			}
@@ -300,14 +303,16 @@ int RNTourThread::closestNodeTo(const ArPose& pose){
 	for(int i = 0; i < currentSector->sitesSize(); i++){
 		s_site* node = currentSector->siteAt(i);
 		if(node->name != std::string(SEMANTIC_FEATURE_DOOR_STR)){
-			mds.emplace(node->id, RNUtils::distanceTo(node->xpos, node->ypos, (pose.getX() / 1e3), (pose.getY() / 1e3)));
+			double heading = RNUtils::fixAngleRad(RNUtils::angleTo(node->xpos, node->ypos, pose.getX() / 1e3, pose.getY() / 1e3) - pose.getThRad());
+			double factor = (heading >= -M_PI / 2.0) and (heading <= M_PI / 2.0) ? 1.0 : -1.0;
+			mds.emplace(node->id, (factor * RNUtils::distanceTo(node->xpos, node->ypos, (pose.getX() / 1e3), (pose.getY() / 1e3))));
 		}		
 	}
 	double mdist = std::numeric_limits<double>::max();
 	std::map<int, double>::iterator mdsit;
 	RNUtils::printMap<int, double>(mds);
 	for(mdsit = mds.begin(); mdsit != mds.end(); mdsit++){
-		if(mdist > mdsit->second){
+		if(mdsit->second > 0.0 and mdist > mdsit->second){
 			mdist = mdsit->second;
 			nodeId = mdsit->first;
 		}
@@ -366,6 +371,7 @@ void RNTourThread::lex(){
 	
 	std::stringstream wss;
 	wss << file.rdbuf();
+	file.close();
 	std::string buff = wss.str();
 	std::list<char> fileContent(buff.begin(), buff.end());
 	std::list<char>::iterator it;
