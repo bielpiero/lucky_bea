@@ -178,69 +178,35 @@ void RNGraph::branchAndBound(const int& src, const int& dst, std::list<int>* cer
     }
 }
 
-std::list<int> RNGraph::shortestPath(const int& src, const int& dst) const{
-    std::list<int> path;
-    std::list<int> selected;
-    std::map<int, int> prev;
-    std::map<int, float> dist;
-    int start = src;
-    bool mal = false;
-    selected.emplace_back(start);
-    dist.emplace(start, 0.0);
-    bool finalNodeArrived = std::find(selected.begin(), selected.end(), dst) != selected.end();
-    while(not finalNodeArrived and not mal){
-        float min = std::numeric_limits<float>::max();
-        int m = RN_NONE;
-        RNAdyacencyList* ady = this->getAdyacencies(start);
-        if(not ady->empty()){
-            for(int i = 0; i < ady->size(); i++){
-                RNGraphEdge* edge = ady->at(i);
-                float d = dist.find(start)->second + edge->getWeight();
-                float dstN = dist.find(edge->getDestination()) != dist.end() ? dist.find(edge->getDestination())->second : std::numeric_limits<float>::max();
-                bool selectedNode = std::find_if(selected.begin(), selected.end(), [edge](int n){ return n == edge->getDestination(); }) == selected.end();
-                printf("Node Origin: %d, Node Destiny: %d, Dist: %f, DistN: %f, selectedNode: %d\n", start, ady->at(i)->getDestination(), d, dstN, (int)selectedNode);
-                if((d < dstN) and selectedNode) {
-                    if(dist.find(ady->at(i)->getDestination()) != dist.end()){
-                        dist.at(ady->at(i)->getDestination()) = d;  
-                    } else {
-                        dist.emplace(ady->at(i)->getDestination(), d);
-                    }
-                    dstN = dist.find(ady->at(i)->getDestination())->second;
-                    if(prev.find(ady->at(i)->getDestination()) != prev.end()){
-                        prev.at(ady->at(i)->getDestination()) = start;  
-                    } else {
-                        prev.emplace(ady->at(i)->getDestination(), start);
-                    }
-                }
-                if((min > dstN) and selectedNode){
-                    min = dstN;
-                    m = ady->at(i)->getDestination();
-                }
-                printf("m: %d\n", m);
-                RNUtils::printList<int>(selected);
+std::map<int, float> RNGraph::shortestPath(const int& src) const{
+    std::map<int, float> distances;
+    std::priority_queue<std::pair<int, float>, std::vector<std::pair<int, float> >, std::greater<std::pair<int, float> > > pq;
+    std::map<int, RNAdyacencyList*>::iterator graph_it;
+    for(graph_it = graph->begin(); graph_it != graph->end(); graph_it++){
+        distances.emplace(graph_it->first, std::numeric_limits<float>::infinity());
+    }
+    pq.emplace(std::pair<int, float>(src, 0.0));
+    distances[src] = 0.0;
+
+    while(!pq.empty()){
+        int current_node = pq.top().first;
+        pq.pop();
+
+        RNAdyacencyList* ady = this->getAdyacencies(current_node);
+        for(int i = 0; i < ady->size(); i++){
+            int adjacent_node = ady->at(i)->getDestination();
+            float weight = ady->at(i)->getWeight();
+            if (distances[adjacent_node] > dist[current_node] + weight){
+                distances[adjacent_node] = dist[current_node] + weight;
+                pq.emplace(std::pair<int, float>(adjacent_node, distances[adjacent_node]));
             }
-        } else {
-            printf("ady list empty\n");
-        }
-        if(m != RN_NONE){
-            start = m;
-            selected.emplace_back(start);
-        } else {
-            mal = true;
-        }
-        finalNodeArrived = std::find(selected.begin(), selected.end(), dst) != selected.end();
-        printf("finalNodeArrived: %d\n", (int)finalNodeArrived);
-    }
-    if(not mal){
-        int end = dst;
-        path.emplace_back(dst);
-        while(end != src){
-            end = prev[end];
-            path.emplace_front(end);
         }
     }
-    printf("Exiting shortestPath\n");
-    return path;
+    return distances;
+}
+
+std::list<int> RNGraph::shortestPath(const int& src, const int& dst) const{
+    std::map<int, float> distances = shortestPath(src);
 }
 
 void RNGraph::clear(){
