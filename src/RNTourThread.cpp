@@ -265,7 +265,7 @@ void RNTourThread::longTravel(int origin, int destiny){
 void RNTourThread::shortTravel(int origin, int destiny){
 	if(currentSectorGraph){
 		//currentSector = gn->getCurrentSector();
-		std::list<int> path = currentSectorGraph->branchAndBound(origin, destiny);
+		std::list<int> path = currentSectorGraph->shortestPath(origin, destiny);
 		printf("Short Travel in sector: %d\n", currentSector->getId());
 		RNUtils::printList<int>(path);
 		std::list<int>::iterator pathIt;

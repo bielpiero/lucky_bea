@@ -178,12 +178,14 @@ void RNGraph::branchAndBound(const int& src, const int& dst, std::list<int>* cer
     }
 }
 
-std::map<int, float> RNGraph::shortestPath(const int& src) const{
+std::map<int, int> RNGraph::shortestPath(const int& src) const{
     std::map<int, float> distances;
+    std::map<int, int> froms;
     std::priority_queue<std::pair<int, float>, std::vector<std::pair<int, float> >, std::greater<std::pair<int, float> > > pq;
     std::map<int, RNAdyacencyList*>::iterator graph_it;
     for(graph_it = graph->begin(); graph_it != graph->end(); graph_it++){
         distances.emplace(graph_it->first, std::numeric_limits<float>::infinity());
+        froms.emplace(graph_it->first, RN_NONE);
     }
     pq.emplace(std::pair<int, float>(src, 0.0));
     distances[src] = 0.0;
@@ -196,17 +198,26 @@ std::map<int, float> RNGraph::shortestPath(const int& src) const{
         for(int i = 0; i < ady->size(); i++){
             int adjacent_node = ady->at(i)->getDestination();
             float weight = ady->at(i)->getWeight();
-            if (distances[adjacent_node] > dist[current_node] + weight){
-                distances[adjacent_node] = dist[current_node] + weight;
+            if (distances[adjacent_node] > distances[current_node] + weight){
+                distances[adjacent_node] = distances[current_node] + weight;
+                froms[adjacent_node] = current_node;
                 pq.emplace(std::pair<int, float>(adjacent_node, distances[adjacent_node]));
             }
         }
     }
-    return distances;
+    return froms;
 }
 
 std::list<int> RNGraph::shortestPath(const int& src, const int& dst) const{
-    std::map<int, float> distances = shortestPath(src);
+    std::map<int, int> froms = shortestPath(src);
+    std::list<int> path;
+    path.emplace_front(dst);
+    int pred = froms[dst];
+    while(pred != RN_NONE){
+        path.emplace_front(pred);
+        pred = froms[pred];
+    }
+    return path;
 }
 
 void RNGraph::clear(){

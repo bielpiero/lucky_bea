@@ -62,7 +62,7 @@ public:
 	void clear();
 	bool empty() const;
 
-	std::map<int, float> shortestPath(const int& src) const;
+	std::map<int, int> shortestPath(const int& src) const;
 	std::list<int> shortestPath(const int& src, const int& dst) const;
 	std::list<int> branchAndBound(const int& src, const int& dst) const;
 
