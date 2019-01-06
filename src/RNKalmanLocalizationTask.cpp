@@ -125,7 +125,7 @@ void RNKalmanLocalizationTask::task(){
 						s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_LASER_STR, (int)zkl(j, 3));
 						//printf("L[%d]: x: %f, y %f\n", currLandmark->id, currLandmark->xpos, currLandmark->ypos);
 						Matrix smallHk(2, 3);
-						if(currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
+						if(currLandmark != NULL and currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
 							double landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, xk_1(0, 0), xk_1(1, 0));
 							smallHk(0, 0) = -(currLandmark->xpos - xk_1(0, 0))/landmarkDistance;
 							smallHk(0, 1) = -(currLandmark->ypos - xk_1(1, 0))/landmarkDistance;
@@ -187,7 +187,7 @@ void RNKalmanLocalizationTask::task(){
 					currentR(cameraIndex + i, cameraIndex + i) = gn->getCameraAngleVariance();
 
 					int zklIndex = RN_NONE;
-					for(int j = (2 * laserLandmarksCount); i < zkl.rows_size() and (zklIndex == RN_NONE); j++){
+					for(int j = laserLandmarksCount; i < zkl.rows_size() and (zklIndex == RN_NONE); j++){
 						s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, (int)zkl(j, 3));
 						if(currLandmark != NULL and currLandmark->type == XML_SENSOR_TYPE_CAMERA_STR){
 							if(currLandmark->id == lndmrk->getMarkerId()){

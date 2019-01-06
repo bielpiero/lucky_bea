@@ -6,7 +6,7 @@ project(lucky_bea)
 ###########
 
 ## Specify additional locations of header files
-
+#set(CMAKE_BUILD_TYPE RelWithDebInfo)
 set(CMAKE_CXX_STANDARD 11) # C++11...
 set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
 set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
@@ -70,6 +70,7 @@ set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-Wall")
 set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-m32")
 set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-Wno-write-strings")
 set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-fPIC")
+#set_target_properties(lucky_bea PROPERTIES COMPILE_FLAGS "-g")
 #set_target_properties(lucky_bea PROPERTIES LINK_FLAGS "-Wl")
 
 

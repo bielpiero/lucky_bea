@@ -1,18 +1,18 @@
 <sectors sequence="0,1,0">
 	<sector id="0" name="Mobile Robots" width="895" height="458" polygon="m 0 0 l 0 458 l 895 0 l 0 -458 z" adjacency="1,4">
 		<landmarks>
-			<landmark id="0" type="laser" x="040" y="023" z="0"/>
-			<landmark id="1" type="laser" x="159" y="023" z="0"/>
-			<landmark id="2" type="laser" x="080" y="183" z="0"/>
-			<landmark id="3" type="laser" x="080" y="343" z="0"/>
-			<landmark id="4" type="laser" x="200" y="103" z="0"/>
-			<landmark id="5" type="laser" x="200" y="343" z="0"/>
-			<landmark id="6" type="laser" x="360" y="143" z="0"/>
-			<landmark id="7" type="laser" x="360" y="303" z="0"/>
-			<landmark id="8" type="laser" x="520" y="143" z="0"/>
-			<landmark id="9" type="laser" x="520" y="303" z="0"/>
-			<landmark id="10" type="laser" x="720" y="183" z="0"/>
-			<landmark id="11" type="laser" x="720" y="303" z="0"/>
+			<landmark id="0" type="laser" x="040" y="027" z="0"/>
+			<landmark id="1" type="laser" x="159" y="027" z="0"/>
+			<landmark id="2" type="laser" x="080" y="187" z="0"/>
+			<landmark id="3" type="laser" x="080" y="347" z="0"/>
+			<landmark id="4" type="laser" x="200" y="107" z="0"/>
+			<landmark id="5" type="laser" x="200" y="347" z="0"/>
+			<landmark id="6" type="laser" x="360" y="147" z="0"/>
+			<landmark id="7" type="laser" x="360" y="307" z="0"/>
+			<landmark id="8" type="laser" x="520" y="147" z="0"/>
+			<landmark id="9" type="laser" x="520" y="307" z="0"/>
+			<landmark id="10" type="laser" x="720" y="187" z="0"/>
+			<landmark id="11" type="laser" x="720" y="307" z="0"/>
 		</landmarks>
 		<features>
 			<feature id="0" name="door" width="120" height="10" x="100" y="0"/>
@@ -20,10 +20,10 @@
 		</features>
 		<sites sequence="6,5,4,2">
 			<site id="0" name="charger" x="680" y="110"/>
-			<site id="1" name="way" x="680" y="223"/>
-			<site id="2" name="way" x="360" y="223"/>
+			<site id="1" name="way" x="680" y="227"/>
+			<site id="2" name="way" x="360" y="227"/>
 			<site id="3" name="frame" x="360" y="310"/>
-			<site id="4" name="way" x="160" y="223"/>
+			<site id="4" name="way" x="160" y="227"/>
 			<site id="5" name="way" x="110" y="110"/>
 			<site id="6" name="door" x="110" y="0" linked-sector-id="1" xcoord="-18" ycoord="1146"/>
 			<site id="7" name="door" x="0" y="110" linked-sector-id="4" xcoord="160" ycoord="0"/>

@@ -25,9 +25,6 @@ RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* de
 	laserLandmarks = NULL;
 
 	//pthread_mutex_init(&mutexSensorsReadingsLocker, NULL);
-
-	/** VICTOR */
-	test2 = std::fopen("medidas_balizas_victor.txt","w+");
 }
 
 
@@ -163,8 +160,6 @@ void RNLaserTask::getReflectiveLandmarks(){
 		Matrix Wkl = Pkl * ~Hkl * !Skl;
 		Pc = Pc + (Wkl * (Zk - Zke));
 		//fprintf(stdout, "$MEAN_LASER_FIXED\t%d\t%f\t%f\n", (i + 1), Pc(0, 0), Pc(1, 0));
-		/** VICTOR */
-		fprintf(test2, "%f\t %f\n", Pc(0,0), Pc(1,0));
 		if(not std::isnan(Pc(0, 0)) and not std::isnan(Pc(1, 0))){
 			laserLandmarks->at(i)->setPointsXMean(Pc(0, 0));
 			laserLandmarks->at(i)->setPointsYMean(Pc(1, 0));

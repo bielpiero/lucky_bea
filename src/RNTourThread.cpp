@@ -127,9 +127,9 @@ int RNTourThread::createCurrentMapGraph(){
 					if(currentMapGraph->addEdge(xmlSectorId, sectorAdy) != RN_OK){
 						RNUtils::printLn("Could not add edge between sector %d and sector %d", xmlSectorId, sectorAdy);
 					}
-					if(currentMapGraph->addEdge(sectorAdy, xmlSectorId) != RN_OK){
+					/*if(currentMapGraph->addEdge(sectorAdy, xmlSectorId) != RN_OK){
 						RNUtils::printLn("Could not add edge between sector %d and sector %d", sectorAdy, xmlSectorId);
-					}
+					}*/
 				}
 				
 			}
@@ -163,9 +163,9 @@ int RNTourThread::createCurrentSectorGraph(){
 				if(currentSectorGraph->addEdge(siteId, siteAdy, d_weight) != RN_OK){
 					RNUtils::printLn("Could not add edge between site %d and site %d", siteId, siteAdy);
 				}
-				if(currentSectorGraph->addEdge(siteAdy, siteId, d_weight) != RN_OK){
+				/*if(currentSectorGraph->addEdge(siteAdy, siteId, d_weight) != RN_OK){
 					RNUtils::printLn("Could not add edge between site %d and site %d", siteAdy, siteId);
-				}
+				}*/
 			}
 		}
 		res = RN_OK;
