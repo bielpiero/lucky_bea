@@ -28,13 +28,13 @@ RNFuzzySpeedController::RNFuzzySpeedController(const char* name, const char* des
 	angleError->setEnabled(true);
 	angleError->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
 	angleError->setLockValueInRange(false);
-	angleError->addTerm(new fl::Triangle("NVeryFar", -std::numeric_limits<double>::infinity(), -0.02, -0.0157));
-	angleError->addTerm(new fl::Triangle("NFar", -0.02, -0.0157, -0.0122));
-	angleError->addTerm(new fl::Triangle("NNear", -0.0157, -0.0122, -0.0087));
-	angleError->addTerm(new fl::Trapezoid("Zero", -0.0122, -0.0087, 0.0087, 0.0122));
-	angleError->addTerm(new fl::Triangle("PNear", 0.0087, 0.0122, 0.0157));
-	angleError->addTerm(new fl::Triangle("PFar", 0.0122, 0.0157, 0.02));
-	angleError->addTerm(new fl::Triangle("PVeryFar", 0.0157, 0.02, std::numeric_limits<double>::infinity()));
+	angleError->addTerm(new fl::Triangle("NVeryFar", -std::numeric_limits<double>::infinity(), -0.044, -0.035));
+	angleError->addTerm(new fl::Triangle("NFar", -0.044, -0.035, -0.026));
+	angleError->addTerm(new fl::Triangle("NNear", -0.035, -0.026, -0.017));
+	angleError->addTerm(new fl::Trapezoid("Zero", -0.026, -0.017, 0.017, 0.026));
+	angleError->addTerm(new fl::Triangle("PNear", 0.017, 0.026, 0.035));
+	angleError->addTerm(new fl::Triangle("PFar", 0.026, 0.035, 0.044));
+	angleError->addTerm(new fl::Triangle("PVeryFar", 0.035, 0.044, std::numeric_limits<double>::infinity()));
 	engine->addInputVariable(angleError);
 
 
@@ -90,10 +90,23 @@ RNFuzzySpeedController::RNFuzzySpeedController(const char* name, const char* des
 
 	ruleBlock->addRule(fl::Rule::parse("if angleError is NVeryFar then linearVelocity is Zero and angularVelocity is FastRight", engine));
 	ruleBlock->addRule(fl::Rule::parse("if angleError is NFar then linearVelocity is Zero and angularVelocity is SlowRight", engine));
-	ruleBlock->addRule(fl::Rule::parse("if angleError is NNear then linearVelocity is Zero and angularVelocity is VSlowRight", engine));
-	ruleBlock->addRule(fl::Rule::parse("if angleError is PNear then linearVelocity is Zero and angularVelocity is VSlowLeft", engine));
 	ruleBlock->addRule(fl::Rule::parse("if angleError is PFar then linearVelocity is Zero and angularVelocity is SlowLeft", engine));
 	ruleBlock->addRule(fl::Rule::parse("if angleError is PVeryFar then linearVelocity is Zero and angularVelocity is FastLeft", engine));
+
+	ruleBlock->addRule(fl::Rule::parse("if angleError is NNear and distanceError is NVeryFar then linearVelocity is FastBackwards and angularVelocity is VSlowRight", engine));
+	ruleBlock->addRule(fl::Rule::parse("if angleError is NNear and distanceError is NFar then linearVelocity is Backwards and angularVelocity is VSlowRight", engine));
+	ruleBlock->addRule(fl::Rule::parse("if angleError is NNear and distanceError is NNear then linearVelocity is MediumBackwards and angularVelocity is VSlowRight", engine));
+	ruleBlock->addRule(fl::Rule::parse("if angleError is NNear and distanceError is PNear then linearVelocity is MediumForward and angularVelocity is VSlowRight", engine));
+	ruleBlock->addRule(fl::Rule::parse("if angleError is NNear and distanceError is PFar then linearVelocity is Forward and angularVelocity is VSlowRight", engine));
+	ruleBlock->addRule(fl::Rule::parse("if angleError is NNear and distanceError is PVeryFar then linearVelocity is FastForward and angularVelocity is VSlowRight", engine));
+
+	ruleBlock->addRule(fl::Rule::parse("if angleError is PNear and distanceError is NVeryFar then linearVelocity is FastBackwards and angularVelocity is VSlowLeft", engine));
+	ruleBlock->addRule(fl::Rule::parse("if angleError is PNear and distanceError is NFar then linearVelocity is Backwards and angularVelocity is VSlowLeft", engine));
+	ruleBlock->addRule(fl::Rule::parse("if angleError is PNear and distanceError is NNear then linearVelocity is MediumBackwards and angularVelocity is VSlowLeft", engine));
+	ruleBlock->addRule(fl::Rule::parse("if angleError is PNear and distanceError is PNear then linearVelocity is MediumForward and angularVelocity is VSlowLeft", engine));
+	ruleBlock->addRule(fl::Rule::parse("if angleError is PNear and distanceError is PFar then linearVelocity is Forward and angularVelocity is VSlowLeft", engine));
+	ruleBlock->addRule(fl::Rule::parse("if angleError is PNear and distanceError is PVeryFar then linearVelocity is FastForward and angularVelocity is VSlowLeft", engine));
+
 	ruleBlock->addRule(fl::Rule::parse("if angleError is Zero and distanceError is NVeryFar then linearVelocity is FastBackwards and angularVelocity is Zero", engine));
 	ruleBlock->addRule(fl::Rule::parse("if angleError is Zero and distanceError is NFar then linearVelocity is Backwards and angularVelocity is Zero", engine));
 	ruleBlock->addRule(fl::Rule::parse("if angleError is Zero and distanceError is NNear then linearVelocity is MediumBackwards and angularVelocity is Zero", engine));
