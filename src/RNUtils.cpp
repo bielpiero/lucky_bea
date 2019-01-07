@@ -290,6 +290,7 @@ void RNUtils::getOdometryPose(const double& xk, const double& yk, const double& 
     *xk1 = xk + deltaDistance * std::cos(thk + (deltaDegrees / 2.0));
     *yk1 = yk + deltaDistance * std::sin(thk + (deltaDegrees / 2.0));
     *thk1 = thk + deltaDegrees;
+    *thk1 = fixAngleRad(*thk1);
     //printf("Raw: %lf, %lf, %lf\n", *xk1, *yk1, *thk1);
 }
 

@@ -160,12 +160,12 @@ Matrix Matrix::inv(){
 	if(this->rows_size() != this->cols_size()){
 		throw std::invalid_argument("Invalid matrix dimension. Matrix must be square");
 	}
-	Matrix self = *this;
 	Matrix I = eye(this->rows_size());
 	Matrix result(this->rows_size(), this->cols_size());
-	Matrix L;
-	Matrix U;
-	self.factorizationLU(L, U);
+	Matrix L(this->rows_size(), this->cols_size());
+	Matrix U= eye(this->rows_size());
+
+	factorizationLU(L, U);
 
 	for (int i = 0; i < this->rows_size(); i++){
 		Matrix Z(this->rows_size(), 1);
@@ -200,8 +200,7 @@ Matrix Matrix::eig(){
 }
 
 Matrix Matrix::sort(int mode){
-	Matrix self = *this;
-	Matrix result = self;
+	Matrix result = *this;
 	for(int j = 0; j < this->cols; j++){
 		bool change = true;
 		while(change){
@@ -253,8 +252,7 @@ Matrix Matrix::sort(int mode){
 }
 
 Matrix Matrix::sort_rows(int mode){
-	Matrix self = *this;
-	Matrix result = self;
+	Matrix result = *this;
 	for(int j = 0; j < this->cols; j++){
 		bool change = true;
 		while(change){
@@ -282,8 +280,7 @@ Matrix Matrix::sort_rows(int mode){
 }
 
 Matrix Matrix::sort_cols(int mode){
-	Matrix self = *this;
-	Matrix result = self;
+	Matrix result = *this;
 	for(int i = 0; i < this->rows; i++){
 		bool change = true;
 		while(change){
@@ -338,13 +335,13 @@ double Matrix::det(){
 		throw std::invalid_argument("Invalid matrix dimension. Matrix must be square");
 	}
 	double determinant = 0;
-	Matrix self = *this;
-	Matrix L;
-	Matrix U;
-	self.factorizationLU(L, U);
+	Matrix L(this->rows_size(), this->cols_size());
+	Matrix U= eye(this->rows_size());
+
+	factorizationLU(L, U);
 
 	double diagL = 1, diagU = 1;
-	for(int i = 0; i < self.rows_size(); i++){
+	for(int i = 0; i < this->rows_size(); i++){
 		diagL = diagL * L(i, i);
 		diagU = diagU * U(i, i);
 	}
@@ -354,27 +351,24 @@ double Matrix::det(){
 }
 
 void Matrix::factorizationLU(Matrix& L, Matrix& U){
-	Matrix rhs = *this;
 
-	L = Matrix(rhs.rows_size(), rhs.cols_size());
-	U = eye(rhs.rows_size());	
 	double sum = 0;
 
-	for(int j = 0; j < rhs.rows_size(); j++){
-		for(int i = j; i < rhs.rows_size(); i++){
+	for(int j = 0; j < this->rows_size(); j++){
+		for(int i = j; i < this->rows_size(); i++){
 			sum = 0;
 			for(int k = 0; k < j; k++){
 				sum += L(i, k) * U(k, j);
 			}
-			L(i, j) = rhs(i, j) - sum;
+			L(i, j) = data[i][j] - sum;
 		}
 
-		for(int i = j; i < rhs.rows_size(); i++){
+		for(int i = j; i < this->rows_size(); i++){
 			sum = 0;
 			for(int k = 0; k < j; k++){
 				sum += L(j, k) * U(k, i);
 			}
-			U(j, i) = (rhs(j, i) - sum) / L(j, j);
+			U(j, i) = (data[j][i] - sum) / L(j, j);
 		}
 	}
 }

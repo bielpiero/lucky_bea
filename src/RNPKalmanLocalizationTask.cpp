@@ -49,7 +49,7 @@ int cont_deforme_y = 0;
 int cont_deforme_th = 0;
 
 
-RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
+RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22510){
 	enableLocalization = false;
 	test = std::fopen("laser_camera_pkalman.txt","w+");
 	test2 = std::fopen("medidas_sensores_pkalman.txt","w+");

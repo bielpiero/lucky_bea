@@ -129,7 +129,6 @@ void RNLaserTask::getReflectiveLandmarks(){
 		}
 	}
 
-	std::ostringstream buffFile;
 	for(int i = 0; i < laserLandmarks->size(); i++){
 		
 		//RNUtils::printLn("Questa Merda prima alla correzione [%d] è {d: %f, a: %f}", i, laserLandmarks->at(i)->getPointsXMean() + LANDMARK_RADIUS, laserLandmarks->at(i)->getPointsYMean());

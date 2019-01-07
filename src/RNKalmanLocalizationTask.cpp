@@ -187,10 +187,10 @@ void RNKalmanLocalizationTask::task(){
 					currentR(cameraIndex + i, cameraIndex + i) = gn->getCameraAngleVariance();
 
 					int zklIndex = RN_NONE;
-					for(int j = laserLandmarksCount; i < zkl.rows_size() and (zklIndex == RN_NONE); j++){
+					for(int j = laserLandmarksCount; j < zkl.rows_size() and (zklIndex == RN_NONE); j++){
 						s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, (int)zkl(j, 3));
 						if(currLandmark != NULL and currLandmark->type == XML_SENSOR_TYPE_CAMERA_STR){
-							if(currLandmark->id == lndmrk->getMarkerId()){
+							if(lndmrk != NULL and currLandmark->id == lndmrk->getMarkerId()){
 								double nrx, nry;
 								Matrix disp = Matrix(2, 1);
 								RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, xk_1(2, 0), &nrx, &nry);
@@ -208,7 +208,7 @@ void RNKalmanLocalizationTask::task(){
 						}
 					}
 
-					if((lndmrk->getMapId() == currentSector->getMapId()) and (lndmrk->getSectorId() == currentSector->getId()) and zklIndex != RN_NONE){
+					if(lndmrk != NULL and (lndmrk->getMapId() == currentSector->getMapId()) and (lndmrk->getSectorId() == currentSector->getId()) and zklIndex != RN_NONE){
 
 						double angleFixed = lndmrk->getPointsYMean();
 						
@@ -285,6 +285,7 @@ void RNKalmanLocalizationTask::task(){
 	} else {
 		init();
 	}
+	RNUtils::sleep(20);
 }
 
 Matrix RNKalmanLocalizationTask::fixFilterGain(const Matrix wk){
