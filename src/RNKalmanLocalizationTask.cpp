@@ -148,34 +148,36 @@ void RNKalmanLocalizationTask::task(){
 						euclideanDistances.emplace(j, std::sqrt(std::abs(mdk(0, 0))));
 					}
 					auto minorDistance = std::min_element(euclideanDistances.begin(), euclideanDistances.end(), [](std::pair<int, double> x, std::pair<int, double> y){ return x.second < y.second; });
+					if(minorDistance != euclideanDistances.end()){
+						Matrix smallHk = matricesHk[minorDistance->first];
+						Hk(2 * i, 0) = smallHk(0, 0);
+						Hk(2 * i, 1) = smallHk(0, 1);
+						Hk(2 * i, 2) = smallHk(0, 2);
 
-					Matrix smallHk = matricesHk[minorDistance->first];
-					Hk(2 * i, 0) = smallHk(0, 0);
-					Hk(2 * i, 1) = smallHk(0, 1);
-					Hk(2 * i, 2) = smallHk(0, 2);
+						Hk(2 * i + 1, 0) = smallHk(1, 0);
+						Hk(2 * i + 1, 1) = smallHk(1, 1);
+						Hk(2 * i + 1, 2) = smallHk(1, 2);
 
-					Hk(2 * i + 1, 0) = smallHk(1, 0);
-					Hk(2 * i + 1, 1) = smallHk(1, 1);
-					Hk(2 * i + 1, 2) = smallHk(1, 2);
+						zl(2 * i, 0) = lndmrk->getPointsXMean() - zkl(minorDistance->first, 0);
+						zl(2 * i + 1, 0) = lndmrk->getPointsYMean() - zkl(minorDistance->first, 1);
+						if(zl(2 * i + 1, 0) > M_PI){
+							zl(2 * i + 1, 0) = zl(2 * i + 1, 0) - 2 * M_PI;
+						} else if(zl(2 * i + 1, 0) < -M_PI){
+							zl(2 * i + 1, 0) = zl(2 * i + 1, 0) + 2 * M_PI;
+						}
 
-					zl(2 * i, 0) = lndmrk->getPointsXMean() - zkl(minorDistance->first, 0);
-					zl(2 * i + 1, 0) = lndmrk->getPointsYMean() - zkl(minorDistance->first, 1);
-					if(zl(2 * i + 1, 0) > M_PI){
-						zl(2 * i + 1, 0) = zl(2 * i + 1, 0) - 2 * M_PI;
-					} else if(zl(2 * i + 1, 0) < -M_PI){
-						zl(2 * i + 1, 0) = zl(2 * i + 1, 0) + 2 * M_PI;
+						double mdDistance = std::abs(zl(2 * i, 0) / std::sqrt(gn->getLaserDistanceVariance()));
+						double mdAngle = std::abs(zl(2 * i + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
+
+						if (mdDistance > laserTMDistance or mdAngle > laserTMAngle){
+		
+							//RNUtils::printLn("landmark %d rejected...", indexFound);
+							zl(2 * i, 0) = 0.0;
+							zl(2 * i + 1, 0) = 0.0;
+							rsize--;
+						}
 					}
-
-					double mdDistance = std::abs(zl(2 * i, 0) / std::sqrt(gn->getLaserDistanceVariance()));
-					double mdAngle = std::abs(zl(2 * i + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
-
-					if (mdDistance > laserTMDistance or mdAngle > laserTMAngle){
-	
-						//RNUtils::printLn("landmark %d rejected...", indexFound);
-						zl(2 * i, 0) = 0.0;
-						zl(2 * i + 1, 0) = 0.0;
-						rsize--;
-					}
+					
 					
 				}
 			}
@@ -187,7 +189,7 @@ void RNKalmanLocalizationTask::task(){
 					currentR(cameraIndex + i, cameraIndex + i) = gn->getCameraAngleVariance();
 
 					int zklIndex = RN_NONE;
-					for(int j = laserLandmarksCount; j < zkl.rows_size() and (zklIndex == RN_NONE); j++){
+					for(int j = laserLandmarksCount; j < laserLandmarksCount + cameraLandmarksCount and (zklIndex == RN_NONE); j++){
 						s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, (int)zkl(j, 3));
 						if(currLandmark != NULL and currLandmark->type == XML_SENSOR_TYPE_CAMERA_STR){
 							if(lndmrk != NULL and currLandmark->id == lndmrk->getMarkerId()){
