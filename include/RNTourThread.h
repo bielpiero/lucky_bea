@@ -17,7 +17,7 @@ public:
 	RNTourThread(const GeneralController* gn, const char* name = "Tour Thread", const char* description = "Doris tour thread");
 	~RNTourThread();
 	int createCurrentMapGraph();
-	int createCurrentSectorGraph();
+	int createCurrentSectorGraph(bool update = false);
 	void go();   
 	void loadProgram(std::string filename);
 	void rfidTagsEvent(std::list<std::string> tags);

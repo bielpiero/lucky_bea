@@ -340,7 +340,6 @@ void MapSector::deleteAllSites() {
         delete sites->front();
         sites->pop_front();
     }
-    printf("Deleted all sites\n");
 }
 
 void MapSector::deleteAllWays() { 
@@ -348,7 +347,6 @@ void MapSector::deleteAllWays() {
         delete ways->front();
         ways->pop_front();
     }
-    printf("Deleted all ways\n");
 }
 
 void MapSector::deleteAllFeatures(){
@@ -356,7 +354,6 @@ void MapSector::deleteAllFeatures(){
         delete features->front();
         features->pop_front();
     }
-    printf("Deleted all features\n");
 }
 
 void MapSector::deleteAllLandmarks(){
@@ -364,7 +361,6 @@ void MapSector::deleteAllLandmarks(){
         delete landmarks->front();
         landmarks->pop_front();
     }
-    printf("Deleted all landmarks\n");
 }
 
 void MapSector::deleteAllTags(){
@@ -372,7 +368,6 @@ void MapSector::deleteAllTags(){
         delete tags->front();
         tags->pop_front();
     }
-    printf("Deleted all tags\n");
 }
 
 void MapSector::deletePolygon(){
@@ -380,7 +375,6 @@ void MapSector::deletePolygon(){
         delete polygon->at(i);
     }
     polygon->clear();
-    printf("Deleted polygon\n");
 }
 
 void MapSector::setPolygon(std::string polygon){

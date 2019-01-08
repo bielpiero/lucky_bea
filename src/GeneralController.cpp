@@ -950,13 +950,13 @@ void GeneralController::loadSector(int mapId, int sectorId){
     	if(reloadMap){
     		tourThread->createCurrentMapGraph();
     	}
-    	tourThread->createCurrentSectorGraph();
+    	tourThread->createCurrentSectorGraph(true);
     }
     if(localization != NULL){
 		localization->reset();	
 	}
 	if(rfidTask){
-		rfidTask->reset();
+		rfidTask->reloadCurrentSector();
 	}
 	
     RNUtils::getTimestamp(mappingSectorTimestamp);

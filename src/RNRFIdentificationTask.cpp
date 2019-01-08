@@ -213,6 +213,13 @@ void RNRFIdentificationTask::kill(){
 	RNRecurrentTask::kill();
 }
 
+void RNRFIdentificationTask::reloadCurrentSector(void){
+	if(currentSector){
+		delete currentSector;
+	}
+	currentSector = gn->getCurrentSector();
+}
+
 int RNRFIdentificationTask::init(void){
 	int result = 0;
 	if(connectTo(DEVICE_NAME) == 0){
@@ -231,10 +238,7 @@ int RNRFIdentificationTask::init(void){
 							if(enableROSpec() == 0){
 								
 								this->deviceInitialized = true;
-								if(currentSector){
-									delete currentSector;
-								}
-								currentSector = gn->getCurrentSector();
+								
 								
 							} else {
 								result = RN_NONE;

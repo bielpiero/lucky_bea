@@ -144,6 +144,7 @@ public:
 	RNRFIdentificationTask(const GeneralController* gn, const char* name = "RF Identification Task", const char* description = "");
 	~RNRFIdentificationTask();
 	int init(void);
+	void reloadCurrentSector(void);
 	virtual void task();
 	virtual void kill();
 

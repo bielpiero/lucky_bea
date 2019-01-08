@@ -14,9 +14,9 @@ RNFuzzySpeedController::RNFuzzySpeedController(const char* name, const char* des
 	distanceError->setLockValueInRange(false);
 	distanceError->addTerm(new fl::Triangle("NVeryFar", -std::numeric_limits<double>::infinity(), -0.750, -0.450));
 	distanceError->addTerm(new fl::Triangle("NFar", -0.750, -0.450, -0.150));
-	distanceError->addTerm(new fl::Triangle("NNear", -0.450, -0.150, -0.030));
-	distanceError->addTerm(new fl::Trapezoid("Zero", -0.150, -0.030, 0.030, 0.150));
-	distanceError->addTerm(new fl::Triangle("PNear", 0.030, 0.150, 0.450));
+	distanceError->addTerm(new fl::Triangle("NNear", -0.450, -0.150, -0.050));
+	distanceError->addTerm(new fl::Trapezoid("Zero", -0.150, -0.050, 0.050, 0.150));
+	distanceError->addTerm(new fl::Triangle("PNear", 0.050, 0.150, 0.450));
 	distanceError->addTerm(new fl::Triangle("PFar", 0.150, 0.450, 0.750));
 	distanceError->addTerm(new fl::Triangle("PVeryFar", 0.450, 0.750, std::numeric_limits<double>::infinity()));
 	engine->addInputVariable(distanceError);
@@ -28,13 +28,14 @@ RNFuzzySpeedController::RNFuzzySpeedController(const char* name, const char* des
 	angleError->setEnabled(true);
 	angleError->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
 	angleError->setLockValueInRange(false);
-	angleError->addTerm(new fl::Triangle("NVeryFar", -std::numeric_limits<double>::infinity(), -0.044, -0.035));
-	angleError->addTerm(new fl::Triangle("NFar", -0.044, -0.035, -0.026));
-	angleError->addTerm(new fl::Triangle("NNear", -0.035, -0.026, -0.017));
-	angleError->addTerm(new fl::Trapezoid("Zero", -0.026, -0.017, 0.017, 0.026));
-	angleError->addTerm(new fl::Triangle("PNear", 0.017, 0.026, 0.035));
-	angleError->addTerm(new fl::Triangle("PFar", 0.026, 0.035, 0.044));
-	angleError->addTerm(new fl::Triangle("PVeryFar", 0.035, 0.044, std::numeric_limits<double>::infinity()));
+	angleError->addTerm(new fl::Triangle("NVeryFar", -std::numeric_limits<double>::infinity(), -0.175, -0.070));
+	angleError->addTerm(new fl::Triangle("NFar", -0.175, -0.070, -0.026));
+	angleError->addTerm(new fl::Triangle("NNear", -0.070, -0.026, -0.017));
+	angleError->addTerm(new fl::Triangle("Zero", -0.017, 0.000, 0.017));
+	//angleError->addTerm(new fl::Trapezoid("Zero", -0.026, -0.017, 0.017, 0.026));
+	angleError->addTerm(new fl::Triangle("PNear", 0.017, 0.026, 0.070));
+	angleError->addTerm(new fl::Triangle("PFar", 0.026, 0.070, 0.175));
+	angleError->addTerm(new fl::Triangle("PVeryFar", 0.070, 0.175, std::numeric_limits<double>::infinity()));
 	engine->addInputVariable(angleError);
 
 
@@ -43,7 +44,7 @@ RNFuzzySpeedController::RNFuzzySpeedController(const char* name, const char* des
 	linearVelocity->setName("linearVelocity");
 	linearVelocity->setDescription("");
 	linearVelocity->setEnabled(true);
-	linearVelocity->setRange(-80.000, 80.000);
+	linearVelocity->setRange(-120.000, 160.000);
 	linearVelocity->setLockValueInRange(false);
 	linearVelocity->setAggregation(new fl::AlgebraicSum);
 	linearVelocity->setDefuzzifier(new fl::Centroid(100));

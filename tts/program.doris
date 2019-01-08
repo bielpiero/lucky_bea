@@ -78,7 +78,7 @@ endfunction
 
 function welcome()
 	say[attention=front; face=happy]("Hola chicos")
-	say[attention=right; face=surprise]("bienvenidos al centro de automática y robatica de la universidad politécnica de madrid")
+	say[attention=right; face=surprise]("bienvenidos al centro de automática y robótica de la universidad politécnica de madrid")
 	say[attention=left; face=suspect]("seguidme por favor que os mostraré el laboratorio, los distintos grupos que hay, os explicaré que hace cada grupo y lo mas importante, os mostraré donde he nacido y quién es mi creador.")
 	turn(#90)
 	say("coloquemos nuestra atencion a la izquierda")
@@ -92,5 +92,5 @@ function welcome()
 endfunction
 
 function main()
-	goto(#2, #2, #3)
+	goto(#2, #1.2, #1)
 endfunction

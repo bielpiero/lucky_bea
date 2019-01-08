@@ -141,9 +141,15 @@ int RNTourThread::createCurrentMapGraph(){
 	return res;
 }
 
-int RNTourThread::createCurrentSectorGraph(){
+int RNTourThread::createCurrentSectorGraph(bool update){
 	int res = RN_NONE;
-	//currentSector = gn->getCurrentSector();
+	if(update){
+		if(currentSector){
+			delete currentSector;
+		}
+		currentSector = gn->getCurrentSector();	
+	}
+	
 	if(currentSector){
 		if(currentSectorGraph){
 			delete currentSectorGraph;
@@ -284,8 +290,8 @@ void RNTourThread::shortTravel(int origin, int destiny){
         			currPose = gn->getAltPose();
         			printf("{x: %f, y: %f, th: %f}\n", (currPose->getX() / 1e3), (currPose->getY() / 1e3), currPose->getThRad());
         			gn->loadSector(currentSector->getMapId(), destinationSite->linkedSectorId);
-        			delete currentSector;
-        			currentSector = gn->getCurrentSector();
+        			//delete currentSector;
+        			//currentSector = gn->getCurrentSector();
         			lastSiteVisitedIndex = RN_NONE;
         		}
 
@@ -308,14 +314,15 @@ int RNTourThread::closestNodeTo(const ArPose& pose){
 			mds.emplace(node->id, (factor * RNUtils::distanceTo(node->xpos, node->ypos, (pose.getX() / 1e3), (pose.getY() / 1e3))));
 		}		
 	}
-	double mdist = std::numeric_limits<double>::max();
-	std::map<int, double>::iterator mdsit;
 	RNUtils::printMap<int, double>(mds);
-	for(mdsit = mds.begin(); mdsit != mds.end(); mdsit++){
-		if(mdsit->second > 0.0 and mdist > mdsit->second){
-			mdist = mdsit->second;
-			nodeId = mdsit->first;
+	auto smallCloseIt = std::min_element(mds.begin(), mds.end(), [](std::pair<int, double> x, std::pair<int, double> y){ return x.second < y.second; });
+	if(smallCloseIt != mds.end() and smallCloseIt->second < 0.0){
+		auto higherCloseIt = std::max_element(mds.begin(), mds.end());
+		if(higherCloseIt != mds.end()){
+			nodeId = higherCloseIt->first;
 		}
+	} else {
+		nodeId = smallCloseIt->first;
 	}
 	return nodeId;
 }
