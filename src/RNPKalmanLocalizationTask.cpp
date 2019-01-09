@@ -32,10 +32,10 @@ const float centro_laser_angl_inf = 0.0;
 const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.07; 
 const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.15;
 
-const float centro_camera_angl_sup = 0.0;
-const float centro_camera_angl_inf = 0.0;
-const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_sup = 0.10;
-const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_inf = 0.20;
+const float centro_camera_angl_sup = 0.005;
+const float centro_camera_angl_inf = 0.005;
+const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_sup = 0.15;
+const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_inf = 0.30;
 
 // Chi cuadradi 2 var: 5% = 5.9915; 10% = 4.6052; 15% = 3.7946; 20% = 3.2189; 25% = 2.7726; 30% = 2.4079; 35% = 2.0996; 40% = 1.8326; 50% = 1.3863
 const float singleMahalanobisLimit = 3.2189;
@@ -49,7 +49,7 @@ int cont_deforme_y = 0;
 int cont_deforme_th = 0;
 
 
-RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22510){
+RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
 	test = std::fopen("laser_camera_pkalman.txt","w+");
 	test2 = std::fopen("medidas_sensores_pkalman.txt","w+");
@@ -396,17 +396,19 @@ printf("4.\n");
 							i_ref_md = j;
 						}
 
+						Matrix P_Z_sup = laserHk * Pk_pred_sup * ~laserHk;
+						Matrix P_Z_inf = laserHk * Pk_pred_inf * ~laserHk;
 
 						/** Identificación borrosa */
-						z1_dist = completeObservations_inf(j*2,0) - incertidumbre_laser_dist_inf;
-						z2_dist = completeObservations_sup(j*2,0) - incertidumbre_laser_dist_sup;
-						z3_dist = completeObservations_sup(j*2,0) + incertidumbre_laser_dist_sup;
-						z4_dist = completeObservations_inf(j*2,0) + incertidumbre_laser_dist_inf;
+						z1_dist = completeObservations_inf(j*2,0) - std::sqrt(3 * P_Z_inf(0,0));
+						z2_dist = completeObservations_sup(j*2,0) - std::sqrt(3 * P_Z_sup(0,0));
+						z3_dist = completeObservations_sup(j*2,0) + std::sqrt(3 * P_Z_sup(0,0));
+						z4_dist = completeObservations_inf(j*2,0) + std::sqrt(3 * P_Z_inf(0,0));
 
-						z1_angl = completeObservations_inf(j*2+1,0) - incertidumbre_laser_angl_inf;
-						z2_angl = completeObservations_sup(j*2+1,0) - incertidumbre_laser_angl_sup;
-						z3_angl = completeObservations_sup(j*2+1,0) + incertidumbre_laser_angl_sup;
-						z4_angl = completeObservations_inf(j*2+1,0) + incertidumbre_laser_angl_inf;
+						z1_angl = completeObservations_inf(j*2+1,0) - std::sqrt(3 * P_Z_inf(1,1));
+						z2_angl = completeObservations_sup(j*2+1,0) - std::sqrt(3 * P_Z_sup(1,1));
+						z3_angl = completeObservations_sup(j*2+1,0) + std::sqrt(3 * P_Z_sup(1,1));
+						z4_angl = completeObservations_inf(j*2+1,0) + std::sqrt(3 * P_Z_inf(1,1));
 
 						if(laserRealObservations(0,0) > z1_dist and laserRealObservations(0,0) < z4_dist)
 						{
@@ -436,11 +438,10 @@ printf("4.\n");
 						printf("Baliza detectada  nº %d identificada como %d\n", i, i_ref_md);
 
 						if(i_ref_fuzzy.size() == 1)
-							fprintf(test3, "%d\t%d\t%d\n", i_ref_md, i_ref_fuzzy.back(), i_ref_fuzzy.size());
+							fprintf(test3, "%d\t%d\n", i_ref_md, i_ref_fuzzy.back());
 						else
-							fprintf(test3, "%d\t%d\t%d\n", i_ref_md, -1, i_ref_fuzzy.size());
+							fprintf(test3, "%d\t%d\n", i_ref_md, -1);
 
-					
 
 						laserLandmarksAccepted ++;
 						
@@ -579,7 +580,7 @@ printf("6.\n");
 
 				/***** 3º CORRECCIÓN *****/
 				// Si tenemos información disponible para corregir, pues corregimos
-				if(laserLandmarksAccepted > 0 || cameraLandmarksAccepted > 1) // Con 1 sola baliza visual las matrices son 1x1 y no valen los cálculos de inversa
+				if(laserLandmarksAccepted > 0 || cameraLandmarksAccepted > 0) // Con 1 sola baliza visual las matrices son 1x1 y no valen los cálculos de inversa
 				{
 					/** Matrices para la corrección solo con las dimensiones de las balizas aceptadas */
 					int sizeMatrix = 2*laserLandmarksAccepted + cameraLandmarksAccepted;
@@ -643,22 +644,35 @@ printf("7.\n");
 					Matrix Sk_sup = Hk * Pk_pred_sup * ~Hk + R_sup;
 					Matrix Sk_inf = Hk * Pk_pred_inf * ~Hk + R_inf;
 
+					// NO me deja hacer la inversa de una matriz de 1x1. Así que en caso de que toque lo hago con double
+					double Sk_sup_double = Sk_sup(0,0); 
+					double Sk_inf_double = Sk_inf(0,0); 
 
 					/** Último descarte de valores atípicos por mahalanobis */
-					Matrix mdk_inf = ~innovation_inf * !Sk_inf * innovation_inf;
+					Matrix mdk_inf = Matrix(1,1);
+
+					if(laserLandmarksAccepted == 0 && cameraLandmarksAccepted == 1) 
+					{
+						 mdk_inf = ~innovation_inf * (1/Sk_inf_double) * innovation_inf;
+					}
+					else
+					{
+						mdk_inf = ~innovation_inf * !Sk_inf * innovation_inf;
+					}
 					double md = std::sqrt(mdk_inf(0,0));
 
 					if(md < fullMahalanobisLimit)
 					{
 						Matrix Wk_sup, Wk_inf;
-						try
+						if(laserLandmarksAccepted == 0 && cameraLandmarksAccepted == 1) 
+						{
+							Wk_sup = Pk_pred_sup * ~Hk * (1 / Sk_sup_double);
+							Wk_inf = Pk_pred_inf * ~Hk * (1 / Sk_inf_double);
+						}
+						else
 						{
 							Wk_sup = Pk_pred_sup * ~Hk * !Sk_sup;
-							Wk_inf = Pk_pred_inf * ~Hk * !Sk_inf;
-						}
-						catch(const std::exception& e)
-						{
-							printf("No se han podido construir las matrices W \n");	
+							Wk_inf = Pk_pred_inf * ~Hk * !Sk_inf;							
 						}
 
 						
