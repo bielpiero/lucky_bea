@@ -314,15 +314,24 @@ int RNTourThread::closestNodeTo(const ArPose& pose){
 			mds.emplace(node->id, (factor * RNUtils::distanceTo(node->xpos, node->ypos, (pose.getX() / 1e3), (pose.getY() / 1e3))));
 		}		
 	}
+	std::map<int, double> mds_positives(mds.begin(), mds.end());
+	for(std::pair<int, double> p : mds_positives){
+        if(p.second < 0){
+            mds_positives.erase(p.first);
+        }
+    }
+
 	RNUtils::printMap<int, double>(mds);
-	auto smallCloseIt = std::min_element(mds.begin(), mds.end(), [](std::pair<int, double> x, std::pair<int, double> y){ return x.second < y.second; });
-	if(smallCloseIt != mds.end() and smallCloseIt->second < 0.0){
+	if(not mds_positives.empty()){
+		auto smallCloseIt = std::min_element(mds_positives.begin(), mds_positives.end(), [](std::pair<int, double> x, std::pair<int, double> y){ return x.second < y.second; });
+		if(smallCloseIt != mds.end()){
+			nodeId = smallCloseIt->first;
+		}
+	} else {
 		auto higherCloseIt = std::max_element(mds.begin(), mds.end());
 		if(higherCloseIt != mds.end()){
 			nodeId = higherCloseIt->first;
 		}
-	} else {
-		nodeId = smallCloseIt->first;
 	}
 	return nodeId;
 }
