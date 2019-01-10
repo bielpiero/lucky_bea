@@ -244,6 +244,9 @@ void RNTourThread::longTravel(int origin, int destiny){
 		std::list<int>::iterator pathIt;
 		ArPose* currPose = NULL;
 		for(pathIt = path.begin(); pathIt != path.end(); pathIt++){
+			while(*pathIt != currentSector->getId()){
+				RNUtils::sleep(500);
+			}
 			if(*pathIt != destiny){
 				s_site* destinationSite = NULL;
 				int originSite = RN_NONE, destinySite = RN_NONE;
@@ -291,14 +294,6 @@ void RNTourThread::shortTravel(int origin, int destiny){
         		}
 
         		if(changeSector){
-        			
-        			/*ArPose* currPose = gn->getAltPose();
-        			gn->setPosition((currPose->getX() / 1e3) + destinationSite->xcoord, (currPose->getY() / 1e3) + destinationSite->ycoord, currPose->getThRad());
-        			currPose = gn->getAltPose();
-        			printf("{x: %f, y: %f, th: %f}\n", (currPose->getX() / 1e3), (currPose->getY() / 1e3), currPose->getThRad());
-        			gn->loadSector(currentSector->getMapId(), destinationSite->linkedSectorId);*/
-        			//delete currentSector;
-        			//currentSector = gn->getCurrentSector();
         			lastSiteVisitedIndex = RN_NONE;
         		}
 
