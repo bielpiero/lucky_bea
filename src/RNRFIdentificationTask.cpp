@@ -125,7 +125,7 @@ void RNRFIdentificationTask::checkForActions(){
 						if(tag->isRemovable() or tag->getRSSI() < MIN_RSSI_ENVIRONMENT_VALUE){
 							if(t->antenna == tag->getAntenna()){
 								auto siteInPathIt = std::find(currentSectorPathPlan.begin(), currentSectorPathPlan.end(), t->linkedSiteId);
-								if(siteInPathIt != currentSectorPathPlan.end()){
+								if(siteInPathIt != currentSectorPathPlan.end() or gn->isDirectMotion()){
 									ArPose* currPose = gn->getAltPose();
 									s_site* destinationSite = currentSector->findSiteById(t->linkedSiteId);
 				        			gn->setPosition((currPose->getX() / 1e3) + destinationSite->xcoord, (currPose->getY() / 1e3) + destinationSite->ycoord, currPose->getThRad());

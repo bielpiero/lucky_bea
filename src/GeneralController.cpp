@@ -1982,6 +1982,9 @@ void GeneralController::moveRobot(double lin_vel, double angular_vel){
 		bumpersOk = false;
 	}
 	if (bumpersOk){
+		if(tourThread){
+			tourThread->kill();
+		}
 		this->moveAtSpeed(lin_vel, angular_vel);
 	} else {
 		this->stopRobot();
