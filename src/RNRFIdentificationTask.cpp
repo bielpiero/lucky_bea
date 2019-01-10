@@ -93,13 +93,13 @@ void RNRFIdentificationTask::checkForActions(){
 			if(t != NULL){
 				if(t->name == std::string(SEMANTIC_HALLWAY_STR)){
 					if(tag->getRSSI() > MAX_RSSI_ENVIRONMENT_VALUE and not isAtHallway){
-						if(t->side == tag->getAntenna()){
+						if(t->antenna == tag->getAntenna()){
 							RNUtils::printLn("Tag ------> Hallway: %s", tag->getTagKey().c_str());
 							RNUtils::printLn("Entrando a un pasillo... activando Hallway Controller");
 							isAtHallway = true;
 						}
 					} else {
-						if(t->side != tag->getAntenna()){
+						if(t->antenna != tag->getAntenna()){
 							RNUtils::printLn("Tag ------> Hallway: %s", tag->getTagKey().c_str());
 							RNUtils::printLn("saliendo a un pasillo... desactivando Hallway Controller");
 							isAtHallway = false;
@@ -123,6 +123,18 @@ void RNRFIdentificationTask::checkForActions(){
 						}
 					} else {
 						if(tag->isRemovable() or tag->getRSSI() < MIN_RSSI_ENVIRONMENT_VALUE){
+							if(t->antenna == tag->getAntenna()){
+								auto siteInPathIt = std::find(currentSectorPathPlan.begin(), currentSectorPathPlan.end(), t->linkedSiteId);
+								if(siteInPathIt != currentSectorPathPlan.end()){
+									ArPose* currPose = gn->getAltPose();
+									s_site* destinationSite = currentSector->findSiteById(t->linkedSiteId);
+				        			gn->setPosition((currPose->getX() / 1e3) + destinationSite->xcoord, (currPose->getY() / 1e3) + destinationSite->ycoord, currPose->getThRad());
+				        			currPose = gn->getAltPose();
+				        			printf("{x: %f, y: %f, th: %f}\n", (currPose->getX() / 1e3), (currPose->getY() / 1e3), currPose->getThRad());
+				        			gn->loadSector(currentSector->getMapId(), destinationSite->linkedSectorId);
+								}
+
+							}
 							RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 							RNUtils::printLn("Saliendo de la puerta... desactivando Hallway Controller");
 							isAtDoor = false;
@@ -172,6 +184,10 @@ void RNRFIdentificationTask::runTagsCallbacks(std::list<std::string> tags){
 			((RNFunPointer1<std::list<std::string> >*)(*subsIt))->invoke(tags);
 		}
 	}
+}
+
+void RNRFIdentificationTask::setSectorPathPlan(std::list<int> path){
+	currentSectorPathPlan = std::list<int>(path.begin(), path.end());
 }
 
 void RNRFIdentificationTask::addTagsCallback(RNFunPointer* func){
@@ -1080,7 +1096,7 @@ LLRP::CMessage* RNRFIdentificationTask::recvMessage(int msecMax){
 	return message;
 }
 
-RFData* RNRFIdentificationTask::findByKeyAntenna(std::string key, std::string antenna){
+RFData* RNRFIdentificationTask::findByKeyAntenna(std::string key, int antenna){
 	RFData* rfid = NULL;
 	bool found = false;
 	std::list<RFData*>::iterator i;

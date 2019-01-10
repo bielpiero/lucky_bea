@@ -238,6 +238,7 @@ void RNTourThread::longTravel(int origin, int destiny){
 	if(currentMapGraph){
 		//currentSector = gn->getCurrentSector();
 		std::list<int> path = currentMapGraph->branchAndBound(origin, destiny);
+		currentMapPathPlan = std::list<int>(path.begin(), path.end());
 		printf("Long Travel in Map: %d\n", currentSector->getMapId());
 		RNUtils::printList<int>(path);
 		std::list<int>::iterator pathIt;
@@ -272,6 +273,10 @@ void RNTourThread::shortTravel(int origin, int destiny){
 	if(currentSectorGraph){
 		//currentSector = gn->getCurrentSector();
 		std::list<int> path = currentSectorGraph->shortestPath(origin, destiny);
+		if(rfid){
+			rfid->setSectorPathPlan(path);
+		}
+		currentSectorPathPlan = std::list<int>(path.begin(), path.end());
 		printf("Short Travel in sector: %d\n", currentSector->getId());
 		RNUtils::printList<int>(path);
 		std::list<int>::iterator pathIt;
@@ -281,15 +286,17 @@ void RNTourThread::shortTravel(int origin, int destiny){
         	if(destinationSite != NULL){
         		bool changeSector = destinationSite->name == std::string(SEMANTIC_FEATURE_DOOR_STR);
         		gn->moveRobotToPosition(destinationSite->xpos, destinationSite->ypos, 0.0);
-        		while((not gn->isGoalAchieved()) and (not gn->isGoalCanceled())) RNUtils::sleep(100);
+        		while((not gn->isGoalAchieved()) and (not gn->isGoalCanceled())) {
+        			RNUtils::sleep(100);
+        		}
 
         		if(changeSector){
         			
-        			ArPose* currPose = gn->getAltPose();
+        			/*ArPose* currPose = gn->getAltPose();
         			gn->setPosition((currPose->getX() / 1e3) + destinationSite->xcoord, (currPose->getY() / 1e3) + destinationSite->ycoord, currPose->getThRad());
         			currPose = gn->getAltPose();
         			printf("{x: %f, y: %f, th: %f}\n", (currPose->getX() / 1e3), (currPose->getY() / 1e3), currPose->getThRad());
-        			gn->loadSector(currentSector->getMapId(), destinationSite->linkedSectorId);
+        			gn->loadSector(currentSector->getMapId(), destinationSite->linkedSectorId);*/
         			//delete currentSector;
         			//currentSector = gn->getCurrentSector();
         			lastSiteVisitedIndex = RN_NONE;
@@ -315,12 +322,17 @@ int RNTourThread::closestNodeTo(const ArPose& pose){
 		}		
 	}
 	std::map<int, double> mds_positives(mds.begin(), mds.end());
-	for(std::pair<int, double> p : mds_positives){
-        if(p.second < 0){
-            mds_positives.erase(p.first);
+	bool negativesPresent = true;
+	while(negativesPresent){
+		negativesPresent = false;
+		auto mdspIt = std::find_if(mds_positives.begin(), mds_positives.end(), [](const std::pair<int, double>& x){ return x.second < 0; });
+        if(mdspIt != mds_positives.end()){
+            mds_positives.erase(mdspIt->first);
+            negativesPresent = true;
         }
     }
-
+    printf("Only positives: ");
+    RNUtils::printMap<int, double>(mds_positives);
 	RNUtils::printMap<int, double>(mds);
 	if(not mds_positives.empty()){
 		auto smallCloseIt = std::min_element(mds_positives.begin(), mds_positives.end(), [](std::pair<int, double> x, std::pair<int, double> y){ return x.second < y.second; });
@@ -334,6 +346,14 @@ int RNTourThread::closestNodeTo(const ArPose& pose){
 		}
 	}
 	return nodeId;
+}
+
+std::list<int> RNTourThread::getSectorPathPlan(){
+	return currentSectorPathPlan;
+}
+
+std::list<int> RNTourThread::getMapPathPlan(){
+	return currentMapPathPlan;
 }
 
 void RNTourThread::loadPredifinedSymbols(){

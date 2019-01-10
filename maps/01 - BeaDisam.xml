@@ -39,8 +39,7 @@
 			<way st="7" adjacency="5"/>
 		</ways>
 		<tags>
-			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" side="right" stretching="0"/>
-			<tag id="e280-1160-6000-0207-28b5-6834" name="door" side="right" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="6" antenna="2" stretching="0"/>
 		</tags>
 
 	</sector>
@@ -133,14 +132,15 @@
 			<way st="7" adjacency="5"/>
 		</ways>
 		<tags>
-			<tag id="e280-1160-6000-0207-28b5-2cd4" name="crossway" side="right" stretching="0"/>
-			<tag id="e280-1160-6000-0207-28b5-2cc4" name="crossway" side="left" stretching="0"/>
-			<tag id="e280-1160-6000-0207-28b5-6844" name="crossway" side="left" stretching="0"/>
-			<tag id="e280-1160-6000-0207-28b5-6854" name="crossway" side="right" stretching="0"/>
-			<tag id="e280-1160-6000-0207-28b5-2cf4" name="crossway" side="right" stretching="0"/>
-			<tag id="e280-1160-6000-0207-28b5-2ce4" name="crossway" side="left" stretching="0"/>
-			<tag id="e280-1160-6000-0207-28b5-2ca4" name="hallway" side="left" stretching="0"/>
-			<tag id="e280-1160-6000-0207-28b5-6834" name="hallway" side="right" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="0" antenna="1" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-2cd4" name="crossway" antenna="2" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-2cc4" name="crossway" antenna="1" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-6844" name="crossway" antenna="1" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-6854" name="crossway" antenna="2" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-2cf4" name="crossway" antenna="2" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-2ce4" name="crossway" antenna="1" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-2ca4" name="hallway" antenna="1" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-6834" name="hallway" antenna="2" stretching="0"/>
 		</tags>
 	</sector>
 	<sector id="7" name="Workshop Place" width="400" height="400" polygon="m 0 0 l 0 400 l 400 0 l 0 -400 z" adjacency="1">
@@ -208,8 +208,8 @@
 			<way st="9" adjacency="7"/>
 		</ways>
 		<tags>
-			<tag id="e280-1160-6000-0207-28b5-6864" name="hallway" side="left" stretching="0"/>
-			<tag id="e280-1160-6000-0207-28b5-6884" name="hallway" side="right" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-6864" name="hallway" antenna="1" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-6884" name="hallway" antenna="2" stretching="0"/>
 		</tags>
 	</sector>
 	<sector id="10" name="Computer Room" width="1340" height="500" polygon="m 0 0 l 0 500 l 1340 0 l 0 -500 z" adjacency="2">

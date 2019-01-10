@@ -6,7 +6,7 @@
 #define SEMANTIC_CROSSWAY_STR "crossway"
 #define SEMANTIC_PERSON_STR "person"
 
-#define SEMANTIC_SIDE_LEFT_STR "left"
-#define SEMANTIC_SIDE_RIGHT_STR "right"
+#define SEMANTIC_SIDE_LEFT_STR 1
+#define SEMANTIC_SIDE_RIGHT_STR 2
 
 #define OPTICAL_THETA_STR "optical_theta"

@@ -935,7 +935,10 @@ void GeneralController::loadSector(int mapId, int sectorId){
 						s_tag* tempTag = new s_tag;
 						tempTag->id = std::string(tag_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
 						tempTag->name = std::string(tag_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());;
-						tempTag->side = std::string(tag_node->first_attribute(XML_ATTRIBUTE_SIDE_STR)->value());;
+						tempTag->antenna = std::atoi(tag_node->first_attribute(XML_ATTRIBUTE_ANTENNA_STR)->value());
+						if(tag_node->first_attribute(XML_ATTRIBUTE_LINKED_SITE_ID_STR)){
+							tempTag->linkedSiteId = std::atoi(tag_node->first_attribute(XML_ATTRIBUTE_LINKED_SITE_ID_STR)->value());
+						}
 						currentSector->addTag(tempTag);
 					}
 				}

@@ -29,16 +29,27 @@ const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_sup = 0.06;
 const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_inf = 0.12; 
 const float centro_laser_angl_sup = 0.0;
 const float centro_laser_angl_inf = 0.0;
-const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.07; 
-const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.15;
+const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.06; 
+const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.15; // La posición de las balizas no es muy precisa
 
-const float centro_camera_angl_sup = 0.005;
-const float centro_camera_angl_inf = 0.005;
-const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_sup = 0.15;
-const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_inf = 0.30;
+// Hay un montón de datos tomados y el resultado da descentrado. 
+// Pero no se sabe sí estan tomados con la cámara estaba girada x grados. Entonces hay dos opciones:
+// - Asumir que efectivamente está descentrada
+// - Asumir este descentrado es causado por el antiguo giro de la cámara.
+// Luego hay otro problema y es que no sabemos cómo de bien puestas están las balizas. 
+
+// Opcion descentrada:  media = 0.055 rad = 3.15º. alpha_sup = 0.05 rad = 2.85º.  alpha_inf = 0.09 rad = 5.15º
+// Opción centrada: media = 0. alpha_sup = 0.095 rad = 5.4º. alpha_inf = 0.135 rad = 7.74º
+ 
+
+const float centro_camera_angl_sup = 0.055;
+const float centro_camera_angl_inf = 0.055;
+const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_sup = 0.08;
+const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_inf = 0.15;
 
 // Chi cuadradi 2 var: 5% = 5.9915; 10% = 4.6052; 15% = 3.7946; 20% = 3.2189; 25% = 2.7726; 30% = 2.4079; 35% = 2.0996; 40% = 1.8326; 50% = 1.3863
 const float singleMahalanobisLimit = 3.2189;
+const float camera_mahalanobis_limit = 1.6424;
 const float fullMahalanobisLimit = 5.9915;
 
 const int stateLenght = 3;
@@ -105,8 +116,8 @@ void RNPKalmanLocalizationTask::init(){
 			- desv tip Y: 0.03
 			- desv tip Theta: 0.122 (7 grados)
 		*/
-		Pk_sup(0,0) = std::pow(0.10, 2) / 3.0;   Pk_sup(1,1) = std::pow(0.10, 2) / 3.0;   Pk_sup(2,2) = std::pow(2*M_PI/180.0, 2) / 3.0;
-		Pk_inf(0,0) = std::pow(0.15, 2) / 3.0;   Pk_inf(1,1) = std::pow(0.15, 2) / 3.0;   Pk_inf(2,2) = std::pow(4*M_PI/180.0, 2) / 3.0;
+		Pk_sup(0,0) = std::pow(0.15, 2) / 3.0;   Pk_sup(1,1) = std::pow(0.15, 2) / 3.0;   Pk_sup(2,2) = std::pow(5*M_PI/180.0, 2) / 3.0;
+		Pk_inf(0,0) = std::pow(0.20, 2) / 3.0;   Pk_inf(1,1) = std::pow(0.20, 2) / 3.0;   Pk_inf(2,2) = std::pow(10*M_PI/180.0, 2) / 3.0;
 
 
 		// Balizas láser existentes en este sector
@@ -135,7 +146,7 @@ void RNPKalmanLocalizationTask::kill(){
 }
 
 void RNPKalmanLocalizationTask::task(){
-
+printf("0.\n");
 	if(enableLocalization)
 	{
 		static int iteracion = 0;
@@ -295,7 +306,7 @@ printf("3.\n");
 							completeObservations_inf(i_laser*2+1, 0) = RNUtils::fixAngleRad(angle + centro_laser_angl_inf);
 
 							/** Matriz H */
-							d = std::sqrt( std::pow(teoricalLandmark->xpos - (CG(0,0) + disp(0,0)), 2) + std::pow(teoricalLandmark->ypos - (CG(1,0) + disp(0,0)), 2) );
+							d = std::sqrt( std::pow(teoricalLandmark->xpos - (CG(0,0) + disp(0,0)), 2) + std::pow(teoricalLandmark->ypos - (CG(1,0) + disp(1,0)), 2) );
 							completeHk(i_laser*2,0) = -(teoricalLandmark->xpos - (CG(0,0) + disp(0,0))) / d;
 							completeHk(i_laser*2,1) = -(teoricalLandmark->ypos - (CG(1,0) + disp(1,0))) / d;
 							completeHk(i_laser*2,2) = 0.0;
@@ -317,13 +328,17 @@ printf("3.\n");
 							disp(0, 0) = nrx;
 							disp(1, 0) = nry;
 						
+						printf("Baliza detectada. ID: %d. Pos: (%f, %f)\n", teoricalLandmark->id, teoricalLandmark->xpos, teoricalLandmark->ypos);
+
 							/** Observaciones */
 							landmarkObservation(xk_pred_sup, disp, teoricalLandmark, distance, angle);
 							completeObservations_sup(i_camera, 0) = RNUtils::fixAngleRad(angle + centro_camera_angl_sup);
+							
+							landmarkObservation(xk_pred_inf, disp, teoricalLandmark, distance, angle);
 							completeObservations_inf(i_camera, 0) = RNUtils::fixAngleRad(angle + centro_camera_angl_inf);
 
 							/** Matriz H */
-							d = std::sqrt( std::pow(teoricalLandmark->xpos - (CG(0,0) + disp(0,0)), 2) + std::pow(teoricalLandmark->ypos - (CG(1,0) + disp(0,0)), 2) );
+							d = std::sqrt( std::pow(teoricalLandmark->xpos - (CG(0,0) + disp(0,0)), 2) + std::pow(teoricalLandmark->ypos - (CG(1,0) + disp(1,0)), 2) );
 							completeHk(i_camera,0) = (teoricalLandmark->ypos - (CG(1,0) + disp(1,0))) / std::pow(d,2);
 							completeHk(i_camera,1) = (-1) * (teoricalLandmark->xpos - (CG(0,0) + disp(0,0))) / std::pow(d, 2);
 							completeHk(i_camera,2) = -1.0;
@@ -349,6 +364,14 @@ printf("4.\n");
 				Matrix laserInnovation_inf = Matrix(2,1);
 				Matrix laserHk = Matrix(2,3);
 				Matrix laserR_inf = Matrix(2,2);
+
+
+				Matrix cameraRealObservations = Matrix(1,1);
+				Matrix cameraInnovation_sup = Matrix(1,1);
+				Matrix cameraInnovation_inf = Matrix(1,1);
+				Matrix cameraHk = Matrix(1,3);
+				Matrix cameraR_inf = Matrix(1,1);
+
 				laserR_inf(0,0) = std::pow(incertidumbre_laser_dist_inf, 2) / 3.0;
 				laserR_inf(1,1) = std::pow(incertidumbre_laser_angl_inf, 2) / 3.0;
 				int i_ref_md = -1;
@@ -357,200 +380,206 @@ printf("4.\n");
 				double z1_dist, z2_dist, z3_dist, z4_dist, z1_angl, z2_angl, z3_angl, z4_angl;
 
 				laserLandmarksAccepted = 0;
+				cameraLandmarksAccepted = 0;
 
 				for(int i = 0; i < laserLandmarksDetected; i++)
 				{
-					RNLandmark* laserLandmark = gn->getLaserLandmarks()->at(i);
-					laserRealObservations(0,0) = laserLandmark->getPointsXMean();
-					laserRealObservations(1,0) = RNUtils::fixAngleRad(laserLandmark->getPointsYMean());
-
-					/** IDENTIFICACIÓN. Las balizas láser no sabemos a cuál corresponden realmente */
-					/** La identificación se va a hacer en función de la mínima distancia de Mahalanobis comparando con la estimación inferior */
-					i_ref_md = -1;
-					min_mahalanobisDistance = 1000.0;
-					i_ref_fuzzy.clear();
-
-					for(int j = 0; j < laserLandmarksCount; j ++)
+					if(laserLandmarksCount != 0)
 					{
-						laserInnovation_sup(0,0) = laserRealObservations(0,0) - completeObservations_sup(j*2,0);
-						laserInnovation_sup(1,0) = RNUtils::fixAngleRad( laserRealObservations(1,0) - completeObservations_sup(j*2+1,0) );
+						RNLandmark* laserLandmark = gn->getLaserLandmarks()->at(i);
+						laserRealObservations(0,0) = laserLandmark->getPointsXMean();
+						laserRealObservations(1,0) = RNUtils::fixAngleRad(laserLandmark->getPointsYMean());
 
-						laserInnovation_inf(0,0) = laserRealObservations(0,0) - completeObservations_inf(j*2,0);
-						laserInnovation_inf(1,0) = RNUtils::fixAngleRad( laserRealObservations(1,0) - completeObservations_inf(j*2+1,0) );
+						/** IDENTIFICACIÓN. Las balizas láser no sabemos a cuál corresponden realmente */
+						/** La identificación se va a hacer en función de la mínima distancia de Mahalanobis comparando con la estimación inferior */
+						i_ref_md = -1;
+						min_mahalanobisDistance = 1000.0;
+						i_ref_fuzzy.clear();
 
-						laserHk(0, 0) = completeHk(2*j, 0);
-						laserHk(0, 1) = completeHk(2*j, 1);
-						laserHk(0, 2) = completeHk(2*j, 2);
-						laserHk(1, 0) = completeHk(2*j+1, 0);
-						laserHk(1, 1) = completeHk(2*j+1, 1);
-						laserHk(1, 2) = completeHk(2*j+1, 2);
-
-						// Mahalanobis
-						Matrix omega_inf = laserHk * Pk_pred_inf * ~laserHk + laserR_inf;
-						Matrix mdk_inf = ~laserInnovation_inf* !omega_inf * laserInnovation_inf;
-						double md_inf = std::sqrt(mdk_inf(0,0));
-
-						if(md_inf < min_mahalanobisDistance)
+						for(int j = 0; j < laserLandmarksCount; j ++)
 						{
-							min_mahalanobisDistance = md_inf;
-							i_ref_md = j;
-						}
+							laserInnovation_sup(0,0) = laserRealObservations(0,0) - completeObservations_sup(j*2,0);
+							laserInnovation_sup(1,0) = RNUtils::fixAngleRad( laserRealObservations(1,0) - completeObservations_sup(j*2+1,0) );
 
-						Matrix P_Z_sup = laserHk * Pk_pred_sup * ~laserHk;
-						Matrix P_Z_inf = laserHk * Pk_pred_inf * ~laserHk;
+							laserInnovation_inf(0,0) = laserRealObservations(0,0) - completeObservations_inf(j*2,0);
+							laserInnovation_inf(1,0) = RNUtils::fixAngleRad( laserRealObservations(1,0) - completeObservations_inf(j*2+1,0) );
 
-						/** Identificación borrosa */
-						z1_dist = completeObservations_inf(j*2,0) - std::sqrt(3 * P_Z_inf(0,0));
-						z2_dist = completeObservations_sup(j*2,0) - std::sqrt(3 * P_Z_sup(0,0));
-						z3_dist = completeObservations_sup(j*2,0) + std::sqrt(3 * P_Z_sup(0,0));
-						z4_dist = completeObservations_inf(j*2,0) + std::sqrt(3 * P_Z_inf(0,0));
+							laserHk(0, 0) = completeHk(2*j, 0);
+							laserHk(0, 1) = completeHk(2*j, 1);
+							laserHk(0, 2) = completeHk(2*j, 2);
+							laserHk(1, 0) = completeHk(2*j+1, 0);
+							laserHk(1, 1) = completeHk(2*j+1, 1);
+							laserHk(1, 2) = completeHk(2*j+1, 2);
 
-						z1_angl = completeObservations_inf(j*2+1,0) - std::sqrt(3 * P_Z_inf(1,1));
-						z2_angl = completeObservations_sup(j*2+1,0) - std::sqrt(3 * P_Z_sup(1,1));
-						z3_angl = completeObservations_sup(j*2+1,0) + std::sqrt(3 * P_Z_sup(1,1));
-						z4_angl = completeObservations_inf(j*2+1,0) + std::sqrt(3 * P_Z_inf(1,1));
+							// Mahalanobis
+							Matrix omega_inf = laserHk * Pk_pred_inf * ~laserHk + laserR_inf;
+							Matrix mdk_inf = ~laserInnovation_inf* !omega_inf * laserInnovation_inf;
+							double md_inf = std::sqrt(mdk_inf(0,0));
 
-						if(laserRealObservations(0,0) > z1_dist and laserRealObservations(0,0) < z4_dist)
-						{
-							if(laserRealObservations(1,0) > z1_angl and laserRealObservations(1,0) < z4_angl)
+							if(md_inf < min_mahalanobisDistance)
 							{
-								i_ref_fuzzy.push_back(j); 
+								min_mahalanobisDistance = md_inf;
+								i_ref_md = j;
 							}
+
+							Matrix P_Z_sup = laserHk * Pk_pred_sup * ~laserHk;
+							Matrix P_Z_inf = laserHk * Pk_pred_inf * ~laserHk;
+
+							/** Identificación borrosa */
+							z1_dist = completeObservations_inf(j*2,0) - std::sqrt(3 * P_Z_inf(0,0));
+							z2_dist = completeObservations_sup(j*2,0) - std::sqrt(3 * P_Z_sup(0,0));
+							z3_dist = completeObservations_sup(j*2,0) + std::sqrt(3 * P_Z_sup(0,0));
+							z4_dist = completeObservations_inf(j*2,0) + std::sqrt(3 * P_Z_inf(0,0));
+
+							z1_angl = completeObservations_inf(j*2+1,0) - std::sqrt(3 * P_Z_inf(1,1));
+							z2_angl = completeObservations_sup(j*2+1,0) - std::sqrt(3 * P_Z_sup(1,1));
+							z3_angl = completeObservations_sup(j*2+1,0) + std::sqrt(3 * P_Z_sup(1,1));
+							z4_angl = completeObservations_inf(j*2+1,0) + std::sqrt(3 * P_Z_inf(1,1));
+
+							if(laserRealObservations(0,0) > z1_dist and laserRealObservations(0,0) < z4_dist)
+							{
+								if(laserRealObservations(1,0) > z1_angl and laserRealObservations(1,0) < z4_angl)
+								{
+									i_ref_fuzzy.push_back(j); 
+								}
+							}
+
 						}
 
-					}
-
-					/** Resultados detección borrosa */
-					/*if(i_ref_fuzzy.size() > 0)
-					{
-						printf("La identificación borrosa ha encontrado %d posibles resultados para la baliza %d.\tBalizas propuestas: ", i_ref_fuzzy.size(), i);
-						for (int k = 0; k < i_ref_fuzzy.size(); k++)
+						/** Resultados detección borrosa */
+						/*if(i_ref_fuzzy.size() > 0)
 						{
-							printf("%d ", i_ref_fuzzy.at(k));
+							printf("La identificación borrosa ha encontrado %d posibles resultados para la baliza %d.\tBalizas propuestas: ", i_ref_fuzzy.size(), i);
+							for (int k = 0; k < i_ref_fuzzy.size(); k++)
+							{
+								printf("%d ", i_ref_fuzzy.at(k));
+							}
+							printf("\n");
+						}*/
+
+
+						// Baliza identificada
+						if( (min_mahalanobisDistance < singleMahalanobisLimit) and (i_ref_md >= 0) )
+						{
+							printf("Baliza detectada  nº %d identificada como %d\n", i, i_ref_md);
+
+							if(i_ref_fuzzy.size() == 1)
+								fprintf(test3, "%d\t%d\n", i_ref_md, i_ref_fuzzy.back());
+							else
+								fprintf(test3, "%d\t%d\n", i_ref_md, -1);
+
+
+							laserLandmarksAccepted ++;
+							
+							// Datos aceptados
+							laserHk(0, 0) = completeHk(2*i_ref_md, 0);
+							laserHk(0, 1) = completeHk(2*i_ref_md, 1);
+							laserHk(0, 2) = completeHk(2*i_ref_md, 2);
+							laserHk(1, 0) = completeHk(2*i_ref_md+1, 0);
+							laserHk(1, 1) = completeHk(2*i_ref_md+1, 1);
+							laserHk(1, 2) = completeHk(2*i_ref_md+1, 2);
+
+							laserInnovation_sup(0,0) = laserRealObservations(0,0) - completeObservations_sup(i_ref_md*2,0);
+							laserInnovation_sup(1,0) = RNUtils::fixAngleRad( laserRealObservations(1,0) - completeObservations_sup(i_ref_md*2+1,0) );
+
+							laserInnovation_inf(0,0) = laserRealObservations(0,0) - completeObservations_inf(i_ref_md*2,0);
+							laserInnovation_inf(1,0) = RNUtils::fixAngleRad( laserRealObservations(1,0) - completeObservations_inf(i_ref_md*2+1,0) );
+
+							v_Hk.push_back(laserHk);
+							v_innovation_sup.push_back(laserInnovation_sup);
+							v_innovation_inf.push_back(laserInnovation_inf);
 						}
-						printf("\n");
-					}*/
-
-
-					// Baliza identificada
-					if( (min_mahalanobisDistance < singleMahalanobisLimit) and (i_ref_md >= 0) )
-					{
-						printf("Baliza detectada  nº %d identificada como %d\n", i, i_ref_md);
-
-						if(i_ref_fuzzy.size() == 1)
-							fprintf(test3, "%d\t%d\n", i_ref_md, i_ref_fuzzy.back());
 						else
-							fprintf(test3, "%d\t%d\n", i_ref_md, -1);
-
-
-						laserLandmarksAccepted ++;
-						
-						// Datos aceptados
-						laserHk(0, 0) = completeHk(2*i_ref_md, 0);
-						laserHk(0, 1) = completeHk(2*i_ref_md, 1);
-						laserHk(0, 2) = completeHk(2*i_ref_md, 2);
-						laserHk(1, 0) = completeHk(2*i_ref_md+1, 0);
-						laserHk(1, 1) = completeHk(2*i_ref_md+1, 1);
-						laserHk(1, 2) = completeHk(2*i_ref_md+1, 2);
-
-						laserInnovation_sup(0,0) = laserRealObservations(0,0) - completeObservations_sup(i_ref_md*2,0);
-						laserInnovation_sup(1,0) = RNUtils::fixAngleRad( laserRealObservations(1,0) - completeObservations_sup(i_ref_md*2+1,0) );
-
-						laserInnovation_inf(0,0) = laserRealObservations(0,0) - completeObservations_inf(i_ref_md*2,0);
-						laserInnovation_inf(1,0) = RNUtils::fixAngleRad( laserRealObservations(1,0) - completeObservations_inf(i_ref_md*2+1,0) );
-
-						v_Hk.push_back(laserHk);
-						v_innovation_sup.push_back(laserInnovation_sup);
-						v_innovation_inf.push_back(laserInnovation_inf);
-					}
-					else
-					{
-						printf("Baliza descartada por Mahalanobis: %f > %f\n", min_mahalanobisDistance, singleMahalanobisLimit);
-					}
-				}// for todas las balizas LASER detectadas
-
-printf("5.\n");				
-				/** Ahora añadimos la cámara */
-				Matrix cameraRealObservations = Matrix(1,1);
-				Matrix cameraInnovation_sup = Matrix(1,1);
-				Matrix cameraInnovation_inf = Matrix(1,1);
-				Matrix cameraHk = Matrix(1,3);
-				Matrix cameraR_inf = Matrix(1,1);
-				cameraR_inf(0,0) = std::pow(incertidumbre_camera_angl_inf, 2) / 3.0;
-
-				bool validQR = true;
-
-				cameraLandmarksAccepted = 0;
-
-				for(int i = 0; i < cameraLandmarksDetected; i++)
+						{
+							printf("Baliza descartada por Mahalanobis: %f > %f\n", min_mahalanobisDistance, singleMahalanobisLimit);
+						}
+					}// for todas las balizas LASER detectadas
+				}
+				if(cameraLandmarksCount)
 				{
+					printf("5.\n");				
+					/** Ahora añadimos la cámara */
+					cameraR_inf(0,0) = std::pow(incertidumbre_camera_angl_inf, 2) / 3.0;
+					bool validQR = true;
+					cameraLandmarksAccepted = 0;
 
-printf("5b. %d\n",i);	
-					RNLandmark* cameraLandmark = gn->getVisualLandmarks()->at(i);
-
-					validQR = true;
-					// Primer filtro -> Que se haya detectado toda la información de la baliza
-					if(cameraLandmark->getMapId() > RN_NONE and cameraLandmark->getSectorId() > RN_NONE && cameraLandmark->getMarkerId() > RN_NONE)
+					for(int i = 0; i < cameraLandmarksDetected; i++)
 					{
-						// Segundo filtro -> Compara que los datos no sean los de otra baliza
-						for(int j = 0; j < cameraLandmarksDetected and validQR; j++)
+
+	printf("5b. %d\n",i);	
+						RNLandmark* cameraLandmark = gn->getVisualLandmarks()->at(i);
+
+						validQR = true;
+						// Primer filtro -> Que se haya detectado toda la información de la baliza
+						if(cameraLandmark->getMapId() > RN_NONE and cameraLandmark->getSectorId() > RN_NONE && cameraLandmark->getMarkerId() > RN_NONE)
 						{
-							if(j != i)
+							// Segundo filtro -> Compara que los datos no sean los de otra baliza
+							for(int j = 0; j < cameraLandmarksDetected and validQR; j++)
 							{
-								if(cameraLandmark->getMarkerId() == gn->getVisualLandmarks()->at(j)->getMarkerId())
+								if(j != i)
 								{
-									validQR = false;
+									if(cameraLandmark->getMarkerId() == gn->getVisualLandmarks()->at(j)->getMarkerId())
+									{
+										validQR = false;
+									}
 								}
 							}
 						}
-					}
-					else
-					{
-						validQR = false;
-					}
-
-					if(validQR)
-					{
-						// Tercer filtro -> Si coincide el mapa y el sector
-						if( (cameraLandmark->getMapId() == gn->getCurrentSector()->getMapId()) and (cameraLandmark->getSectorId() == gn->getCurrentSector()->getId()) )
+						else
 						{
-							// Buscamos si alguna de las balizas de este sector coincide el QR con el detectado
-							bool landmark_used = false;
+							validQR = false;
+						}
 
-							for(int j = 2*laserLandmarksCount; j < (2*laserLandmarksCount + cameraLandmarksCount) and !landmark_used; j++)
+						if(validQR)
+						{
+							// Tercer filtro -> Si coincide el mapa y el sector
+							if( (cameraLandmark->getMapId() == gn->getCurrentSector()->getMapId()) and (cameraLandmark->getSectorId() == gn->getCurrentSector()->getId()) )
 							{
+								// Buscamos si alguna de las balizas de este sector coincide el QR con el detectado
+								bool landmark_used = false;
 
-								if(cameraLandmark->getMarkerId() == gn->getCurrentSector()->landmarkAt(j)->id)
+								for(int j = 2*laserLandmarksCount; j < (2*laserLandmarksCount + cameraLandmarksCount) and !landmark_used; j++)
 								{
-									landmark_used = true;
-									cameraLandmarksAccepted ++;
-									printf("id baliza visual = %d\n", cameraLandmark->getMarkerId());
 
-									cameraRealObservations(0,0) = RNUtils::fixAngleRad(cameraLandmark->getPointsYMean());
+									if(cameraLandmark->getMarkerId() == gn->getCurrentSector()->landmarkAt(j)->id)
+									{
+										printf("Baliza detectada. ID: %d compara con la baliza %d con ID: %d\n", cameraLandmark->getMarkerId(), j, gn->getCurrentSector()->landmarkAt(j)->id);
+										landmark_used = true;
+										printf("id baliza visual = %d\n", cameraLandmark->getMarkerId());
 
-									cameraHk(0, 0) = completeHk(j, 0);
-									cameraHk(0, 1) = completeHk(j, 1);
-									cameraHk(0, 2) = completeHk(j, 2);
+										cameraRealObservations(0,0) = RNUtils::fixAngleRad(cameraLandmark->getPointsYMean());
 
-									cameraInnovation_sup(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_sup(j,0) );
-									cameraInnovation_inf(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_inf(j,0) );
+										cameraHk(0, 0) = completeHk(j, 0);
+										cameraHk(0, 1) = completeHk(j, 1);
+										cameraHk(0, 2) = completeHk(j, 2);
 
-printf("5b. innovacion_sup = %f\n",cameraInnovation_sup(0,0));
+										cameraInnovation_sup(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_sup(j,0) );
+										cameraInnovation_inf(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_inf(j,0) );
 
-									v_Hk.push_back(cameraHk);
-									v_innovation_sup.push_back(cameraInnovation_sup);
-									v_innovation_inf.push_back(cameraInnovation_inf);
+	printf("5b. innovacion_sup = %f\n",cameraInnovation_sup(0,0));
+
+										Matrix smallS_inf = cameraHk * Pk_pred_inf * ~cameraHk + cameraR_inf;
+										double mahalanobisCamera_inf = std::sqrt( cameraInnovation_inf(0,0) * pow(smallS_inf(0,0), -1) * cameraInnovation_inf(0,0) );
+
+										printf("Camera mahalanobis limit %f\n", mahalanobisCamera_inf);
+										if(mahalanobisCamera_inf < camera_mahalanobis_limit)
+										{
+											v_Hk.push_back(cameraHk);
+											v_innovation_sup.push_back(cameraInnovation_sup);
+											v_innovation_inf.push_back(cameraInnovation_inf);
+
+											cameraLandmarksAccepted ++;
+										}
+										else
+											printf("\t\tDESCARTADA POR MAHALANOBIS\n");
+									}
 								}
 							}
 						}
-					}
-				}// for todas las balizas VISUALES detectadas
+					}// for todas las balizas VISUALES detectadas
 				
 
-	printf("completeHk\n");
-	completeHk.print();
-
-
+				}
 
 printf("6.\n");
 				totalLandmarksAccepted = laserLandmarksAccepted + cameraLandmarksAccepted;
@@ -580,7 +609,7 @@ printf("6.\n");
 
 				/***** 3º CORRECCIÓN *****/
 				// Si tenemos información disponible para corregir, pues corregimos
-				if(laserLandmarksAccepted > 0 || cameraLandmarksAccepted > 0) // Con 1 sola baliza visual las matrices son 1x1 y no valen los cálculos de inversa
+				if(laserLandmarksAccepted > 0 || cameraLandmarksAccepted > 1) // Con 1 sola baliza visual (1 medida de ángulo) no funciona bien
 				{
 					/** Matrices para la corrección solo con las dimensiones de las balizas aceptadas */
 					int sizeMatrix = 2*laserLandmarksAccepted + cameraLandmarksAccepted;
@@ -644,37 +673,16 @@ printf("7.\n");
 					Matrix Sk_sup = Hk * Pk_pred_sup * ~Hk + R_sup;
 					Matrix Sk_inf = Hk * Pk_pred_inf * ~Hk + R_inf;
 
-					// NO me deja hacer la inversa de una matriz de 1x1. Así que en caso de que toque lo hago con double
-					double Sk_sup_double = Sk_sup(0,0); 
-					double Sk_inf_double = Sk_inf(0,0); 
 
 					/** Último descarte de valores atípicos por mahalanobis */
-					Matrix mdk_inf = Matrix(1,1);
-
-					if(laserLandmarksAccepted == 0 && cameraLandmarksAccepted == 1) 
-					{
-						 mdk_inf = ~innovation_inf * (1/Sk_inf_double) * innovation_inf;
-					}
-					else
-					{
-						mdk_inf = ~innovation_inf * !Sk_inf * innovation_inf;
-					}
+					Matrix mdk_inf = ~innovation_inf * !Sk_inf * innovation_inf;
 					double md = std::sqrt(mdk_inf(0,0));
 
 					if(md < fullMahalanobisLimit)
 					{
-						Matrix Wk_sup, Wk_inf;
-						if(laserLandmarksAccepted == 0 && cameraLandmarksAccepted == 1) 
-						{
-							Wk_sup = Pk_pred_sup * ~Hk * (1 / Sk_sup_double);
-							Wk_inf = Pk_pred_inf * ~Hk * (1 / Sk_inf_double);
-						}
-						else
-						{
-							Wk_sup = Pk_pred_sup * ~Hk * !Sk_sup;
-							Wk_inf = Pk_pred_inf * ~Hk * !Sk_inf;							
-						}
-
+						// Ganancia de Kalman
+						Matrix Wk_sup = Pk_pred_sup * ~Hk * !Sk_sup;
+						Matrix Wk_inf = Pk_pred_inf * ~Hk * !Sk_inf;	
 						
 						// Corrección de la estimación
 						xk_sup = xk_pred_sup + Wk_sup * innovation_sup;
@@ -689,16 +697,6 @@ printf("7.\n");
 
 						corrected = true;		
 
-
-printf("Matriz H usada: \n");
-	Hk.print();
-	printf("Matriz R_sup usada\n");
-	R_sup.print();
-	printf("Innovacion sup usada\n");
-	innovation_sup.print();
-	printf("Matriz Wk_sup\n");
-	Wk_sup.print();
-	
 
 
 
@@ -892,11 +890,8 @@ printf("10.\n");
 		
 		printf("Contadores trapecios deformes:                                                x = %d, y = %d, th = %d\n", cont_deforme_x, cont_deforme_y, cont_deforme_th);
 
-		printf("11.\n");
+		
 		printf("CG: (%.8f, %.8f, %.8f)\n\n\n", CG(0, 0), CG(1, 0), CG(2, 0) * 180.0/M_PI);
-
-
-
 
 	} 
 	else 
@@ -904,6 +899,9 @@ printf("10.\n");
 		init();
 	}
 	RNUtils::sleep(10);
+
+
+printf("11.\n");
 }
 
 

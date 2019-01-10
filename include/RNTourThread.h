@@ -62,6 +62,9 @@ private:
 	RNRFIdentificationTask* rfid;
 	RNEmotionsTask* emotions;
 
+	std::list<int> currentSectorPathPlan;
+	std::list<int> currentMapPathPlan;
+
 	RNFunPointer1C<RNTourThread, std::list<std::string> >* rfidEvent;
 private:
 	void* runThread(void* object);
@@ -94,6 +97,9 @@ private:
 	void factor(std::list<std::string>* tokens);
 	void term(std::list<std::string>* tokens);
 	void simpExpr(std::list<std::string>* tokens);
+
+	std::list<int> getSectorPathPlan();
+	std::list<int> getMapPathPlan();
 
 };
 

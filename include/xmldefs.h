@@ -85,7 +85,8 @@
 #define XML_ATTRIBUTE_LINKED_FEATURE_ID_STR "linked-feature-id"
 #define XML_ATTRIBUTE_LINKED_SECTOR_ID_STR "linked-sector-id"
 #define XML_ATTRIBUTE_REFERENCE_STR "reference"
-#define XML_ATTRIBUTE_SIDE_STR "side"
+#define XML_ATTRIBUTE_ANTENNA_STR "antenna"
+#define XML_ATTRIBUTE_LINKED_SITE_ID_STR "linked-site-id"
 
 #define XML_ATTRIBUTE_ALPHA_STR "alpha"
 #define XML_ATTRIBUTE_TRAP_X1_STR "x1"

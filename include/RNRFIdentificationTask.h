@@ -49,7 +49,7 @@ public:
 		this->timestamp = timestamp;
 	}
 
-	void setAntenna(std::string antenna){
+	void setAntenna(int antenna){
 		this->antenna = antenna;
 	}
 
@@ -64,7 +64,7 @@ public:
 	double getPhaseAngle(void){ return angle; }
 	double getDistance(void){ return distance; }
 	double getDopplerFrequency(void){ return dopplerFrequency; }
-	std::string getAntenna(void){ return antenna; }
+	int getAntenna(void){ return antenna; }
 
 	void initializeFromString(std::string data){
 		if(data != ""){
@@ -74,9 +74,9 @@ public:
 			}*/
 			tagKey = std::string(info.at(0));
 			if(info.at(1) == "1"){
-				antenna = std::string(SEMANTIC_SIDE_LEFT_STR);
+				antenna = SEMANTIC_SIDE_LEFT_STR;
 			} else {
-				antenna = std::string(SEMANTIC_SIDE_RIGHT_STR);
+				antenna = SEMANTIC_SIDE_RIGHT_STR;
 			}
 			rssi = (double)std::stof(info.at(2));
 			timestamp = std::stoull(info.at(3));
@@ -90,7 +90,7 @@ public:
 			rssi = -1.0;
 			angle = 0.0;
 			dopplerFrequency = 0.0;
-			antenna = std::string(SEMANTIC_SIDE_LEFT_STR);
+			antenna = SEMANTIC_SIDE_LEFT_STR;
 		}
 	}
 
@@ -131,7 +131,7 @@ private:
 	double distance;
 	double angle;
 	double dopplerFrequency;
-	std::string antenna;
+	int antenna;
 
 };
 
@@ -148,10 +148,12 @@ public:
 	virtual void task();
 	virtual void kill();
 
+	void setSectorPathPlan(std::list<int> path);
+
 	void addTagsCallback(RNFunPointer* func);
 	void remTagsCallback(RNFunPointer* func);
 private:
-	RFData* findByKeyAntenna(std::string key, std::string antenna);
+	RFData* findByKeyAntenna(std::string key,int antenna);
 
 	void loadPeopleTagFile();
 
@@ -215,6 +217,7 @@ private:
 	std::list<s_person_tag*>* peopleTags;
 
 	std::list<RNFunPointer*> tagsSubscribers;
+	std::list<int> currentSectorPathPlan;
 };
 
 #endif

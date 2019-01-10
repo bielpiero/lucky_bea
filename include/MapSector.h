@@ -124,17 +124,20 @@ public:
 
 struct s_tag{
 	std::string id;
-	std::string side;
+	int antenna;
 	std::string name;
+	int linkedSiteId;
 	s_tag(){
 		id = "";
-		side = "";
+		antenna = RN_NONE;
+		linkedSiteId = RN_NONE;
 		name = "";
 	}
 
 	s_tag(const s_tag& tg){
 		id = tg.id;
-		side = tg.side;
+		antenna = tg.antenna;
+		linkedSiteId = tg.linkedSiteId;
 		name = tg.name;
 	}
 };
