@@ -964,7 +964,12 @@ void GeneralController::loadSector(int mapId, int sectorId){
 	
     RNUtils::getTimestamp(mappingSectorTimestamp);
     
-    
+    std::list<RNFunPointer*>::iterator sectorSubsIt;
+	for(sectorSubsIt = sectorChangedSubscribers.begin(); sectorSubsIt != sectorChangedSubscribers.end(); sectorSubsIt++){
+		if(dynamic_cast<RNFunPointer1<int>* >(*sectorSubsIt) != NULL){
+			((RNFunPointer1<int>*)(*sectorSubsIt))->invoke(sectorId);
+		}
+	}
 
 }
 
@@ -2425,6 +2430,14 @@ MapSector* GeneralController::getCurrentSector(){
 	}
 	pthread_mutex_unlock(&currentSectorLocker);
 	return copy;
+}
+
+void GeneralController::addSectorChangedCallback(RNFunPointer* func){
+	sectorChangedSubscribers.emplace_back(func);
+}
+
+void GeneralController::remSectorChangedCallback(RNFunPointer* func){
+	sectorChangedSubscribers.remove(func);
 }
 
 int GeneralController::getNextSectorId(){

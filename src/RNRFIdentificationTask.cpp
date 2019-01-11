@@ -115,14 +115,15 @@ void RNRFIdentificationTask::checkForActions(){
 					//RNUtils::printLn("Tag ------> NARROW: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 					
 				} else if(t->name == std::string(SEMANTIC_FEATURE_DOOR_STR)){
+					//RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 					if(not isAtDoor){
-						if(tag->getRSSI() > MAX_RSSI_ENVIRONMENT_VALUE){
+						if(tag->getRSSI() >= MAX_RSSI_ENVIRONMENT_VALUE){
 							RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 							RNUtils::printLn("Entrando a una puerta... activando Hallway Controller");
 							isAtDoor = true;
 						}
 					} else {
-						if(tag->isRemovable() or tag->getRSSI() < MIN_RSSI_ENVIRONMENT_VALUE){
+						if(tag->isRemovable() or tag->getRSSI() <= MIN_RSSI_ENVIRONMENT_VALUE){
 							if(t->antenna == tag->getAntenna()){
 								auto siteInPathIt = std::find(currentSectorPathPlan.begin(), currentSectorPathPlan.end(), t->linkedSiteId);
 								if(siteInPathIt != currentSectorPathPlan.end() or gn->isDirectMotion()){
@@ -581,12 +582,12 @@ int RNRFIdentificationTask::addROSpec(void){
         switch (i)
         {
             case 1:
-            	powerIndexAntenna1 = 61;
+            	powerIndexAntenna1 = 71;
                 pRFTransmitter->setTransmitPower(powerIndexAntenna1); // (value * .25) + 10.0 = -30.25 dBm // max power when using PoE
                 pRFReceiver->setReceiverSensitivity(12); // 1 --> -80 dBm;
                 break;
             case 2:
-            	powerIndexAntenna2 = 61;
+            	powerIndexAntenna2 = 71;
                 pRFTransmitter->setTransmitPower(powerIndexAntenna2); // (value * .25) + 10.0 = -27.75 dBm
                 pRFReceiver->setReceiverSensitivity(12); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
                 break;

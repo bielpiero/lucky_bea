@@ -21,6 +21,10 @@ RNTourThread::RNTourThread(const GeneralController* gn, const char* name, const 
 	lastSiteVisitedIndex = RN_NONE;
 	programLoaded = false;
 	loadPredifinedSymbols();
+	if(gn){
+		sectorChangedEvent = new RNFunPointer1C<RNTourThread, int>(this, &RNTourThread::sectorUpdatedEvent);
+		this->gn->addSectorChangedCallback(sectorChangedEvent);
+	}
 	if(this->rfid != NULL){
 		rfidEvent = new RNFunPointer1C<RNTourThread, std::list<std::string> >(this, &RNTourThread::rfidTagsEvent);
 		this->rfid->addTagsCallback(rfidEvent);
@@ -41,6 +45,18 @@ void RNTourThread::go(){
     unlock();
 
     create();
+}
+
+void RNTourThread::kill(){
+	if(isThreadRunning()){
+        RNUtils::printLn("Thread %s will be killed...", this->name.c_str());
+        lock();
+        goRequested = false;
+        executingTask = false;
+        killed = true;
+        unlock();       
+        RNUtils::printLn("Thread %s has been killed...", this->name.c_str());    
+    }
 }
 
 void* RNTourThread::runThread(void* object){
@@ -590,7 +606,8 @@ void RNTourThread::lex(){
 				ifcounter = 0;
 				forcounter = 0; 
 				whilecounter = 0;
-
+				expr_started = 0;
+				function_call = 0;
 
 				if(tpos != tokens.end()){
 					fprintf(stderr, "Error: Expected symbol )\n");
@@ -863,7 +880,15 @@ void RNTourThread::lex(){
 				}
 			} else {
 				if(state == 1){
-					if(functionarguments == 1){
+					if(function_call == 1 and expr_started == 1){
+						if(cnd != ""){
+							tokens.insert(tpos, TOK_EXP2PTS_STR + cnd);
+						}
+						cnd = "";
+						function_call = 0;
+						expr_started = 0;
+						tpos = std::next(tpos, 1);
+					} else if(functionarguments == 1){
 						if(str != ""){
 							tokens.insert(tpos, TOK_ARG2PTS_STR + str);
 							argCount++;
@@ -933,14 +958,6 @@ void RNTourThread::lex(){
 						tokens.insert(tpos, TOK_NUM2PTS_STR + str);
 						isnumber = 0;
 					}
-				}
-
-				if(function_call == 1 and expr_started == 1 and cnd != ""){
-					tokens.insert(tpos, TOK_EXP2PTS_STR + cnd);
-					cnd = "";
-					function_call = 0;
-					expr_started = 0;
-					tpos = std::next(tpos, 1);
 				}
 				infunction = 0;
 				state = 0;
@@ -1057,22 +1074,47 @@ void RNTourThread::parse(){
 }
 
 void RNTourThread::rfidTagsEvent(std::list<std::string> tags){
-	std::string tagsArray = TOK_ARR2PTS_STR;
-	std::list<std::string>::iterator itTags;
-	for(itTags = tags.begin(); itTags != tags.end(); itTags++){
-		tagsArray += TOK_STR2PTS_STR + *itTags;
-		if(std::next(itTags, 1) != tags.end()){
-			tagsArray += ",";
+	bool doit;
+    lock();
+    doit = goRequested;
+    unlock();
+	if(doit){
+		std::string tagsArray = TOK_ARR2PTS_STR;
+		std::list<std::string>::iterator itTags;
+		for(itTags = tags.begin(); itTags != tags.end(); itTags++){
+			tagsArray += TOK_STR2PTS_STR + *itTags;
+			if(std::next(itTags, 1) != tags.end()){
+				tagsArray += ",";
+			}
+		}
+
+		wevent_t eventHandler = events[EVENT_ON_RFID_TAGS_DETECTED_STR];
+		std::map<std::string, wcontent_t>::iterator fit;
+		fit = functions.find(eventHandler.eventFunction);
+		if(fit != functions.end()){
+			wcontent_t content = fit->second;
+			content.arguments.emplace_back(tagsArray);
+			parse(fit->first, &content);		
 		}
 	}
+}
 
-	wevent_t eventHandler = events[EVENT_ON_RFID_TAGS_DETECTED_STR];
-	std::map<std::string, wcontent_t>::iterator fit;
-	fit = functions.find(eventHandler.eventFunction);
-	if(fit != functions.end()){
-		wcontent_t content = fit->second;
-		content.arguments.emplace_back(tagsArray);
-		parse(fit->first, &content);		
+void RNTourThread::sectorUpdatedEvent(int sector){
+	bool doit;
+    lock();
+    doit = goRequested;
+    unlock();
+	if(doit){
+		std::string sectorStr = TOK_NUM2PTS_STR + std::to_string(sector);
+	
+		wevent_t eventHandler = events[EVENT_ON_SECTOR_CHANGED_STR];
+		std::map<std::string, wcontent_t>::iterator fit;
+		fit = functions.find(eventHandler.eventFunction);
+		if(fit != functions.end()){
+			wcontent_t content = fit->second;
+			content.arguments.emplace_back(sectorStr);
+			parse(fit->first, &content);		
+		}
 	}
 }
 
@@ -1325,6 +1367,23 @@ void RNTourThread::parse(std::string functionName, wcontent_t* content){
 						std::string cadenados;
 						cadenados = assignArray(*functionSymbols, (*it).substr(4), (*it2).substr(4), (*it4).substr(4));
 						functionSymbols->at((*it).substr(4)) = cadenados;
+
+						it = std::next(it, 4);
+				}
+			} else if(globalSymbols.find((*it).substr(4)) != globalSymbols.end()){
+				if((*it2) == TOK_EQ_STR and (*it3).substr(0, 3) == TOK_EXP_STR){
+					std::string r = evaluateExpression((*it3).substr(4), *functionSymbols);
+					globalSymbols.at((*it).substr(4)) = r;
+					it = std::next(it, 3);
+				} else if((*it2) == TOK_EQ_STR and (*it3).substr(0, 3) == TOK_ARR_STR){
+					if(globalSymbols.find((*it).substr(4)) == globalSymbols.end()){
+						globalSymbols.emplace((*it).substr(4),*it3);
+					}
+					it = std::next(it, 3);
+				} else if((*it2).substr(0,3) == TOK_POS_STR and (*it3).substr(0,3) == TOK_EQ_STR and (*it4).substr(0,3) == TOK_EXP_STR){
+						std::string cadenados;
+						cadenados = assignArray(*functionSymbols, (*it).substr(4), (*it2).substr(4), (*it4).substr(4));
+						globalSymbols.at((*it).substr(4)) = cadenados;
 
 						it = std::next(it, 4);
 				}

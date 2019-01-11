@@ -112,7 +112,7 @@
 			<feature id="4" name="door" width="137" height="10" x="0" y="65"/>
 		</features>
 		<sites sequence="5,3,2,0">
-			<site id="0" name="door" x="115" y="1174" linked-sector-id="0" xcoord="18" ycoord="-1146"/>
+			<site id="0" name="door" x="100" y="1174" linked-sector-id="0" xcoord="18" ycoord="-1146"/>
 			<site id="1" name="way" x="115" y="713"/>
 			<site id="2" name="way" x="464" y="713"/>
 			<site id="3" name="frame" x="115" y="209"/>

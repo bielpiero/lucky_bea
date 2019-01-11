@@ -15,6 +15,7 @@ function rfidEvent(tagsList)
 endfunction
 
 function newSectorEvent(sectorId)
+	say("Nuevo sector alcanzado")
 	if(sectorId == #0)
 		say[face=happy]("Estamos ahora en el sitio donde fui creada. Esta es la sala de Robots Móviles")
 		explainRobotsMoviles()
@@ -44,7 +45,4 @@ endfunction
 
 function main()
 	goto(#0, #1.1, #0.8)
-	while(finishedTour == #0)
-		wait(1000)
-	endw
 endfunction

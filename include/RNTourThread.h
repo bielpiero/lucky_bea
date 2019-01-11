@@ -18,9 +18,11 @@ public:
 	~RNTourThread();
 	int createCurrentMapGraph();
 	int createCurrentSectorGraph(bool update = false);
-	void go();   
+	void go();
+	virtual void kill();
 	void loadProgram(std::string filename);
 	void rfidTagsEvent(std::list<std::string> tags);
+	void sectorUpdatedEvent(int sector);
 private:
 	GeneralController* gn;
 	std::string name;
@@ -66,6 +68,7 @@ private:
 	std::list<int> currentMapPathPlan;
 
 	RNFunPointer1C<RNTourThread, std::list<std::string> >* rfidEvent;
+	RNFunPointer1C<RNTourThread, int >* sectorChangedEvent;
 private:
 	void* runThread(void* object);
 	void task();

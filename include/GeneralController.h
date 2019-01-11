@@ -338,6 +338,9 @@ public:
 	RNRFIdentificationTask* getRfidTask();
 	RNEmotionsTask* getEmotionsTask();
 	RNLaserTask* getLaserTask();
+
+	void addSectorChangedCallback(RNFunPointer* func);
+	void remSectorChangedCallback(RNFunPointer* func);
 private:
 	
 	RobotDataStreamer* spdWSServer;
@@ -367,6 +370,7 @@ private:
 	Matrix P;
 	Matrix Q;
 
+	std::list<RNFunPointer*> sectorChangedSubscribers;
 
 	double laserDistanceAlpha;
 	double laserAngleAlpha;
