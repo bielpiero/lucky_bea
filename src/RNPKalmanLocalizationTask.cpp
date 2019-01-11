@@ -8,7 +8,7 @@
 
 #include "RNPKalmanLocalizationTask.h"
 
-const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.25;
+const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.22;
 const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.014;
 
 //const float RNPKalmanLocalizationTask::MULTIPLIER_FACTOR = 4;
@@ -30,27 +30,18 @@ const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_inf = 0.12;
 const float centro_laser_angl_sup = 0.0;
 const float centro_laser_angl_inf = 0.0;
 const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.06; 
-const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.15; // La posición de las balizas no es muy precisa
-
-// Hay un montón de datos tomados y el resultado da descentrado. 
-// Pero no se sabe sí estan tomados con la cámara estaba girada x grados. Entonces hay dos opciones:
-// - Asumir que efectivamente está descentrada
-// - Asumir este descentrado es causado por el antiguo giro de la cámara.
-// Luego hay otro problema y es que no sabemos cómo de bien puestas están las balizas. 
-
-// Opcion descentrada:  media = 0.055 rad = 3.15º. alpha_sup = 0.05 rad = 2.85º.  alpha_inf = 0.09 rad = 5.15º
-// Opción centrada: media = 0. alpha_sup = 0.095 rad = 5.4º. alpha_inf = 0.135 rad = 7.74º
+const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.15; 
  
 
-const float centro_camera_angl_sup = 0.055;
-const float centro_camera_angl_inf = 0.055;
+const float centro_camera_angl_sup = -0.07;
+const float centro_camera_angl_inf = -0.07;
 const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_sup = 0.08;
-const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_inf = 0.15;
+const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_inf = 0.16; // Las balizas pueden estar mal colocadas
 
-// Chi cuadradi 2 var: 5% = 5.9915; 10% = 4.6052; 15% = 3.7946; 20% = 3.2189; 25% = 2.7726; 30% = 2.4079; 35% = 2.0996; 40% = 1.8326; 50% = 1.3863
-const float singleMahalanobisLimit = 3.2189;
-const float camera_mahalanobis_limit = 1.6424;
-const float fullMahalanobisLimit = 5.9915;
+// Chi cuadradi, 2 gfl: 5% = 5.9915; 10% = 4.6052; 15% = 3.7946; 20% = 3.2189; 25% = 2.7726; 30% = 2.4079; 35% = 2.0996; 40% = 1.8326; 50% = 1.3863
+const float singleMahalanobisLimit = 3.2189; // 2 gdl
+const float fullMahalanobisLimit = 5.9915; // 2 gdl
+const float camera_mahalanobis_limit = 2.706; // 1 gdl (5%)
 
 const int stateLenght = 3;
 
@@ -321,23 +312,31 @@ printf("3.\n");
 					{
 						if(gn->isCameraSensorActivated())
 						{
-							/** Matriz de rotación */
-							disp = Matrix(2, 1);
-							double nrx, nry;
-							RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, CG(2, 0), &nrx, &nry);
-							disp(0, 0) = nrx;
-							disp(1, 0) = nry;
-						
+													
 						printf("Baliza detectada. ID: %d. Pos: (%f, %f)\n", teoricalLandmark->id, teoricalLandmark->xpos, teoricalLandmark->ypos);
 
 							/** Observaciones */
+							// Matriz de rotación respecto a la posición superior
+							disp = Matrix(2, 1);   double nrx, nry;								
+							RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, xk_pred_sup(2, 0), &nrx, &nry);
+							disp(0, 0) = nrx;   disp(1, 0) = nry;
+							// Medidas superiores
 							landmarkObservation(xk_pred_sup, disp, teoricalLandmark, distance, angle);
 							completeObservations_sup(i_camera, 0) = RNUtils::fixAngleRad(angle + centro_camera_angl_sup);
 							
+							// Matriz de rotación respecto a la posición inferior
+							disp = Matrix(2, 1);							
+							RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, xk_pred_inf(2, 0), &nrx, &nry);
+							disp(0, 0) = nrx;   disp(1, 0) = nry;
+							// Medidas inferiores
 							landmarkObservation(xk_pred_inf, disp, teoricalLandmark, distance, angle);
 							completeObservations_inf(i_camera, 0) = RNUtils::fixAngleRad(angle + centro_camera_angl_inf);
 
 							/** Matriz H */
+							// Matriz de rotación respecto al centro de gravedad
+							disp = Matrix(2, 1);							
+							RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, CG(2, 0), &nrx, &nry);
+							disp(0, 0) = nrx;   disp(1, 0) = nry;
 							d = std::sqrt( std::pow(teoricalLandmark->xpos - (CG(0,0) + disp(0,0)), 2) + std::pow(teoricalLandmark->ypos - (CG(1,0) + disp(1,0)), 2) );
 							completeHk(i_camera,0) = (teoricalLandmark->ypos - (CG(1,0) + disp(1,0))) / std::pow(d,2);
 							completeHk(i_camera,1) = (-1) * (teoricalLandmark->xpos - (CG(0,0) + disp(0,0))) / std::pow(d, 2);
@@ -561,7 +560,6 @@ printf("4.\n");
 										Matrix smallS_inf = cameraHk * Pk_pred_inf * ~cameraHk + cameraR_inf;
 										double mahalanobisCamera_inf = std::sqrt( cameraInnovation_inf(0,0) * pow(smallS_inf(0,0), -1) * cameraInnovation_inf(0,0) );
 
-										printf("Camera mahalanobis limit %f\n", mahalanobisCamera_inf);
 										if(mahalanobisCamera_inf < camera_mahalanobis_limit)
 										{
 											v_Hk.push_back(cameraHk);
@@ -571,7 +569,7 @@ printf("4.\n");
 											cameraLandmarksAccepted ++;
 										}
 										else
-											printf("\t\tDESCARTADA POR MAHALANOBIS\n");
+											printf("\t\tDESCARTADA POR MAHALANOBIS: %f > %f\n", mahalanobisCamera_inf, camera_mahalanobis_limit);
 									}
 								}
 							}

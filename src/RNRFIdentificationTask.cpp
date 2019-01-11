@@ -48,10 +48,10 @@ void RNRFIdentificationTask::task(){
 	if(this->deviceInitialized){
 		std::string data = "";
 		if(getDataFromDevice(data) == 0){
-			
+			std::cout << data << std::endl;
 			RFData* detected = new RFData(data);
 			RFData* found = NULL;
-			if((found = findByKeyAntenna(detected->getTagKey(), detected->getAntenna())) == NULL){
+			/*if((found = findByKeyAntenna(detected->getTagKey(), detected->getAntenna())) == NULL){
 				if(detected->getTagKey() != ""){
 					rfids->emplace_back(detected);	
 				}
@@ -61,15 +61,15 @@ void RNRFIdentificationTask::task(){
 				us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
 				found->setTimestamp((unsigned long long)us.count());
 				delete detected;
-			}
+			}*/
 		}
-		std::list<RFData*>::iterator i;
+		/*std::list<RFData*>::iterator i;
 		for (i = rfids->begin(); i != rfids->end(); i++){
 			std::chrono::microseconds us;
 			us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
 			(*i)->setTimestamp((unsigned long long)us.count(), 1);
 
-		}
+		}*/
 		checkForActions();
 	} else {
 		init();
@@ -115,7 +115,7 @@ void RNRFIdentificationTask::checkForActions(){
 					//RNUtils::printLn("Tag ------> NARROW: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 					
 				} else if(t->name == std::string(SEMANTIC_FEATURE_DOOR_STR)){
-					//RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
+					RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 					if(not isAtDoor){
 						if(tag->getRSSI() >= MAX_RSSI_ENVIRONMENT_VALUE){
 							RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
@@ -582,14 +582,14 @@ int RNRFIdentificationTask::addROSpec(void){
         switch (i)
         {
             case 1:
-            	powerIndexAntenna1 = 71;
+            	powerIndexAntenna1 = 61;
                 pRFTransmitter->setTransmitPower(powerIndexAntenna1); // (value * .25) + 10.0 = -30.25 dBm // max power when using PoE
-                pRFReceiver->setReceiverSensitivity(12); // 1 --> -80 dBm;
+                pRFReceiver->setReceiverSensitivity(1); // 1 --> -80 dBm;
                 break;
             case 2:
-            	powerIndexAntenna2 = 71;
+            	powerIndexAntenna2 = 61;
                 pRFTransmitter->setTransmitPower(powerIndexAntenna2); // (value * .25) + 10.0 = -27.75 dBm
-                pRFReceiver->setReceiverSensitivity(12); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
+                pRFReceiver->setReceiverSensitivity(1); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
                 break;
         }
 
