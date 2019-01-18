@@ -45,4 +45,7 @@ endfunction
 
 function main()
 	goto(#0, #1.1, #0.8)
+	while(finishedTour == #0)
+		wait(#1000)
+	endw
 endfunction

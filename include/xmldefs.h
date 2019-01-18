@@ -49,6 +49,7 @@
 
 #define XML_ELEMENT_ROBOT_STR "robot"
 #define XML_ELEMENT_NAV_PARAMS_STR "navigation"
+#define XML_ELEMENT_RFID_CONFIG_STR "rfid-config"
 #define XML_ELEMENT_INITIAL_POS_STR "initial-position"
 #define XML_ELEMENT_PROCESS_NOISE_STR "process-noise"
 #define XML_ELEMENT_SENSORS_STR "sensors"
@@ -87,6 +88,9 @@
 #define XML_ATTRIBUTE_REFERENCE_STR "reference"
 #define XML_ATTRIBUTE_ANTENNA_STR "antenna"
 #define XML_ATTRIBUTE_LINKED_SITE_ID_STR "linked-site-id"
+
+#define XML_ATTRIBUTE_RFID_TX_POWER_STR "tx-power"
+#define XML_ATTRIBUTE_RFID_RX_SENSITIVITY_STR "rx-sensitivity"
 
 #define XML_ATTRIBUTE_ALPHA_STR "alpha"
 #define XML_ATTRIBUTE_TRAP_X1_STR "x1"

@@ -163,6 +163,15 @@ struct s_sensor{
 	}
 };
 
+struct s_rfid_params{
+	int txPowerIndex;
+	int rxSensitivityIndex;
+	s_rfid_params(){
+		txPowerIndex = 0;
+		rxSensitivityIndex = 0;
+	}
+};
+
 struct s_navigation_params{
 	s_position* initialPosition;
 	s_obs_dth* processNoise;
@@ -189,12 +198,14 @@ struct s_robot{
 	std::string localization;
 	int faceId;
 	int neckId;
+	s_rfid_params* rfidConfig;
 	s_navigation_params* navParams;
 	s_robot(){
 		faceId = RN_NONE;
 		neckId = RN_NONE;
 		height = 0.0;
 		localization = "kalman";
+		rfidConfig = new s_rfid_params();
 		navParams = new s_navigation_params();
 	}
 
@@ -316,6 +327,9 @@ public:
 	double getRobotHeight();
 	int getFaceId();
 	int getNeckId();
+
+	int getRfidTxPower();
+	int getRfidRxSensitivity();
 
 	bool isLaserSensorActivated();
 	bool isCameraSensorActivated();

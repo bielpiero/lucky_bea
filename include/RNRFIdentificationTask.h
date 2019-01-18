@@ -18,8 +18,8 @@
 #define TRANSMISSION_POWER_INDEX_2 71
 #define FRONT_2_BACK_RATIO 18
 
-#define MAX_RSSI_ENVIRONMENT_VALUE -38
-#define MIN_RSSI_ENVIRONMENT_VALUE -45
+#define MAX_RSSI_ENVIRONMENT_VALUE -36
+#define MIN_RSSI_ENVIRONMENT_VALUE -51
 
 #define XML_TAG_LIST_ATTRIBUTE_ACTIVE_STR "active"
 #define XML_TAG_LIST_ATTRIBUTE_HOLDER_NAME_STR "holder-name"
@@ -53,13 +53,13 @@ public:
 		this->antenna = antenna;
 	}
 
-	void update(double rssi, double phaseAngle, double dopplerFrequency){
+	void update(double rssi, double phaseAngle = 0.0, double dopplerFrequency = 0.0){
 		this->rssi = rssi;
 		this->angle = phaseAngle;
 		this->dopplerFrequency = dopplerFrequency;
-		convertToDistance();
+		//convertToDistance();
 	}
-	bool isRemovable(){ return ((timestamp - lastTimestamp) > 3e6); }
+	bool isRemovable(){ return ((timestamp - lastTimestamp) > 1e6); }
 	double getRSSI(void){ return rssi; }
 	double getPhaseAngle(void){ return angle; }
 	double getDistance(void){ return distance; }
@@ -81,6 +81,8 @@ public:
 			rssi = (double)std::stof(info.at(2));
 			timestamp = std::stoull(info.at(3));
 			lastTimestamp = timestamp;
+			angle = 0.0;
+			dopplerFrequency = 0.0;
 			//convertToDistance();
 			
 		} else {
@@ -94,16 +96,16 @@ public:
 		}
 	}
 
-	const char* toString() const{
+	const std::string toString() const{
 		std::ostringstream buffer;
 		buffer.clear();
 		buffer << "Key: " << tagKey << ", ";
 		buffer << "Antenna: " << antenna << ", ";
-		buffer << "RSSI: " << rssi << ", ";
-		buffer << "Angle: " << angle << ", ";
-		buffer << "DF: " << dopplerFrequency << ", ";
-		buffer << "Distance: " << distance;
-		return buffer.str().c_str();
+		buffer << "RSSI: " << rssi;// << ", ";
+		//buffer << "Angle: " << angle << ", ";
+		//buffer << "DF: " << dopplerFrequency << ", ";
+		//buffer << "Distance: " << distance;
+		return buffer.str();
 	}
 private:
 	void convertToDistance(){

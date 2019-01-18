@@ -1005,44 +1005,49 @@ void GeneralController::loadRobotConfig(){
 	if(root_node->first_attribute(XML_ATTRIBUTE_ROBOT_NECK_ID_STR)){
 		robotConfig->neckId = std::atoi(root_node->first_attribute(XML_ATTRIBUTE_ROBOT_NECK_ID_STR)->value());
 	}
+	xml_node<>* rfid_conf_root_node = root_node->first_node(XML_ELEMENT_RFID_CONFIG_STR);
+	s_rfid_params* rfidConfig = robotConfig->rfidConfig;
+	rfidConfig->txPowerIndex = std::atoi(rfid_conf_root_node->first_attribute(XML_ATTRIBUTE_RFID_TX_POWER_STR)->value());
+	rfidConfig->rxSensitivityIndex = std::atoi(rfid_conf_root_node->first_attribute(XML_ATTRIBUTE_RFID_RX_SENSITIVITY_STR)->value());
+
 	xml_node<>* nav_root_node = root_node->first_node(XML_ELEMENT_NAV_PARAMS_STR);
 
 	xml_node<>* initial_pos_root_node = nav_root_node->first_node(XML_ELEMENT_INITIAL_POS_STR);
 	xml_node<>* pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_X_ZONE_STR);
 	s_trapezoid* x_zone = robotConfig->navParams->initialPosition->xZone;
-	x_zone->x1 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
-	x_zone->x2 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
-	x_zone->x3 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
-	x_zone->x4 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
+	x_zone->x1 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
+	x_zone->x2 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
+	x_zone->x3 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
+	x_zone->x4 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
 
 	pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_Y_ZONE_STR);
 	s_trapezoid* y_zone = robotConfig->navParams->initialPosition->yZone;
-	y_zone->x1 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
-	y_zone->x2 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
-	y_zone->x3 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
-	y_zone->x4 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
+	y_zone->x1 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
+	y_zone->x2 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
+	y_zone->x3 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
+	y_zone->x4 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
 
 	pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
 	s_trapezoid* th_zone = robotConfig->navParams->initialPosition->thZone;
-	th_zone->x1 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
-	th_zone->x2 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
-	th_zone->x3 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
-	th_zone->x4 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
+	th_zone->x1 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
+	th_zone->x2 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
+	th_zone->x3 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
+	th_zone->x4 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
 	
 	xml_node<>* process_noise_root_node = nav_root_node->first_node(XML_ELEMENT_PROCESS_NOISE_STR);
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_D_ZONE_STR);
 	s_trapezoid* x1_zone =robotConfig->navParams->processNoise->dZone;
-	x1_zone->x1 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
-	x1_zone->x2 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
-	x1_zone->x3 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
-	x1_zone->x4 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
+	x1_zone->x1 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
+	x1_zone->x2 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
+	x1_zone->x3 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
+	x1_zone->x4 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
 
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
 	s_trapezoid* th1_zone = robotConfig->navParams->processNoise->thZone;
-	th1_zone->x1 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
-	th1_zone->x2 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
-	th1_zone->x3 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
-	th1_zone->x4 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
+	th1_zone->x1 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
+	th1_zone->x2 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
+	th1_zone->x3 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
+	th1_zone->x4 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
 
 	xml_node<>* sensors_root_node = nav_root_node->first_node(XML_ELEMENT_SENSORS_STR);
 	if(sensors_root_node != NULL){
@@ -2552,6 +2557,14 @@ int GeneralController::getFaceId(){
 
 int GeneralController::getNeckId(){
 	return (robotConfig != NULL ? robotConfig->neckId : 0.0);
+}
+
+int GeneralController::getRfidTxPower(){
+	return (robotConfig != NULL ? robotConfig->rfidConfig->txPowerIndex : 8); //default value
+}
+
+int GeneralController::getRfidRxSensitivity(){
+	return (robotConfig != NULL ? robotConfig->rfidConfig->rxSensitivityIndex : 22); //default value
 }
 
 DorisLipSync* GeneralController::getTTS(){

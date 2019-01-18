@@ -1,4 +1,5 @@
 <robot height="1.425" cameras="2" localization="kalman" face="1" neck="0"> <!--localization: {kalman, pkalman}-->
+	<rfid-config tx-power="8" rx-sensitivity="22"/>
 	<navigation>
 		<initial-position>
 			<x-zone x1="-5" x2="-3" x3="3" x4="5"/> <!-- centimeters -->
@@ -20,12 +21,6 @@
 				<observation-noise>
 					<d-zone alpha="0.1" x1="-3" x2="-2" x3="2" x4="3"/>  <!-- centimeters -->
 					<th-zone alpha="0.05" x1="-0.013" x2="-0.009" x3="0.009" x4="0.013"/> <!-- radians -->
-				</observation-noise>
-			</sensor>
-			<sensor type="rfid" activated="0">
-				<observation-noise>
-					<d-zone alpha="0" x1="-4" x2="-2" x3="3" x4="4"/>  <!-- centimeters -->
-					<th-zone alpha="0" x1="-0.04" x2="-0.02" x3="0.0351" x4="0.04"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
 		</sensors>

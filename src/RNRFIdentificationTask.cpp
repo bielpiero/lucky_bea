@@ -30,13 +30,13 @@ RNRFIdentificationTask::~RNRFIdentificationTask(){
 			/*if(stopROSpec() == 0){
 				RNUtils::printLn("Success: Enabled readers operation specifications on %s OK...", DEVICE_NAME);
 			}*/
-			if(resetToDefaultConfiguration() == 0){
+			/*if(resetToDefaultConfiguration() == 0){
 				RNUtils::printLn("Success: resetConfiguration on %s OK...", DEVICE_NAME);
-			}
+			}*/
 			conn->closeConnectionToReader();
 			RNUtils::printLn("Disconnected from RF Speedway Reader...");
 		}
-		delete conn;
+		//delete conn;
 		delete currentSector;
 	}
 	/*if(!file){
@@ -47,29 +47,27 @@ RNRFIdentificationTask::~RNRFIdentificationTask(){
 void RNRFIdentificationTask::task(){
 	if(this->deviceInitialized){
 		std::string data = "";
+		std::chrono::microseconds us;
+		us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
 		if(getDataFromDevice(data) == 0){
-			std::cout << data << std::endl;
 			RFData* detected = new RFData(data);
-			RFData* found = NULL;
-			/*if((found = findByKeyAntenna(detected->getTagKey(), detected->getAntenna())) == NULL){
+			RFData* found = findByKeyAntenna(detected->getTagKey(), detected->getAntenna());
+			
+			if(found == NULL){
 				if(detected->getTagKey() != ""){
 					rfids->emplace_back(detected);	
 				}
 			} else {
-				found->update(detected->getRSSI(), detected->getPhaseAngle(), detected->getDopplerFrequency());
-				std::chrono::microseconds us;
-				us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
+				found->update(detected->getRSSI());
 				found->setTimestamp((unsigned long long)us.count());
 				delete detected;
-			}*/
+			}
 		}
-		/*std::list<RFData*>::iterator i;
+		std::list<RFData*>::iterator i;
 		for (i = rfids->begin(); i != rfids->end(); i++){
-			std::chrono::microseconds us;
-			us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
 			(*i)->setTimestamp((unsigned long long)us.count(), 1);
-
-		}*/
+			//std::cout << (*i)->toString() << std::endl;
+		}
 		checkForActions();
 	} else {
 		init();
@@ -115,34 +113,23 @@ void RNRFIdentificationTask::checkForActions(){
 					//RNUtils::printLn("Tag ------> NARROW: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
 					
 				} else if(t->name == std::string(SEMANTIC_FEATURE_DOOR_STR)){
-					RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
-					if(not isAtDoor){
-						if(tag->getRSSI() >= MAX_RSSI_ENVIRONMENT_VALUE){
-							RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
-							RNUtils::printLn("Entrando a una puerta... activando Hallway Controller");
-							isAtDoor = true;
+					//RNUtils::printLn("Tag ------> DOOR: %s, @%f, %d", tag->getTagKey().c_str(), tag->getRSSI(), tag->getAntenna());
+					if(t->antenna == tag->getAntenna()){
+						auto siteInPathIt = std::find(currentSectorPathPlan.begin(), currentSectorPathPlan.end(), t->linkedSiteId);
+						if(siteInPathIt != currentSectorPathPlan.end() or gn->isDirectMotion()){
+							ArPose* currPose = gn->getAltPose();
+							s_site* destinationSite = currentSector->findSiteById(t->linkedSiteId);
+		        			gn->setPosition((currPose->getX() / 1e3) + destinationSite->xcoord, (currPose->getY() / 1e3) + destinationSite->ycoord, currPose->getThRad());
+		        			currPose = gn->getAltPose();
+		        			printf("{x: %f, y: %f, th: %f}\n", (currPose->getX() / 1e3), (currPose->getY() / 1e3), currPose->getThRad());
+		        			gn->loadSector(currentSector->getMapId(), destinationSite->linkedSectorId);
 						}
-					} else {
-						if(tag->isRemovable() or tag->getRSSI() <= MIN_RSSI_ENVIRONMENT_VALUE){
-							if(t->antenna == tag->getAntenna()){
-								auto siteInPathIt = std::find(currentSectorPathPlan.begin(), currentSectorPathPlan.end(), t->linkedSiteId);
-								if(siteInPathIt != currentSectorPathPlan.end() or gn->isDirectMotion()){
-									ArPose* currPose = gn->getAltPose();
-									s_site* destinationSite = currentSector->findSiteById(t->linkedSiteId);
-				        			gn->setPosition((currPose->getX() / 1e3) + destinationSite->xcoord, (currPose->getY() / 1e3) + destinationSite->ycoord, currPose->getThRad());
-				        			currPose = gn->getAltPose();
-				        			printf("{x: %f, y: %f, th: %f}\n", (currPose->getX() / 1e3), (currPose->getY() / 1e3), currPose->getThRad());
-				        			gn->loadSector(currentSector->getMapId(), destinationSite->linkedSectorId);
-								}
-
-							}
-							RNUtils::printLn("Tag ------> DOOR: %s, @%f", tag->getTagKey().c_str(), tag->getRSSI());
-							RNUtils::printLn("Saliendo de la puerta... desactivando Hallway Controller");
-							isAtDoor = false;
-							delete *it;
-							it = rfids->erase(it);
-							deleted = true;
-						}
+						RNUtils::printLn("Tag ------> DOOR: %s, @%f, %d, lim { inf: %lf, sup: %lf }", tag->getTagKey().c_str(), tag->getRSSI(), tag->getAntenna(), (double)MIN_RSSI_ENVIRONMENT_VALUE, (double)MAX_RSSI_ENVIRONMENT_VALUE);
+						RNUtils::printLn("Saliendo de la puerta...");
+						isAtDoor = false;
+						delete *it;
+						it = rfids->erase(it);
+						deleted = true;
 					}
 				}
 			} else if(pt != NULL){
@@ -582,14 +569,12 @@ int RNRFIdentificationTask::addROSpec(void){
         switch (i)
         {
             case 1:
-            	powerIndexAntenna1 = 61;
-                pRFTransmitter->setTransmitPower(powerIndexAntenna1); // (value * .25) + 10.0 = -30.25 dBm // max power when using PoE
-                pRFReceiver->setReceiverSensitivity(1); // 1 --> -80 dBm;
+                pRFTransmitter->setTransmitPower(this->gn->getRfidTxPower()); // (value * .25) + 10.0 = -30.25 dBm // max power when using PoE
+                pRFReceiver->setReceiverSensitivity(this->gn->getRfidRxSensitivity()); // 1 --> -80 dBm;
                 break;
             case 2:
-            	powerIndexAntenna2 = 61;
-                pRFTransmitter->setTransmitPower(powerIndexAntenna2); // (value * .25) + 10.0 = -27.75 dBm
-                pRFReceiver->setReceiverSensitivity(1); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
+                pRFTransmitter->setTransmitPower(this->gn->getRfidTxPower()); // (value * .25) + 10.0 = -27.75 dBm
+                pRFReceiver->setReceiverSensitivity(this->gn->getRfidRxSensitivity()); // 10 dBm + 3 dBm = 13 dBm + (- 80 dBm) = -67 dBm
                 break;
         }
 
@@ -801,11 +786,10 @@ int RNRFIdentificationTask::getDataFromDevice(std::string& data){
 		typeDesc = message->m_pType;
 		if(typeDesc == &LLRP::CRO_ACCESS_REPORT::s_typeDescriptor){
 			report = (LLRP::CRO_ACCESS_REPORT*)message;
-			int index = 0;
+
 			for(std::list<LLRP::CTagReportData*>::iterator it = report->beginTagReportData(); it != report->endTagReportData(); it++){
 				std::string oneTag;
 				getOneTagData(*it, oneTag);
-				//RNUtils::printLn("Y aqui cuanto tarda");
 				data += oneTag + ";";
 			}
 			data = data.substr(0, data.size() - 1);
@@ -1099,13 +1083,9 @@ LLRP::CMessage* RNRFIdentificationTask::recvMessage(int msecMax){
 
 RFData* RNRFIdentificationTask::findByKeyAntenna(std::string key, int antenna){
 	RFData* rfid = NULL;
-	bool found = false;
-	std::list<RFData*>::iterator i;
-	for (i = rfids->begin(); i != rfids->end() and not found; i++){
-		if ((*i)->getTagKey() == key and (*i)->getAntenna() == antenna){
-			found = true;
-			rfid = (*i);
-		}
+	auto tagit = std::find_if(rfids->begin(), rfids->end(), [key, antenna](RFData* tag) { return (tag->getTagKey() == key and tag->getAntenna() == antenna); });
+	if(tagit != rfids->end()){
+		rfid = *tagit;
 	}
 	return rfid;
 }
