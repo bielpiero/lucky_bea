@@ -25,7 +25,7 @@
 			<site id="3" name="frame" x="360" y="310"/>
 			<site id="4" name="way" x="160" y="227"/>
 			<site id="5" name="way" x="110" y="110"/>
-			<site id="6" name="door" x="110" y="0" linked-sector-id="1" xcoord="-18" ycoord="1146"/>
+			<site id="6" name="door" x="110" y="0" linked-sector-id="1" xcoord="-18" ycoord="1148"/>
 			<site id="7" name="door" x="0" y="110" linked-sector-id="4" xcoord="160" ycoord="0"/>
 		</sites>
 		<ways>
@@ -87,7 +87,7 @@
 		<ways/>
 		<tags/>
 	</sector>
-	<sector id="1" name="Computer Vision" width="1030" height="1146" reference="2" polygon="m 0 0 l 0 1146 l 1030 0 l 0 -1146 z" adjacency="0,2,7,8">
+	<sector id="1" name="Computer Vision" width="1030" height="1148" reference="2" polygon="m 0 0 l 0 1148 l 1030 0 l 0 -1146 z" adjacency="0,2,7,8">
 		<landmarks>
 			<landmark id="8" type="camera" x="92" y="10" z="275"/>
 			<landmark id="9" type="camera" x="0" y="209" z="275"/>
@@ -112,7 +112,7 @@
 			<feature id="4" name="door" width="137" height="10" x="0" y="65"/>
 		</features>
 		<sites sequence="5,3,2,0">
-			<site id="0" name="door" x="100" y="1184" linked-sector-id="0" xcoord="18" ycoord="-1146"/>
+			<site id="0" name="door" x="090" y="1148" linked-sector-id="0" xcoord="18" ycoord="-1148"/>
 			<site id="1" name="way" x="115" y="713"/>
 			<site id="2" name="way" x="464" y="713"/>
 			<site id="3" name="frame" x="115" y="209"/>

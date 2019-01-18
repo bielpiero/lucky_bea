@@ -24,7 +24,7 @@ function newSectorEvent(sectorId)
 endfunction
 
 function explainRobotsMoviles()
-	goto(#-1, #1.2, #2.27)
+	goto(#-1, #1.6, #2.27)
 	turn(#-90)
 	say[face=happy]("Si miráis a mi espalda, en la parte superior, se encuentra VAD 1, que fué el primer robot móvil del laboratorio")
 	goto(#-1, #2.4, #2.27)
@@ -45,7 +45,4 @@ endfunction
 
 function main()
 	goto(#0, #1.1, #0.8)
-	while(finishedTour == #0)
-		wait(#1000)
-	endw
 endfunction

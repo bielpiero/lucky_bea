@@ -122,6 +122,7 @@ void RNRFIdentificationTask::checkForActions(){
 		        			gn->setPosition((currPose->getX() / 1e3) + destinationSite->xcoord, (currPose->getY() / 1e3) + destinationSite->ycoord, currPose->getThRad());
 		        			currPose = gn->getAltPose();
 		        			printf("{x: %f, y: %f, th: %f}\n", (currPose->getX() / 1e3), (currPose->getY() / 1e3), currPose->getThRad());
+		        			gn->moveAtSpeed(0.0, 0.0);
 		        			gn->loadSector(currentSector->getMapId(), destinationSite->linkedSectorId);
 						}
 						RNUtils::printLn("Tag ------> DOOR: %s, @%f, %d, lim { inf: %lf, sup: %lf }", tag->getTagKey().c_str(), tag->getRSSI(), tag->getAntenna(), (double)MIN_RSSI_ENVIRONMENT_VALUE, (double)MAX_RSSI_ENVIRONMENT_VALUE);
