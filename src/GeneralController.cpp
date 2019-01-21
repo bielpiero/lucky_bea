@@ -787,189 +787,196 @@ void GeneralController::getMapId(char* cad, int& mapId){
 	mapId = atoi(cad);
 }
 
-void GeneralController::loadSector(int mapId, int sectorId){
+bool GeneralController::loadSector(int mapId, int sectorId){
 	if(localization != NULL){
 		localization->kill();	
 	}
 	pthread_mutex_lock(&currentSectorLocker);
 	std::string filename;
 	bool reloadMap = true;
+	bool sectorLoadedSuccess = false;
 	getMapFilename(mapId, filename);
+	if (filename != ""){
+		xml_document<> doc;
+	    xml_node<>* root_node;  
 
-	xml_document<> doc;
-    xml_node<>* root_node;  
+	    std::string fullSectorPath = xmlSectorsPath + filename;
+	    std::ifstream the_file(fullSectorPath.c_str());
+	    std::vector<char> buffer = std::vector<char>((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
+	    buffer.push_back('\0');
+	    doc.parse<0>(&buffer[0]);
 
-    std::string fullSectorPath = xmlSectorsPath + filename;
-    std::ifstream the_file(fullSectorPath.c_str());
-    std::vector<char> buffer = std::vector<char>((std::istreambuf_iterator<char>(the_file)), std::istreambuf_iterator<char>());
-    buffer.push_back('\0');
-    doc.parse<0>(&buffer[0]);
+	    if(currentSector != NULL){
+	    	reloadMap = mapId != currentSector->getMapId();
+	    	delete currentSector;
+	    	currentSector = NULL;
+	    }
 
-    if(currentSector != NULL){
-    	reloadMap = mapId != currentSector->getMapId();
-    	delete currentSector;
-    	currentSector = NULL;
-    }
+	    root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
+	    currentSector = new MapSector;
+	    if(root_node != NULL){
+	    	bool found = false;
+	    	for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){	
+	    		int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+	    		//std::cout << "hasta aqui bien" << std::endl;
+	    		if(xmlSectorId == sectorId){
+	    			found = true;
+	    			currentSector->setMapId(mapId);
+	    			currentSector->setId(xmlSectorId);
+					currentSector->setName(std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value()));
+					currentSector->setPolygon(std::string(sector_node->first_attribute(XML_ATTRIBUTE_POLYGON_STR)->value()));
+					currentSector->setWidth((double)std::atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())/100.0);
+					currentSector->setHeight((double)std::atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())/100.0);
+					xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
+					if(landmarks_root_node->first_node() !=  NULL){
+						for(xml_node<>* landmark_node = landmarks_root_node->first_node(XML_ELEMENT_LANDMARK_STR); landmark_node; landmark_node = landmark_node->next_sibling()){
+							s_landmark* tempLandmark = new s_landmark;
 
-    root_node = doc.first_node(XML_ELEMENT_SECTORS_STR);
-    currentSector = new MapSector;
-    if(root_node != NULL){
-    	bool found = false;
-    	for (xml_node<> * sector_node = root_node->first_node(XML_ELEMENT_SECTOR_STR); sector_node and not found; sector_node = sector_node->next_sibling()){	
-    		int xmlSectorId = atoi(sector_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-    		//std::cout << "hasta aqui bien" << std::endl;
-    		if(xmlSectorId == sectorId){
-    			found = true;
-    			currentSector->setMapId(mapId);
-    			currentSector->setId(xmlSectorId);
-				currentSector->setName(std::string(sector_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value()));
-				currentSector->setPolygon(std::string(sector_node->first_attribute(XML_ATTRIBUTE_POLYGON_STR)->value()));
-				currentSector->setWidth((double)std::atoi(sector_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())/100.0);
-				currentSector->setHeight((double)std::atoi(sector_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())/100.0);
-				xml_node<>* landmarks_root_node = sector_node->first_node(XML_ELEMENT_LANDMARKS_STR);
-				if(landmarks_root_node->first_node() !=  NULL){
-					for(xml_node<>* landmark_node = landmarks_root_node->first_node(XML_ELEMENT_LANDMARK_STR); landmark_node; landmark_node = landmark_node->next_sibling()){
-						s_landmark* tempLandmark = new s_landmark;
+							tempLandmark->id = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+							tempLandmark->type = std::string(landmark_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value());
+							if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)){
+								tempLandmark->varMinX = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100.0;
+							}
+							if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)){
+								tempLandmark->varMaxX = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100.0;
+							}
+							if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)){
+								tempLandmark->varMinY = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100.0;
+							}
+							if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)){
+								tempLandmark->varMaxY = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100.0;
+							}
+							if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Z_STR)){
+								tempLandmark->varMinZ = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Z_STR)->value())) / 100.0;
+							}
+							if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Z_STR)){
+								tempLandmark->varMaxZ = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Z_STR)->value())) / 100.0;
+							}	
 
-						tempLandmark->id = atoi(landmark_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-						tempLandmark->type = std::string(landmark_node->first_attribute(XML_ATTRIBUTE_TYPE_STR)->value());
-						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)){
-							tempLandmark->varMinX = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_X_STR)->value())) / 100.0;
+							tempLandmark->xpos = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100.0;
+							tempLandmark->ypos = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100.0;
+							if(landmark_node->first_attribute(XML_ATTRIBUTE_Z_POSITION_STR)){
+								tempLandmark->zpos = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Z_POSITION_STR)->value())) / 100.0;
+							}
+							currentSector->addLandmark(tempLandmark);
 						}
-						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)){
-							tempLandmark->varMaxX = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_X_STR)->value())) / 100.0;
-						}
-						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)){
-							tempLandmark->varMinY = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Y_STR)->value())) / 100.0;
-						}
-						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)){
-							tempLandmark->varMaxY = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Y_STR)->value())) / 100.0;
-						}
-						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Z_STR)){
-							tempLandmark->varMinZ = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MIN_Z_STR)->value())) / 100.0;
-						}
-						if(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Z_STR)){
-							tempLandmark->varMaxZ = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_VARIANCE_MAX_Z_STR)->value())) / 100.0;
-						}	
-
-						tempLandmark->xpos = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100.0;
-						tempLandmark->ypos = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100.0;
-						if(landmark_node->first_attribute(XML_ATTRIBUTE_Z_POSITION_STR)){
-							tempLandmark->zpos = ((double)std::atoi(landmark_node->first_attribute(XML_ATTRIBUTE_Z_POSITION_STR)->value())) / 100.0;
-						}
-						currentSector->addLandmark(tempLandmark);
 					}
-				}
 
-				xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
-				if(features_root_node->first_node() !=  NULL){
-					for(xml_node<>* features_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); features_node; features_node = features_node->next_sibling()){
-						s_feature* tempFeature = new s_feature;
+					xml_node<>* features_root_node = sector_node->first_node(XML_ELEMENT_FEATURES_STR);
+					if(features_root_node->first_node() !=  NULL){
+						for(xml_node<>* features_node = features_root_node->first_node(XML_ELEMENT_FEATURE_STR); features_node; features_node = features_node->next_sibling()){
+							s_feature* tempFeature = new s_feature;
 
-						tempFeature->id = atoi(features_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-						tempFeature->name = std::string(features_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-						tempFeature->width = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100.0;
-						tempFeature->height = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100.0;
-						tempFeature->xpos = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100.0;
-						tempFeature->ypos = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100.0;
-                        
-                        currentSector->addFeature(tempFeature);
-						
-					}
-				}
-
-				xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
-				if(sites_root_node->first_attribute()){
-					if(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)){
-						std::string sequence(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)->value());
-						currentSector->setSequence(sequence);
-					}
-				}
-				
-				if(sites_root_node->first_node() !=  NULL){
-					for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
-						s_site* tempSite = new s_site;
-
-						tempSite->id = std::atoi(site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-						tempSite->name = std::string(site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
-						tempSite->xpos = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100.0;
-						tempSite->ypos = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100.0;
-
-						if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
-							tempSite->linkedSectorId = std::atoi(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value());
-						} else {
-							tempSite->linkedSectorId = RN_NONE;
+							tempFeature->id = atoi(features_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+							tempFeature->name = std::string(features_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+							tempFeature->width = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_WIDTH_STR)->value())) / 100.0;
+							tempFeature->height = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_HEIGHT_STR)->value())) / 100.0;
+							tempFeature->xpos = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100.0;
+							tempFeature->ypos = ((double)std::atoi(features_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100.0;
+	                        
+	                        currentSector->addFeature(tempFeature);
+							
 						}
-                        
-                        if(site_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)){
-                            tempSite->xcoord = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)->value())) / 100.0;
-                        } else {
-                            tempSite->xcoord = 0.0;
-                        }
-                        
-                        if(site_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)){
-                            tempSite->ycoord = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)->value())) / 100.0;
-                        } else {
-                            tempSite->ycoord = 0.0;
-                        }
-
-						currentSector->addSite(tempSite);
 					}
-				}
-				xml_node<>* ways_root_node = sector_node->first_node(XML_ELEMENT_WAYS_STR);
-				if(ways_root_node->first_node() !=  NULL){
-					for(xml_node<>* way_node = ways_root_node->first_node(XML_ELEMENT_WAY_STR); way_node; way_node = way_node->next_sibling()){
-						s_way* tempWay = new s_way;
-						tempWay->st = std::atoi(way_node->first_attribute(XML_ATTRIBUTE_ST_STR)->value());
-						std::vector<std::string> adyList = RNUtils::split(way_node->first_attribute(XML_ATTRIBUTE_ADJACENCY_STR)->value(), ",");
-						for(int i = 0; i < adyList.size(); i++){
-							tempWay->adjacencies.push_back(std::stoi(adyList.at(i)));
+
+					xml_node<>* sites_root_node = sector_node->first_node(XML_ELEMENT_SITES_STR);
+					if(sites_root_node->first_attribute()){
+						if(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)){
+							std::string sequence(sites_root_node->first_attribute(XML_ATTRIBUTE_SEQUENCE_STR)->value());
+							currentSector->setSequence(sequence);
 						}
-						currentSector->addWay(tempWay);
 					}
-				}
+					
+					if(sites_root_node->first_node() !=  NULL){
+						for(xml_node<>* site_node = sites_root_node->first_node(XML_ELEMENT_SITE_STR); site_node; site_node = site_node->next_sibling()){
+							s_site* tempSite = new s_site;
 
-				xml_node<>* tags_root_node = sector_node->first_node(XML_ELEMENT_TAGS_STR);
-				if(tags_root_node->first_node() !=  NULL){
-					for(xml_node<>* tag_node = tags_root_node->first_node(XML_ELEMENT_TAG_STR); tag_node; tag_node = tag_node->next_sibling()){
-						s_tag* tempTag = new s_tag;
-						tempTag->id = std::string(tag_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
-						tempTag->name = std::string(tag_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());;
-						tempTag->antenna = std::atoi(tag_node->first_attribute(XML_ATTRIBUTE_ANTENNA_STR)->value());
-						if(tag_node->first_attribute(XML_ATTRIBUTE_LINKED_SITE_ID_STR)){
-							tempTag->linkedSiteId = std::atoi(tag_node->first_attribute(XML_ATTRIBUTE_LINKED_SITE_ID_STR)->value());
+							tempSite->id = std::atoi(site_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+							tempSite->name = std::string(site_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());
+							tempSite->xpos = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_X_POSITION_STR)->value())) / 100.0;
+							tempSite->ypos = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_POSITION_STR)->value())) / 100.0;
+
+							if(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)){
+								tempSite->linkedSectorId = std::atoi(site_node->first_attribute(XML_ATTRIBUTE_LINKED_SECTOR_ID_STR)->value());
+							} else {
+								tempSite->linkedSectorId = RN_NONE;
+							}
+	                        
+	                        if(site_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)){
+	                            tempSite->xcoord = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_X_COORD_STR)->value())) / 100.0;
+	                        } else {
+	                            tempSite->xcoord = 0.0;
+	                        }
+	                        
+	                        if(site_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)){
+	                            tempSite->ycoord = ((double)std::atoi(site_node->first_attribute(XML_ATTRIBUTE_Y_COORD_STR)->value())) / 100.0;
+	                        } else {
+	                            tempSite->ycoord = 0.0;
+	                        }
+
+							currentSector->addSite(tempSite);
 						}
-						currentSector->addTag(tempTag);
 					}
-				}
-    		}
-    	}
+					xml_node<>* ways_root_node = sector_node->first_node(XML_ELEMENT_WAYS_STR);
+					if(ways_root_node->first_node() !=  NULL){
+						for(xml_node<>* way_node = ways_root_node->first_node(XML_ELEMENT_WAY_STR); way_node; way_node = way_node->next_sibling()){
+							s_way* tempWay = new s_way;
+							tempWay->st = std::atoi(way_node->first_attribute(XML_ATTRIBUTE_ST_STR)->value());
+							std::vector<std::string> adyList = RNUtils::split(way_node->first_attribute(XML_ATTRIBUTE_ADJACENCY_STR)->value(), ",");
+							for(int i = 0; i < adyList.size(); i++){
+								tempWay->adjacencies.push_back(std::stoi(adyList.at(i)));
+							}
+							currentSector->addWay(tempWay);
+						}
+					}
 
-    }
-    the_file.close();
-    RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", sectorId, currentSector->getName().c_str());
-	pthread_mutex_unlock(&currentSectorLocker);
-    if(tourThread){
-    	if(reloadMap){
-    		tourThread->createCurrentMapGraph();
-    	}
-    	tourThread->createCurrentSectorGraph(true);
-    }
-    if(localization != NULL){
-		localization->reset();	
+					xml_node<>* tags_root_node = sector_node->first_node(XML_ELEMENT_TAGS_STR);
+					if(tags_root_node->first_node() !=  NULL){
+						for(xml_node<>* tag_node = tags_root_node->first_node(XML_ELEMENT_TAG_STR); tag_node; tag_node = tag_node->next_sibling()){
+							s_tag* tempTag = new s_tag;
+							tempTag->id = std::string(tag_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value());
+							tempTag->name = std::string(tag_node->first_attribute(XML_ATTRIBUTE_NAME_STR)->value());;
+							tempTag->antenna = std::atoi(tag_node->first_attribute(XML_ATTRIBUTE_ANTENNA_STR)->value());
+							if(tag_node->first_attribute(XML_ATTRIBUTE_LINKED_SITE_ID_STR)){
+								tempTag->linkedSiteId = std::atoi(tag_node->first_attribute(XML_ATTRIBUTE_LINKED_SITE_ID_STR)->value());
+							}
+							currentSector->addTag(tempTag);
+						}
+					}
+	    		}
+	    	}
+	    }
+	    the_file.close();
+	    RNUtils::printLn("Loaded new Sector {id: %d, name: %s}", sectorId, currentSector->getName().c_str());
+	    sectorLoadedSuccess = true;
 	}
-	if(rfidTask){
-		rfidTask->reloadCurrentSector();
-	}
+
 	
-    RNUtils::getTimestamp(mappingSectorTimestamp);
-    
-    std::list<RNFunPointer*>::iterator sectorSubsIt;
-	for(sectorSubsIt = sectorChangedSubscribers.begin(); sectorSubsIt != sectorChangedSubscribers.end(); sectorSubsIt++){
-		if(dynamic_cast<RNFunPointer1<int>* >(*sectorSubsIt) != NULL){
-			((RNFunPointer1<int>*)(*sectorSubsIt))->invoke(sectorId);
+	pthread_mutex_unlock(&currentSectorLocker);
+	if(sectorLoadedSuccess){
+		if(tourThread){
+	    	if(reloadMap){
+	    		tourThread->createCurrentMapGraph();
+	    	}
+	    	tourThread->createCurrentSectorGraph(true);
+	    }
+	    if(localization != NULL){
+			localization->reset();	
+		}
+		if(rfidTask){
+			rfidTask->reloadCurrentSector();
+		}
+		
+	    RNUtils::getTimestamp(mappingSectorTimestamp);
+	    
+	    std::list<RNFunPointer*>::iterator sectorSubsIt;
+		for(sectorSubsIt = sectorChangedSubscribers.begin(); sectorSubsIt != sectorChangedSubscribers.end(); sectorSubsIt++){
+			if(dynamic_cast<RNFunPointer1<int>* >(*sectorSubsIt) != NULL){
+				((RNFunPointer1<int>*)(*sectorSubsIt))->invoke(sectorId);
+			}
 		}
 	}
+    return sectorLoadedSuccess;
 
 }
 
@@ -2154,86 +2161,91 @@ void GeneralController::getInitialLocation(){
 				sector = it->first;
 			}
 		}
-
+		
 		if(map != RN_NONE and sector != RN_NONE){
-			loadSector(map, sector);
-			if(visualLandmarks->size() >= 2){
-				double minDist = std::numeric_limits<double>::max();
+			if(loadSector(map, sector)){
+				std::cout << "-------> N Markers: " << visualLandmarks->size() << std::endl;
+				if(visualLandmarks->size() >= 2){
+					double minDist = std::numeric_limits<double>::max();
 
-				//Checks pairs of markers and saves the pair that's closest to Doris
-				
-				int maIdx = RN_NONE, mbIdx = RN_NONE;
-				for(int i = 0; i < visualLandmarks->size(); i++){
-					for(int j = i + 1; j < visualLandmarks->size(); j++){
-						double combinedDistance = visualLandmarks->at(i)->getPointsXMean() + visualLandmarks->at(j)->getPointsXMean();
-						if(minDist > combinedDistance){
-							minDist = combinedDistance;
-							maIdx = i;
-							mbIdx = j;
+					//Checks pairs of markers and saves the pair that's closest to Doris
+					
+					int maIdx = RN_NONE, mbIdx = RN_NONE;
+					for(int i = 0; i < visualLandmarks->size(); i++){
+						for(int j = i + 1; j < visualLandmarks->size(); j++){
+							double combinedDistance = visualLandmarks->at(i)->getPointsXMean() + visualLandmarks->at(j)->getPointsXMean();
+							if(minDist > combinedDistance){
+								minDist = combinedDistance;
+								maIdx = i;
+								mbIdx = j;
+							}
 						}
 					}
-				}
-				double r0 = visualLandmarks->at(maIdx)->getPointsXMean();
-				double r1 = visualLandmarks->at(mbIdx)->getPointsXMean();
+					double r0 = visualLandmarks->at(maIdx)->getPointsXMean();
+					double r1 = visualLandmarks->at(mbIdx)->getPointsXMean();
 
-				s_landmark* cma = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, visualLandmarks->at(maIdx)->getMarkerId());
-				s_landmark* cmb = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, visualLandmarks->at(mbIdx)->getMarkerId());
+					s_landmark* cma = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, visualLandmarks->at(maIdx)->getMarkerId());
+					s_landmark* cmb = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, visualLandmarks->at(mbIdx)->getMarkerId());
 
-				PointXYZ possiblePosition0;
-				PointXYZ possiblePosition1;
-				double d = RNUtils::distanceTo(cma->xpos, cma->ypos, cmb->xpos, cmb->ypos);
-				if(d <= r0 + r1 and d >= std::abs(r0 - r1)){
-					double a = (pow(r0, 2) - pow(r1, 2) + pow(d, 2)) / (2 * d);
-					double h = sqrt(pow(r0, 2) - pow(a, 2));
-					PointXY middlePoint(cma->xpos + a * (cmb->xpos - cma->xpos) / d, cma->ypos + a * (cmb->ypos - cma->ypos) / d);
-					/*double x2 = x0 + a * (x1 - x0) / d;
-					double y2 = y0 + a * (y1 - y0) / d;*/
-				
-					possiblePosition0.setX (middlePoint.getX() + h * (cmb->ypos - cma->ypos) / d);
-					possiblePosition0.setY (middlePoint.getY() - h * (cmb->xpos - cma->xpos) / d);
-					possiblePosition1.setX (middlePoint.getX() - h * (cmb->ypos - cma->ypos) / d);
-					possiblePosition1.setY (middlePoint.getY() + h * (cmb->xpos - cma->xpos) / d);
+					PointXYZ possiblePosition0;
+					PointXYZ possiblePosition1;
+					double d = RNUtils::distanceTo(cma->xpos, cma->ypos, cmb->xpos, cmb->ypos);
+					if(d <= r0 + r1 and d >= std::abs(r0 - r1)){
+						double a = (pow(r0, 2) - pow(r1, 2) + pow(d, 2)) / (2 * d);
+						double h = sqrt(pow(r0, 2) - pow(a, 2));
+						PointXY middlePoint(cma->xpos + a * (cmb->xpos - cma->xpos) / d, cma->ypos + a * (cmb->ypos - cma->ypos) / d);
+						/*double x2 = x0 + a * (x1 - x0) / d;
+						double y2 = y0 + a * (y1 - y0) / d;*/
+					
+						possiblePosition0.setX (middlePoint.getX() + h * (cmb->ypos - cma->ypos) / d);
+						possiblePosition0.setY (middlePoint.getY() - h * (cmb->xpos - cma->xpos) / d);
+						possiblePosition1.setX (middlePoint.getX() - h * (cmb->ypos - cma->ypos) / d);
+						possiblePosition1.setY (middlePoint.getY() + h * (cmb->xpos - cma->xpos) / d);
 
-					possiblePosition0.setZ(std::atan2((possiblePosition0.getY() - cma->ypos), (possiblePosition0.getX() - cma->xpos)) - visualLandmarks->at(maIdx)->getPointsYMean() - M_PI);
-					if(possiblePosition0.getZ() > M_PI){
-						possiblePosition0.setZ(possiblePosition0.getZ() - 2 * M_PI);
-					} else if(possiblePosition0.getZ() < -M_PI){
-						possiblePosition0.setZ(possiblePosition0.getZ() + 2 * M_PI);
-					}
+						possiblePosition0.setZ(std::atan2((possiblePosition0.getY() - cma->ypos), (possiblePosition0.getX() - cma->xpos)) - visualLandmarks->at(maIdx)->getPointsYMean() - M_PI);
+						if(possiblePosition0.getZ() > M_PI){
+							possiblePosition0.setZ(possiblePosition0.getZ() - 2 * M_PI);
+						} else if(possiblePosition0.getZ() < -M_PI){
+							possiblePosition0.setZ(possiblePosition0.getZ() + 2 * M_PI);
+						}
 
-					possiblePosition1.setZ(std::atan2((possiblePosition1.getY() - cma->ypos ), (possiblePosition1.getX() - cma->xpos)) - visualLandmarks->at(maIdx)->getPointsYMean() - M_PI);
-					if(possiblePosition1.getZ() > M_PI){
-						possiblePosition1.setZ(possiblePosition1.getZ() - 2 * M_PI);
-					} else if(possiblePosition1.getZ() < -M_PI){
-						possiblePosition1.setZ(possiblePosition1.getZ() + 2 * M_PI);
-					}
-					bool s1 = currentSector->checkPointXYInPolygon(possiblePosition0);
-					bool s2 = currentSector->checkPointXYInPolygon(possiblePosition1);
-					if(s1 and s2){
-						if (visualLandmarks->size() >= 3){
-							double thirdMinRadius = std::numeric_limits<double>::max();
-							int thirdIndex = 0;
+						possiblePosition1.setZ(std::atan2((possiblePosition1.getY() - cma->ypos ), (possiblePosition1.getX() - cma->xpos)) - visualLandmarks->at(maIdx)->getPointsYMean() - M_PI);
+						if(possiblePosition1.getZ() > M_PI){
+							possiblePosition1.setZ(possiblePosition1.getZ() - 2 * M_PI);
+						} else if(possiblePosition1.getZ() < -M_PI){
+							possiblePosition1.setZ(possiblePosition1.getZ() + 2 * M_PI);
+						}
+						std::cout << "P1: " << possiblePosition0.toString() << std:: endl;
+						std::cout << "P2: " << possiblePosition1.toString() << std:: endl;
 
-							for(int i = 0; i < visualLandmarks->size(); i++){
-								if(thirdMinRadius > visualLandmarks->at(i)->getPointsXMean() and i != maIdx and i != mbIdx){
-									thirdMinRadius = visualLandmarks->at(i)->getPointsXMean();
-									thirdIndex = i;
+						bool s1 = currentSector->checkPointXYInPolygon(possiblePosition0);
+						bool s2 = currentSector->checkPointXYInPolygon(possiblePosition1);
+						if(s1 and s2){
+							if (visualLandmarks->size() >= 3){
+								double thirdMinRadius = std::numeric_limits<double>::max();
+								int thirdIndex = 0;
+
+								for(int i = 0; i < visualLandmarks->size(); i++){
+									if(thirdMinRadius > visualLandmarks->at(i)->getPointsXMean() and i != maIdx and i != mbIdx){
+										thirdMinRadius = visualLandmarks->at(i)->getPointsXMean();
+										thirdIndex = i;
+									}
+								}
+								s_landmark* cmc = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, visualLandmarks->at(thirdIndex)->getMarkerId());
+								double difference0 = std::abs(visualLandmarks->at(thirdIndex)->getPointsXMean() - sqrt(pow(possiblePosition0.getX() - cmc->xpos, 2) + pow(possiblePosition0.getY() - cmc->ypos, 2)));
+								double difference1 = std::abs(visualLandmarks->at(thirdIndex)->getPointsXMean() - sqrt(pow(possiblePosition1.getX() - cmc->xpos, 2) + pow(possiblePosition1.getY() - cmc->ypos, 2)));
+
+								if (difference0 < difference1){
+									setRobotPosition(possiblePosition0.getX(), possiblePosition0.getY(), possiblePosition0.getZ());
+								} else {
+									setRobotPosition(possiblePosition1.getX(), possiblePosition1.getY(), possiblePosition1.getZ());
 								}
 							}
-							s_landmark* cmc = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, visualLandmarks->at(thirdIndex)->getMarkerId());
-							double difference0 = std::abs(visualLandmarks->at(thirdIndex)->getPointsXMean() - sqrt(pow(possiblePosition0.getX() - cmc->xpos, 2) + pow(possiblePosition0.getY() - cmc->ypos, 2)));
-							double difference1 = std::abs(visualLandmarks->at(thirdIndex)->getPointsXMean() - sqrt(pow(possiblePosition1.getX() - cmc->xpos, 2) + pow(possiblePosition1.getY() - cmc->ypos, 2)));
-
-							if (difference0 < difference1){
-								setRobotPosition(possiblePosition0.getX(), possiblePosition0.getY(), possiblePosition0.getZ());
-							} else {
-								setRobotPosition(possiblePosition1.getX(), possiblePosition1.getY(), possiblePosition1.getZ());
-							}
+						} else if(s1){
+							setRobotPosition(possiblePosition0.getX(), possiblePosition0.getY(), possiblePosition0.getZ());
+						} else if(s2){
+							setRobotPosition(possiblePosition1.getX(), possiblePosition1.getY(), possiblePosition1.getZ());
 						}
-					} else if(s1){
-						setRobotPosition(possiblePosition0.getX(), possiblePosition0.getY(), possiblePosition0.getZ());
-					} else if(s2){
-						setRobotPosition(possiblePosition1.getX(), possiblePosition1.getY(), possiblePosition1.getZ());
 					}
 				}
 			}

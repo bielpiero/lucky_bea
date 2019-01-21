@@ -16,8 +16,8 @@ const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.014;
 // Valores cambiados a ojo para concordar con cada Iteración
 const float centro_odom_dist_sup = 0.0; 
 const float centro_odom_dist_inf = 0.0; 
-const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_sup = 0.005;  
-const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_inf = 0.010; 
+const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_sup = 0.006;  //0.005
+const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_inf = 0.012;  //0.010
 const float centro_odom_angl_sup = 0.0; 
 const float centro_odom_angl_inf = 0.0; 
 const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_sup = 0.005; 
@@ -35,13 +35,13 @@ const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.15;
 
 const float centro_camera_angl_sup = -0.07;
 const float centro_camera_angl_inf = -0.07;
-const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_sup = 0.08;
+const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_sup = 0.08; 
 const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_inf = 0.16; // Las balizas pueden estar mal colocadas
 
 // Chi cuadradi, 2 gfl: 5% = 5.9915; 10% = 4.6052; 15% = 3.7946; 20% = 3.2189; 25% = 2.7726; 30% = 2.4079; 35% = 2.0996; 40% = 1.8326; 50% = 1.3863
-const float singleMahalanobisLimit = 3.2189; // 2 gdl
+const float singleMahalanobisLimit = 2.7726; // 2 gdl
 const float fullMahalanobisLimit = 5.9915; // 2 gdl
-const float camera_mahalanobis_limit = 2.706; // 1 gdl (5%)
+const float camera_mahalanobis_limit = 2.0722; // 1 gdl (15%)
 
 const int stateLenght = 3;
 
@@ -107,8 +107,8 @@ void RNPKalmanLocalizationTask::init(){
 			- desv tip Y: 0.03
 			- desv tip Theta: 0.122 (7 grados)
 		*/
-		Pk_sup(0,0) = std::pow(0.15, 2) / 3.0;   Pk_sup(1,1) = std::pow(0.15, 2) / 3.0;   Pk_sup(2,2) = std::pow(5*M_PI/180.0, 2) / 3.0;
-		Pk_inf(0,0) = std::pow(0.20, 2) / 3.0;   Pk_inf(1,1) = std::pow(0.20, 2) / 3.0;   Pk_inf(2,2) = std::pow(10*M_PI/180.0, 2) / 3.0;
+		Pk_sup(0,0) = std::pow(0.15, 2) / 3.0;   Pk_sup(1,1) = std::pow(0.15, 2) / 3.0;   Pk_sup(2,2) = std::pow(10*M_PI/180.0, 2) / 3.0;
+		Pk_inf(0,0) = std::pow(0.20, 2) / 3.0;   Pk_inf(1,1) = std::pow(0.20, 2) / 3.0;   Pk_inf(2,2) = std::pow(20*M_PI/180.0, 2) / 3.0;
 
 
 		// Balizas láser existentes en este sector

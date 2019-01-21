@@ -287,7 +287,7 @@ public:
     void onLaserScanCompleted(LaserScan* data);
 	
 	int initializeKalmanVariables();
-	void loadSector(int mapId, int sectorId);
+	bool loadSector(int mapId, int sectorId);
 	void getMapFilename(int mapId, std::string& filename);
 
 	int getNextSectorId();

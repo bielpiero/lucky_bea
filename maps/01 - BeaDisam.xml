@@ -19,24 +19,26 @@
 			<feature id="1" name="door" width="10" height="80" x="0" y="65"/>
 		</features>
 		<sites sequence="6,5,4,2">
-			<site id="0" name="charger" x="680" y="110"/>
-			<site id="1" name="way" x="680" y="227"/>
-			<site id="2" name="way" x="360" y="227"/>
-			<site id="3" name="frame" x="360" y="310"/>
-			<site id="4" name="way" x="160" y="227"/>
-			<site id="5" name="way" x="110" y="110"/>
-			<site id="6" name="door" x="110" y="0" linked-sector-id="1" xcoord="-18" ycoord="1148"/>
-			<site id="7" name="door" x="0" y="110" linked-sector-id="4" xcoord="160" ycoord="0"/>
+			<site id="0" name="charger" x="660" y="110"/>
+			<site id="1" name="way" x="660" y="227"/>
+			<site id="2" name="way" x="480" y="227"/>
+			<site id="3" name="way" x="240" y="227"/>
+			<site id="4" name="frame" x="240" y="310"/>
+			<site id="5" name="way" x="160" y="227"/>
+			<site id="6" name="way" x="110" y="110"/>
+			<site id="7" name="door" x="110" y="0" linked-sector-id="1" xcoord="-18" ycoord="1148"/>
+			<site id="8" name="door" x="0" y="110" linked-sector-id="4" xcoord="160" ycoord="0"/>
 		</sites>
 		<ways>
 			<way st="0" adjacency="1"/>
 			<way st="1" adjacency="0,2"/>
-			<way st="2" adjacency="1,3,4"/>
-			<way st="3" adjacency="2"/>
-			<way st="4" adjacency="2,5"/>
-			<way st="5" adjacency="4,6,7"/>
-			<way st="6" adjacency="5"/>
-			<way st="7" adjacency="5"/>
+			<way st="2" adjacency="1,3"/>
+			<way st="3" adjacency="2,4"/>
+			<way st="4" adjacency="3"/>
+			<way st="5" adjacency="3,6"/>
+			<way st="6" adjacency="5,8,7"/>
+			<way st="7" adjacency="6"/>
+			<way st="8" adjacency="6"/>
 		</ways>
 		<tags>
 			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="6" antenna="2" stretching="0"/>
@@ -112,24 +114,26 @@
 			<feature id="4" name="door" width="137" height="10" x="0" y="65"/>
 		</features>
 		<sites sequence="5,3,2,0">
-			<site id="0" name="door" x="090" y="1148" linked-sector-id="0" xcoord="18" ycoord="-1148"/>
-			<site id="1" name="way" x="115" y="713"/>
-			<site id="2" name="way" x="464" y="713"/>
-			<site id="3" name="frame" x="115" y="209"/>
-			<site id="4" name="door" x="0" y="209" linked-sector-id="7" xcoord="-18" ycoord="1180"/>
-			<site id="5" name="way" x="115" y="80"/>
-			<site id="6" name="door" x="0" y="80" linked-sector-id="8" xcoord="-18" ycoord="1180"/>
-			<site id="7" name="door" x="115" y="0" linked-sector-id="2" xcoord="0" ycoord="1059"/>
+			<site id="0" name="door" x="090" y="1148" linked-sector-id="0" xcoord="18" ycoord="-1128"/>
+			<site id="1" name="way" x="090" y="940"/>
+			<site id="2" name="way" x="115" y="713"/>
+			<site id="3" name="way" x="464" y="713"/>
+			<site id="4" name="frame" x="115" y="209"/>
+			<site id="5" name="door" x="0" y="209" linked-sector-id="7" xcoord="-18" ycoord="1180"/>
+			<site id="6" name="way" x="115" y="80"/>
+			<site id="7" name="door" x="0" y="80" linked-sector-id="8" xcoord="-18" ycoord="1180"/>
+			<site id="8" name="door" x="115" y="0" linked-sector-id="2" xcoord="0" ycoord="1059"/>
 		</sites>
 		<ways>
 			<way st="0" adjacency="1"/>
-			<way st="1" adjacency="0,2,3"/>
-			<way st="2" adjacency="1"/>
-			<way st="3" adjacency="1,4,5"/>
-			<way st="4" adjacency="3"/>
-			<way st="5" adjacency="3,6,7"/>
-			<way st="6" adjacency="5"/>
-			<way st="7" adjacency="5"/>
+			<way st="1" adjacency="0,2"/>
+			<way st="2" adjacency="1,3,4"/>
+			<way st="3" adjacency="2"/>
+			<way st="4" adjacency="2,5"/>
+			<way st="5" adjacency="4,6"/>
+			<way st="6" adjacency="6,7,8"/>
+			<way st="7" adjacency="6"/>
+			<way st="8" adjacency="6"/>
 		</ways>
 		<tags>
 			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="0" antenna="1" stretching="0"/>

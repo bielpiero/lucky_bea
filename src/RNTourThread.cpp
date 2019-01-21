@@ -336,7 +336,7 @@ int RNTourThread::closestNodeTo(const ArPose& pose){
 	bool negativesPresent = true;
 	while(negativesPresent){
 		negativesPresent = false;
-		auto mdspIt = std::find_if(mds_positives.begin(), mds_positives.end(), [](const std::pair<int, double>& x){ return x.second < 0; });
+		auto mdspIt = std::find_if(mds_positives.begin(), mds_positives.end(), [](const std::pair<int, double>& x){ return x.second < -0.1; });
         if(mdspIt != mds_positives.end()){
             mds_positives.erase(mdspIt->first);
             negativesPresent = true;
@@ -351,12 +351,18 @@ int RNTourThread::closestNodeTo(const ArPose& pose){
 			nodeId = smallCloseIt->first;
 		}
 	} else {
-		auto higherCloseIt = std::max_element(mds.begin(), mds.end());
+		auto higherCloseIt = std::max_element(mds.begin(), mds.end(), [](std::pair<int, double> x, std::pair<int, double> y){ return x.second > y.second; });
 		if(higherCloseIt != mds.end()){
 			nodeId = higherCloseIt->first;
 		}
 	}
 	return nodeId;
+}
+
+void RNTourThread::turnTo(const double& radians){
+	if(gn){
+		gn->moveRobotToPosition(0.0, 0.0, radians);
+	}
 }
 
 std::list<int> RNTourThread::getSectorPathPlan(){
@@ -1239,6 +1245,8 @@ void RNTourThread::parse(std::string functionName, wcontent_t* content){
 			if(it2 != functionTokens.end()){
 				if((*it2).substr(0, 3) == TOK_NUM_STR){
 					printf("TURN %s DEGREES COMMAND\n", (*it2).substr(4).c_str());
+					double radians = RNUtils::deg2Rad(std::stod((*it2).substr(4).c_str()));
+					turnTo(radians);
 					it = std::next(it, 2);
 				}
 			} 

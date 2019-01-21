@@ -78,6 +78,7 @@ private:
 	void longTravel(int origin, int destiny);
 	void moveAround(int direction);
 	int closestNodeTo(const ArPose& pose);
+	void turnTo(const double& radians);
 
 	void lex();
 	void parse();
