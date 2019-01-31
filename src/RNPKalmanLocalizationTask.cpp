@@ -1,4 +1,4 @@
-
+;
 
 /** VERSIÓN QUE USA SOLO EL LÁSER PARA CORREGIR 
  *  El láser no es capaz de identificar las balizas, por lo que hay que hacer una identificación
@@ -17,31 +17,32 @@ const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.014;
 const float centro_odom_dist_sup = 0.0; 
 const float centro_odom_dist_inf = 0.0; 
 const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_sup = 0.006;  //0.005
-const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_inf = 0.012;  //0.010
+const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_inf = 0.010;  //0.010
 const float centro_odom_angl_sup = 0.0; 
 const float centro_odom_angl_inf = 0.0; 
-const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_sup = 0.005; 
-const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_inf = 0.010; 
+const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_sup = 0.007; // 0.005
+const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_inf = 0.012; // 0.010 
 
 const float centro_laser_dist_sup = 0.0;
 const float centro_laser_dist_inf = 0.0;
 const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_sup = 0.06; 
-const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_inf = 0.12; 
+const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_inf = 0.13; 
 const float centro_laser_angl_sup = 0.0;
 const float centro_laser_angl_inf = 0.0;
 const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.06; 
 const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.15; 
  
 
-const float centro_camera_angl_sup = -0.07;
-const float centro_camera_angl_inf = -0.07;
-const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_sup = 0.08; 
-const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_inf = 0.16; // Las balizas pueden estar mal colocadas
+const float centro_camera_angl_sup = 0.055;
+const float centro_camera_angl_inf = 0.055;
+const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_sup = 0.06; 
+const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_inf = 0.15; // Las balizas pueden estar mal colocadas
 
 // Chi cuadradi, 2 gfl: 5% = 5.9915; 10% = 4.6052; 15% = 3.7946; 20% = 3.2189; 25% = 2.7726; 30% = 2.4079; 35% = 2.0996; 40% = 1.8326; 50% = 1.3863
+// Chi cuadradi, 2 gfl: 5% = 3.8415; 10% = 2.7055; 15% = 2.0722; 20% = 1.6424; 25% = 1.3233; 30% = 1.0742; 35% = 0.8735; 40% = 0.7083; 50% = 0.4549
 const float singleMahalanobisLimit = 2.7726; // 2 gdl
 const float fullMahalanobisLimit = 5.9915; // 2 gdl
-const float camera_mahalanobis_limit = 2.0722; // 1 gdl (15%)
+const float camera_mahalanobis_limit = 2.7055; // 1 gdl
 
 const int stateLenght = 3;
 
@@ -136,7 +137,8 @@ void RNPKalmanLocalizationTask::kill(){
 	RNRecurrentTask::kill();
 }
 
-void RNPKalmanLocalizationTask::task(){
+void RNPKalmanLocalizationTask::task()
+{
 printf("0.\n");
 	if(enableLocalization)
 	{
@@ -290,7 +292,7 @@ printf("3.\n");
 							/** Observaciones */
 							landmarkObservation(xk_pred_sup, disp, teoricalLandmark, distance, angle);
 							completeObservations_sup(i_laser*2, 0) = distance + centro_laser_dist_sup;
-							completeObservations_sup(i_laser*2+1, 0) =RNUtils::fixAngleRad(angle + centro_laser_angl_sup);
+							completeObservations_sup(i_laser*2+1, 0) = RNUtils::fixAngleRad(angle + centro_laser_angl_sup);
 
 							landmarkObservation(xk_pred_inf, disp, teoricalLandmark, distance, angle);
 							completeObservations_inf(i_laser*2, 0) = distance + centro_laser_dist_inf;
@@ -311,14 +313,12 @@ printf("3.\n");
 					else if(teoricalLandmark->type == XML_SENSOR_TYPE_CAMERA_STR)
 					{
 						if(gn->isCameraSensorActivated())
-						{
-													
-						printf("Baliza detectada. ID: %d. Pos: (%f, %f)\n", teoricalLandmark->id, teoricalLandmark->xpos, teoricalLandmark->ypos);
-
+						{							
 							/** Observaciones */
 							// Matriz de rotación respecto a la posición superior
 							disp = Matrix(2, 1);   double nrx, nry;								
 							RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, xk_pred_sup(2, 0), &nrx, &nry);
+							//RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, CG(2, 0), &nrx, &nry);
 							disp(0, 0) = nrx;   disp(1, 0) = nry;
 							// Medidas superiores
 							landmarkObservation(xk_pred_sup, disp, teoricalLandmark, distance, angle);
@@ -327,6 +327,7 @@ printf("3.\n");
 							// Matriz de rotación respecto a la posición inferior
 							disp = Matrix(2, 1);							
 							RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, xk_pred_inf(2, 0), &nrx, &nry);
+							//RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, CG(2, 0), &nrx, &nry);
 							disp(0, 0) = nrx;   disp(1, 0) = nry;
 							// Medidas inferiores
 							landmarkObservation(xk_pred_inf, disp, teoricalLandmark, distance, angle);
@@ -502,81 +503,79 @@ printf("4.\n");
 					bool validQR = true;
 					cameraLandmarksAccepted = 0;
 
-					for(int i = 0; i < cameraLandmarksDetected; i++)
+					if(cameraLandmarksDetected > 1) // UNA SOLA OBSERVACIÓN, NO ME VALE NI PARA CÁLCULOS NI ME FIO DE SU MEDIDA
 					{
-
-	printf("5b. %d\n",i);	
-						RNLandmark* cameraLandmark = gn->getVisualLandmarks()->at(i);
-
-						validQR = true;
-						// Primer filtro -> Que se haya detectado toda la información de la baliza
-						if(cameraLandmark->getMapId() > RN_NONE and cameraLandmark->getSectorId() > RN_NONE && cameraLandmark->getMarkerId() > RN_NONE)
+						for(int i = 0; i < cameraLandmarksDetected; i++)
 						{
-							// Segundo filtro -> Compara que los datos no sean los de otra baliza
-							for(int j = 0; j < cameraLandmarksDetected and validQR; j++)
+
+		printf("5b. %d\n",i);	
+							RNLandmark* cameraLandmark = gn->getVisualLandmarks()->at(i);
+
+							validQR = true;
+							// Primer filtro -> Que se haya detectado toda la información de la baliza
+							if(cameraLandmark->getMapId() > RN_NONE and cameraLandmark->getSectorId() > RN_NONE && cameraLandmark->getMarkerId() > RN_NONE)
 							{
-								if(j != i)
+								// Segundo filtro -> Compara que los datos no sean los de otra baliza
+								for(int j = 0; j < cameraLandmarksDetected and validQR; j++)
 								{
-									if(cameraLandmark->getMarkerId() == gn->getVisualLandmarks()->at(j)->getMarkerId())
+									if(j != i)
 									{
-										validQR = false;
-									}
-								}
-							}
-						}
-						else
-						{
-							validQR = false;
-						}
-
-						if(validQR)
-						{
-							// Tercer filtro -> Si coincide el mapa y el sector
-							if( (cameraLandmark->getMapId() == gn->getCurrentSector()->getMapId()) and (cameraLandmark->getSectorId() == gn->getCurrentSector()->getId()) )
-							{
-								// Buscamos si alguna de las balizas de este sector coincide el QR con el detectado
-								bool landmark_used = false;
-
-								for(int j = 2*laserLandmarksCount; j < (2*laserLandmarksCount + cameraLandmarksCount) and !landmark_used; j++)
-								{
-
-									if(cameraLandmark->getMarkerId() == gn->getCurrentSector()->landmarkAt(j)->id)
-									{
-										printf("Baliza detectada. ID: %d compara con la baliza %d con ID: %d\n", cameraLandmark->getMarkerId(), j, gn->getCurrentSector()->landmarkAt(j)->id);
-										landmark_used = true;
-										printf("id baliza visual = %d\n", cameraLandmark->getMarkerId());
-
-										cameraRealObservations(0,0) = RNUtils::fixAngleRad(cameraLandmark->getPointsYMean());
-
-										cameraHk(0, 0) = completeHk(j, 0);
-										cameraHk(0, 1) = completeHk(j, 1);
-										cameraHk(0, 2) = completeHk(j, 2);
-
-										cameraInnovation_sup(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_sup(j,0) );
-										cameraInnovation_inf(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_inf(j,0) );
-
-	printf("5b. innovacion_sup = %f\n",cameraInnovation_sup(0,0));
-
-										Matrix smallS_inf = cameraHk * Pk_pred_inf * ~cameraHk + cameraR_inf;
-										double mahalanobisCamera_inf = std::sqrt( cameraInnovation_inf(0,0) * pow(smallS_inf(0,0), -1) * cameraInnovation_inf(0,0) );
-
-										if(mahalanobisCamera_inf < camera_mahalanobis_limit)
+										if(cameraLandmark->getMarkerId() == gn->getVisualLandmarks()->at(j)->getMarkerId())
 										{
-											v_Hk.push_back(cameraHk);
-											v_innovation_sup.push_back(cameraInnovation_sup);
-											v_innovation_inf.push_back(cameraInnovation_inf);
-
-											cameraLandmarksAccepted ++;
+											validQR = false;
 										}
-										else
-											printf("\t\tDESCARTADA POR MAHALANOBIS: %f > %f\n", mahalanobisCamera_inf, camera_mahalanobis_limit);
 									}
 								}
 							}
-						}
-					}// for todas las balizas VISUALES detectadas
-				
+							else
+							{
+								validQR = false;
+							}
 
+							if(validQR)
+							{
+								// Tercer filtro -> Si coincide el mapa y el sector
+								if( (cameraLandmark->getMapId() == gn->getCurrentSector()->getMapId()) and (cameraLandmark->getSectorId() == gn->getCurrentSector()->getId()) )
+								{
+									// Buscamos si alguna de las balizas de este sector coincide el QR con el detectado
+									bool landmark_used = false;
+
+									for(int j = 2*laserLandmarksCount; j < (2*laserLandmarksCount + cameraLandmarksCount) and !landmark_used; j++)
+									{
+
+										if(cameraLandmark->getMarkerId() == gn->getCurrentSector()->landmarkAt(j)->id)
+										{
+											printf("Baliza detectada. ID: %d compara con la baliza %d con ID: %d\n", cameraLandmark->getMarkerId(), j, gn->getCurrentSector()->landmarkAt(j)->id);
+											landmark_used = true;
+
+											cameraRealObservations(0,0) = RNUtils::fixAngleRad(cameraLandmark->getPointsYMean());
+
+											cameraHk(0, 0) = completeHk(j, 0);
+											cameraHk(0, 1) = completeHk(j, 1);
+											cameraHk(0, 2) = completeHk(j, 2);
+
+											cameraInnovation_sup(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_sup(j,0) );
+											cameraInnovation_inf(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_inf(j,0) );
+
+		printf("5b. innovacion_sup = %f\n",cameraInnovation_sup(0,0));
+
+											Matrix smallS_inf = cameraHk * Pk_pred_inf * ~cameraHk + cameraR_inf;
+											double mahalanobisCamera_inf = std::sqrt( cameraInnovation_inf(0,0) * pow(smallS_inf(0,0), -1) * cameraInnovation_inf(0,0) );
+
+											if(mahalanobisCamera_inf < camera_mahalanobis_limit)
+											{
+												v_Hk.push_back(cameraHk);
+												v_innovation_sup.push_back(cameraInnovation_sup);
+												v_innovation_inf.push_back(cameraInnovation_inf);
+
+												cameraLandmarksAccepted ++;
+											}
+										}
+									}
+								}
+							}
+						}// for todas las balizas VISUALES detectadas
+					}			
 				}
 
 printf("6.\n");
@@ -741,6 +740,12 @@ printf("8.\n");
 			Pk_inf = Pk_pred_inf;	
 
 			printf("     no se corrige\n");
+
+			for(int k = 0; k < (laserLandmarksCount + cameraLandmarksCount); k++)
+			{
+				fprintf(test2, "%d\t%.10lf\t%.10lf\t", 0, 0.0, 0.0);				
+			}
+			fprintf(test2, "\n");
 		}
 		else
 		{
@@ -914,20 +919,9 @@ void RNPKalmanLocalizationTask::landmarkObservation(const Matrix& Xk, const Matr
 {
 	distance = std::sqrt(std::pow(landmark->xpos - (Xk(0, 0) + disp(0, 0)), 2) + std::pow(landmark->ypos - (Xk(1, 0) + disp(1, 0)), 2));
 
-	if(landmark->xpos >= Xk(0,0) and landmark->ypos >= Xk(1,0))
-		angle = std::atan2( std::abs(landmark->ypos - (Xk(1, 0) + disp(1, 0))), std::abs(landmark->xpos - (Xk(0, 0) + disp(0, 0))) ) - Xk(2, 0);
-	else if(landmark->xpos < Xk(0,0) and landmark->ypos >= Xk(1,0))
-		angle = 180.0*M_PI/180.0 - std::atan2( std::abs(landmark->ypos - (Xk(1, 0) + disp(1, 0))), std::abs(landmark->xpos - (Xk(0, 0) + disp(0, 0))) ) - Xk(2, 0);
-	else if(landmark->xpos < Xk(0,0) and landmark->ypos < Xk(1,0))
-		angle = 180.0*M_PI/180.0 + std::atan2( std::abs(landmark->ypos - (Xk(1, 0) + disp(1, 0))), std::abs(landmark->xpos - (Xk(0, 0) + disp(0, 0))) ) - Xk(2, 0);
-	else if(landmark->xpos >= Xk(0,0) and landmark->ypos < Xk(1,0))
-		angle = 360.0*M_PI/180.0 - std::atan2( std::abs(landmark->ypos - (Xk(1, 0) + disp(1, 0))), std::abs(landmark->xpos - (Xk(0, 0) + disp(0, 0))) ) - Xk(2, 0);
-	else
-		angle = std::atan2(landmark->ypos - (Xk(1, 0) + disp(1, 0)), landmark->xpos - (Xk(0, 0) + disp(0, 0))) - Xk(2, 0);
+	angle = std::atan2(landmark->ypos - (Xk(1, 0) + disp(1, 0)), landmark->xpos - (Xk(0, 0) + disp(0, 0))) - Xk(2, 0);
 
 	angle = RNUtils::fixAngleRad(angle);
-
-	double angle2 = std::atan2(landmark->ypos - (Xk(1, 0) + disp(1, 0)), landmark->xpos - (Xk(0, 0) + disp(0, 0))) - Xk(2, 0);
 }
 
 

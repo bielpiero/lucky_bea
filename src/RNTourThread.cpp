@@ -326,11 +326,11 @@ int RNTourThread::closestNodeTo(const ArPose& pose){
 	//currentSector = gn->getCurrentSector();
 	for(int i = 0; i < currentSector->sitesSize(); i++){
 		s_site* node = currentSector->siteAt(i);
-		if(node->name != std::string(SEMANTIC_FEATURE_DOOR_STR)){
+		//if(node->name != std::string(SEMANTIC_FEATURE_DOOR_STR)){
 			double heading = RNUtils::fixAngleRad(RNUtils::angleTo(node->xpos, node->ypos, pose.getX() / 1e3, pose.getY() / 1e3) - pose.getThRad());
 			double factor = (heading >= -M_PI / 2.0) and (heading <= M_PI / 2.0) ? 1.0 : -1.0;
 			mds.emplace(node->id, (factor * RNUtils::distanceTo(node->xpos, node->ypos, (pose.getX() / 1e3), (pose.getY() / 1e3))));
-		}		
+		//}		
 	}
 	std::map<int, double> mds_positives(mds.begin(), mds.end());
 	bool negativesPresent = true;

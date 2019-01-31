@@ -1,0 +1,31 @@
+<face>
+	<mouth>
+		<motor cardId="{face}" id="0" low="8384" high="3584" description="inferior lip"/>
+		<motor cardId="{face}" id="1" low="3584" high="8384" description="horizontal right corner"/>
+		<motor cardId="{face}" id="2" low="3584" high="8384" description="vertical right corner"/>
+		<motor cardId="{face}" id="3" low="3584" high="8384" description="horizontal left corner"/>
+		<motor cardId="{face}" id="4" low="8384" high="3584" description="vertical left corner"/>
+		<motor cardId="{face}" id="5" low="8384" high="3584" description="superior lip"/>
+	</mouth>
+	<eyelids>
+		<motor cardId="{face}" id="6" low="8960" high="3456" description="right eyelid"/>
+		<motor cardId="{face}" id="9" low="3456" high="8960" description="left eyelid"/>
+	</eyelids>
+	<eyebrows>
+		<motor cardId="{face}" id="7" low="3584" high="8384" description="interior right eyebrow"/>
+		<motor cardId="{face}" id="8" low="3584" high="8384" description="exterior right eyebrow"/>
+		<motor cardId="{face}" id="10" low="8384" high="3584" description="interior left eyebrow"/>
+		<motor cardId="{face}" id="11" low="8384" high="3584" description="exterior left eyebrow"/>
+	</eyebrows>
+	<eyes>
+		<motor cardId="{face}" id="14" low="3968" high="8000" description="horizontal right eye"/>
+		<motor cardId="{face}" id="15" low="3968" high="8000" description="vertical right eye"/>
+		<motor cardId="{face}" id="16" low="4032" high="8000" description="horizontal left eye"/>
+		<motor cardId="{face}" id="17" low="4032" high="8000" description="vertical left eye"/>
+	</eyes>
+	<neck>
+		<motor cardId="{neck}" id="0" low="3584" high="8384" description="Servo Neck 1"/>
+		<motor cardId="{neck}" id="1" low="3584" high="8384" description="Servo Neck 2"/>
+		<motor cardId="{neck}" id="2" low="3584" high="8384" description="Servo Neck 3"/>
+	</neck>
+</face>

@@ -3,8 +3,9 @@
 RNEmotionsTask::RNEmotionsTask(const GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
 	this->gn = (GeneralController*)gn;
 	impulses = new std::vector<Impulse*>();
-
-	currentState = new Impulse(50, 50, 50, 50, 50);
+    this->maestroController = this->gn->getMaestroController();
+    spokenId = RN_NONE;
+	currentState = new Impulse(50, 50, 50);
 
     xml_document<> doc;
     xml_node<> * root_node;
@@ -19,20 +20,104 @@ RNEmotionsTask::RNEmotionsTask(const GeneralController* gn, const char* name, co
     for (xml_node<> * impulse_node = root_node->first_node(XML_ELEMENT_IMPULSE_STR); impulse_node; impulse_node = impulse_node->next_sibling()){
     	Impulse* imp = new Impulse();
         imp->setId(std::atoi(impulse_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
-        imp->setAngry(std::atof(impulse_node->first_attribute(XML_ATTRIBUTE_ANGRY_STR)->value()));
-        imp->setHappy(std::atof(impulse_node->first_attribute(XML_ATTRIBUTE_HAPPY_STR)->value()));
-        imp->setCalm(std::atof(impulse_node->first_attribute(XML_ATTRIBUTE_CALM_STR)->value()));
-        imp->setSad(std::atof(impulse_node->first_attribute(XML_ATTRIBUTE_SAD_STR)->value()));
-        imp->setAfraid(std::atof(impulse_node->first_attribute(XML_ATTRIBUTE_AFRAID_STR)->value()));
+        imp->setJoy(std::atof(impulse_node->first_attribute(XML_ATTRIBUTE_JOY_STR)->value()));
+        imp->setFear(std::atof(impulse_node->first_attribute(XML_ATTRIBUTE_FEAR_STR)->value()));
+        imp->setApproval(std::atof(impulse_node->first_attribute(XML_ATTRIBUTE_APPROVAL_STR)->value()));
         impulses->push_back(imp);
     }
+    theFile.close();
 
+    faceMotors = new FRMotorsList;
+
+    fullPath = RNUtils::getApplicationPath() + XML_FACE_MOTORS_RANGES_FILE_PATH;
+    theFile.open(fullPath);
+    buffer = std::vector<char>(( istreambuf_iterator<char>( theFile ) ), istreambuf_iterator<char>());
+    buffer.push_back('\0');
+    doc.parse<0>(&buffer[0]);
+
+    root_node = doc.first_node(XML_ELEMENT_FACE_STR);
+    xml_node<> * node = root_node->first_node(XML_ELEMENT_MOUTH_STR);
+    for (xml_node<> * motor_node = node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling()){
+        FRMotor* mtr = new FRMotor;
+        mtr->setId(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
+        if(strcmp(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value(), XML_FACE_STR) == 0){
+            mtr->setCardId(this->gn->getFaceId());
+        } else if(strcmp(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value(), XML_NECK_STR) == 0){
+            mtr->setCardId(this->gn->getNeckId());
+        }
+        mtr->setLow(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_LOW_STR)->value()));
+        mtr->setHigh(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_HIGH_STR)->value()));
+        mtr->setDescription(motor_node->first_attribute(XML_ATTRIBUTE_DESCRIPTION_STR)->value());
+        faceMotors->addMouthMotor(mtr);
+    }
+
+    node = root_node->first_node(XML_ELEMENT_EYELIDS_STR);
+    for (xml_node<> * motor_node = node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling()){
+        FRMotor* mtr = new FRMotor;
+        mtr->setId(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
+        if(strcmp(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value(), XML_FACE_STR) == 0){
+            mtr->setCardId(this->gn->getFaceId());
+        } else if(strcmp(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value(), XML_NECK_STR) == 0){
+            mtr->setCardId(this->gn->getNeckId());
+        }
+        mtr->setLow(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_LOW_STR)->value()));
+        mtr->setHigh(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_HIGH_STR)->value()));
+        mtr->setDescription(motor_node->first_attribute(XML_ATTRIBUTE_DESCRIPTION_STR)->value());
+        faceMotors->addEyelidsMotor(mtr);
+    }
+
+    node = root_node->first_node(XML_ELEMENT_EYEBROWS_STR);
+    for (xml_node<> * motor_node = node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling()){
+        FRMotor* mtr = new FRMotor;
+        mtr->setId(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
+        if(strcmp(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value(), XML_FACE_STR) == 0){
+            mtr->setCardId(this->gn->getFaceId());
+        } else if(strcmp(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value(), XML_NECK_STR) == 0){
+            mtr->setCardId(this->gn->getNeckId());
+        }
+        mtr->setLow(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_LOW_STR)->value()));
+        mtr->setHigh(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_HIGH_STR)->value()));
+        mtr->setDescription(motor_node->first_attribute(XML_ATTRIBUTE_DESCRIPTION_STR)->value());
+        faceMotors->addEyebrowsMotor(mtr);
+    }
+    
+    node = root_node->first_node(XML_ELEMENT_EYES_STR);
+    for (xml_node<> * motor_node = node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling()){
+        FRMotor* mtr = new FRMotor;
+        mtr->setId(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
+        if(strcmp(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value(), XML_FACE_STR) == 0){
+            mtr->setCardId(this->gn->getFaceId());
+        } else if(strcmp(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value(), XML_NECK_STR) == 0){
+            mtr->setCardId(this->gn->getNeckId());
+        }
+        mtr->setLow(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_LOW_STR)->value()));
+        mtr->setHigh(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_HIGH_STR)->value()));
+        mtr->setDescription(motor_node->first_attribute(XML_ATTRIBUTE_DESCRIPTION_STR)->value());
+        faceMotors->addEyesMotor(mtr);
+    }
+
+    node = root_node->first_node(XML_ELEMENT_NECK_STR);
+    for (xml_node<> * motor_node = node->first_node(XML_ELEMENT_MOTOR_STR); motor_node; motor_node = motor_node->next_sibling()){
+        FRMotor* mtr = new FRMotor;
+        mtr->setId(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_ID_STR)->value()));
+        if(strcmp(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value(), XML_FACE_STR) == 0){
+            mtr->setCardId(this->gn->getFaceId());
+        } else if(strcmp(motor_node->first_attribute(XML_ATTRIBUTE_CARD_ID_STR)->value(), XML_NECK_STR) == 0){
+            mtr->setCardId(this->gn->getNeckId());
+        }
+        mtr->setLow(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_LOW_STR)->value()));
+        mtr->setHigh(std::atoi(motor_node->first_attribute(XML_ATTRIBUTE_HIGH_STR)->value()));
+        mtr->setDescription(motor_node->first_attribute(XML_ATTRIBUTE_DESCRIPTION_STR)->value());
+        faceMotors->addNeckMotor(mtr);
+    }
+    
+    
     theFile.close();
     initializeFuzzyEmotionSystem();
 }
 
 RNEmotionsTask::~RNEmotionsTask(){
-
+    delete faceMotors;
 }
 
 void RNEmotionsTask::initializeFuzzyEmotionSystem(){
@@ -40,88 +125,102 @@ void RNEmotionsTask::initializeFuzzyEmotionSystem(){
     emotionEngine->setName("FuzzyEmotionSystem");
     emotionEngine->setDescription("");
 
-    angryFS = new fl::InputVariable;
-    angryFS->setName("angryDialogInput");
-    angryFS->setDescription("");
-    angryFS->setEnabled(true);
-    angryFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
-    angryFS->setLockValueInRange(false);
-    angryFS->addTerm(new fl::Triangle("VeryLow", -std::numeric_limits<double>::infinity(), 20.000, 40.000)); 
-    angryFS->addTerm(new fl::Triangle("Low", 20.000, 40.000, 60.000)); 
-    angryFS->addTerm(new fl::Triangle("Normal", 40.000, 60.000, 80.000)); 
-    angryFS->addTerm(new fl::Triangle("High", 60.000, 80.000, 100.000)); 
-    angryFS->addTerm(new fl::Triangle("VeryHigh", 80.000, 100.000, std::numeric_limits<double>::infinity())); 
-    emotionEngine->addInputVariable(angryFS);
+    joyFS = new fl::InputVariable;
+    joyFS->setName("JOY");
+    joyFS->setDescription("");
+    joyFS->setEnabled(true);
+    joyFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
+    joyFS->setLockValueInRange(false);
+    joyFS->addTerm(new fl::Triangle("SAD", -std::numeric_limits<double>::infinity(), 25.000, 50.000)); 
+    joyFS->addTerm(new fl::Triangle("NORMAL", 25.000, 50.000, 75.000)); 
+    joyFS->addTerm(new fl::Triangle("HAPPY", 50.000, 75.000, std::numeric_limits<double>::infinity())); 
+    emotionEngine->addInputVariable(joyFS);
     
-    happyFS = new fl::InputVariable;
-    happyFS->setName("happyDialogInput");
-    happyFS->setDescription("");
-    happyFS->setEnabled(true);
-    happyFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
-    happyFS->setLockValueInRange(false);
-    happyFS->addTerm(new fl::Triangle("VeryLow", -std::numeric_limits<double>::infinity(), 20.000, 40.000)); 
-    happyFS->addTerm(new fl::Triangle("Low", 20.000, 40.000, 60.000)); 
-    happyFS->addTerm(new fl::Triangle("Normal", 40.000, 60.000, 80.000)); 
-    happyFS->addTerm(new fl::Triangle("High", 60.000, 80.000, 100.000)); 
-    happyFS->addTerm(new fl::Triangle("VeryHigh", 80.000, 100.000, std::numeric_limits<double>::infinity())); 
-    emotionEngine->addInputVariable(happyFS);
+    fearFS = new fl::InputVariable;
+    fearFS->setName("FEAR");
+    fearFS->setDescription("");
+    fearFS->setEnabled(true);
+    fearFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
+    fearFS->setLockValueInRange(false);
+    fearFS->addTerm(new fl::Triangle("AFFRAID", -std::numeric_limits<double>::infinity(), 25.000, 50.000)); 
+    fearFS->addTerm(new fl::Triangle("NORMAL", 25.000, 50.000, 75.000)); 
+    fearFS->addTerm(new fl::Triangle("CALM", 50.000, 75.000, std::numeric_limits<double>::infinity())); 
+    emotionEngine->addInputVariable(fearFS);
     
-    calmFS = new fl::InputVariable;
-    calmFS->setName("calmDialogInput");
-    calmFS->setDescription("");
-    calmFS->setEnabled(true);
-    calmFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
-    calmFS->setLockValueInRange(false);
-    calmFS->addTerm(new fl::Triangle("VeryLow", -std::numeric_limits<double>::infinity(), 20.000, 40.000)); 
-    calmFS->addTerm(new fl::Triangle("Low", 20.000, 40.000, 60.000)); 
-    calmFS->addTerm(new fl::Triangle("Normal", 40.000, 60.000, 80.000)); 
-    calmFS->addTerm(new fl::Triangle("High", 60.000, 80.000, 100.000)); 
-    calmFS->addTerm(new fl::Triangle("VeryHigh", 80.000, 100.000, std::numeric_limits<double>::infinity())); 
-    emotionEngine->addInputVariable(calmFS);
-        
-    sadFS = new fl::InputVariable;
-    sadFS->setName("sadDialogInput");
-    sadFS->setDescription("");
-    sadFS->setEnabled(true);
-    sadFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
-    sadFS->setLockValueInRange(false);
-    sadFS->addTerm(new fl::Triangle("VeryLow", -std::numeric_limits<double>::infinity(), 20.000, 40.000)); 
-    sadFS->addTerm(new fl::Triangle("Low", 20.000, 40.000, 60.000)); 
-    sadFS->addTerm(new fl::Triangle("Normal", 40.000, 60.000, 80.000)); 
-    sadFS->addTerm(new fl::Triangle("High", 60.000, 80.000, 100.000)); 
-    sadFS->addTerm(new fl::Triangle("VeryHigh", 80.000, 100.000, std::numeric_limits<double>::infinity())); 
-    emotionEngine->addInputVariable(sadFS);
-    
-    afraidFS = new fl::InputVariable;
-    afraidFS->setName("afraidDialogInput");
-    afraidFS->setDescription("");
-    afraidFS->setEnabled(true);
-    afraidFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
-    afraidFS->setLockValueInRange(false);
-    afraidFS->addTerm(new fl::Triangle("VeryLow", -std::numeric_limits<double>::infinity(), 20.000, 40.000)); 
-    afraidFS->addTerm(new fl::Triangle("Low", 20.000, 40.000, 60.000)); 
-    afraidFS->addTerm(new fl::Triangle("Normal", 40.000, 60.000, 80.000)); 
-    afraidFS->addTerm(new fl::Triangle("High", 60.000, 80.000, 100.000)); 
-    afraidFS->addTerm(new fl::Triangle("VeryHigh", 80.000, 100.000, std::numeric_limits<double>::infinity())); 
-    emotionEngine->addInputVariable(afraidFS);
-    
-    emotionFS = new fl::OutputVariable;
-    emotionFS->setName("outputEmotion");
-    emotionFS->setDescription("");
-    emotionFS->setEnabled(true);
-    emotionFS->setRange(0, 120);
-    emotionFS->setLockValueInRange(false);
-    emotionFS->setAggregation(new fl::AlgebraicSum);
-    emotionFS->setDefuzzifier(new fl::Centroid(100));
-    emotionFS->setDefaultValue(0.0);
-    emotionFS->setLockPreviousValue(false);
+    approvalFS = new fl::InputVariable;
+    approvalFS->setName("APPROVAL");
+    approvalFS->setDescription("");
+    approvalFS->setEnabled(true);
+    approvalFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
+    approvalFS->setLockValueInRange(false);
+    approvalFS->addTerm(new fl::Triangle("DISLIKE", -std::numeric_limits<double>::infinity(), 25.000, 50.000)); 
+    approvalFS->addTerm(new fl::Triangle("NORMAL", 25.000, 50.000, 75.000)); 
+    approvalFS->addTerm(new fl::Triangle("LIKE", 50.000, 75.000, std::numeric_limits<double>::infinity())); 
+    emotionEngine->addInputVariable(approvalFS);
 
-    emotionFS->addTerm(new fl::Triangle("HAPPY", 0.000, 20.000, 40.000));
-    emotionFS->addTerm(new fl::Triangle("SAD", 20.000, 40.000, 60.000));
-    emotionFS->addTerm(new fl::Triangle("CALM", 40.000, 60.000, 80.000));
-    emotionFS->addTerm(new fl::Triangle("AFRAID", 60.000, 80.000, 100.000));
-    emotionFS->addTerm(new fl::Triangle("ANGRY", 80.000, 100.000, 120.000));
-    emotionEngine->addOutputVariable(emotionFS);
+    eyelidsFS = new fl::OutputVariable;
+    eyelidsFS->setName("FACE_EYELIDS");
+    eyelidsFS->setDescription("");
+    eyelidsFS->setEnabled(true);
+    eyelidsFS->setRange(-25.000, 125);
+    eyelidsFS->setLockValueInRange(false);
+    eyelidsFS->setAggregation(new fl::AlgebraicSum);
+    eyelidsFS->setDefuzzifier(new fl::Centroid(100));
+    eyelidsFS->setDefaultValue(0.0);
+    eyelidsFS->setLockPreviousValue(false);
+    eyelidsFS->addTerm(new fl::Triangle("CLOSED", -25.000, 0.000, 25.000)); 
+    eyelidsFS->addTerm(new fl::Triangle("HALF_CLOSED", 0.000, 25.000, 50.000)); 
+    eyelidsFS->addTerm(new fl::Triangle("NORMAL", 25.000, 50.000, 75.000));
+    eyelidsFS->addTerm(new fl::Triangle("HALF_OPENED", 50.000, 75.000, 100.000)); 
+    eyelidsFS->addTerm(new fl::Triangle("OPENED", 75.000, 100.000, 125.000)); 
+    emotionEngine->addOutputVariable(eyelidsFS);
+        
+    mouthFS = new fl::OutputVariable;
+    mouthFS->setName("FACE_MOUTH");
+    mouthFS->setDescription("");
+    mouthFS->setEnabled(true);
+    mouthFS->setRange(-25, 125);
+    mouthFS->setLockValueInRange(false);
+    mouthFS->setAggregation(new fl::AlgebraicSum);
+    mouthFS->setDefuzzifier(new fl::Centroid(100));
+    mouthFS->setDefaultValue(0.0);
+    mouthFS->setLockPreviousValue(false);
+    mouthFS->addTerm(new fl::Triangle("SO_SAD", -25.000, 0.000, 25.000)); 
+    mouthFS->addTerm(new fl::Triangle("SAD", 0.000, 25.000, 50.000)); 
+    mouthFS->addTerm(new fl::Triangle("NORMAL", 25.000, 50.000, 75.000));
+    mouthFS->addTerm(new fl::Triangle("SMILEY", 50.000, 75.000, 100.000)); 
+    mouthFS->addTerm(new fl::Triangle("BIG_SMILEY", 75.000, 100.000, 125.000)); 
+    emotionEngine->addOutputVariable(mouthFS);
+
+    eyebrowsFS = new fl::OutputVariable;
+    eyebrowsFS->setName("FACE_EYEBROWS");
+    eyebrowsFS->setDescription("");
+    eyebrowsFS->setEnabled(true);
+    eyebrowsFS->setRange(0, 100);
+    eyebrowsFS->setLockValueInRange(false);
+    eyebrowsFS->setAggregation(new fl::AlgebraicSum);
+    eyebrowsFS->setDefuzzifier(new fl::Centroid(100));
+    eyebrowsFS->setDefaultValue(0.0);
+    eyebrowsFS->setLockPreviousValue(false);
+    eyebrowsFS->addTerm(new fl::Triangle("LOW", 0, 25.000, 50.000)); 
+    eyebrowsFS->addTerm(new fl::Triangle("NORMAL", 25.000, 50.000, 75.000)); 
+    eyebrowsFS->addTerm(new fl::Triangle("HIGH", 50.000, 75.000, 100)); 
+    emotionEngine->addOutputVariable(eyebrowsFS);
+           
+    voiceRateFS = new fl::OutputVariable;
+    voiceRateFS->setName("VOICE_RATE");
+    voiceRateFS->setDescription("");
+    voiceRateFS->setEnabled(true);
+    voiceRateFS->setRange(0, 100);
+    voiceRateFS->setLockValueInRange(false);
+    voiceRateFS->setAggregation(new fl::AlgebraicSum);
+    voiceRateFS->setDefuzzifier(new fl::Centroid(100));
+    voiceRateFS->setDefaultValue(0.0);
+    voiceRateFS->setLockPreviousValue(false);
+    voiceRateFS->addTerm(new fl::Triangle("LOW", 0, 25.000, 50.000)); 
+    voiceRateFS->addTerm(new fl::Triangle("NORMAL", 25.000, 50.000, 75.000)); 
+    voiceRateFS->addTerm(new fl::Triangle("HIGH", 50.000, 75.000, 100)); 
+    emotionEngine->addOutputVariable(voiceRateFS);
 
     ruleBlock = new fl::RuleBlock;
 	ruleBlock->setName("mamdani");
@@ -131,2443 +230,64 @@ void RNEmotionsTask::initializeFuzzyEmotionSystem(){
 	ruleBlock->setDisjunction(new fl::AlgebraicSum);
 	ruleBlock->setImplication(new fl::AlgebraicProduct);
 	ruleBlock->setActivation(new fl::General);
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-   
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-   
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-   
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-        
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-        
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-        
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-        
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryHigh and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is AFFRAID and APPROVAL is DISLIKE then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is LOW and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is AFFRAID and APPROVAL is NORMAL then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SO_SAD and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is AFFRAID and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is HIGH and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));  
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-        
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-        
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is High and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
- 
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is NORMAL and APPROVAL is DISLIKE then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is LOW and FACE_MOUTH is SAD and VOICE_RATE is LOW", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is NORMAL and APPROVAL is NORMAL then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is NORMAL and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is CALM and APPROVAL is DISLIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is LOW and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is CALM and APPROVAL is NORMAL then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is LOW", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is CALM and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-        
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Normal and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is AFFRAID and APPROVAL is DISLIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is LOW and FACE_MOUTH is SAD and VOICE_RATE is HIGH", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is AFFRAID and APPROVAL is NORMAL then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is AFFRAID and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is NORMAL and APPROVAL is DISLIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is LOW and FACE_MOUTH is NORMAL and VOICE_RATE is LOW", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is NORMAL and APPROVAL is NORMAL then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is NORMAL and APPROVAL is LIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is HIGH", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is CALM and APPROVAL is DISLIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is LOW and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is CALM and APPROVAL is NORMAL then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is HIGH and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is CALM and APPROVAL is LIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is HIGH and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is VeryHigh then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-       
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is ANGRY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-        
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is AFRAID", emotionEngine)); 
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is Low and happyDialogInput is VeryLow and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is ANGRY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryHigh and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is High and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-   
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Normal and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryHigh and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is High and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryHigh then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Normal and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryLow then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryLow then outputEmotion is HAPPY", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Normal then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is Low and sadDialogInput is VeryLow and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is Low and calmDialogInput is VeryLow and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is HAPPY", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is VeryHigh and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is High and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Normal and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is CALM", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is VeryHigh and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is High then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is High and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Normal then outputEmotion is SAD", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Normal and afraidDialogInput is Low then outputEmotion is SAD", emotionEngine));
-    
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is VeryHigh then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is High then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Normal then outputEmotion is AFRAID", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if angryDialogInput is VeryLow and happyDialogInput is VeryLow and calmDialogInput is Low and sadDialogInput is Low and afraidDialogInput is Low then outputEmotion is CALM", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is AFFRAID and APPROVAL is DISLIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is LOW", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is AFFRAID and APPROVAL is NORMAL then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is LOW", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is AFFRAID and APPROVAL is LIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL", emotionEngine));
+
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is NORMAL and APPROVAL is DISLIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is NORMAL and APPROVAL is NORMAL then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is HIGH and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is NORMAL and APPROVAL is LIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is HIGH and FACE_MOUTH is SMILEY and VOICE_RATE is HIGH", emotionEngine));
+
+
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is CALM and APPROVAL is DISLIKE then FACE_EYELIDS is OPENED and FACE_EYEBROWS is LOW and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is CALM and APPROVAL is NORMAL then FACE_EYELIDS is OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is CALM and APPROVAL is LIKE then FACE_EYELIDS is OPENED and FACE_EYEBROWS is HIGH and FACE_MOUTH is BIG_SMILEY and VOICE_RATE is HIGH", emotionEngine));
+
+
+
     emotionEngine->addRuleBlock(ruleBlock);
     printf("Reglas EMOTION FUZZY cargadas\n");
 }
 
-void RNEmotionsTask::getSystemInput(double* emotion){
+void RNEmotionsTask::getSystemInput(double* eyelids, double* eyelashes, double* mouth, double* voiceRate){
     RNUtils::printLn("Emotion: %s", currentState->toString().c_str());
-    this->angryFS->setValue(currentState->getAngry());  
-    this->happyFS->setValue(currentState->getHappy());
-    this->calmFS->setValue(currentState->getCalm());
-    this->sadFS->setValue(currentState->getSad());
-    this->afraidFS->setValue(currentState->getAfraid());
+    this->joyFS->setValue(currentState->getJoy());  
+    this->fearFS->setValue(currentState->getFear());
+    this->approvalFS->setValue(currentState->getApproval());
+
     emotionEngine->process();
-    *emotion = this->emotionFS->getValue();
+
+    *eyelids = this->eyelidsFS->getValue();
+    *eyelashes = this->eyebrowsFS->getValue();
+    *mouth = this->mouthFS->getValue();
+    *voiceRate = this->voiceRateFS->getValue();
 }
 
 void RNEmotionsTask::task(){ //This is supposed to be sensing Doris emotion by: speaking....
@@ -2577,22 +297,21 @@ void RNEmotionsTask::task(){ //This is supposed to be sensing Doris emotion by: 
         for (int i = 0; i < impulses->size() and not found; i++){
             if(spokenId == impulses->at(i)->getId()){
                 found = true;
-                currentState->setAngry(impulses->at(i)->getAngry() + currentState->getAngry());
-                currentState->setHappy(impulses->at(i)->getHappy() + currentState->getHappy());
-                currentState->setCalm(impulses->at(i)->getCalm() + currentState->getCalm());
-                currentState->setSad(impulses->at(i)->getSad() + currentState->getSad());
-                currentState->setAfraid(impulses->at(i)->getAfraid() + currentState->getAfraid());
+                currentState->setJoy(impulses->at(i)->getJoy() + currentState->getJoy());
+                currentState->setFear(impulses->at(i)->getFear() + currentState->getFear());
+                currentState->setApproval(impulses->at(i)->getApproval() + currentState->getApproval());
+                
             }
         }
+        RNUtils::printLn("SpokenId: {%d}", spokenId);
         spokenId = RN_NONE;
         if(found){
-            double emotion;
-            getSystemInput(&emotion);
-            RNUtils::printLn("Emotion: %lf", emotion);
-            std::string state = setDialogState(emotion);
-            std::string face = setFace(emotion);
-            RNUtils::printLn("State: %s, Face: %s", state.c_str(), face.c_str());
-            gn->setEmotionsResult(state, face);
+            double eyelids, eyebrows, mouth, voiceRate;
+            getSystemInput(&eyelids, &eyebrows, &mouth, &voiceRate);
+
+            RNUtils::printLn("Emotion: {EL: %lf, EB: %lf, Mouth: %lf, VoiceRate: %lf}", eyelids, eyebrows, mouth, voiceRate);
+            setDialogState(voiceRate);
+            setFace(eyelids, eyebrows, mouth);
         }
         // set face
         // modify speaking rate and volume.
@@ -2606,7 +325,7 @@ void RNEmotionsTask::setSpokenImpulseId(int id){
     this->spokenId = id;
 }
 
-std::string RNEmotionsTask::setDialogState(double outputEmotion){ //Función para enviar parámetro state a la clase RNDialogsTask para que Doris responda en función de su estado de ánimo
+void RNEmotionsTask::setDialogState(double voiceRate){ //Función para enviar parámetro state a la clase RNDialogsTask para que Doris responda en función de su estado de ánimo
     std::string state = "";
 	if (outputEmotion >= 80.0){//outputEmotion=="ANGRY";
 		state = "4";
@@ -2623,66 +342,41 @@ std::string RNEmotionsTask::setDialogState(double outputEmotion){ //Función par
 	else if (outputEmotion < 20.0) {//outputEmotion=="HAPPY";
 		state = "0";
 	}
-	
-	return state;
+	gn->setEmotionsResult(state, "");
 }
 
-std::string RNEmotionsTask::setFace(double outputEmotion){ //Función para enviar parámetro id a RNGestureTask para indicar qué cara tiene que poner 
-    std::string id;
-	if (outputEmotion >= 80 ){//outputEmotion=="ANGRY";
-		if (outputEmotion < 85){ 
-			id = "13";
-		} else if ((outputEmotion >= 85) and (outputEmotion < 90)){ 
-			id = "12";
-		} else if (outputEmotion >= 90 and outputEmotion < 95){
-			id = "4";
-		} else if (outputEmotion >= 95){ 
-			id = "8";
-		}
-	} else if (outputEmotion < 80 and outputEmotion >= 60 ) { //outputEmotion=="AFRAID";
-		if (outputEmotion < 65){ 
-			id = "24";
-		} else if (outputEmotion >= 65 and outputEmotion < 70){ 
-			id = "25";
-		} else if (outputEmotion >= 70 and outputEmotion < 75){ 
-			id = "26";
-		} else if (outputEmotion >= 75){ 
-			id = "0";
-		}
-			
-	} else if (outputEmotion < 60 and outputEmotion >= 40) { //outputEmotion=="CALM";
-		if (outputEmotion < 45){ 
-			id = "11"; 
-		} else if (outputEmotion >= 45 and outputEmotion < 50){ 
-			id = "29";
-		} else if (outputEmotion >= 50 and outputEmotion < 55){ 
-			id = "16";
-		} else if (outputEmotion >= 55){ 
-			id = "7";
-		}
-				
-	} else if (outputEmotion < 40 and outputEmotion >= 20 ) { //outputEmotion=="SAD";
-		if (outputEmotion < 25) { 
-			id = "21"; 
-		} else if (outputEmotion >= 25 and outputEmotion < 30){ 
-			id = "20";
-		} else if (outputEmotion >= 30 and outputEmotion < 35){ 
-			id = "30";
-		} else if (outputEmotion >= 35){ 
-			id = "14";
-		}
-					
-	} else if (outputEmotion < 20) { //outputEmotion=="HAPPY";
-		if (outputEmotion < 5){  
-			id = "1";
-		} else if (outputEmotion >= 5 and outputEmotion < 10){ 
-			id = "28"; 
-		} else if (outputEmotion >= 10 and outputEmotion < 15){ 
-			id = "3";
-		} else if (outputEmotion >= 15){ 
-			id = "10";
-		}					
-	}
-    return id;
-	// mandar a la clase GN
+void RNEmotionsTask::setFace(double eyelids, double eyebrows, double mouth){ //Función para enviar parámetro id a RNGestureTask para indicar qué cara tiene que poner 
+    for(int i = 0; i < faceMotors->mouthMotorsSize(); i++){
+        double valor = RNUtils::linearInterpolator(mouth, PointXY(0, faceMotors->mouthMotorAt(i)->getLow()), PointXY(100, faceMotors->mouthMotorAt(i)->getHigh()));
+        uint8_t card_id = faceMotors->mouthMotorAt(i)->getCardId();
+        uint8_t servo_id = faceMotors->mouthMotorAt(i)->getId();
+        uint16_t position = static_cast<uint16_t>(valor);
+        this->maestroController->setTarget(card_id, servo_id, position);
+    }
+
+    for(int i = 0; i < faceMotors->eyelidsMotorsSize(); i++){
+        double valor = RNUtils::linearInterpolator(mouth, PointXY(0, faceMotors->eyelidsMotorAt(i)->getLow()), PointXY(100, faceMotors->eyelidsMotorAt(i)->getHigh()));
+        uint8_t card_id = faceMotors->eyelidsMotorAt(i)->getCardId();
+        uint8_t servo_id = faceMotors->eyelidsMotorAt(i)->getId();
+        uint16_t position = static_cast<uint16_t>(valor);
+        this->maestroController->setTarget(card_id, servo_id, position);
+    }
+
+    for(int i = 0; i < faceMotors->eyebrowsMotorsSize(); i++){
+        double valor = RNUtils::linearInterpolator(mouth, PointXY(0, faceMotors->eyebrowsMotorAt(i)->getLow()), PointXY(100, faceMotors->eyebrowsMotorAt(i)->getHigh()));
+        uint8_t card_id = faceMotors->eyebrowsMotorAt(i)->getCardId();
+        uint8_t servo_id = faceMotors->eyebrowsMotorAt(i)->getId();
+        uint16_t position = static_cast<uint16_t>(valor);
+        this->maestroController->setTarget(card_id, servo_id, position);
+    }
+
+    /*for(int i = 0; i < faceMotors->eyesMotorsSize(); i++){
+        valor = RNUtils::linearInterpolator(mouth, PointXY(0, faceMotors->eyesMotorAt(i)->getLow()), PointXY(100, faceMotors->eyesMotorAt(i)->getHigh()));
+    }*/
+
+    /*for(int i = 0; i < faceMotors->neckMotorsSize(); i++){
+        valor = RNUtils::linearInterpolator(mouth, PointXY(0, faceMotors->neckMotorAt(i)->getLow()), PointXY(100, faceMotors->neckMotorAt(i)->getHigh()));
+    }*/
+
+
 }

@@ -23,25 +23,25 @@
 			<site id="1" name="way" x="660" y="227"/>
 			<site id="2" name="way" x="480" y="227"/>
 			<site id="3" name="way" x="240" y="227"/>
-			<site id="4" name="frame" x="240" y="310"/>
+			<!--<site id="4" name="frame" x="240" y="310"/>-->
 			<site id="5" name="way" x="160" y="227"/>
 			<site id="6" name="way" x="110" y="110"/>
 			<site id="7" name="door" x="110" y="0" linked-sector-id="1" xcoord="-18" ycoord="1148"/>
 			<site id="8" name="door" x="0" y="110" linked-sector-id="4" xcoord="160" ycoord="0"/>
 		</sites>
 		<ways>
-			<way st="0" adjacency="1"/>
-			<way st="1" adjacency="0,2"/>
+			<!--<way st="0" adjacency="1"/>-->
+			<way st="1" adjacency="2"/>
 			<way st="2" adjacency="1,3"/>
-			<way st="3" adjacency="2,4"/>
-			<way st="4" adjacency="3"/>
+			<way st="3" adjacency="2"/>
+			<!--<way st="4" adjacency="3"/>-->
 			<way st="5" adjacency="3,6"/>
 			<way st="6" adjacency="5,8,7"/>
 			<way st="7" adjacency="6"/>
 			<way st="8" adjacency="6"/>
 		</ways>
 		<tags>
-			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="6" antenna="2" stretching="0"/>
+			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="7" antenna="2" stretching="0"/>
 		</tags>
 
 	</sector>

@@ -71,13 +71,13 @@ RNFuzzySpeedController::RNFuzzySpeedController(const char* name, const char* des
 	angularVelocity->setDefuzzifier(new fl::Centroid(100));
 	angularVelocity->setDefaultValue(0.0);
 	angularVelocity->setLockPreviousValue(false);
-	angularVelocity->addTerm(new fl::Triangle("FastRight", -0.088, -0.066, -0.044));
-	angularVelocity->addTerm(new fl::Triangle("SlowRight", -0.066, -0.044, 0.022));
-	angularVelocity->addTerm(new fl::Triangle("VSlowRight", -0.044, -0.022, 0.000));
+	angularVelocity->addTerm(new fl::Triangle("FastRight", -0.157, -0.105, -0.052));
+	angularVelocity->addTerm(new fl::Triangle("SlowRight", -0.105, -0.052, 0.022));
+	angularVelocity->addTerm(new fl::Triangle("VSlowRight", -0.052, -0.022, 0.000));
 	angularVelocity->addTerm(new fl::Triangle("Zero", -0.022, 0.000, 0.022));
-	angularVelocity->addTerm(new fl::Triangle("VSlowLeft", 0.000, 0.080, 0.044));
-	angularVelocity->addTerm(new fl::Triangle("SlowLeft", 0.022, 0.044, 0.066));
-	angularVelocity->addTerm(new fl::Triangle("FastLeft", 0.044, 0.066, 0.088));
+	angularVelocity->addTerm(new fl::Triangle("VSlowLeft", 0.000, 0.022, 0.052));
+	angularVelocity->addTerm(new fl::Triangle("SlowLeft", 0.022, 0.052, 0.105));
+	angularVelocity->addTerm(new fl::Triangle("FastLeft", 0.052, 0.105, 0.157));
 	engine->addOutputVariable(angularVelocity);
 
 	ruleBlock = new fl::RuleBlock;

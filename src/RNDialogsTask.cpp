@@ -63,7 +63,6 @@ void RNDialogsTask::task(){
     //XML parameters
     if(inputMessage != ""){
         std::string id_input_aux; //To manage the id of the possible response
-        
 
         //Variables for when the phrase is not complete
         
@@ -71,24 +70,23 @@ void RNDialogsTask::task(){
         
         int coincidences = 0; //To count the number of coincidences between the input message and the xml request
         int coincidences_aux = 0; //Auxiliar variable to know if there is another phrase that has more coincidences
-        
-        std::string s; //Used to divide the request into words
+        id_input = "";
+        bool found = false;
         //REPETITION
-                    
-        for (int i = 0; i < inputMessages->size() and (id_input == "121"); i++){
+        std::vector<std::string> splittedInputMessage = RNUtils::split(inputMessage, " ");
+        for (int i = 0; i < inputMessages->size() and not found; i++){
             if( inputMessages->at(i)->getComplete() == "0" ){ //if complete is 0, the phrase is complete
                 if(inputMessage == inputMessages->at(i)->getText()){ //compares the phrase we say with the requests
                     id_input = inputMessages->at(i)->getId();
                     if(last_id_input == id_input){
                         id_input = "122";
                     }
+                    found = true;
                 }
             } else if(inputMessages->at(i)->getComplete() == "1" ){ //if complete is 1, the phrase is not complete
                 std::string s = inputMessages->at(i)->getText();
-                std::string str = std::string(inputMessage);
+                std::vector<std::string> splittedRequest = RNUtils::split(s, " ");
 
-                std::vector<std::string> splittedRequest = RNUtils::split((char*)s.c_str(), " ");
-                std::vector<std::string> splittedInputMessage = RNUtils::split((char*)str.c_str(), " ");
                 coincidences = 0;
 
                 for(int p = 0; p < splittedRequest.size(); p++){
@@ -96,14 +94,11 @@ void RNDialogsTask::task(){
                         if(splittedRequest.at(p) == splittedInputMessage.at(q)){
                             coincidences++;
                         }
-
                     }
                 }
 
                 if (coincidences == splittedRequest.size()){ //if we have found all the words of the request in the input message
-                    
                     id_input_aux = inputMessages->at(i)->getId();
-
                     if (coincidences > coincidences_aux){ //To compare if there has been a better match
                         id_input = id_input_aux;
                         coincidences_aux = coincidences;
