@@ -222,6 +222,23 @@ void RNEmotionsTask::initializeFuzzyEmotionSystem(){
     voiceRateFS->addTerm(new fl::Triangle("HIGH", 50.000, 75.000, 100)); 
     emotionEngine->addOutputVariable(voiceRateFS);
 
+    responseModeFS = new fl::OutputVariable;
+    responseModeFS->setName("VOICE_RESPONSE");
+    responseModeFS->setDescription("");
+    responseModeFS->setEnabled(true);
+    responseModeFS->setRange(0, 4);
+    responseModeFS->setLockValueInRange(false);
+    responseModeFS->setAggregation(new fl::AlgebraicSum);
+    responseModeFS->setDefuzzifier(new fl::Centroid(100));
+    responseModeFS->setDefaultValue(0.0);
+    responseModeFS->setLockPreviousValue(false);
+    responseModeFS->addTerm(new fl::Triangle("BLUE", -1.000, 0.000, 1.000));
+    responseModeFS->addTerm(new fl::Triangle("HYPOCRITE", 0.000, 1.000, 2.000));
+    responseModeFS->addTerm(new fl::Triangle("NORMAL", 1.000, 2.000, 3.000));
+    responseModeFS->addTerm(new fl::Triangle("EASY", 2.000, 3.000, 4.000));
+    responseModeFS->addTerm(new fl::Triangle("ENTHUSIASTIC", 3.000, 4.000, 5.000));
+    emotionEngine->addOutputVariable(responseModeFS);
+
     ruleBlock = new fl::RuleBlock;
 	ruleBlock->setName("mamdani");
 	ruleBlock->setDescription("");
@@ -231,52 +248,51 @@ void RNEmotionsTask::initializeFuzzyEmotionSystem(){
 	ruleBlock->setImplication(new fl::AlgebraicProduct);
 	ruleBlock->setActivation(new fl::General);
 
-    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is AFFRAID and APPROVAL is DISLIKE then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is LOW and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is AFFRAID and APPROVAL is NORMAL then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SO_SAD and VOICE_RATE is NORMAL", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is AFFRAID and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is HIGH and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is AFFRAID and APPROVAL is DISLIKE then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is LOW and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW and VOICE_RESPONSE is BLUE", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is AFFRAID and APPROVAL is NORMAL then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SO_SAD and VOICE_RATE is NORMAL and VOICE_RESPONSE is BLUE", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is AFFRAID and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is HIGH and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW and VOICE_RESPONSE is HYPOCRITE", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is NORMAL and APPROVAL is DISLIKE then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is LOW and FACE_MOUTH is SAD and VOICE_RATE is LOW", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is NORMAL and APPROVAL is NORMAL then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is NORMAL and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is NORMAL and APPROVAL is DISLIKE then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is LOW and FACE_MOUTH is SAD and VOICE_RATE is LOW and VOICE_RESPONSE is BLUE", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is NORMAL and APPROVAL is NORMAL then FACE_EYELIDS is CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL and VOICE_RESPONSE is HYPOCRITE", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is NORMAL and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW and VOICE_RESPONSE is HYPOCRITE", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is CALM and APPROVAL is DISLIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is LOW and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is CALM and APPROVAL is NORMAL then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is LOW", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is CALM and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL", emotionEngine));
-
-
-    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is AFFRAID and APPROVAL is DISLIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is LOW and FACE_MOUTH is SAD and VOICE_RATE is HIGH", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is AFFRAID and APPROVAL is NORMAL then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is AFFRAID and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL", emotionEngine));
-
-    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is NORMAL and APPROVAL is DISLIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is LOW and FACE_MOUTH is NORMAL and VOICE_RATE is LOW", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is NORMAL and APPROVAL is NORMAL then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is NORMAL and APPROVAL is LIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is HIGH", emotionEngine));
-
-    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is CALM and APPROVAL is DISLIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is LOW and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is CALM and APPROVAL is NORMAL then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is HIGH and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is CALM and APPROVAL is LIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is HIGH and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is CALM and APPROVAL is DISLIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is LOW and FACE_MOUTH is SO_SAD and VOICE_RATE is LOW and VOICE_RESPONSE is BLUE", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is CALM and APPROVAL is NORMAL then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is LOW and VOICE_RESPONSE is BLUE", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is SAD and FEAR is CALM and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL and VOICE_RESPONSE is HYPOCRITE", emotionEngine));
 
 
-    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is AFFRAID and APPROVAL is DISLIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is LOW", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is AFFRAID and APPROVAL is NORMAL then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is LOW", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is AFFRAID and APPROVAL is LIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is AFFRAID and APPROVAL is DISLIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is LOW and FACE_MOUTH is SAD and VOICE_RATE is HIGH and VOICE_RESPONSE is HYPOCRITE", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is AFFRAID and APPROVAL is NORMAL then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL and VOICE_RESPONSE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is AFFRAID and APPROVAL is LIKE then FACE_EYELIDS is HALF_CLOSED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL and VOICE_RESPONSE is NORMAL", emotionEngine));
 
-    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is NORMAL and APPROVAL is DISLIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is NORMAL and APPROVAL is NORMAL then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is HIGH and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is NORMAL and APPROVAL is LIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is HIGH and FACE_MOUTH is SMILEY and VOICE_RATE is HIGH", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is NORMAL and APPROVAL is DISLIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is LOW and FACE_MOUTH is NORMAL and VOICE_RATE is LOW and VOICE_RESPONSE is HYPOCRITE", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is NORMAL and APPROVAL is NORMAL then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL and VOICE_RESPONSE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is NORMAL and APPROVAL is LIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is HIGH and VOICE_RESPONSE is NORMAL", emotionEngine));
+
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is CALM and APPROVAL is DISLIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is LOW and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL and VOICE_RESPONSE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is CALM and APPROVAL is NORMAL then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is HIGH and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL and VOICE_RESPONSE is EASY", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is NORMAL and FEAR is CALM and APPROVAL is LIKE then FACE_EYELIDS is NORMAL and FACE_EYEBROWS is HIGH and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL and VOICE_RESPONSE is EASY", emotionEngine));
 
 
-    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is CALM and APPROVAL is DISLIKE then FACE_EYELIDS is OPENED and FACE_EYEBROWS is LOW and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is CALM and APPROVAL is NORMAL then FACE_EYELIDS is OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL", emotionEngine));
-    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is CALM and APPROVAL is LIKE then FACE_EYELIDS is OPENED and FACE_EYEBROWS is HIGH and FACE_MOUTH is BIG_SMILEY and VOICE_RATE is HIGH", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is AFFRAID and APPROVAL is DISLIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is LOW and VOICE_RESPONSE is HYPOCRITE", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is AFFRAID and APPROVAL is NORMAL then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is LOW and VOICE_RESPONSE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is AFFRAID and APPROVAL is LIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is NORMAL and VOICE_RATE is NORMAL and VOICE_RESPONSE is EASY", emotionEngine));
 
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is NORMAL and APPROVAL is DISLIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SAD and VOICE_RATE is NORMAL and VOICE_RESPONSE is NORMAL", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is NORMAL and APPROVAL is NORMAL then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is HIGH and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL and VOICE_RESPONSE is EASY", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is NORMAL and APPROVAL is LIKE then FACE_EYELIDS is HALF_OPENED and FACE_EYEBROWS is HIGH and FACE_MOUTH is SMILEY and VOICE_RATE is HIGH and VOICE_RESPONSE is EASY", emotionEngine));
+
+
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is CALM and APPROVAL is DISLIKE then FACE_EYELIDS is OPENED and FACE_EYEBROWS is LOW and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL and VOICE_RESPONSE is EASY", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is CALM and APPROVAL is NORMAL then FACE_EYELIDS is OPENED and FACE_EYEBROWS is NORMAL and FACE_MOUTH is SMILEY and VOICE_RATE is NORMAL and VOICE_RESPONSE is EASY", emotionEngine));
+    ruleBlock->addRule(fl::Rule::parse("if JOY is HAPPY and FEAR is CALM and APPROVAL is LIKE then FACE_EYELIDS is OPENED and FACE_EYEBROWS is HIGH and FACE_MOUTH is BIG_SMILEY and VOICE_RATE is HIGH and VOICE_RESPONSE is ENTHUSIASTIC", emotionEngine));
 
 
     emotionEngine->addRuleBlock(ruleBlock);
     printf("Reglas EMOTION FUZZY cargadas\n");
 }
 
-void RNEmotionsTask::getSystemInput(double* eyelids, double* eyelashes, double* mouth, double* voiceRate){
+void RNEmotionsTask::getSystemInput(double* eyelids, double* eyelashes, double* mouth, double* responseMode, double* voiceRate){
     RNUtils::printLn("Emotion: %s", currentState->toString().c_str());
     this->joyFS->setValue(currentState->getJoy());  
     this->fearFS->setValue(currentState->getFear());
@@ -288,6 +304,7 @@ void RNEmotionsTask::getSystemInput(double* eyelids, double* eyelashes, double* 
     *eyelashes = this->eyebrowsFS->getValue();
     *mouth = this->mouthFS->getValue();
     *voiceRate = this->voiceRateFS->getValue();
+    *responseMode = this->responseModeFS->getValue();
 }
 
 void RNEmotionsTask::task(){ //This is supposed to be sensing Doris emotion by: speaking....
@@ -300,17 +317,16 @@ void RNEmotionsTask::task(){ //This is supposed to be sensing Doris emotion by: 
                 currentState->setJoy(impulses->at(i)->getJoy() + currentState->getJoy());
                 currentState->setFear(impulses->at(i)->getFear() + currentState->getFear());
                 currentState->setApproval(impulses->at(i)->getApproval() + currentState->getApproval());
-                
             }
         }
         RNUtils::printLn("SpokenId: {%d}", spokenId);
         spokenId = RN_NONE;
         if(found){
-            double eyelids, eyebrows, mouth, voiceRate;
-            getSystemInput(&eyelids, &eyebrows, &mouth, &voiceRate);
+            double eyelids, eyebrows, mouth, responseMode, voiceRate;
+            getSystemInput(&eyelids, &eyebrows, &mouth, &responseMode, &voiceRate);
 
-            RNUtils::printLn("Emotion: {EL: %lf, EB: %lf, Mouth: %lf, VoiceRate: %lf}", eyelids, eyebrows, mouth, voiceRate);
-            setDialogState(voiceRate);
+            RNUtils::printLn("Emotion: {EL: %lf, EB: %lf, Mouth: %lf, ResponseType: %lf, VoiceRate: %lf}", eyelids, eyebrows, mouth, responseMode, voiceRate);
+            setDialogState(responseMode, voiceRate);
             setFace(eyelids, eyebrows, mouth);
         }
         // set face
@@ -325,23 +341,9 @@ void RNEmotionsTask::setSpokenImpulseId(int id){
     this->spokenId = id;
 }
 
-void RNEmotionsTask::setDialogState(double voiceRate){ //Función para enviar parámetro state a la clase RNDialogsTask para que Doris responda en función de su estado de ánimo
-    std::string state = "";
-	if (outputEmotion >= 80.0){//outputEmotion=="ANGRY";
-		state = "4";
-	}
-	else if (outputEmotion >= 60.0 and outputEmotion < 80.0) {//outputEmotion=="AFRAID";
-		state = "3";
-	}
-	else if (outputEmotion >= 40.0 and outputEmotion < 60.0) {//outputEmotion=="CALM";
-		state = "2";
-	}
-	else if (outputEmotion >= 20.0 and outputEmotion < 40.0) {//outputEmotion=="SAD";
-		state = "1";
-	}
-	else if (outputEmotion < 20.0) {//outputEmotion=="HAPPY";
-		state = "0";
-	}
+void RNEmotionsTask::setDialogState(double responseMode, double voiceRate){ //Función para enviar parámetro state a la clase RNDialogsTask para que Doris responda en función de su estado de ánimo
+    int type = static_cast<int>(responseMode);
+    std::string state = std::to_string(type);
 	gn->setEmotionsResult(state, "");
 }
 

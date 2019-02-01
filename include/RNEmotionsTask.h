@@ -82,9 +82,9 @@ public:
 
 private:
     void initializeFuzzyEmotionSystem();
-    void getSystemInput(double* eyelids, double* eyebrows, double* mouth, double* voiceRate);
+    void getSystemInput(double* eyelids, double* eyebrows, double* mouth, double* responseMode, double* voiceRate);
     void setFace(double eyelids, double eyebrows, double mouth);
-    void setDialogState(double voiceRate);
+    void setDialogState(double responseMode, double voiceRate);
 private:
 	GeneralController* gn;
 	std::vector<Impulse*>* impulses;
@@ -104,6 +104,7 @@ private:
     fl::OutputVariable* eyebrowsFS;
     fl::OutputVariable* mouthFS;
     fl::OutputVariable* voiceRateFS;
+    fl::OutputVariable* responseModeFS;
     fl::RuleBlock* ruleBlock;
 };
 
