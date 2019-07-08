@@ -129,7 +129,8 @@ void RNEmotionsTask::initializeFuzzyEmotionSystem(){
     joyFS->setName("JOY");
     joyFS->setDescription("");
     joyFS->setEnabled(true);
-    joyFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
+    joyFS->setRange(0, 100);
+    //joyFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
     joyFS->setLockValueInRange(false);
     joyFS->addTerm(new fl::Triangle("SAD", -std::numeric_limits<double>::infinity(), 25.000, 50.000)); 
     joyFS->addTerm(new fl::Triangle("NORMAL", 25.000, 50.000, 75.000)); 
@@ -140,7 +141,8 @@ void RNEmotionsTask::initializeFuzzyEmotionSystem(){
     fearFS->setName("FEAR");
     fearFS->setDescription("");
     fearFS->setEnabled(true);
-    fearFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
+    fearFS->setRange(0, 100);
+    //fearFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
     fearFS->setLockValueInRange(false);
     fearFS->addTerm(new fl::Triangle("AFFRAID", -std::numeric_limits<double>::infinity(), 25.000, 50.000)); 
     fearFS->addTerm(new fl::Triangle("NORMAL", 25.000, 50.000, 75.000)); 
@@ -151,7 +153,8 @@ void RNEmotionsTask::initializeFuzzyEmotionSystem(){
     approvalFS->setName("APPROVAL");
     approvalFS->setDescription("");
     approvalFS->setEnabled(true);
-    approvalFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
+    approvalFS->setRange(0, 100);
+    //approvalFS->setRange(-std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
     approvalFS->setLockValueInRange(false);
     approvalFS->addTerm(new fl::Triangle("DISLIKE", -std::numeric_limits<double>::infinity(), 25.000, 50.000)); 
     approvalFS->addTerm(new fl::Triangle("NORMAL", 25.000, 50.000, 75.000)); 

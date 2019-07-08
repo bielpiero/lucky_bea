@@ -93,7 +93,7 @@
 			
 		<message id="32" type="0" lang="es" compl="1" request="cual pelicula favorita"/>			
 			
-		<message id="33" type="0" lang="es" compl="1" request="cual cancion preferida"/>			
+		<message id="33" type="0" lang="es" compl="0" request="cual es tu cancion preferida"/>			
 			
 		
 	<!--type 1, EXCLAMATIVAS-->
@@ -356,14 +356,14 @@
 		<message id="3" type="0" est="4" lang="es" response="Y a ti qué te importa?"/>
 		<message id="3" type="0" est="3" lang="es" response="Ahora mismo no lo sé"/>
 		<!--A QUIÉN-->
-		<message id="4" type="0" est="0" lang="es" response="Me gustaría conocer a Darwin y a Ryan Gosling"/>
+		<message id="4" type="0" est="0" lang="es" response="Me gustaría conocer a Fredi Mercuri"/>
 		<message id="4" type="0" est="2" lang="es" response="A otros robots, y a ti?"/>
 		<message id="4" type="0" est="1" lang="es" response="No estoy de humor para conocer a nadie"/>
 		<message id="4" type="0" est="4" lang="es" response="No es de tu incumbencia"/>
 		<message id="4" type="0" est="3" lang="es" response="Eeeh, ahora mismo no puedo pensar en nadie"/>
 
 		<message id="5" type="0" est="0" lang="es" response="Admiro a Urbano porque es muy inteligente y divertido"/>
-		<message id="5" type="0" est="2" lang="es" response="Admiro a Mozart, y tú?"/>
+		<message id="5" type="0" est="2" lang="es" response="Admiro a Biel, y tú?"/>
 		<message id="5" type="0" est="1" lang="es" response="Admiro a la gente que siempre está contenta"/>
 		<message id="5" type="0" est="4" lang="es" response="Para qué quieres saberlo?"/>
 		<message id="5" type="0" est="3" lang="es" response="Admiro a las personas valientes"/>
@@ -558,15 +558,15 @@
 
 		<message id="32" type="0" est="0" lang="es" response="Wall-e, porque sale mi primo"/>
 		<message id="32" type="0" est="2" lang="es" response="Wall-e me gusta mucho"/>
-		<message id="32" type="0" est="1" lang="es" response="Es Wall-e"/>
+		<message id="32" type="0" est="1" lang="es" response="Es uali"/>
 		<message id="32" type="0" est="4" lang="es" response="Para qué iba a decírtelo?"/>
-		<message id="32" type="0" est="4" lang="es" response="No sé, Wall-e"/>
+		<message id="32" type="0" est="3" lang="es" response="No sé, uali"/>
 
-		<message id="33" type="0" est="0" lang="es" response="dont stop mi nao me parece preciosa"/>
-		<message id="33" type="0" est="2" lang="es" response="Me gusta mucho bohemian rapsody"/>
-		<message id="33" type="0" est="1" lang="es" response="dont stop mi nao de Qüin"/>
+		<message id="33" type="0" est="0" lang="es" response="la canción Barcelona me parece preciosa"/>
+		<message id="33" type="0" est="2" lang="es" response="Me gusta mucho bohemian rapsodi"/>
+		<message id="33" type="0" est="1" lang="es" response="don stop mi nao de Qüin"/>
 		<message id="33" type="0" est="4" lang="es" response="Estás intentando caerme bien?"/>
-		<message id="33" type="0" est="4" lang="es" response="La Macarena, por ejemplo"/>
+		<message id="33" type="0" est="3" lang="es" response="La Macarena, por ejemplo"/>
 
 	<!--type 1, EXCLAMATIVAS-->	
 		<!--QUÉ-->

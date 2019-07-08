@@ -1,18 +1,38 @@
 <sectors sequence="0,1,0">
 	<sector id="0" name="Mobile Robots" width="895" height="458" polygon="m 0 0 l 0 458 l 895 0 l 0 -458 z" adjacency="1,4">
 		<landmarks>
+			<!-- Configuración normal 
 			<landmark id="0" type="laser" x="040" y="027" z="0"/>
 			<landmark id="1" type="laser" x="159" y="027" z="0"/>
 			<landmark id="2" type="laser" x="080" y="187" z="0"/>
-			<landmark id="3" type="laser" x="080" y="347" z="0"/>
+			<landmark id="3" type="laser" x="080" y="307" z="0"/>
 			<landmark id="4" type="laser" x="200" y="107" z="0"/>
-			<landmark id="5" type="laser" x="200" y="347" z="0"/>
+			<landmark id="5" type="laser" x="200" y="387" z="0"/>
 			<landmark id="6" type="laser" x="360" y="147" z="0"/>
 			<landmark id="7" type="laser" x="360" y="307" z="0"/>
 			<landmark id="8" type="laser" x="520" y="147" z="0"/>
 			<landmark id="9" type="laser" x="520" y="307" z="0"/>
 			<landmark id="10" type="laser" x="720" y="187" z="0"/>
 			<landmark id="11" type="laser" x="720" y="307" z="0"/>
+			-->
+
+			<!-- Intento de configuración más precisa baldosas (0.398 m), margen Y para la puerta (0.270 m) 
+			redondeando a la alta siempre, por los bordecillos, las uniones de las baldosas y tal -->
+			<landmark id="0" type="laser" x="040" y="027" z="0"/>
+			<landmark id="1" type="laser" x="159" y="027" z="0"/>
+			<landmark id="2" type="laser" x="080" y="187" z="0"/>
+			<landmark id="3" type="laser" x="080" y="306" z="0"/>
+			<landmark id="4" type="laser" x="199" y="107" z="0"/>
+			<landmark id="5" type="laser" x="358" y="147" z="0"/>
+			<landmark id="6" type="laser" x="358" y="306" z="0"/>
+			<landmark id="7" type="laser" x="517" y="147" z="0"/>
+			<landmark id="8" type="laser" x="517" y="306" z="0"/>
+			<landmark id="9" type="laser" x="717" y="187" z="0"/>
+			<landmark id="10" type="laser" x="717" y="306" z="0"/>
+
+
+
+		
 		</landmarks>
 		<features>
 			<feature id="0" name="door" width="120" height="10" x="100" y="0"/>

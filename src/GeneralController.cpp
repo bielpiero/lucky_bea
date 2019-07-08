@@ -71,7 +71,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 
 	tasks = new RNRecurrentTaskMap(this);
 
-	//laserTask = new RNLaserTask(this);
+	laserTask = new RNLaserTask(this);
 	//omnidirectionalTask = new RNOmnicameraTask(this, "Omnidirectional Task");
 	rfidTask = new RNRFIdentificationTask(this);
 	dialogs = new RNDialogsTask(this);
@@ -88,7 +88,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	}
 	
 	////Tasks added:
-	//tasks->addTask(laserTask);
+	tasks->addTask(laserTask);
 	//tasks->addTask(omnidirectionalTask);
 	tasks->addTask(rfidTask);
 	tasks->addTask(dialogs);

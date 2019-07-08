@@ -47,7 +47,7 @@ public:
     }
 
     Impulse(double joy, double fear, double approval, int id = RN_NONE){
-        this->id = RN_NONE;
+        this->id = id;
         this->joy = joy;
         this->fear = fear;
         this->approval = approval;
@@ -56,7 +56,7 @@ public:
     
 
     double getId() { return id; }
-    void setId(double id) { this->id = id; }
+    void setId(int id) { this->id = id; }
     double getJoy() { return joy; }
     void setJoy(double joy) { this->joy = joy; }   
     double getFear() { return fear; }

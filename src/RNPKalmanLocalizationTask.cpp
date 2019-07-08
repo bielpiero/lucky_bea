@@ -16,25 +16,25 @@ const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.014;
 // Valores cambiados a ojo para concordar con cada Iteración
 const float centro_odom_dist_sup = 0.0; 
 const float centro_odom_dist_inf = 0.0; 
-const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_sup = 0.006;  //0.005
+const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_sup = 0.005;  //0.005
 const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_inf = 0.010;  //0.010
 const float centro_odom_angl_sup = 0.0; 
 const float centro_odom_angl_inf = 0.0; 
-const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_sup = 0.007; // 0.005
-const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_inf = 0.012; // 0.010 
+const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_sup = 0.005; // 0.005
+const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_inf = 0.010; // 0.010 
 
 const float centro_laser_dist_sup = 0.0;
 const float centro_laser_dist_inf = 0.0;
-const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_sup = 0.06; 
-const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_inf = 0.13; 
+const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_sup = 0.09; 
+const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_inf = 0.14; 
 const float centro_laser_angl_sup = 0.0;
 const float centro_laser_angl_inf = 0.0;
-const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.06; 
+const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.10; 
 const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.15; 
  
 
-const float centro_camera_angl_sup = 0.055;
-const float centro_camera_angl_inf = 0.055;
+const float centro_camera_angl_sup = 0.020;//0.055;
+const float centro_camera_angl_inf = 0.020;
 const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_sup = 0.06; 
 const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_inf = 0.15; // Las balizas pueden estar mal colocadas
 
@@ -206,7 +206,7 @@ printf("1.\n");
 
 			predicted = false;
 		}
-printf("2.\n");		
+//printf("2.\n");		
 
 
 
@@ -231,7 +231,7 @@ printf("2.\n");
 			cameraLandmarksDetected = gn->getVisualLandmarks()->size();
 			totalLandmarksDetected += cameraLandmarksDetected;
 		}
-		printf("Balizas detectadas: %d, Láser: %d, Camara: %d. \n", totalLandmarksDetected, laserLandmarksDetected, cameraLandmarksDetected);
+		//printf("Balizas detectadas: %d, Láser: %d, Camara: %d. \n", totalLandmarksDetected, laserLandmarksDetected, cameraLandmarksDetected);
 
 		int totalLandmarksAccepted = 0;
 		int laserLandmarksAccepted = 0;
@@ -352,7 +352,7 @@ printf("3.\n");
 					}
 				}// for para rellenar con todas las balizas posibles
 				
-printf("4.\n");
+//printf("4.\n");
 
 
 				
@@ -461,7 +461,7 @@ printf("4.\n");
 						// Baliza identificada
 						if( (min_mahalanobisDistance < singleMahalanobisLimit) and (i_ref_md >= 0) )
 						{
-							printf("Baliza detectada  nº %d identificada como %d\n", i, i_ref_md);
+							//printf("Baliza detectada  nº %d identificada como %d\n", i, i_ref_md);
 
 							if(i_ref_fuzzy.size() == 1)
 								fprintf(test3, "%d\t%d\n", i_ref_md, i_ref_fuzzy.back());
@@ -508,7 +508,7 @@ printf("4.\n");
 						for(int i = 0; i < cameraLandmarksDetected; i++)
 						{
 
-		printf("5b. %d\n",i);	
+		//printf("5b. %d\n",i);	
 							RNLandmark* cameraLandmark = gn->getVisualLandmarks()->at(i);
 
 							validQR = true;
@@ -545,7 +545,7 @@ printf("4.\n");
 
 										if(cameraLandmark->getMarkerId() == gn->getCurrentSector()->landmarkAt(j)->id)
 										{
-											printf("Baliza detectada. ID: %d compara con la baliza %d con ID: %d\n", cameraLandmark->getMarkerId(), j, gn->getCurrentSector()->landmarkAt(j)->id);
+											//printf("Baliza detectada. ID: %d compara con la baliza %d con ID: %d\n", cameraLandmark->getMarkerId(), j, gn->getCurrentSector()->landmarkAt(j)->id);
 											landmark_used = true;
 
 											cameraRealObservations(0,0) = RNUtils::fixAngleRad(cameraLandmark->getPointsYMean());
@@ -557,7 +557,7 @@ printf("4.\n");
 											cameraInnovation_sup(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_sup(j,0) );
 											cameraInnovation_inf(0,0) = RNUtils::fixAngleRad( cameraRealObservations(0,0) - completeObservations_inf(j,0) );
 
-		printf("5b. innovacion_sup = %f\n",cameraInnovation_sup(0,0));
+		//printf("5b. innovacion_sup = %f\n",cameraInnovation_sup(0,0));
 
 											Matrix smallS_inf = cameraHk * Pk_pred_inf * ~cameraHk + cameraR_inf;
 											double mahalanobisCamera_inf = std::sqrt( cameraInnovation_inf(0,0) * pow(smallS_inf(0,0), -1) * cameraInnovation_inf(0,0) );
@@ -578,9 +578,9 @@ printf("4.\n");
 					}			
 				}
 
-printf("6.\n");
+//printf("6.\n");
 				totalLandmarksAccepted = laserLandmarksAccepted + cameraLandmarksAccepted;
-				
+				/*
 				// Escribir información en un fichero
 				int cont_landmarks = 0;
 				for(int k = 0; k < gn->getLaserLandmarks()->size(); k++)
@@ -599,14 +599,16 @@ printf("6.\n");
 				{
 					fprintf(test2, "%d\t%.10lf\t%.10lf\t", 0, 0.0, 0.0);				
 				}
+				for(int k = 0; k < 3)
 				fprintf(test2, "\n");
+			*/
 
 
 
 
 				/***** 3º CORRECCIÓN *****/
 				// Si tenemos información disponible para corregir, pues corregimos
-				if(laserLandmarksAccepted > 0 || cameraLandmarksAccepted > 1) // Con 1 sola baliza visual (1 medida de ángulo) no funciona bien
+				if(totalLandmarksAccepted > 1) // laserLandmarksAccepted > 0 || cameraLandmarksAccepted > 1) // Con 1 sola baliza visual (1 medida de ángulo) no funciona bien
 				{
 					/** Matrices para la corrección solo con las dimensiones de las balizas aceptadas */
 					int sizeMatrix = 2*laserLandmarksAccepted + cameraLandmarksAccepted;
@@ -615,7 +617,7 @@ printf("6.\n");
 					Matrix innovation_inf = Matrix(sizeMatrix, 1);
 					Matrix R_sup = Matrix(sizeMatrix, sizeMatrix);
 					Matrix R_inf = Matrix(sizeMatrix, sizeMatrix);
-printf("7.\n");					
+//printf("7.\n");					
 					for(int i = 0; i < laserLandmarksAccepted; i++)
 					{
 						// Leer info guardada
@@ -644,7 +646,7 @@ printf("7.\n");
 						R_inf(2*i+1, 2*i+1) = std::pow(incertidumbre_laser_angl_inf, 2) / 3.0;
 					}
 	
-	printf("laser accepted: %d. camera accepted: %d\n",laserLandmarksAccepted, cameraLandmarksAccepted);
+	//printf("laser accepted: %d. camera accepted: %d\n",laserLandmarksAccepted, cameraLandmarksAccepted);
 					for(int i = 2*laserLandmarksAccepted; i < (2*laserLandmarksAccepted + cameraLandmarksAccepted); i++)
 					{					
 						cameraHk = v_Hk.at(i);
@@ -724,7 +726,7 @@ printf("7.\n");
 
 printf("Landmarks accepted: %d. Laser: %d, camera: %d\n",totalLandmarksAccepted, laserLandmarksAccepted, cameraLandmarksAccepted);
 
-printf("8.\n");
+//printf("8.\n");
 		gn->getVisualLandmarks()->clear();
 		gn->unlockVisualLandmarks();
 		gn->unlockLaserLandmarks();
@@ -814,7 +816,7 @@ printf("9.\n");
 		CG(2, 0) = RNUtils::fixAngleRad(CG(2, 0));
 				
 		gn->setAltPose(ArPose(CG(0, 0), CG(1, 0), CG(2, 0)*180/M_PI));
-printf("10.\n");
+//printf("10.\n");
 
 
 /*
@@ -896,6 +898,35 @@ printf("10.\n");
 		
 		printf("CG: (%.8f, %.8f, %.8f)\n\n\n", CG(0, 0), CG(1, 0), CG(2, 0) * 180.0/M_PI);
 
+
+
+
+
+		// Escribir información en un fichero
+		int cont_landmarks = 0;
+		// Láser
+		for(int k = 0; k < gn->getLaserLandmarks()->size(); k++)
+		{
+			RNLandmark* lndmrk = gn->getLaserLandmarks()->at(k);
+			fprintf(test2, "%d\t%.10lf\t%.10lf\t", -1, lndmrk->getPointsXMean(), RNUtils::fixAngleRad(lndmrk->getPointsYMean()));
+			cont_landmarks ++;
+		}
+		//Visuales
+		for(int k = 0; k < gn->getVisualLandmarks()->size(); k++)
+		{
+			RNLandmark* lndmrk = gn->getVisualLandmarks()->at(k);
+			fprintf(test2, "%d\t%.10lf\t%.10lf\t", lndmrk->getMarkerId(), lndmrk->getPointsXMean(), RNUtils::fixAngleRad(lndmrk->getPointsYMean()));
+			cont_landmarks ++;
+		}
+		// Rellenar lo que queda de las balizas, para tener siempre el mismo tamaño
+		for(int k = cont_landmarks; k < (laserLandmarksCount + cameraLandmarksCount); k++)
+		{
+			fprintf(test2, "%d\t%.10lf\t%.10lf\t", 0, 0.0, 0.0);				
+		}
+		// Desplazamiento
+		fprintf(test2, "%.10lf\t%.10lf\n", deltaDistance, deltaAngle);
+		
+
 	} 
 	else 
 	{
@@ -904,7 +935,7 @@ printf("10.\n");
 	RNUtils::sleep(10);
 
 
-printf("11.\n");
+//printf("11.\n");
 }
 
 
