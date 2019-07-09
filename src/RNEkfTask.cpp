@@ -1,22 +1,22 @@
-#include "RNKalmanLocalizationTask.h"
+#include "RNEkfTask.h"
 
-const double RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.25;
-const double RNKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.014;
+const double RNEkfTask::CAMERA_ERROR_POSITION_X = -0.25;
+const double RNEkfTask::CAMERA_ERROR_POSITION_Y = -0.014;
 
-RNKalmanLocalizationTask::RNKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
+RNEkfTask::RNEkfTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
 	currentSector = NULL;
 	test = std::fopen("laser_camera.txt","w+");
 	this->startThread();
 }
 
-RNKalmanLocalizationTask::~RNKalmanLocalizationTask(){
+RNEkfTask::~RNEkfTask(){
 	if(test != NULL){
 		std::fclose(test);
 	}
 }
 
-void RNKalmanLocalizationTask::init(){
+void RNEkfTask::init(){
 	if(gn != NULL and gn->initializeKalmanVariables() == 0){
 		Ak = Matrix::eye(3);
 		Bk = Matrix(3, 2);
@@ -46,13 +46,13 @@ void RNKalmanLocalizationTask::init(){
 	}
 }
 
-void RNKalmanLocalizationTask::kill(){
+void RNEkfTask::kill(){
 	enableLocalization = false;
 	RNRecurrentTask::kill();
 }
 
 
-void RNKalmanLocalizationTask::task(){
+void RNEkfTask::task(){
 	if(enableLocalization){
 		int rsize = 0, vsize = 0;
 		int activeRL = 0, activeVL = 0;
@@ -80,6 +80,9 @@ void RNKalmanLocalizationTask::task(){
 		RNUtils::getOdometryPose(xk, deltaDistance, deltaAngle, xk_1);
 
 		Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
+		if(Pk(0, 0) < 0.0 or Pk(1, 1) < 0 or Pk(2, 2) < 0){
+			printf("Error gordo...\n");
+		}
 		Matrix zkl;
 		getObservations(zkl);
 
@@ -244,6 +247,9 @@ void RNKalmanLocalizationTask::task(){
 			char bufferpk1[256], bufferpk[256];
 			sprintf(bufferpk1, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
 			Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
+			if(Pk(0, 0) < 0.0 or Pk(1, 1) < 0 or Pk(2, 2) < 0){
+				printf("Error gordo...\n");
+			}
 			sprintf(bufferpk, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
 			xk = xk_1 + Wk * zl;
 			xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
@@ -290,7 +296,7 @@ void RNKalmanLocalizationTask::task(){
 	RNUtils::sleep(20);
 }
 
-Matrix RNKalmanLocalizationTask::fixFilterGain(const Matrix wk){
+Matrix RNEkfTask::fixFilterGain(const Matrix wk){
 	Matrix result = wk;
 	for(int i = 0; i < wk.rows_size(); i++){
 		for(int j = 0; j < wk.cols_size(); j++){
@@ -303,7 +309,7 @@ Matrix RNKalmanLocalizationTask::fixFilterGain(const Matrix wk){
 }
 
 
-void RNKalmanLocalizationTask::getObservations(Matrix& observations){
+void RNEkfTask::getObservations(Matrix& observations){
 	int totalLandmarks = 0;
 	int laserIndex = 0, cameraIndex = 0;
 	if(gn->isLaserSensorActivated()){
@@ -363,12 +369,12 @@ void RNKalmanLocalizationTask::getObservations(Matrix& observations){
 	observations = result;
 }
 
-void RNKalmanLocalizationTask::landmarkObservation(const Matrix& Xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle){
+void RNEkfTask::landmarkObservation(const Matrix& Xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle){
 	distance = std::sqrt(std::pow(landmark->xpos - (Xk(0, 0) + disp(0, 0)), 2) + std::pow(landmark->ypos - (Xk(1, 0) + disp(1, 0)), 2));
 	angle = std::atan2(landmark->ypos - (Xk(1, 0) + disp(1, 0)), landmark->xpos - (Xk(0, 0) + disp(0, 0))) - Xk(2, 0);
 }
 
-void RNKalmanLocalizationTask::OnMessageReceivedWithData(unsigned char* cad, int length){
+void RNEkfTask::OnMessageReceivedWithData(unsigned char* cad, int length){
 	gn->lockVisualLandmarks();
 	RNLandmarkList* markers = gn->getVisualLandmarks();
 	markers->initializeFromString((char*)cad);

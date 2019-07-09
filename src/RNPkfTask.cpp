@@ -6,37 +6,37 @@
 
 
 
-#include "RNPKalmanLocalizationTask.h"
+#include "RNPkfTask.h"
 
-const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_X = -0.22;
-const double RNPKalmanLocalizationTask::CAMERA_ERROR_POSITION_Y = -0.014;
+const double RNPkfTask::CAMERA_ERROR_POSITION_X = -0.22;
+const double RNPkfTask::CAMERA_ERROR_POSITION_Y = -0.014;
 
-//const float RNPKalmanLocalizationTask::MULTIPLIER_FACTOR = 4;
+//const float RNPkfTask::MULTIPLIER_FACTOR = 4;
 
 // Valores cambiados a ojo para concordar con cada Iteración
 const float centro_odom_dist_sup = 0.0; 
 const float centro_odom_dist_inf = 0.0; 
-const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_sup = 0.005;  //0.005
-const float RNPKalmanLocalizationTask::incertidumbre_odom_dist_inf = 0.010;  //0.010
+const float RNPkfTask::incertidumbre_odom_dist_sup = 0.005;  //0.005
+const float RNPkfTask::incertidumbre_odom_dist_inf = 0.010;  //0.010
 const float centro_odom_angl_sup = 0.0; 
 const float centro_odom_angl_inf = 0.0; 
-const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_sup = 0.005; // 0.005
-const float RNPKalmanLocalizationTask::incertidumbre_odom_angl_inf = 0.010; // 0.010 
+const float RNPkfTask::incertidumbre_odom_angl_sup = 0.005; // 0.005
+const float RNPkfTask::incertidumbre_odom_angl_inf = 0.010; // 0.010 
 
 const float centro_laser_dist_sup = 0.0;
 const float centro_laser_dist_inf = 0.0;
-const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_sup = 0.09; 
-const float RNPKalmanLocalizationTask::incertidumbre_laser_dist_inf = 0.14; 
+const float RNPkfTask::incertidumbre_laser_dist_sup = 0.09; 
+const float RNPkfTask::incertidumbre_laser_dist_inf = 0.14; 
 const float centro_laser_angl_sup = 0.0;
 const float centro_laser_angl_inf = 0.0;
-const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_sup = 0.10; 
-const float RNPKalmanLocalizationTask::incertidumbre_laser_angl_inf = 0.15; 
+const float RNPkfTask::incertidumbre_laser_angl_sup = 0.10; 
+const float RNPkfTask::incertidumbre_laser_angl_inf = 0.15; 
  
 
 const float centro_camera_angl_sup = 0.020;//0.055;
 const float centro_camera_angl_inf = 0.020;
-const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_sup = 0.06; 
-const float RNPKalmanLocalizationTask::incertidumbre_camera_angl_inf = 0.15; // Las balizas pueden estar mal colocadas
+const float RNPkfTask::incertidumbre_camera_angl_sup = 0.06; 
+const float RNPkfTask::incertidumbre_camera_angl_inf = 0.15; // Las balizas pueden estar mal colocadas
 
 // Chi cuadradi, 2 gfl: 5% = 5.9915; 10% = 4.6052; 15% = 3.7946; 20% = 3.2189; 25% = 2.7726; 30% = 2.4079; 35% = 2.0996; 40% = 1.8326; 50% = 1.3863
 // Chi cuadradi, 2 gfl: 5% = 3.8415; 10% = 2.7055; 15% = 2.0722; 20% = 1.6424; 25% = 1.3233; 30% = 1.0742; 35% = 0.8735; 40% = 0.7083; 50% = 0.4549
@@ -52,7 +52,7 @@ int cont_deforme_y = 0;
 int cont_deforme_th = 0;
 
 
-RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
+RNPkfTask::RNPkfTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
 	test = std::fopen("laser_camera_pkalman.txt","w+");
 	test2 = std::fopen("medidas_sensores_pkalman.txt","w+");
@@ -60,11 +60,11 @@ RNPKalmanLocalizationTask::RNPKalmanLocalizationTask(const GeneralController* gn
 	this->startThread();
 }
 
-RNPKalmanLocalizationTask::~RNPKalmanLocalizationTask(){
+RNPkfTask::~RNPkfTask(){
 
 }
 
-void RNPKalmanLocalizationTask::init(){
+void RNPkfTask::init(){
 	if(gn != NULL and gn->initializeKalmanVariables() == 0)
 	{
 		printf("Inicializacion\n");
@@ -132,12 +132,12 @@ void RNPKalmanLocalizationTask::init(){
 }
 
 
-void RNPKalmanLocalizationTask::kill(){
+void RNPkfTask::kill(){
 	enableLocalization = false;
 	RNRecurrentTask::kill();
 }
 
-void RNPKalmanLocalizationTask::task()
+void RNPkfTask::task()
 {
 printf("0.\n");
 	if(enableLocalization)
@@ -946,7 +946,7 @@ printf("9.\n");
 * @param & distancia calculada
 * @param & ángulo calculado
 */
-void RNPKalmanLocalizationTask::landmarkObservation(const Matrix& Xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle)
+void RNPkfTask::landmarkObservation(const Matrix& Xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle)
 {
 	distance = std::sqrt(std::pow(landmark->xpos - (Xk(0, 0) + disp(0, 0)), 2) + std::pow(landmark->ypos - (Xk(1, 0) + disp(1, 0)), 2));
 
@@ -956,7 +956,7 @@ void RNPKalmanLocalizationTask::landmarkObservation(const Matrix& Xk, const Matr
 }
 
 
-void RNPKalmanLocalizationTask::OnMessageReceivedWithData(unsigned char* cad, int length){
+void RNPkfTask::OnMessageReceivedWithData(unsigned char* cad, int length){
 	gn->lockVisualLandmarks();
 	RNLandmarkList* markers = gn->getVisualLandmarks();
 	markers->initializeFromString((char*)cad);

@@ -199,6 +199,37 @@ Matrix Matrix::eig(){
 	return Matrix();
 }
 
+Matrix Matrix::chol(){
+	if(this->rows != this->cols){
+		throw std::invalid_argument("Invalid matrix. Must be symmetric.");
+	}
+
+	Matrix result(this->rows, this->cols);
+
+	for(unsigned int i = 0; i < this->rows; i++){
+		for(unsigned int j = 0; j <= i; j++){
+			double sum = 0;
+			if(j == i){
+				for(unsigned int k = 0; k < j; k++){
+					sum += std::pow(result(j, k), 2);
+				}
+				if((data[j][j] - sum) < 0){
+					throw std::invalid_argument("Invalid matrix. Must be definite positive.");
+				}
+				result(j, j) = std::sqrt(data[j][j] - sum);
+			} else {
+				for(unsigned int k = 0; k < j; k++){
+					sum += result(i, k) * result(j, k);
+				}
+				result(i, j) = (data[i][j] - sum) / result(j, j);
+			}
+		}
+	}
+
+	return result;
+
+}
+
 Matrix Matrix::sort(int mode){
 	Matrix result = *this;
 	for(int j = 0; j < this->cols; j++){

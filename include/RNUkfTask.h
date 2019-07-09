@@ -1,15 +1,15 @@
-#ifndef RN_KALMAN_LOCALIZATION_TASK_H
-#define RN_KALMAN_LOCALIZATION_TASK_H
+#ifndef RN_UKF_TASK_H
+#define RN_UKF_TASK_H
 
 #include "RNLocalizationTask.h"
 #include "UDPServer.h"
 
 #define STATE_VARIABLES 3
 
-class RNKalmanLocalizationTask : public RNLocalizationTask, public UDPServer{
+class RNUkfTask : public RNLocalizationTask, public UDPServer{
 public:
-	RNKalmanLocalizationTask(const GeneralController* gn, const char* name = "Kalman Localization Task", const char* description = "");
-	~RNKalmanLocalizationTask();
+	RNUkfTask(const GeneralController* gn, const char* name = "Unscented Kalman Localization Task", const char* description = "");
+	~RNUkfTask();
 	virtual void task();
 	virtual void kill();
 	virtual void init();

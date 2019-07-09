@@ -4,8 +4,9 @@
 #include "RNRecurrentTaskMap.h"
 #include "RNLaserTask.h"
 #include "RNLocalizationTask.h"
-#include "RNKalmanLocalizationTask.h"
-#include "RNPKalmanLocalizationTask.h"
+#include "RNEkfTask.h"
+#include "RNPkfTask.h"
+#include "RNUkfTask.h"
 #include "RNCameraTask.h"
 #include "RNOmnicameraTask.h"
 #include "RNRFIdentificationTask.h"
@@ -81,10 +82,12 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	tourThread = new RNTourThread(this);
 	//eyesCameras = new RNCameraTask(this);
 
-	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_KALMAN_STR){
-		localization = new RNKalmanLocalizationTask(this);
-	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PKALMAN_STR){
-		localization = new RNPKalmanLocalizationTask(this);
+	if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_EKF_STR){
+		localization = new RNEkfTask(this);
+	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_PKF_STR){
+		localization = new RNPkfTask(this);
+	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_UKF_STR){
+		localization = new RNUkfTask(this);
 	}
 	
 	////Tasks added:
@@ -1004,7 +1007,7 @@ void GeneralController::loadRobotConfig(){
 	if(root_node->first_attribute(XML_ATTRIBUTE_LOCALIZATION_STR)){
 		robotConfig->localization = std::string(root_node->first_attribute(XML_ATTRIBUTE_LOCALIZATION_STR)->value());
 	} else {
-		robotConfig->localization = std::string(XML_LOCALIZATION_ALGORITHM_KALMAN_STR);
+		robotConfig->localization = std::string(XML_LOCALIZATION_ALGORITHM_EKF_STR);
 	}
 	if(root_node->first_attribute(XML_ATTRIBUTE_ROBOT_FACE_ID_STR)){
 		robotConfig->faceId = std::atoi(root_node->first_attribute(XML_ATTRIBUTE_ROBOT_FACE_ID_STR)->value());

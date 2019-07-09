@@ -50,6 +50,7 @@ class Matrix{
 		Matrix eig();
 		Matrix roots();
 		Matrix abs();
+		Matrix chol();
 		
 		Matrix sort(int mode = MATRIX_ASCENDING);
 		Matrix sort_cols(int mode = MATRIX_ASCENDING);

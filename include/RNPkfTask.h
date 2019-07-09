@@ -1,13 +1,13 @@
-#ifndef RN_PF_LOCALIZATION_TASK_H
-#define RN_PF_LOCALIZATION_TASK_H
+#ifndef RN_PKF_TASK_H
+#define RN_PKF_TASK_H
 
 #include "RNLocalizationTask.h"
 #include "UDPServer.h"
 
-class RNPKalmanLocalizationTask : public RNLocalizationTask, public UDPServer{
+class RNPkfTask : public RNLocalizationTask, public UDPServer{
 public:
-	RNPKalmanLocalizationTask(const GeneralController* gn, const char* name = "Possibilistic Kalman-Filter Localization Task", const char* description = "");
-	~RNPKalmanLocalizationTask();
+	RNPkfTask(const GeneralController* gn, const char* name = "Possibilistic Kalman-Filter Localization Task", const char* description = "");
+	~RNPkfTask();
 	virtual void task();
 	virtual void kill();
 	virtual void init();
