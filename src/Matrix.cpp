@@ -141,6 +141,63 @@ Matrix Matrix::operator() (const int row) const{
 	return rowData;
 }
 
+Matrix Matrix::col(const unsigned int index){
+	Matrix r(rows, 1);
+
+	if(index >= cols){
+		throw std::invalid_argument("Invalid subscripting dimension");
+	}
+
+	for(int i = 0; i < rows; i++){
+		r(i, 0) = data[i][index];
+	}
+
+	return r;
+}
+
+void Matrix::setCol(const unsigned int index, Matrix values){
+
+	if(index >= cols){
+		throw std::invalid_argument("Invalid subscripting dimension");
+	}
+
+	if(values.rows_size() != rows){
+		throw std::invalid_argument("Invalid dimension of vector values");
+	}
+
+	for(int i = 0; i < rows; i++){
+		data[i][index] = values(i, 0);
+	}
+}
+
+Matrix Matrix::row(const unsigned int index){
+	Matrix result(1, cols);
+	if(index >= rows){
+		throw std::invalid_argument("Invalid subscripting dimension");
+	}
+
+	for(int i = 0; i < cols; i++){
+		result(0, i) = data[index][i];
+	}
+
+	return result;
+}
+
+void Matrix::setRow(const unsigned int index, Matrix values){
+	
+	if(index >= rows){
+		throw std::invalid_argument("Invalid subscripting dimension");
+	}
+
+	if(values.cols_size() != cols){
+		throw std::invalid_argument("Invalid dimension of vector values");
+	}
+
+	for(int i = 0; i < cols; i++){
+		data[index][i] = values(0, i);
+	}
+}
+
 Matrix Matrix::mlDivide(const Matrix& rhs){
 	Matrix A = *this;
 	return ((A.transpose() * A).inv() * A.transpose() * rhs);

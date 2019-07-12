@@ -66,7 +66,7 @@ void RNLaserTask::getLaserScan(void){
 		/****************************************************************/
 
 
-        //rn->onLaserScanCompleted(laserDataScan);
+        rn->onLaserScanCompleted(laserDataScan);
         laser->unlockDevice();
         
         if(currentReadings){

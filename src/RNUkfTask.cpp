@@ -2,6 +2,9 @@
 
 const double RNUkfTask::CAMERA_ERROR_POSITION_X = -0.25;
 const double RNUkfTask::CAMERA_ERROR_POSITION_Y = -0.014;
+const double RNUkfTask::ALPHA = 0.05;
+const double RNUkfTask::BETA = 2;
+const double RNUkfTask::LAMBDA = 0;
 
 RNUkfTask::RNUkfTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
@@ -18,8 +21,20 @@ RNUkfTask::~RNUkfTask(){
 
 void RNUkfTask::init(){
 	if(gn != NULL and gn->initializeKalmanVariables() == 0){
-		Ak = Matrix::eye(3);
-		Bk = Matrix(3, 2);
+
+		xkAug = Matrix(SV_AUG, 1);
+		PkAug = Matrix(SV_AUG, SV_AUG);
+		XSigPred = Matrix(SV, SV_AUG_SIGMA);
+		XSigPredAug = Matrix(SV_AUG, SV_AUG_SIGMA);
+
+		weights_m.push_back(1.0 - ((double)SV/(ALPHA*ALPHA*((double)SV + LAMBDA))));
+		weights_c.push_back((2 - ALPHA*ALPHA + BETA) - (double)SV/(ALPHA*ALPHA*((double)SV + LAMBDA)));
+		for(int i = 1; i < SV_AUG_SIGMA; i++){
+			double f = 1/(2*ALPHA*ALPHA*((double)SV + LAMBDA));
+			weights_m.push_back(f);
+			weights_c.push_back(f);
+		}		
+		
 		Pk = gn->getP();
 		/*if(currentSector != NULL){
 			delete currentSector;
@@ -51,6 +66,105 @@ void RNUkfTask::kill(){
 	RNRecurrentTask::kill();
 }
 
+void RNUkfTask::prediction(){
+
+	double deltaDistance = 0.0, deltaAngle = 0.0;
+	gn->getIncrementPosition(&deltaDistance, &deltaAngle);
+
+	xkAug(0, 0) = xk(0, 0);
+	xkAug(1, 0) = xk(1, 0);
+	xkAug(2, 0) = xk(2, 0);
+	xkAug(3, 0) = 0;
+	xkAug(4, 0) = 0;
+
+	for(int i = 0; i < SV; i++){
+		for(int j = 0; j < SV; j++){
+			PkAug(i, j) = Pk(i, j);
+		}
+	}
+	if(deltaDistance == 0.0 and deltaAngle == 0.0){
+		PkAug(3, 3) = 0.0;
+		PkAug(4, 4) = 0.0;
+	} else {
+		PkAug(3, 3) = gn->getQ()(0, 0);
+		PkAug(4, 4) = gn->getQ()(1, 1);
+	}
+
+	Matrix L = PkAug.chol();
+	XSigPredAug.setCol(0, xkAug);
+
+	// sigma points
+	double c = std::sqrt(ALPHA*ALPHA*((double)SV + LAMBDA));
+	for(int i = 1; i <= SV_AUG; i++){
+		XSigPredAug.setCol(i, xkAug + c * L.col(i - 1));
+		XSigPredAug.setCol(i + SV_AUG, xkAug - c * L.col(i - 1));
+	}
+
+	//Prediction of every sigma point
+	for(int i = 0; i < SV_AUG_SIGMA; i++){
+		RNUtils::getOdometryPose(XSigPredAug.col(i), deltaDistance, deltaAngle, xk_1);
+		XSigPred.setCol(i, xk_1);
+	}
+	// Mean of state
+	for(int i = 0; i < SV_AUG_SIGMA; i++){
+		xk_1 = xk_1 + weights_m.at(i) * XSigPred.col(i);
+	}
+	printf("XSigPred\n");
+	XSigPred.print();
+
+	printf("xk_1\n");
+	xk_1.print();
+	//covariance matrix
+	Matrix Pyy(SV, SV);
+	for(int i = 0; i < SV_AUG_SIGMA; i++){
+		Matrix diff = XSigPred.col(i) - xk_1;
+		diff(2, 0) = RNUtils::fixAngleRad(diff(2, 0));
+		Pyy = Pyy + weights_c.at(i) * (diff * ~diff);
+	}
+	Pk = Pyy;
+}
+
+void RNUkfTask::obtainMeasurements(Matrix& zkli, std::vector<int>& ids){
+	bool idsProcessed = false;
+	int totalLandmarks = 0;
+	int laserIndex = 0, cameraIndex = 0;
+	if(gn->isLaserSensorActivated()){
+		totalLandmarks += laserLandmarksCount;
+		cameraIndex += laserLandmarksCount;	
+	}
+
+	if(gn->isCameraSensorActivated()){
+		totalLandmarks += cameraLandmarksCount;
+
+	}
+
+	Matrix results(2*laserLandmarksCount + cameraLandmarksCount, SV_AUG_SIGMA); 
+	for(int i = 0; i < SV_AUG_SIGMA; i++){
+		Matrix zkl(totalLandmarks, 4);
+		predictMeasurements(zkl, XSigPred.col(i));
+		for(int j = 0; j < laserLandmarksCount; j++){
+			results(2*j, i) = zkl(j, 0);
+			results(2*j + 1, i) = zkl(j, 1);
+			if(not idsProcessed){
+				ids.push_back((int)zkl(j, 3));
+			}
+			
+		}
+
+		for(int j = cameraIndex; j < totalLandmarks; j++){
+			results(j, i) = zkl(j, 1);
+			if(not idsProcessed){
+				ids.push_back((int)zkl(j, 3));
+			}
+		}
+
+		idsProcessed = true;
+	}
+
+	zkli = results;
+	
+}
+
 
 void RNUkfTask::task(){
 	if(enableLocalization){
@@ -58,34 +172,21 @@ void RNUkfTask::task(){
 		int activeRL = 0, activeVL = 0;
 		pk1 = Pk;
 		xk_1 = xk;
-		double deltaDistance = 0.0, deltaAngle = 0.0;
-		gn->getIncrementPosition(&deltaDistance, &deltaAngle);
-
-		Ak(0, 2) = -deltaDistance * std::sin(xk_1(2, 0) + deltaAngle/2.0);
-		Ak(1, 2) = deltaDistance * std::cos(xk_1(2, 0) + deltaAngle/2.0);
-
-		Bk(0, 0) = std::cos(xk_1(2, 0) + deltaAngle/2.0);
-		Bk(0, 1) = -0.5 * deltaDistance * std::sin(xk_1(2, 0) + deltaAngle/2.0);
-
-		Bk(1, 0) = std::sin(xk_1(2, 0) + deltaAngle/2.0);
-		Bk(1, 1) = 0.5 * deltaDistance * std::cos(xk_1(2, 0) + deltaAngle/2.0);
-
-		Bk(2, 0) = 0.0;
-		Bk(2, 1) = 1.0;
+		printf("\n\n\nNew iteration...");
+		printf("P(k|k)\n");
+		Pk.print();
+		prediction();
+		printf("P(k+1|k)\n");
+		Pk.print();
 		
-		Matrix currentQ = gn->getQ();
-		if(deltaDistance == 0.0 and deltaAngle == 0.0){
-			currentQ = Matrix(2, 2);
-		}
-		RNUtils::getOdometryPose(xk, deltaDistance, deltaAngle, xk_1);
-
-		Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
 		if(Pk(0, 0) < 0.0 or Pk(1, 1) < 0 or Pk(2, 2) < 0){
 			printf("Error gordo...\n");
 		}
-		Matrix zkl;
-		getObservations(zkl);
 
+		Matrix zkli;
+		std::vector<int> ids;
+		obtainMeasurements(zkli, ids);
+		printf("Measurements Obtained\n");
 		gn->lockLaserLandmarks();
 		gn->lockVisualLandmarks();
 
@@ -101,87 +202,39 @@ void RNUkfTask::task(){
 		}
 		int sizeH = (gn->isLaserSensorActivated() ? 2 * activeRL : 0) + (gn->isCameraSensorActivated() ? activeVL : 0);
 		Matrix currentR(sizeH, sizeH);
-		Matrix zl(sizeH, 1);
+		Matrix zik_1(sizeH, 1);
+		Matrix zi(sizeH, SV_AUG_SIGMA);
+		Matrix zi_mean(sizeH, 1);
 		if(sizeH > 1){
-			Hk = Matrix(sizeH, STATE_VARIABLES);
 			int laserIndex = 0, cameraIndex = 0;
 			if(gn->isLaserSensorActivated()){
 				cameraIndex = 2 * activeRL;
 				rsize = gn->getLaserLandmarks()->size();
 				for (int i = 0; i < gn->getLaserLandmarks()->size(); i++){
 					RNLandmark* lndmrk = gn->getLaserLandmarks()->at(i);
+					zik_1(2 * i, 0) = lndmrk->getPointsXMean();
+					zik_1(2 * i + 1, 0) = lndmrk->getPointsYMean();
 
-					//RNUtils::printLn("Laser landmarks {d: %f, a: %f}\n", lndmrk->getPointsXMean(), lndmrk->getPointsYMean());
-					std::map<int, double> euclideanDistances;
-					std::map<int, Matrix> matricesHk;
+					Matrix measure(2, 1);
+					measure(0, 0) = lndmrk->getPointsXMean();
+					measure(1, 0) = lndmrk->getPointsYMean();
+
 					Matrix smallR(2, 2);
 					smallR(0, 0) = gn->getLaserDistanceVariance();
 					smallR(1, 1) = gn->getLaserAngleVariance();
 					currentR(2 * i, 2 * i) = smallR(0, 0);
 					currentR(2 * i + 1, 2 * i + 1) = smallR(1, 1);
+					for(int j = 0; j < SV_AUG_SIGMA; j++){
+						std::map<int, double> mahalanobisDistances = computeMahalanobis(j, measure, zkli, XSigPred.col(j), smallR, ids);
 
-					Matrix measure(2, 1);
-					measure(0, 0) = lndmrk->getPointsXMean();
-					measure(1, 0) = lndmrk->getPointsYMean();
-					
-					for (int j = 0; j < laserLandmarksCount; j++){
-						s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_LASER_STR, (int)zkl(j, 3));
-						//printf("L[%d]: x: %f, y %f\n", currLandmark->id, currLandmark->xpos, currLandmark->ypos);
-						Matrix smallHk(2, 3);
-						if(currLandmark != NULL and currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
-							double landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, xk_1(0, 0), xk_1(1, 0));
-							smallHk(0, 0) = -(currLandmark->xpos - xk_1(0, 0))/landmarkDistance;
-							smallHk(0, 1) = -(currLandmark->ypos - xk_1(1, 0))/landmarkDistance;
-							smallHk(0, 2) = 0.0;
+						auto minorDistance = std::min_element(mahalanobisDistances.begin(), mahalanobisDistances.end(), [](std::pair<int, double> x, std::pair<int, double> y){ return x.second < y.second; });
+						if(minorDistance != mahalanobisDistances.end()){
+							zi(2 * i, j) = zkli(2 * minorDistance->first, 0);
+							zi(2 * i + 1, j) = zkli(2 * minorDistance->first + 1, 0);
 
-							smallHk(1, 0) = (currLandmark->ypos - xk_1(1, 0))/std::pow(landmarkDistance, 2);
-							smallHk(1, 1) = -(currLandmark->xpos - xk_1(0, 0))/std::pow(landmarkDistance, 2);
-							smallHk(1, 2) = -1.0;
-						}
-						
-						matricesHk.emplace(j, smallHk);
-						Matrix omega = smallHk * Pk * ~smallHk + smallR;
-						Matrix obs(2, 1);
-						obs(0, 0) = zkl(j, 0);
-						obs(1, 0) = zkl(j, 1);
-
-
-						Matrix mdk = ~(measure - obs) * omega * (measure - obs);
-
-						euclideanDistances.emplace(j, std::sqrt(std::abs(mdk(0, 0))));
-					}
-					auto minorDistance = std::min_element(euclideanDistances.begin(), euclideanDistances.end(), [](std::pair<int, double> x, std::pair<int, double> y){ return x.second < y.second; });
-					if(minorDistance != euclideanDistances.end()){
-						Matrix smallHk = matricesHk[minorDistance->first];
-						Hk(2 * i, 0) = smallHk(0, 0);
-						Hk(2 * i, 1) = smallHk(0, 1);
-						Hk(2 * i, 2) = smallHk(0, 2);
-
-						Hk(2 * i + 1, 0) = smallHk(1, 0);
-						Hk(2 * i + 1, 1) = smallHk(1, 1);
-						Hk(2 * i + 1, 2) = smallHk(1, 2);
-
-						zl(2 * i, 0) = lndmrk->getPointsXMean() - zkl(minorDistance->first, 0);
-						zl(2 * i + 1, 0) = lndmrk->getPointsYMean() - zkl(minorDistance->first, 1);
-						if(zl(2 * i + 1, 0) > M_PI){
-							zl(2 * i + 1, 0) = zl(2 * i + 1, 0) - 2 * M_PI;
-						} else if(zl(2 * i + 1, 0) < -M_PI){
-							zl(2 * i + 1, 0) = zl(2 * i + 1, 0) + 2 * M_PI;
-						}
-
-						double mdDistance = std::abs(zl(2 * i, 0) / std::sqrt(gn->getLaserDistanceVariance()));
-						double mdAngle = std::abs(zl(2 * i + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
-
-						if (mdDistance > laserTMDistance or mdAngle > laserTMAngle){
-		
-							//RNUtils::printLn("landmark %d rejected...", indexFound);
-							zl(2 * i, 0) = 0.0;
-							zl(2 * i + 1, 0) = 0.0;
-							rsize--;
+							//zi(2 * i + 1, j) = RNUtils::fixAngleRad(zi(2 * i + 1, j));
 						}
 					}
-					
-					
 				}
 			}
 
@@ -189,68 +242,72 @@ void RNUkfTask::task(){
 				vsize = gn->getVisualLandmarks()->size();
 				for (int i = 0; i < gn->getVisualLandmarks()->size(); i++){
 					RNLandmark* lndmrk = gn->getVisualLandmarks()->at(i);
+					zik_1(i, 0) = lndmrk->getPointsYMean();
+
 					currentR(cameraIndex + i, cameraIndex + i) = gn->getCameraAngleVariance();
-
-					int zklIndex = RN_NONE;
-					for(int j = laserLandmarksCount; j < laserLandmarksCount + cameraLandmarksCount and (zklIndex == RN_NONE); j++){
-						s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, (int)zkl(j, 3));
-						if(currLandmark != NULL and currLandmark->type == XML_SENSOR_TYPE_CAMERA_STR){
-							if(lndmrk != NULL and currLandmark->id == lndmrk->getMarkerId()){
-								double nrx, nry;
-								Matrix disp = Matrix(2, 1);
-								RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, xk_1(2, 0), &nrx, &nry);
-								disp(0, 0) = nrx;
-								disp(1, 0) = nry;
-
-								double landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, (xk_1(0, 0) + disp(0, 0)), (xk_1(1, 0) + disp(1, 0)));
-
-								Hk(cameraIndex + i, 0) = (currLandmark->ypos - (xk_1(1, 0) + disp(1, 0)))/std::pow(landmarkDistance, 2);
-								Hk(cameraIndex + i, 1) = -(currLandmark->xpos - (xk_1(0, 0) + disp(0, 0)))/std::pow(landmarkDistance, 2);
-								Hk(cameraIndex + i, 2) = -1.0;
-
-								zklIndex = j;
+					for(int j = 0; j < SV_AUG_SIGMA; j++){
+						
+						int zklIndex = RN_NONE;
+						for(int k = 0; k < cameraLandmarksCount and (zklIndex == RN_NONE); k++){
+							s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, ids[k + laserLandmarksCount]);
+							if(currLandmark != NULL and currLandmark->type == XML_SENSOR_TYPE_CAMERA_STR){
+								if(lndmrk != NULL and currLandmark->id == lndmrk->getMarkerId()){
+									
+									zklIndex = k + 2*laserLandmarksCount;
+								}
 							}
 						}
-					}
 
-					if(lndmrk != NULL and (lndmrk->getMapId() == currentSector->getMapId()) and (lndmrk->getSectorId() == currentSector->getId()) and zklIndex != RN_NONE){
-
-						double angleFixed = lndmrk->getPointsYMean();
-						
-
-						zl(cameraIndex + i, 0) = angleFixed - zkl(zklIndex, 1);
-						if(zl(cameraIndex + i, 0) > M_PI){
-							zl(cameraIndex + i, 0) = zl(cameraIndex + i, 0) - 2 * M_PI;
-						} else if(zl(cameraIndex + i, 0) < -M_PI){
-							zl(cameraIndex + i, 0) = zl(cameraIndex + i, 0) + 2 * M_PI;
+						if(lndmrk != NULL and (lndmrk->getMapId() == currentSector->getMapId()) and (lndmrk->getSectorId() == currentSector->getId()) and zklIndex != RN_NONE){				
+							zi(cameraIndex + i, 0) = zkli(zklIndex, 0);
+							//zl(cameraIndex + i, 0) = RNUtils::fixAngleRad(zl(cameraIndex + i, 0));
+							//RNUtils::printLn("MapId: %d, SectorId: %d, markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, Error: {a: %f}", lndmrk->getMapId(), lndmrk->getSectorId(), lndmrk->getMarkerId(), distanceFixed, angleFixed, zkl(j, 0), zkl(j, 1), zl(j + laserOffset, 0));
 						}
-						//RNUtils::printLn("MapId: %d, SectorId: %d, markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, Error: {a: %f}", lndmrk->getMapId(), lndmrk->getSectorId(), lndmrk->getMarkerId(), distanceFixed, angleFixed, zkl(j, 0), zkl(j, 1), zl(j + laserOffset, 0));
 					}
 
-					double mdAngle = std::abs(zl(cameraIndex + i, 0) / std::sqrt(gn->getCameraAngleVariance()));
-
-					if (mdAngle > cameraTMAngle){
-						//RNUtils::printLn("Landmark %d rejected...", (int)zkl(i, 3));
-						zl(cameraIndex + i, 0) = 0;
-						vsize--;
-					}
 				}
 			}
+			printf("Matrices zi and zik_1 are formed\n");
+			printf("Zi\n");
+			zi.print();
+			printf("zik_1\n");
+			zik_1.print();
 
-			Matrix Sk = Hk * Pk * ~Hk + currentR;
-			Matrix Wk = Pk * ~Hk * !Sk;
+			for(int i = 0; i < SV_AUG_SIGMA; i++){
+				zi_mean = zi_mean + weights_m.at(i) * zi.col(i);
+			}
+			Matrix Sk(sizeH, sizeH);
+			for(int i = 0; i < SV_AUG_SIGMA; i++){
+				Matrix diff = zi.col(i) - zi_mean;
+				Sk = Sk + weights_c.at(i)*(diff * ~diff);
+			}
+		
+			Matrix Pxx(SV, sizeH);
+			for(int i = 0; i < SV_AUG_SIGMA; i++){
+				Matrix diff_x = XSigPred.col(i) - xk_1;
+				diff_x(2, 0) = RNUtils::fixAngleRad(diff_x(2, 0));
 
-			//printf("Zl:\n");
-			//zl.print();
+				Matrix diff_z = zi.col(i) - zi_mean;
+				Pxx = Pxx + weights_c.at(i) * (diff_x * ~diff_z);
+			}
+
+			printf("Pxx\n");
+			Pxx.print();
+
+			Matrix Wk = Pxx * !Sk;
+			Matrix diff_z = zik_1 - zi_mean;
+
+			xk = xk + Wk * diff_z;
+			Pk = Pk - Wk * Sk * ~Wk;
 
 			char bufferpk1[256], bufferpk[256];
 			sprintf(bufferpk1, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
-			Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
+			//Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
 			if(Pk(0, 0) < 0.0 or Pk(1, 1) < 0 or Pk(2, 2) < 0){
 				printf("Error gordo...\n");
 			}
 			sprintf(bufferpk, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
-			xk = xk_1 + Wk * zl;
+			//xk = xk_1 + Wk * zl;
 			xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
 			gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 			char buffer[1024];
@@ -285,8 +342,38 @@ void RNUkfTask::task(){
 	RNUtils::sleep(20);
 }
 
+std::map<int, double> RNUkfTask::computeMahalanobis(const int& sigmaPoint, Matrix measure, const Matrix& zkli, const Matrix& xk, const Matrix& sr, const std::vector<int>& ids){
+	std::map<int, double> mahalanobisDistances;
 
-void RNUkfTask::getObservations(Matrix& observations){
+	for (int i = 0; i < laserLandmarksCount; i++){
+		s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_LASER_STR, ids[i]);
+		Matrix smallHk(2, 3);
+		if(currLandmark != NULL and currentSector->landmarkAt(i)->type == XML_SENSOR_TYPE_LASER_STR){
+			double landmarkDistance = RNUtils::distanceTo(currLandmark->xpos, currLandmark->ypos, xk(0, 0), xk(1, 0));
+			smallHk(0, 0) = -(currLandmark->xpos - xk(0, 0))/landmarkDistance;
+			smallHk(0, 1) = -(currLandmark->ypos - xk(1, 0))/landmarkDistance;
+			smallHk(0, 2) = 0.0;
+
+			smallHk(1, 0) = (currLandmark->ypos - xk(1, 0))/std::pow(landmarkDistance, 2);
+			smallHk(1, 1) = -(currLandmark->xpos - xk(0, 0))/std::pow(landmarkDistance, 2);
+			smallHk(1, 2) = -1.0;
+		}
+
+		Matrix omega = smallHk * Pk * ~smallHk + sr;
+
+		Matrix obs(2, 1);
+		obs(0, 0) = zkli(2 * i, sigmaPoint);
+		obs(1, 0) = zkli(2 * i + 1, sigmaPoint);
+
+		Matrix mdk = ~(measure - obs) * omega * (measure - obs);
+
+		mahalanobisDistances.emplace(i, std::sqrt(std::abs(mdk(0, 0))));
+	}
+	return mahalanobisDistances;
+}
+
+
+void RNUkfTask::predictMeasurements(Matrix& predictions, const Matrix& xk){
 	int totalLandmarks = 0;
 	int laserIndex = 0, cameraIndex = 0;
 	if(gn->isLaserSensorActivated()){
@@ -296,11 +383,7 @@ void RNUkfTask::getObservations(Matrix& observations){
 
 	if(gn->isCameraSensorActivated()){
 		totalLandmarks += cameraLandmarksCount;
-
 	}
-
-
-	Matrix result(totalLandmarks, 4);
 
 	for(int k = 0; k < currentSector->landmarksSize(); k++){
 		int zIndex = RN_NONE;
@@ -309,11 +392,11 @@ void RNUkfTask::getObservations(Matrix& observations){
 		s_landmark* landmark = currentSector->landmarkAt(k);
 		if(landmark->type == XML_SENSOR_TYPE_CAMERA_STR){
 			double nrx, nry;
-			RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, xk_1(2, 0), &nrx, &nry);
+			RNUtils::rotate(CAMERA_ERROR_POSITION_X, CAMERA_ERROR_POSITION_Y, xk(2, 0), &nrx, &nry);
 			disp(0, 0) = nrx;
 			disp(1, 0) = nry;
 		}
-		landmarkObservation(xk_1, disp, landmark, distance, angle);
+		landmarkObservation(xk, disp, landmark, distance, angle);
 
 		if(gn->isLaserSensorActivated()){
 			if(landmark->type == XML_SENSOR_TYPE_LASER_STR){
@@ -329,21 +412,19 @@ void RNUkfTask::getObservations(Matrix& observations){
 		}
 		
 		if(zIndex > RN_NONE){
-			result(zIndex, 0) = distance;
+			predictions(zIndex, 0) = distance;
 			if(angle > M_PI){
 				angle = angle - 2 * M_PI;
 			} else if(angle < -M_PI){
 				angle = angle + 2 * M_PI;
 			}
 
-			result(zIndex, 1) = angle;
-			result(zIndex, 2) = landmark->zpos;
-			result(zIndex, 3) = (double)landmark->id;
+			predictions(zIndex, 1) = angle;
+			predictions(zIndex, 2) = landmark->zpos;
+			predictions(zIndex, 3) = (double)landmark->id;
 		}
 		
 	}
-
-	observations = result;
 }
 
 void RNUkfTask::landmarkObservation(const Matrix& Xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle){

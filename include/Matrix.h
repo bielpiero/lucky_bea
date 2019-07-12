@@ -13,7 +13,7 @@
 #define MATRIX_DESCENDING 1
 
 class Matrix{
-	private:
+	protected:
 		unsigned int rows;
 		unsigned int cols;
 		std::vector<std::vector<double> > data;
@@ -42,8 +42,14 @@ class Matrix{
 		double& operator() (const int row, const int col);
 		const double& operator() (const int row, const int col) const;
 		
+		Matrix col(const unsigned int index);
+		void setCol(const unsigned int index, Matrix values);
+
+		Matrix row(const unsigned int index);
+		void setRow(const unsigned int index, Matrix values);
+
 		Matrix mlDivide(const Matrix& rhs);
-		
+
 		Matrix transpose();
 		Matrix inv();
 		Matrix pInv();
@@ -69,4 +75,6 @@ class Matrix{
 		const size_t rows_size() const;
 		const size_t cols_size() const;
 };
+
+
 #endif
