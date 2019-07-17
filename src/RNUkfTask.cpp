@@ -2,15 +2,18 @@
 
 const double RNUkfTask::CAMERA_ERROR_POSITION_X = -0.25;
 const double RNUkfTask::CAMERA_ERROR_POSITION_Y = -0.014;
-const double RNUkfTask::ALPHA = 0.05;
+const double RNUkfTask::ALPHA = 1.0e-3;
 const double RNUkfTask::BETA = 2;
-const double RNUkfTask::LAMBDA = 0;
+const double RNUkfTask::KAPPA = 0;
+const double RNUkfTask::LAMBDA = ALPHA*ALPHA*((double)SV_AUG + KAPPA) - (double)SV_AUG;
 
 RNUkfTask::RNUkfTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
 	currentSector = NULL;
 	test = std::fopen("laser_camera.txt","w+");
 	this->startThread();
+	wm = NULL;
+	wc = NULL;
 }
 
 RNUkfTask::~RNUkfTask(){
@@ -27,14 +30,22 @@ void RNUkfTask::init(){
 		XSigPred = Matrix(SV, SV_AUG_SIGMA);
 		XSigPredAug = Matrix(SV_AUG, SV_AUG_SIGMA);
 
-		weights_m.push_back(1.0 - ((double)SV/(ALPHA*ALPHA*((double)SV + LAMBDA))));
-		weights_c.push_back((2 - ALPHA*ALPHA + BETA) - (double)SV/(ALPHA*ALPHA*((double)SV + LAMBDA)));
+		if(wm != NULL){
+			delete[] wm;
+		}
+		if(wc != NULL){
+			delete[] wc;
+		}
+		wm = new double[SV_AUG_SIGMA];
+		wc = new double[SV_AUG_SIGMA];
+
+		wm[0] = (LAMBDA / ((double)SV_AUG + LAMBDA));
+		wc[0] = (LAMBDA / ((double)SV_AUG + LAMBDA)) + (1 - ALPHA*ALPHA + BETA);
 		for(int i = 1; i < SV_AUG_SIGMA; i++){
-			double f = 1/(2*ALPHA*ALPHA*((double)SV + LAMBDA));
-			weights_m.push_back(f);
-			weights_c.push_back(f);
-		}		
-		
+			wm[i] = 1/(2*((double)SV_AUG + LAMBDA));
+			wc[i] = 1/(2*((double)SV_AUG + LAMBDA));
+		}
+
 		Pk = gn->getP();
 		/*if(currentSector != NULL){
 			delete currentSector;
@@ -70,6 +81,7 @@ void RNUkfTask::prediction(){
 
 	double deltaDistance = 0.0, deltaAngle = 0.0;
 	gn->getIncrementPosition(&deltaDistance, &deltaAngle);
+	printf("Increment: {%lf, %lf}\n", deltaDistance, deltaAngle);
 
 	xkAug(0, 0) = xk(0, 0);
 	xkAug(1, 0) = xk(1, 0);
@@ -78,26 +90,31 @@ void RNUkfTask::prediction(){
 	xkAug(4, 0) = 0;
 
 	for(int i = 0; i < SV; i++){
-		for(int j = 0; j < SV; j++){
+		for(int j= 0; j < SV; j++){
 			PkAug(i, j) = Pk(i, j);
 		}
 	}
-	if(deltaDistance == 0.0 and deltaAngle == 0.0){
+	/*if(deltaDistance == 0.0 and deltaAngle == 0.0){
 		PkAug(3, 3) = 0.0;
 		PkAug(4, 4) = 0.0;
-	} else {
+	} else {*/
 		PkAug(3, 3) = gn->getQ()(0, 0);
 		PkAug(4, 4) = gn->getQ()(1, 1);
-	}
+	//}
 
 	Matrix L = PkAug.chol();
+	printf("L\n");
+	L.print();
 	XSigPredAug.setCol(0, xkAug);
 
 	// sigma points
-	double c = std::sqrt(ALPHA*ALPHA*((double)SV + LAMBDA));
+	double c = std::sqrt((double)SV_AUG + LAMBDA);
 	for(int i = 1; i <= SV_AUG; i++){
 		XSigPredAug.setCol(i, xkAug + c * L.col(i - 1));
+		XSigPredAug(2, i) = RNUtils::fixAngleRad(XSigPredAug(2, i));
+
 		XSigPredAug.setCol(i + SV_AUG, xkAug - c * L.col(i - 1));
+		XSigPredAug(2, i + SV_AUG) = RNUtils::fixAngleRad(XSigPredAug(2, i + SV_AUG));
 	}
 
 	//Prediction of every sigma point
@@ -106,20 +123,24 @@ void RNUkfTask::prediction(){
 		XSigPred.setCol(i, xk_1);
 	}
 	// Mean of state
+	Matrix xk_mean(3, 1);
 	for(int i = 0; i < SV_AUG_SIGMA; i++){
-		xk_1 = xk_1 + weights_m.at(i) * XSigPred.col(i);
+		xk_mean = xk_mean + wm[i] * XSigPred.col(i);
+		xk_mean(2, 0) = RNUtils::fixAngleRad(xk_mean(2, 0));
 	}
+	xk_1 = xk_mean;
+	printf("X(k + 1|k) mean\n");
+	xk_1.print();
+
 	printf("XSigPred\n");
 	XSigPred.print();
 
-	printf("xk_1\n");
-	xk_1.print();
 	//covariance matrix
 	Matrix Pyy(SV, SV);
 	for(int i = 0; i < SV_AUG_SIGMA; i++){
 		Matrix diff = XSigPred.col(i) - xk_1;
 		diff(2, 0) = RNUtils::fixAngleRad(diff(2, 0));
-		Pyy = Pyy + weights_c.at(i) * (diff * ~diff);
+		Pyy = Pyy + wc[i] * (diff * ~diff);
 	}
 	Pk = Pyy;
 }
@@ -172,11 +193,12 @@ void RNUkfTask::task(){
 		int activeRL = 0, activeVL = 0;
 		pk1 = Pk;
 		xk_1 = xk;
-		printf("\n\n\nNew iteration...");
-		printf("P(k|k)\n");
-		Pk.print();
+
+		printf("\n\n\nNew Iteration:\n");
+		
 		prediction();
-		printf("P(k+1|k)\n");
+
+		printf("P(k + 1|k)\n");
 		Pk.print();
 		
 		if(Pk(0, 0) < 0.0 or Pk(1, 1) < 0 or Pk(2, 2) < 0){
@@ -186,7 +208,8 @@ void RNUkfTask::task(){
 		Matrix zkli;
 		std::vector<int> ids;
 		obtainMeasurements(zkli, ids);
-		printf("Measurements Obtained\n");
+
+
 		gn->lockLaserLandmarks();
 		gn->lockVisualLandmarks();
 
@@ -229,10 +252,11 @@ void RNUkfTask::task(){
 
 						auto minorDistance = std::min_element(mahalanobisDistances.begin(), mahalanobisDistances.end(), [](std::pair<int, double> x, std::pair<int, double> y){ return x.second < y.second; });
 						if(minorDistance != mahalanobisDistances.end()){
-							zi(2 * i, j) = zkli(2 * minorDistance->first, 0);
-							zi(2 * i + 1, j) = zkli(2 * minorDistance->first + 1, 0);
+							zi(2 * i, j) = zkli(2 * minorDistance->first, j);
+							zi(2 * i + 1, j) = zkli(2 * minorDistance->first + 1, j);
 
-							//zi(2 * i + 1, j) = RNUtils::fixAngleRad(zi(2 * i + 1, j));
+							zi(2 * i + 1, j) = RNUtils::fixAngleRad(zi(2 * i + 1, j));
+							
 						}
 					}
 				}
@@ -259,7 +283,7 @@ void RNUkfTask::task(){
 						}
 
 						if(lndmrk != NULL and (lndmrk->getMapId() == currentSector->getMapId()) and (lndmrk->getSectorId() == currentSector->getId()) and zklIndex != RN_NONE){				
-							zi(cameraIndex + i, 0) = zkli(zklIndex, 0);
+							zi(cameraIndex + i, 0) = zkli(zklIndex, j);
 							//zl(cameraIndex + i, 0) = RNUtils::fixAngleRad(zl(cameraIndex + i, 0));
 							//RNUtils::printLn("MapId: %d, SectorId: %d, markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, Error: {a: %f}", lndmrk->getMapId(), lndmrk->getSectorId(), lndmrk->getMarkerId(), distanceFixed, angleFixed, zkl(j, 0), zkl(j, 1), zl(j + laserOffset, 0));
 						}
@@ -267,48 +291,77 @@ void RNUkfTask::task(){
 
 				}
 			}
-			printf("Matrices zi and zik_1 are formed\n");
-			printf("Zi\n");
-			zi.print();
-			printf("zik_1\n");
-			zik_1.print();
 
 			for(int i = 0; i < SV_AUG_SIGMA; i++){
-				zi_mean = zi_mean + weights_m.at(i) * zi.col(i);
+				zi_mean = zi_mean + wm[i] * zi.col(i);
 			}
+
+			printf("zi_mean mean\n");
+			zi_mean.print();
+
 			Matrix Sk(sizeH, sizeH);
 			for(int i = 0; i < SV_AUG_SIGMA; i++){
 				Matrix diff = zi.col(i) - zi_mean;
-				Sk = Sk + weights_c.at(i)*(diff * ~diff);
+				Sk = Sk + wc[i]*(diff * ~diff);
 			}
-		
-			Matrix Pxx(SV, sizeH);
+			Sk = Sk + currentR;
+
+			Matrix Pxz(SV, sizeH);
 			for(int i = 0; i < SV_AUG_SIGMA; i++){
 				Matrix diff_x = XSigPred.col(i) - xk_1;
 				diff_x(2, 0) = RNUtils::fixAngleRad(diff_x(2, 0));
 
 				Matrix diff_z = zi.col(i) - zi_mean;
-				Pxx = Pxx + weights_c.at(i) * (diff_x * ~diff_z);
+				Pxz = Pxz + wc[i] * (diff_x * ~diff_z);
 			}
 
-			printf("Pxx\n");
-			Pxx.print();
+			Matrix Wk = Pxz * !Sk;
 
-			Matrix Wk = Pxx * !Sk;
-			Matrix diff_z = zik_1 - zi_mean;
+			printf("Z(k + 1)\n");
+			zik_1.print();
 
-			xk = xk + Wk * diff_z;
-			Pk = Pk - Wk * Sk * ~Wk;
+			Matrix nu = zik_1 - zi_mean;
+			for (int i = 0; i < activeRL; i++){
+				double mdDistance = std::abs(nu(2 * i, 0) / std::sqrt(gn->getLaserDistanceVariance()));
+				double mdAngle = std::abs(nu(2 * i + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
+
+				if (mdDistance > laserTMDistance or mdAngle > laserTMAngle){
+
+					//RNUtils::printLn("landmark %d rejected...", indexFound);
+					nu(2 * i, 0) = 0.0;
+					nu(2 * i + 1, 0) = 0.0;
+					rsize--;
+				}
+			}
+
+			for(int i = 0; i < activeVL; i++){
+				double mdAngle = std::abs(nu(cameraIndex + i, 0) / std::sqrt(gn->getCameraAngleVariance()));
+
+				if (mdAngle > cameraTMAngle){
+					//RNUtils::printLn("Landmark %d rejected...", (int)zkl(i, 3));
+					nu(cameraIndex + i, 0) = 0;
+					vsize--;
+				}
+			}
+			printf("nu(k + 1)\n");
+			nu.print();
+
+			xk = xk_1 + Wk * nu;
+			xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
+
+			printf("X(k + 1|k + 1) postfix\n");
+			xk.print();
 
 			char bufferpk1[256], bufferpk[256];
 			sprintf(bufferpk1, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
-			//Pk = (Matrix::eye(3) - Wk * Hk) * Pk;
+			Pk = Pk - Wk * Sk * ~Wk;
+			printf("P(k + 1|k + 1)\n");
+			Pk.print();
 			if(Pk(0, 0) < 0.0 or Pk(1, 1) < 0 or Pk(2, 2) < 0){
 				printf("Error gordo...\n");
 			}
 			sprintf(bufferpk, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
-			//xk = xk_1 + Wk * zl;
-			xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
+
 			gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 			char buffer[1024];
 			sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize);
@@ -318,10 +371,10 @@ void RNUkfTask::task(){
 		} else {
 			char bufferpk1[256], bufferpk[256];
 			sprintf(bufferpk1, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
-			Pk = Pk;
+			//Pk = Pk;
 			sprintf(bufferpk, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
 			xk = xk_1;
-			xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
+			//xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
 			gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 			char buffer[1024];
 			sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize);

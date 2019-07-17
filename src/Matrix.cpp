@@ -494,7 +494,7 @@ void Matrix::print(){
 	Matrix rhs = *this;
 	for(int i = 0; i < rhs.rows_size(); i++){
 		for(int j = 0; j < rhs.cols_size(); j++){
-			printf("(%d, %d): %0.7f\t", i, j, rhs(i, j));
+			printf("(%d, %d): %0.7g\t", i, j, rhs(i, j));
 		}
 		printf("\n");
 	}

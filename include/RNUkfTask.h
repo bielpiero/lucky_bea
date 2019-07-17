@@ -29,6 +29,7 @@ private:
 	static const double CAMERA_ERROR_POSITION_Y;
 	static const double ALPHA;
 	static const double BETA;
+	static const double KAPPA;
 	static const double LAMBDA;
 	
 	int laserLandmarksCount;
@@ -53,8 +54,8 @@ private:
 	Matrix PkAug;
 	Matrix XSigPred;
 	Matrix XSigPredAug;
-	std::vector<double> weights_m;
-	std::vector<double> weights_c;
+	double* wm;
+	double* wc;
 };
 
 #endif
