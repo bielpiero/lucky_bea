@@ -81,7 +81,6 @@ void RNUkfTask::prediction(){
 
 	double deltaDistance = 0.0, deltaAngle = 0.0;
 	gn->getIncrementPosition(&deltaDistance, &deltaAngle);
-	printf("Increment: {%lf, %lf}\n", deltaDistance, deltaAngle);
 
 	xkAug(0, 0) = xk(0, 0);
 	xkAug(1, 0) = xk(1, 0);
@@ -103,8 +102,7 @@ void RNUkfTask::prediction(){
 	//}
 
 	Matrix L = PkAug.chol();
-	printf("L\n");
-	L.print();
+	
 	XSigPredAug.setCol(0, xkAug);
 
 	// sigma points
@@ -129,11 +127,11 @@ void RNUkfTask::prediction(){
 		xk_mean(2, 0) = RNUtils::fixAngleRad(xk_mean(2, 0));
 	}
 	xk_1 = xk_mean;
-	printf("X(k + 1|k) mean\n");
-	xk_1.print();
+	//printf("X(k + 1|k) mean\n");
+	//xk_1.print();
 
-	printf("XSigPred\n");
-	XSigPred.print();
+	//printf("XSigPred\n");
+	//XSigPred.print();
 
 	//covariance matrix
 	Matrix Pyy(SV, SV);
@@ -194,12 +192,12 @@ void RNUkfTask::task(){
 		pk1 = Pk;
 		xk_1 = xk;
 
-		printf("\n\n\nNew Iteration:\n");
-		
+		//printf("\n\n\nNew Iteration:\n");
+		gn->getRobotPosition();
 		prediction();
 
-		printf("P(k + 1|k)\n");
-		Pk.print();
+		//printf("P(k + 1|k)\n");
+		//Pk.print();
 		
 		if(Pk(0, 0) < 0.0 or Pk(1, 1) < 0 or Pk(2, 2) < 0){
 			printf("Error gordo...\n");
@@ -296,8 +294,8 @@ void RNUkfTask::task(){
 				zi_mean = zi_mean + wm[i] * zi.col(i);
 			}
 
-			printf("zi_mean mean\n");
-			zi_mean.print();
+			//printf("zi_mean mean\n");
+			//zi_mean.print();
 
 			Matrix Sk(sizeH, sizeH);
 			for(int i = 0; i < SV_AUG_SIGMA; i++){
@@ -317,8 +315,8 @@ void RNUkfTask::task(){
 
 			Matrix Wk = Pxz * !Sk;
 
-			printf("Z(k + 1)\n");
-			zik_1.print();
+			//printf("Z(k + 1)\n");
+			//zik_1.print();
 
 			Matrix nu = zik_1 - zi_mean;
 			for (int i = 0; i < activeRL; i++){
@@ -343,20 +341,20 @@ void RNUkfTask::task(){
 					vsize--;
 				}
 			}
-			printf("nu(k + 1)\n");
-			nu.print();
+			//printf("nu(k + 1)\n");
+			//nu.print();
 
 			xk = xk_1 + Wk * nu;
 			xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
 
-			printf("X(k + 1|k + 1) postfix\n");
-			xk.print();
+			//printf("X(k + 1|k + 1) postfix\n");
+			//xk.print();
 
 			char bufferpk1[256], bufferpk[256];
 			sprintf(bufferpk1, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
 			Pk = Pk - Wk * Sk * ~Wk;
-			printf("P(k + 1|k + 1)\n");
-			Pk.print();
+			//printf("P(k + 1|k + 1)\n");
+			//Pk.print();
 			if(Pk(0, 0) < 0.0 or Pk(1, 1) < 0 or Pk(2, 2) < 0){
 				printf("Error gordo...\n");
 			}
