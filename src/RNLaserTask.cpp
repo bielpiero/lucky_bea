@@ -4,8 +4,6 @@ const double RNLaserTask::SECURITY_DISTANCE = 0.5;
 const double RNLaserTask::LASER_MAX_RANGE = 11.6;
 const double RNLaserTask::LANDMARK_RADIUS = 0.045;
 
-std::FILE* test2;
-
 
 RNLaserTask::RNLaserTask(GeneralController* gn, const char* name, const char* description) : RNRecurrentTask(gn, name, description){
 	this->gn = gn;
@@ -52,19 +50,6 @@ void RNLaserTask::getLaserScan(void){
 		for(std::list<ArSensorReading*>::const_iterator it = currentReadings->begin(); it != currentReadings->end(); ++it){
 			laserDataScan->addRange((double)(*it)->getRange() / 1000, (double)(*it)->getExtraInt());
 		}
-
-
-		/**************************** VICTOR ****************************/
-		// Declaración FILE arriba, en la cabecera
-		test2 = std::fopen("un_ciclo_de_medidas_laser.txt","w+");
-		for(int kkk = 0; kkk < laserDataScan->size(); kkk++)
-		{
-			fprintf(test2, "%f\t", laserDataScan->getRange(kkk));
-		}
-		fprintf(test2, "\n");
-		fclose(test2);
-		/****************************************************************/
-
 
         rn->onLaserScanCompleted(laserDataScan);
         laser->unlockDevice();

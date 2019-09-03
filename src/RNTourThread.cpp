@@ -201,6 +201,7 @@ void RNTourThread::tripTo(int dst_sector, double dst_x, double dst_y){
 	if(dst_sector != RN_NONE){
 		longTravel(currentSector->getId(), dst_sector);
 	}
+	RNUtils::sleep(500);
 	ArPose* currPose = gn->getAltPose();
 	ArPose dstPose(dst_x * 1e3, dst_y * 1e3, 0.0);
 	int originSite = closestNodeTo(*currPose);
@@ -280,9 +281,9 @@ void RNTourThread::longTravel(int origin, int destiny){
 					}
 				}
 				shortTravel(originSite, destinySite);
-				delete currPose;
-				currPose = NULL;
-				RNUtils::sleep(10);
+				//delete currPose;
+				//currPose = NULL;
+				RNUtils::sleep(20);
 			}
 		}
 	}

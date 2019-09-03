@@ -6,7 +6,7 @@ const double RNEkfTask::CAMERA_ERROR_POSITION_Y = -0.014;
 RNEkfTask::RNEkfTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
 	currentSector = NULL;
-	test = std::fopen("laser_camera.txt","w+");
+	test = std::fopen("laser_camera_ekf.txt","w+");
 	this->startThread();
 }
 

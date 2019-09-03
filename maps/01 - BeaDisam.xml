@@ -50,10 +50,10 @@
 			<site id="8" name="door" x="0" y="110" linked-sector-id="4" xcoord="160" ycoord="0"/>
 		</sites>
 		<ways>
-			<!--<way st="0" adjacency="1"/>-->
+			<way st="0" adjacency="1"/>
 			<way st="1" adjacency="2"/>
 			<way st="2" adjacency="1,3"/>
-			<way st="3" adjacency="2"/>
+			<way st="3" adjacency="2,5"/>
 			<!--<way st="4" adjacency="3"/>-->
 			<way st="5" adjacency="3,6"/>
 			<way st="6" adjacency="5,8,7"/>

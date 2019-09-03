@@ -10,7 +10,7 @@ const double RNUkfTask::LAMBDA = ALPHA*ALPHA*((double)SV_AUG + KAPPA) - (double)
 RNUkfTask::RNUkfTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
 	currentSector = NULL;
-	test = std::fopen("laser_camera.txt","w+");
+	test = std::fopen("laser_camera_ukf.txt","w+");
 	this->startThread();
 	wm = NULL;
 	wc = NULL;
@@ -64,7 +64,7 @@ void RNUkfTask::init(){
 
 		xk = gn->getRawEncoderPosition();
 		xk.print();
-		
+		gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 		enableLocalization = true;
 
 	} else{
@@ -325,7 +325,7 @@ void RNUkfTask::task(){
 
 				if (mdDistance > laserTMDistance or mdAngle > laserTMAngle){
 
-					//RNUtils::printLn("landmark %d rejected...", indexFound);
+					//RNUtils::printLn("RL landmark %d rejected...", indexFound);
 					nu(2 * i, 0) = 0.0;
 					nu(2 * i + 1, 0) = 0.0;
 					rsize--;
@@ -335,11 +335,11 @@ void RNUkfTask::task(){
 			for(int i = 0; i < activeVL; i++){
 				double mdAngle = std::abs(nu(cameraIndex + i, 0) / std::sqrt(gn->getCameraAngleVariance()));
 
-				if (mdAngle > cameraTMAngle){
-					//RNUtils::printLn("Landmark %d rejected...", (int)zkl(i, 3));
+				/*if (mdAngle > cameraTMAngle){
+					RNUtils::printLn("FL Landmark %d rejected...", ids[i + laserLandmarksCount]);
 					nu(cameraIndex + i, 0) = 0;
 					vsize--;
-				}
+				}*/
 			}
 			//printf("nu(k + 1)\n");
 			//nu.print();

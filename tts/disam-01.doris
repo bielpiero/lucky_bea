@@ -1,5 +1,4 @@
+
 function main()
-	say[attention=front; face=happy]("Ya estoy despierta")
-	goto(#1, #1.15, #8)
-	say[attention=front; face=happy]("Ya he llegado")
+	goto(#1, #1.15, #6.25)
 endfunction
