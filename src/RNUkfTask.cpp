@@ -206,7 +206,7 @@ void RNUkfTask::task(){
 		Matrix zkli;
 		std::vector<int> ids;
 		obtainMeasurements(zkli, ids);
-
+		
 
 		gn->lockLaserLandmarks();
 		gn->lockVisualLandmarks();
@@ -264,24 +264,21 @@ void RNUkfTask::task(){
 				vsize = gn->getVisualLandmarks()->size();
 				for (int i = 0; i < gn->getVisualLandmarks()->size(); i++){
 					RNLandmark* lndmrk = gn->getVisualLandmarks()->at(i);
-					zik_1(i, 0) = lndmrk->getPointsYMean();
+					zik_1(i + cameraIndex, 0) = lndmrk->getPointsYMean();
 
 					currentR(cameraIndex + i, cameraIndex + i) = gn->getCameraAngleVariance();
-					for(int j = 0; j < SV_AUG_SIGMA; j++){
-						
-						int zklIndex = RN_NONE;
-						for(int k = 0; k < cameraLandmarksCount and (zklIndex == RN_NONE); k++){
-							s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, ids[k + laserLandmarksCount]);
-							if(currLandmark != NULL and currLandmark->type == XML_SENSOR_TYPE_CAMERA_STR){
-								if(lndmrk != NULL and currLandmark->id == lndmrk->getMarkerId()){
-									
-									zklIndex = k + 2*laserLandmarksCount;
-								}
-							}
-						}
 
+					int zklIndex = RN_NONE;
+					for(int k = 0; k < cameraLandmarksCount and (zklIndex == RN_NONE); k++){
+						s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, lndmrk->getMarkerId());
+						if(currLandmark != NULL){	
+							zklIndex = k + 2 * laserLandmarksCount;
+						}
+					}
+
+					for(int j = 0; j < SV_AUG_SIGMA; j++){
 						if(lndmrk != NULL and (lndmrk->getMapId() == currentSector->getMapId()) and (lndmrk->getSectorId() == currentSector->getId()) and zklIndex != RN_NONE){				
-							zi(cameraIndex + i, 0) = zkli(zklIndex, j);
+							zi(cameraIndex + i, j) = zkli(zklIndex, j);
 							//zl(cameraIndex + i, 0) = RNUtils::fixAngleRad(zl(cameraIndex + i, 0));
 							//RNUtils::printLn("MapId: %d, SectorId: %d, markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, Error: {a: %f}", lndmrk->getMapId(), lndmrk->getSectorId(), lndmrk->getMarkerId(), distanceFixed, angleFixed, zkl(j, 0), zkl(j, 1), zl(j + laserOffset, 0));
 						}
@@ -289,6 +286,12 @@ void RNUkfTask::task(){
 
 				}
 			}
+
+			//printf("zik_1:\n");
+			//zik_1.print();
+
+			//printf("zi:\n");
+			//zi.print();
 
 			for(int i = 0; i < SV_AUG_SIGMA; i++){
 				zi_mean = zi_mean + wm[i] * zi.col(i);
@@ -335,11 +338,11 @@ void RNUkfTask::task(){
 			for(int i = 0; i < activeVL; i++){
 				double mdAngle = std::abs(nu(cameraIndex + i, 0) / std::sqrt(gn->getCameraAngleVariance()));
 
-				/*if (mdAngle > cameraTMAngle){
+				if (mdAngle > cameraTMAngle){
 					RNUtils::printLn("FL Landmark %d rejected...", ids[i + laserLandmarksCount]);
 					nu(cameraIndex + i, 0) = 0;
 					vsize--;
-				}*/
+				}
 			}
 			//printf("nu(k + 1)\n");
 			//nu.print();

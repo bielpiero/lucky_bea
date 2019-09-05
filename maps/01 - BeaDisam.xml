@@ -136,13 +136,13 @@
 		<sites sequence="5,3,2,0">
 			<site id="0" name="door" x="090" y="1148" linked-sector-id="0" xcoord="18" ycoord="-1128"/>
 			<site id="1" name="way" x="090" y="940"/>
-			<site id="2" name="way" x="115" y="713"/>
+			<site id="2" name="way" x="120" y="713"/>
 			<site id="3" name="way" x="464" y="713"/>
-			<site id="4" name="frame" x="115" y="209"/>
+			<site id="4" name="frame" x="120" y="209"/>
 			<site id="5" name="door" x="0" y="209" linked-sector-id="7" xcoord="-18" ycoord="1180"/>
-			<site id="6" name="way" x="115" y="80"/>
+			<site id="6" name="way" x="120" y="80"/>
 			<site id="7" name="door" x="0" y="80" linked-sector-id="8" xcoord="-18" ycoord="1180"/>
-			<site id="8" name="door" x="115" y="0" linked-sector-id="2" xcoord="0" ycoord="1059"/>
+			<site id="8" name="door" x="120" y="0" linked-sector-id="2" xcoord="0" ycoord="1059"/>
 		</sites>
 		<ways>
 			<way st="0" adjacency="1"/>
