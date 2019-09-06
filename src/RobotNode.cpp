@@ -45,10 +45,10 @@ RobotNode::RobotNode(const char* port){
         Aria::setKeyHandler(keyHandler);
         robot->attachKeyHandler(keyHandler, false);
     }
-    upCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.10, 0.0);
-    downCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, -0.10, -0.0);
-    leftCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.0, 0.05);
-    rightCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.0, -0.05);
+    upCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.20, 0.0);
+    downCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, -0.20, -0.0);
+    leftCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.0, 0.1);
+    rightCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.0, -0.1);
     spaceCB = ArFunctor2C<RobotNode, double, double>(this, &RobotNode::moveAtSpeed, 0.0, 0.0);
 
     keyHandler->addKeyHandler(ArKeyHandler::UP, &upCB);

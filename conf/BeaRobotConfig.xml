@@ -1,4 +1,4 @@
-<robot height="1.425" cameras="2" localization="ukf" face="1" neck="0"> <!--localization: {ekf, pkf, ukf}-->
+<robot height="1.425" cameras="2" localization="ekf" face="1" neck="0"> <!--localization: {ekf, pkf, ukf}-->
 	<rfid-config tx-power="8" rx-sensitivity="22"/>
 	<navigation>
 		<initial-position>

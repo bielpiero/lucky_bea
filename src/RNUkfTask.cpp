@@ -207,6 +207,8 @@ void RNUkfTask::task(){
 		std::vector<int> ids;
 		obtainMeasurements(zkli, ids);
 		
+		//printf("zkli:\n");
+		//zkli.print();
 
 		gn->lockLaserLandmarks();
 		gn->lockVisualLandmarks();
@@ -268,15 +270,13 @@ void RNUkfTask::task(){
 
 					currentR(cameraIndex + i, cameraIndex + i) = gn->getCameraAngleVariance();
 
-					int zklIndex = RN_NONE;
-					for(int k = 0; k < cameraLandmarksCount and (zklIndex == RN_NONE); k++){
-						s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_CAMERA_STR, lndmrk->getMarkerId());
-						if(currLandmark != NULL){	
-							zklIndex = k + 2 * laserLandmarksCount;
-						}
-					}
-
 					for(int j = 0; j < SV_AUG_SIGMA; j++){
+						int zklIndex = RN_NONE;
+						for(int k = 0; k < cameraLandmarksCount and (zklIndex == RN_NONE); k++){
+							if(lndmrk->getMarkerId() == ids[k + laserLandmarksCount]){	
+								zklIndex = k + 2 * laserLandmarksCount;
+							}
+						}
 						if(lndmrk != NULL and (lndmrk->getMapId() == currentSector->getMapId()) and (lndmrk->getSectorId() == currentSector->getId()) and zklIndex != RN_NONE){				
 							zi(cameraIndex + i, j) = zkli(zklIndex, j);
 							//zl(cameraIndex + i, 0) = RNUtils::fixAngleRad(zl(cameraIndex + i, 0));
