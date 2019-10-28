@@ -1,0 +1,30 @@
+
+var start = #1
+
+function explainAniversario()
+	turn(#-90)
+	say[attention=front; face=happy]("Hola soy Doris. Estamos en la Sala de la Máquina.")
+	goto(#-1, #6.74, #21.57)
+	say[attention=front; face=sad]("Al fonde está reprografía.")
+	goto(#-1, #7.93, #19.84)
+	say[attention=front; face=surprise]("Esta es la máquina.")
+	goto(#-1, #12.08, #19.83)
+	turn(#-90)
+	say[attention=front; face=surprise]("Hoy es el décimo aniversario del CAR.")
+	goto(#-1, #13.86, #21.57)
+	turn(#45)
+	say[attention=front; face=surprise]("Al fondo está la secretaría.")
+	goto(#-1, #10.30, #21.57)
+endfunction
+
+function welcome()
+	say[attention=front; face=happy]("Hola soy Doris.")
+endfunction
+
+function main()
+	goto(#-1, #10.30, #21.57)
+	welcome()
+	while(#1 == #1)
+		explainAniversario()
+	endw
+endfunction

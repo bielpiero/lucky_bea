@@ -24,15 +24,19 @@
 			<landmark id="3" type="laser" x="080" y="306" z="0"/>
 			<landmark id="4" type="laser" x="199" y="107" z="0"/>
 			<landmark id="5" type="laser" x="358" y="147" z="0"/>
-			<landmark id="6" type="laser" x="358" y="306" z="0"/>
+			<!-- <landmark id="6" type="laser" x="358" y="306" z="0"/> -->
 			<landmark id="7" type="laser" x="517" y="147" z="0"/>
 			<landmark id="8" type="laser" x="517" y="306" z="0"/>
 			<landmark id="9" type="laser" x="717" y="187" z="0"/>
 			<landmark id="10" type="laser" x="717" y="306" z="0"/>
-
-
-
-		
+			
+			<!--
+			<landmark id="7" type="camera" x="90" y="0" z="275"/>
+			<landmark id="6" type="camera" x="0" y="109" z="275"/>
+			<landmark id="3" type="camera" x="134" y="147" z="275"/>
+			<landmark id="5" type="camera" x="0" y="193" z="275"/>
+			<landmark id="4" type="camera" x="90" y="149" z="275"/>
+			-->
 		</landmarks>
 		<features>
 			<feature id="0" name="door" width="120" height="10" x="100" y="0"/>
@@ -197,11 +201,13 @@
 			<landmark id="2" type="laser" x="180" y="575" z="0"/>
 			<landmark id="3" type="laser" x="0" y="768" z="0"/>
 			<landmark id="4" type="laser" x="180" y="975" z="0"/>
+			<!--
 			<landmark id="7" type="camera" x="90" y="0" z="275"/>
 			<landmark id="6" type="camera" x="0" y="309" z="275"/>
 			<landmark id="3" type="camera" x="134" y="547" z="275"/>
 			<landmark id="5" type="camera" x="0" y="793" z="275"/>
 			<landmark id="4" type="camera" x="90" y="1049" z="275"/>
+			-->
 		</landmarks>
 		<features>
 			<feature id="0" name="armario 1" width="42" height="312" x="0" y="448"/>
