@@ -1,14 +1,14 @@
-#ifndef RN_UKF_TASK_H
-#define RN_UKF_TASK_H
+#ifndef RN_USKF_TASK_H
+#define RN_USKF_TASK_H
 
 #include "RNLocalizationTask.h"
 #include "UDPServer.h"
 
 
-class RNUkfTask : public RNLocalizationTask, public UDPServer{
+class RNUskfTask : public RNLocalizationTask, public UDPServer{
 public:
-	RNUkfTask(const GeneralController* gn, const char* name = "Unscented Kalman Localization Task", const char* description = "");
-	~RNUkfTask();
+	RNUskfTask(const GeneralController* gn, const char* name = "Unscented Schmidt-Kalman Localization Task", const char* description = "");
+	~RNUskfTask();
 	virtual void task();
 	virtual void kill();
 	virtual void init();

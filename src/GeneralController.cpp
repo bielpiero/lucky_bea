@@ -7,6 +7,8 @@
 #include "RNEkfTask.h"
 #include "RNPkfTask.h"
 #include "RNUkfTask.h"
+#include "RNEskfTask.h"
+#include "RNUskfTask.h"
 #include "RNCameraTask.h"
 #include "RNOmnicameraTask.h"
 #include "RNRFIdentificationTask.h"
@@ -88,8 +90,12 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 		localization = new RNPkfTask(this);
 	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_UKF_STR){
 		localization = new RNUkfTask(this);
+	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_ESKF_STR){
+		localization = new RNEskfTask(this);
+	} else if(robotConfig->localization == XML_LOCALIZATION_ALGORITHM_USKF_STR){
+		localization = new RNUskfTask(this);
 	}
-	
+
 	////Tasks added:
 	tasks->addTask(laserTask);
 	//tasks->addTask(omnidirectionalTask);
@@ -100,7 +106,7 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	tasks->addTask(emotions);
 	//tasks->addTask(eyesCameras);
 	tasks->addTask(localization);
-	
+
 	
 	//Start all tasks;
 	tasks->startAllTasks();
@@ -794,6 +800,7 @@ bool GeneralController::loadSector(int mapId, int sectorId){
 	if(localization != NULL){
 		localization->kill();	
 	}
+
 	pthread_mutex_lock(&currentSectorLocker);
 	std::string filename;
 	bool reloadMap = true;
@@ -966,6 +973,7 @@ bool GeneralController::loadSector(int mapId, int sectorId){
 	    if(localization != NULL){
 			localization->reset();	
 		}
+
 		if(rfidTask){
 			rfidTask->reloadCurrentSector();
 		}
@@ -2016,7 +2024,8 @@ void GeneralController::setRobotPosition(double x, double y, double theta){
 		localization->kill();
 	}
 	RNUtils::printLn("Changin' position...");
-	this->setPosition(x, y, theta);	
+	this->setPosition(x, y, theta);
+
 	if(localization != NULL){
 		localization->reset();	
 	}

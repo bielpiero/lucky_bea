@@ -1,23 +1,23 @@
-#include "RNEkfTask.h"
+#include "RNEskfTask.h"
 
-const double RNEkfTask::CAMERA_ERROR_POSITION_X = -0.25;
-const double RNEkfTask::CAMERA_ERROR_POSITION_Y = -0.014;
-const int RNEkfTask::STATE_VARIABLES = 3;
+const double RNEskfTask::CAMERA_ERROR_POSITION_X = -0.25;
+const double RNEskfTask::CAMERA_ERROR_POSITION_Y = -0.014;
+const int RNEskfTask::STATE_VARIABLES = 3;
 
-RNEkfTask::RNEkfTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
+RNEskfTask::RNEskfTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
 	currentSector = NULL;
-	test = std::fopen("laser_camera_ekf.txt","w+");
+	test = std::fopen("laser_camera_eskf.txt","w+");
 	this->startThread();
 }
 
-RNEkfTask::~RNEkfTask(){
+RNEskfTask::~RNEskfTask(){
 	if(test != NULL){
 		std::fclose(test);
 	}
 }
 
-void RNEkfTask::init(){
+void RNEskfTask::init(){
 	if(gn != NULL and gn->initializeKalmanVariables() == 0){
 		Ak = Matrix::eye(3);
 		Bk = Matrix(3, 2);
@@ -47,13 +47,13 @@ void RNEkfTask::init(){
 	}
 }
 
-void RNEkfTask::kill(){
+void RNEskfTask::kill(){
 	enableLocalization = false;
 	RNRecurrentTask::kill();
 }
 
 
-void RNEkfTask::task(){
+void RNEskfTask::task(){
 	if(enableLocalization){
 		int rsize = 0, vsize = 0;
 		int activeRL = 0, activeVL = 0;
@@ -297,7 +297,7 @@ void RNEkfTask::task(){
 	RNUtils::sleep(20);
 }
 
-Matrix RNEkfTask::fixFilterGain(const Matrix wk){
+Matrix RNEskfTask::fixFilterGain(const Matrix wk){
 	Matrix result = wk;
 	for(int i = 0; i < wk.rows_size(); i++){
 		for(int j = 0; j < wk.cols_size(); j++){
@@ -310,7 +310,7 @@ Matrix RNEkfTask::fixFilterGain(const Matrix wk){
 }
 
 
-void RNEkfTask::getObservations(Matrix& observations){
+void RNEskfTask::getObservations(Matrix& observations){
 	int totalLandmarks = 0;
 	int laserIndex = 0, cameraIndex = 0;
 	if(gn->isLaserSensorActivated()){
@@ -370,12 +370,12 @@ void RNEkfTask::getObservations(Matrix& observations){
 	observations = result;
 }
 
-void RNEkfTask::landmarkObservation(const Matrix& Xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle){
+void RNEskfTask::landmarkObservation(const Matrix& Xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle){
 	distance = std::sqrt(std::pow(landmark->xpos - (Xk(0, 0) + disp(0, 0)), 2) + std::pow(landmark->ypos - (Xk(1, 0) + disp(1, 0)), 2));
 	angle = std::atan2(landmark->ypos - (Xk(1, 0) + disp(1, 0)), landmark->xpos - (Xk(0, 0) + disp(0, 0))) - Xk(2, 0);
 }
 
-void RNEkfTask::OnMessageReceivedWithData(unsigned char* cad, int length){
+void RNEskfTask::OnMessageReceivedWithData(unsigned char* cad, int length){
 	gn->lockVisualLandmarks();
 	RNLandmarkList* markers = gn->getVisualLandmarks();
 	markers->initializeFromString((char*)cad);

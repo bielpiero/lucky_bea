@@ -1,18 +1,19 @@
-#include "RNUkfTask.h"
+#include "RNUskfTask.h"
 
-const int RNUkfTask::SV = 3;
-const int RNUkfTask::SV_AUG = 5;
-const int RNUkfTask::SV_AUG_SIGMA = 11;
+const int RNUskfTask::SV = 3;
+const int RNUskfTask::SV_AUG = 5;
+const int RNUskfTask::SV_AUG_SIGMA = 11;
 
-const double RNUkfTask::CAMERA_ERROR_POSITION_X = -0.25;
-const double RNUkfTask::CAMERA_ERROR_POSITION_Y = -0.014;
-const double RNUkfTask::ALPHA = 1.0e-3;
-const double RNUkfTask::BETA = 2;
-const double RNUkfTask::KAPPA = 0;
-const double RNUkfTask::LAMBDA = ALPHA*ALPHA*((double)SV_AUG + KAPPA) - (double)SV_AUG;
+const double RNUskfTask::CAMERA_ERROR_POSITION_X = -0.25;
+const double RNUskfTask::CAMERA_ERROR_POSITION_Y = -0.014;
+const double RNUskfTask::ALPHA = 1.0e-3;
+const double RNUskfTask::BETA = 2;
+const double RNUskfTask::KAPPA = 0;
+const double RNUskfTask::LAMBDA = ALPHA*ALPHA*((double)SV_AUG + KAPPA) - (double)SV_AUG;
 
 
-RNUkfTask::RNUkfTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
+
+RNUskfTask::RNUskfTask(const GeneralController* gn, const char* name, const char* description) : RNLocalizationTask(gn, name, description), UDPServer(22500){
 	enableLocalization = false;
 	currentSector = NULL;
 	test = std::fopen("laser_camera_ukf.txt","w+");
@@ -21,13 +22,13 @@ RNUkfTask::RNUkfTask(const GeneralController* gn, const char* name, const char* 
 	wc = NULL;
 }
 
-RNUkfTask::~RNUkfTask(){
+RNUskfTask::~RNUskfTask(){
 	if(test != NULL){
 		std::fclose(test);
 	}
 }
 
-void RNUkfTask::init(){
+void RNUskfTask::init(){
 	if(gn != NULL and gn->initializeKalmanVariables() == 0){
 
 		xkAug = Matrix(SV_AUG, 1);
@@ -77,12 +78,12 @@ void RNUkfTask::init(){
 	}
 }
 
-void RNUkfTask::kill(){
+void RNUskfTask::kill(){
 	enableLocalization = false;
 	RNRecurrentTask::kill();
 }
 
-void RNUkfTask::prediction(){
+void RNUskfTask::prediction(){
 
 	double deltaDistance = 0.0, deltaAngle = 0.0;
 	gn->getIncrementPosition(&deltaDistance, &deltaAngle);
@@ -148,7 +149,7 @@ void RNUkfTask::prediction(){
 	Pk = Pyy;
 }
 
-void RNUkfTask::obtainMeasurements(Matrix& zkli, std::vector<int>& ids){
+void RNUskfTask::obtainMeasurements(Matrix& zkli, std::vector<int>& ids){
 	bool idsProcessed = false;
 	int totalLandmarks = 0;
 	int laserIndex = 0, cameraIndex = 0;
@@ -190,7 +191,7 @@ void RNUkfTask::obtainMeasurements(Matrix& zkli, std::vector<int>& ids){
 }
 
 
-void RNUkfTask::task(){
+void RNUskfTask::task(){
 	if(enableLocalization){
 		int rsize = 0, vsize = 0;
 		int activeRL = 0, activeVL = 0;
@@ -381,7 +382,7 @@ void RNUkfTask::task(){
 			sprintf(bufferpk, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
 			xk = xk_1;
 			//xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
-			gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
+			//gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 			char buffer[1024];
 			sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize);
 			if(test != NULL){
@@ -401,7 +402,7 @@ void RNUkfTask::task(){
 	RNUtils::sleep(20);
 }
 
-std::map<int, double> RNUkfTask::computeMahalanobis(const int& sigmaPoint, Matrix measure, const Matrix& zkli, const Matrix& xk, const Matrix& sr, const std::vector<int>& ids){
+std::map<int, double> RNUskfTask::computeMahalanobis(const int& sigmaPoint, Matrix measure, const Matrix& zkli, const Matrix& xk, const Matrix& sr, const std::vector<int>& ids){
 	std::map<int, double> mahalanobisDistances;
 
 	for (int i = 0; i < laserLandmarksCount; i++){
@@ -432,7 +433,7 @@ std::map<int, double> RNUkfTask::computeMahalanobis(const int& sigmaPoint, Matri
 }
 
 
-void RNUkfTask::predictMeasurements(Matrix& predictions, const Matrix& xk){
+void RNUskfTask::predictMeasurements(Matrix& predictions, const Matrix& xk){
 	int totalLandmarks = 0;
 	int laserIndex = 0, cameraIndex = 0;
 	if(gn->isLaserSensorActivated()){
@@ -486,12 +487,12 @@ void RNUkfTask::predictMeasurements(Matrix& predictions, const Matrix& xk){
 	}
 }
 
-void RNUkfTask::landmarkObservation(const Matrix& Xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle){
+void RNUskfTask::landmarkObservation(const Matrix& Xk, const Matrix& disp, s_landmark* landmark, double& distance, double& angle){
 	distance = std::sqrt(std::pow(landmark->xpos - (Xk(0, 0) + disp(0, 0)), 2) + std::pow(landmark->ypos - (Xk(1, 0) + disp(1, 0)), 2));
 	angle = std::atan2(landmark->ypos - (Xk(1, 0) + disp(1, 0)), landmark->xpos - (Xk(0, 0) + disp(0, 0))) - Xk(2, 0);
 }
 
-void RNUkfTask::OnMessageReceivedWithData(unsigned char* cad, int length){
+void RNUskfTask::OnMessageReceivedWithData(unsigned char* cad, int length){
 	gn->lockVisualLandmarks();
 	RNLandmarkList* markers = gn->getVisualLandmarks();
 	markers->initializeFromString((char*)cad);

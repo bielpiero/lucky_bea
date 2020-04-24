@@ -64,9 +64,11 @@ using namespace rapidxml;
 class GeneralController;
 class RNLaserTask;
 class RNLocalizationTask;
-class RNEkfTask;
+/*class RNEkfTask;
 class RNPkfTask;
 class RNUkfTask;
+class RNEskfTask;
+class RNUskfTask;*/
 class RNOmnicameraTask;
 class RNCameraTask;
 class RNRecurrentTaskMap;
@@ -366,7 +368,9 @@ private:
 	RNArmTask* armGestures;
 	RNDialogsTask* dialogs;
 	RNRecurrentTaskMap* tasks;
+
 	RNLocalizationTask* localization;
+
 	RNOmnicameraTask* omnidirectionalTask;
 	RNRFIdentificationTask* rfidTask; //future
 	RNCameraTask* eyesCameras;

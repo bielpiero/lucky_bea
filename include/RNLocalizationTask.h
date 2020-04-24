@@ -6,8 +6,6 @@
 #include "Matrix.h"
 #include "GeneralController.h"
 
-#define STATE_VARIABLES 3
-
 class RNLocalizationTask : public RNRecurrentTask{
 public:
 	RNLocalizationTask(const GeneralController* gn, const char* name = "Localization Task", const char* description = "") : RNRecurrentTask(gn, name, description){

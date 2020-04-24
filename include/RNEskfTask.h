@@ -1,13 +1,13 @@
-#ifndef RN_EKF_TASK_H
-#define RN_EKF_TASK_H
+#ifndef RN_ESKF_TASK_H
+#define RN_ESKF_TASK_H
 
 #include "RNLocalizationTask.h"
 #include "UDPServer.h"
 
-class RNEkfTask : public RNLocalizationTask, public UDPServer{
+class RNEskfTask : public RNLocalizationTask, public UDPServer{
 public:
-	RNEkfTask(const GeneralController* gn, const char* name = "Extended Kalman Localization Task", const char* description = "");
-	~RNEkfTask();
+	RNEskfTask(const GeneralController* gn, const char* name = "Extended Schmidt-Kalman Localization Task", const char* description = "");
+	~RNEskfTask();
 	virtual void task();
 	virtual void kill();
 	virtual void init();
