@@ -1,8 +1,9 @@
 #include "RNUskfTask.h"
 
 const int RNUskfTask::SV = 3;
-const int RNUskfTask::SV_AUG = 5;
-const int RNUskfTask::SV_AUG_SIGMA = 11;
+const int RNUskfTask::BV = 5;
+const int RNUskfTask::SV_AUG = SV + BV;
+const int RNUskfTask::SV_AUG_SIGMA = 2*SV_AUG + 1;
 
 const double RNUskfTask::CAMERA_ERROR_POSITION_X = -0.25;
 const double RNUskfTask::CAMERA_ERROR_POSITION_Y = -0.014;
@@ -35,6 +36,10 @@ void RNUskfTask::init(){
 		PkAug = Matrix(SV_AUG, SV_AUG);
 		XSigPred = Matrix(SV, SV_AUG_SIGMA);
 		XSigPredAug = Matrix(SV_AUG, SV_AUG_SIGMA);
+
+		b = gn->getb();
+		B = gn->getB();
+		Pxbk = Matrix(3, BV);
 
 		if(wm != NULL){
 			delete[] wm;
@@ -86,26 +91,44 @@ void RNUskfTask::kill(){
 void RNUskfTask::prediction(){
 
 	double deltaDistance = 0.0, deltaAngle = 0.0;
+	double deltaDistance_unbiased = 0.0, deltaAngle_unbiased = 0.0;
 	gn->getIncrementPosition(&deltaDistance, &deltaAngle);
+
+	deltaDistance_unbiased = deltaDistance + b(0,0); /*Corrige las medidas de la odometría con el vector bias calibrado*/
+	deltaAngle_unbiased = deltaAngle + b(1,0);
 
 	xkAug(0, 0) = xk(0, 0);
 	xkAug(1, 0) = xk(1, 0);
 	xkAug(2, 0) = xk(2, 0);
-	xkAug(3, 0) = 0;
-	xkAug(4, 0) = 0;
+	for(int i = 0; i < BV; i++){
+		xkAug(SV + i, 0) = b(i, 0);;
+	}
+
 
 	for(int i = 0; i < SV; i++){
 		for(int j= 0; j < SV; j++){
 			PkAug(i, j) = Pk(i, j);
 		}
 	}
-	/*if(deltaDistance == 0.0 and deltaAngle == 0.0){
-		PkAug(3, 3) = 0.0;
-		PkAug(4, 4) = 0.0;
-	} else {*/
-		PkAug(3, 3) = gn->getQ()(0, 0);
-		PkAug(4, 4) = gn->getQ()(1, 1);
-	//}
+
+	for(int i = 0; i < SV; i++){
+		for(int j= SV; j < SV+BV; j++){
+			PkAug(i, j) = Pxbk(i, j-SV);
+		}
+	}
+
+	for(int i = SV; i < SV+BV; i++){
+		for(int j= 0; j < SV; j++){
+			PkAug(i, j) = Pxbk(j, i-SV);
+		}
+	}
+
+	for(int i = SV; i < SV+BV; i++){
+		for(int j= SV; j < SV+BV; j++){
+			PkAug(i, j) = B(i-SV, j-SV);
+		}
+	}
+
 
 	Matrix L = PkAug.chol();
 	
@@ -123,7 +146,7 @@ void RNUskfTask::prediction(){
 
 	//Prediction of every sigma point
 	for(int i = 0; i < SV_AUG_SIGMA; i++){
-		RNUtils::getOdometryPose(XSigPredAug.col(i), deltaDistance, deltaAngle, xk_1);
+		RNUtils::getOdometryPose(XSigPredAug.col(i), deltaDistance_unbiased, deltaAngle_unbiased, xk_1);
 		XSigPred.setCol(i, xk_1);
 	}
 	// Mean of state
@@ -168,8 +191,9 @@ void RNUskfTask::obtainMeasurements(Matrix& zkli, std::vector<int>& ids){
 		Matrix zkl(totalLandmarks, 4);
 		predictMeasurements(zkl, XSigPred.col(i));
 		for(int j = 0; j < laserLandmarksCount; j++){
-			results(2*j, i) = zkl(j, 0);
-			results(2*j + 1, i) = zkl(j, 1);
+			results(2*j, i) = zkl(j, 0) - XSigPred(5, i);
+			results(2*j + 1, i) = zkl(j, 1) - XSigPred(6, i);
+			results(2*j + 1, i) = RNUtils::fixAngleRad(results(2*j + 1, i));
 			if(not idsProcessed){
 				ids.push_back((int)zkl(j, 3));
 			}
@@ -177,7 +201,8 @@ void RNUskfTask::obtainMeasurements(Matrix& zkli, std::vector<int>& ids){
 		}
 
 		for(int j = cameraIndex; j < totalLandmarks; j++){
-			results(j, i) = zkl(j, 1);
+			results(j, i) = zkl(j, 1) - XSigPred(7, i);
+			results(j, i) = RNUtils::fixAngleRad(results(j, i));
 			if(not idsProcessed){
 				ids.push_back((int)zkl(j, 3));
 			}
@@ -196,6 +221,7 @@ void RNUskfTask::task(){
 		int rsize = 0, vsize = 0;
 		int activeRL = 0, activeVL = 0;
 		pk1 = Pk;
+		pxbk1 = Pxbk;
 		xk_1 = xk;
 
 		//printf("\n\n\nNew Iteration:\n");
@@ -324,6 +350,17 @@ void RNUskfTask::task(){
 
 			Matrix Wk = Pxz * !Sk;
 
+			Matrix Wxk(SV, sizeH);
+			for(int i = 0; i < SV; i++){
+				Wxk.setRow(i, Wk.row(i));
+			}
+
+			Matrix Wbk(BV, sizeH);
+			for(int i = SV; i < SV_AUG; i++){
+				Wbk.setRow(i-SV,  Wk.row(i));
+			}
+
+
 			//printf("Z(k + 1)\n");
 			//zik_1.print();
 
@@ -353,7 +390,7 @@ void RNUskfTask::task(){
 			//printf("nu(k + 1)\n");
 			//nu.print();
 
-			xk = xk_1 + Wk * nu;
+			xk = xk_1 + Wxk * nu;
 			xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
 
 			//printf("X(k + 1|k + 1) postfix\n");
@@ -361,7 +398,9 @@ void RNUskfTask::task(){
 
 			char bufferpk1[256], bufferpk[256];
 			sprintf(bufferpk1, "%.4e\t%.4e\t%.4e", Pk(0, 0), Pk(1, 1), Pk(2, 2));
-			Pk = Pk - Wk * Sk * ~Wk;
+			Pk = Pk - Wxk * Sk * ~Wxk;
+			Pxbk = Pxbk - Wxk * Sk * ~Wbk;
+
 			//printf("P(k + 1|k + 1)\n");
 			//Pk.print();
 			if(Pk(0, 0) < 0.0 or Pk(1, 1) < 0 or Pk(2, 2) < 0){

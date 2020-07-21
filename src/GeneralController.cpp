@@ -55,6 +55,9 @@ GeneralController::GeneralController(const char* port):RobotNode(port){
 	P = Matrix(3, 3);
 	Q = Matrix(2, 2);
 
+	b = Matrix(5, 1);
+	B = Matrix(5, 5);
+
 	xmlFaceFullPath = RNUtils::getApplicationPath() + XML_FILE_PATH;
 	xmlMapsFullPath = RNUtils::getApplicationPath() + XML_FILE_MAPS_PATH;
 	xmlSectorsPath = RNUtils::getApplicationPath() + XML_FILE_SECTORS_PATH;
@@ -1030,42 +1033,45 @@ void GeneralController::loadRobotConfig(){
 
 	xml_node<>* nav_root_node = root_node->first_node(XML_ELEMENT_NAV_PARAMS_STR);
 
+
+
+
 	xml_node<>* initial_pos_root_node = nav_root_node->first_node(XML_ELEMENT_INITIAL_POS_STR);
-	xml_node<>* pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_X_ZONE_STR);
-	s_trapezoid* x_zone = robotConfig->navParams->initialPosition->xZone;
-	x_zone->x1 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
-	x_zone->x2 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
-	x_zone->x3 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
-	x_zone->x4 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
 
-	pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_Y_ZONE_STR);
-	s_trapezoid* y_zone = robotConfig->navParams->initialPosition->yZone;
-	y_zone->x1 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
-	y_zone->x2 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
-	y_zone->x3 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
-	y_zone->x4 = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
+	xml_node<>* pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_X_DISTRIBUTION_STR);
+	s_distribution* x_distribution = robotConfig->navParams->initialPosition->xDistribution;
+	x_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
+	x_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
+	x_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
 
-	pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
-	s_trapezoid* th_zone = robotConfig->navParams->initialPosition->thZone;
-	th_zone->x1 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
-	th_zone->x2 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
-	th_zone->x3 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
-	th_zone->x4 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
+	pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_Y_DISTRIBUTION_STR);
+	s_distribution* y_distribution = robotConfig->navParams->initialPosition->yDistribution;
+	y_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
+	y_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
+	y_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
+
+	pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_TH_DISTRIBUTION_STR);
+	s_distribution* th_distribution = robotConfig->navParams->initialPosition->thDistribution;
+	th_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
+	th_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
+	th_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
+
+
 	
 	xml_node<>* process_noise_root_node = nav_root_node->first_node(XML_ELEMENT_PROCESS_NOISE_STR);
-	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_D_ZONE_STR);
-	s_trapezoid* x1_zone =robotConfig->navParams->processNoise->dZone;
-	x1_zone->x1 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
-	x1_zone->x2 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
-	x1_zone->x3 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
-	x1_zone->x4 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
+	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_D_DISTRIBUTION_STR);
+	s_distribution* d_distribution = robotConfig->navParams->processNoise->dDistribution;
+	d_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
+	d_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
+	d_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
 
-	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
-	s_trapezoid* th1_zone = robotConfig->navParams->processNoise->thZone;
-	th1_zone->x1 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
-	th1_zone->x2 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
-	th1_zone->x3 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
-	th1_zone->x4 = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
+	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_TH_DISTRIBUTION_STR);
+	s_distribution* th1_distribution = robotConfig->navParams->processNoise->thDistribution;
+	th1_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
+	th1_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
+	th1_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
+
+
 
 	xml_node<>* sensors_root_node = nav_root_node->first_node(XML_ELEMENT_SENSORS_STR);
 	if(sensors_root_node != NULL){
@@ -1083,21 +1089,19 @@ void GeneralController::loadRobotConfig(){
 			}
 
 			xml_node<>* observation_noise_root_node = sensor_node->first_node(XML_ELEMENT_OBSERV_NOISE_STR);
-			pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_D_ZONE_STR);
-			s_trapezoid* d_zone = sensor->observationNoise->dZone;
-			d_zone->alpha = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value());
-			d_zone->x1 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value()) / 100;
-			d_zone->x2 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value()) / 100;
-			d_zone->x3 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value()) / 100;
-			d_zone->x4 = (double)atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value()) / 100;
+			pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_D_DISTRIBUTION_STR);
+			s_distribution* d1_distribution = sensor->observationNoise->dDistribution;
+			d1_distribution->alpha = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value());
+			d1_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
+			d1_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
+			d1_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
 
-			pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_TH_ZONE_STR);
-			s_trapezoid* th2_zone = sensor->observationNoise->thZone;
-			th2_zone->alpha = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value());
-			th2_zone->x1 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X1_STR)->value());
-			th2_zone->x2 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X2_STR)->value());
-			th2_zone->x3 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X3_STR)->value());
-			th2_zone->x4 = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_TRAP_X4_STR)->value());
+			pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_TH_DISTRIBUTION_STR);
+			s_distribution* th2_distribution = sensor->observationNoise->thDistribution;
+			th2_distribution->alpha = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value());
+			th2_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
+			th2_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
+			th2_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
 
 			robotConfig->navParams->sensors->push_back(sensor);
 		}
@@ -2296,19 +2300,9 @@ int GeneralController::initializeKalmanVariables(){
 
 		int totalLandmarks = 0;
 
-		fl::Trapezoid* xxKK = new fl::Trapezoid("Xx(k|k)", rpk(0, 0) + robotConfig->navParams->initialPosition->xZone->x1, rpk(0, 0) + robotConfig->navParams->initialPosition->xZone->x2, rpk(0, 0) + robotConfig->navParams->initialPosition->xZone->x3, rpk(0, 0) + robotConfig->navParams->initialPosition->xZone->x4);
-		
-		fl::Trapezoid* xyKK = new fl::Trapezoid("Xy(k|k)", rpk(1, 0) + robotConfig->navParams->initialPosition->yZone->x1, rpk(1, 0) + robotConfig->navParams->initialPosition->yZone->x2, rpk(1, 0) + robotConfig->navParams->initialPosition->yZone->x3, rpk(1, 0) + robotConfig->navParams->initialPosition->yZone->x4);	
-		
-		fl::Trapezoid* xThKK = new fl::Trapezoid("XTh(k|k)", rpk(2, 0) + robotConfig->navParams->initialPosition->thZone->x1, rpk(2, 0) + robotConfig->navParams->initialPosition->thZone->x2, rpk(2, 0) + robotConfig->navParams->initialPosition->thZone->x3, rpk(2, 0) + robotConfig->navParams->initialPosition->thZone->x4);	
-		
-		fl::Trapezoid* vdK1 = new fl::Trapezoid("Vd(k + 1)", robotConfig->navParams->processNoise->dZone->x1, robotConfig->navParams->processNoise->dZone->x2, robotConfig->navParams->processNoise->dZone->x3, robotConfig->navParams->processNoise->dZone->x4);
-		
-		fl::Trapezoid* vThK1 = new fl::Trapezoid("VTh(k + 1)", robotConfig->navParams->processNoise->thZone->x1, robotConfig->navParams->processNoise->thZone->x2, robotConfig->navParams->processNoise->thZone->x3, robotConfig->navParams->processNoise->thZone->x4);	
-
-		uX = fuzzy::FStats::uncertainty(xxKK->getVertexA(), xxKK->getVertexB(), xxKK->getVertexC(), xxKK->getVertexD());
-		uY = fuzzy::FStats::uncertainty(xyKK->getVertexA(), xyKK->getVertexB(), xyKK->getVertexC(), xyKK->getVertexD());
-		uTh = fuzzy::FStats::uncertainty(xThKK->getVertexA(), xThKK->getVertexB(), xThKK->getVertexC(), xThKK->getVertexD());
+		uX = robotConfig->navParams->initialPosition->xDistribution->variance;
+		uY = robotConfig->navParams->initialPosition->yDistribution->variance;
+		uTh = robotConfig->navParams->initialPosition->thDistribution->variance;
 		RNUtils::printLn("Position {ux: %f m^2, uy: %f m^2, uth:%f rads^2}", uX, uY, uTh);
 
 		P(0, 0) = uX; 	P(0, 1) = 0; 	P(0, 2) = 0;
@@ -2317,39 +2311,40 @@ int GeneralController::initializeKalmanVariables(){
 		
 		// Variances and Covariances Matrix of Process noise Q
 
-		uX = fuzzy::FStats::uncertainty(vdK1->getVertexA(), vdK1->getVertexB(), vdK1->getVertexC(), vdK1->getVertexD());
-		uTh = fuzzy::FStats::uncertainty(vThK1->getVertexA(), vThK1->getVertexB(), vThK1->getVertexC(), vThK1->getVertexD());
+		uX = robotConfig->navParams->processNoise->dDistribution->variance;
+		uTh = robotConfig->navParams->processNoise->thDistribution->variance;
 		
 		Q(0, 0) = uX; 	Q(0, 1) = 0;
 		Q(1, 0) = 0; 	Q(1, 1) = uTh;
 		RNUtils::printLn("Process {ux: %f m^2, uth: %f rads^2}", uX, uTh);
-		double rfidUX = 0, rfidUTh = 0;
+
 
 		for(int i = 0; i < robotConfig->navParams->sensors->size(); i++){
-			s_trapezoid* dZone;
-			s_trapezoid* thZone;
-			dZone = robotConfig->navParams->sensors->at(i)->observationNoise->dZone;
-			thZone = robotConfig->navParams->sensors->at(i)->observationNoise->thZone;
+			double laserDistanceBias, laserAngleBias, cameraDistanceBias, cameraAngleBias;
+			s_distribution* dDistribution;
+			s_distribution* thDistribution;
+			dDistribution = robotConfig->navParams->sensors->at(i)->observationNoise->dDistribution;
+			thDistribution = robotConfig->navParams->sensors->at(i)->observationNoise->thDistribution;
 
 			if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_LASER_STR){
-				this->laserDistanceAlpha = dZone->alpha;
-				this->laserAngleAlpha = thZone->alpha;
-				this->laserDistanceVariance = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
-				this->laserAngleVariance = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+				this->laserDistanceAlpha = dDistribution->alpha;
+				this->laserAngleAlpha = thDistribution->alpha;
+				this->laserDistanceVariance = dDistribution->variance;
+				this->laserAngleVariance = thDistribution->variance;
+				laserDistanceBias = dDistribution->variance;
+				laserAngleBias = thDistribution->variance;
 				RNUtils::printLn("Laser {ux: %f m^2, uth:%f rads^2}", this->laserDistanceVariance, this->laserAngleVariance);
 
 			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
-				this->cameraDistanceAlpha = dZone->alpha;
-				this->cameraAngleAlpha = thZone->alpha;
-				this->cameraDistanceVariance = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
-				this->cameraAngleVariance = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
+				this->cameraDistanceAlpha = dDistribution->alpha;
+				this->cameraAngleAlpha = thDistribution->alpha;
+				this->cameraDistanceVariance = dDistribution->variance;;
+				this->cameraAngleVariance = thDistribution->variance;
+				cameraDistanceBias = dDistribution->variance;
+				cameraAngleBias = thDistribution->variance;
 				RNUtils::printLn("Camara {ux: %f m^2, uth:%f rads^2}", this->cameraDistanceVariance, this->cameraAngleVariance);
 				//cameraUTh = 0.00022;   //forced meanwhile
 
-			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_RFID_STR){
-				
-				rfidUX = fuzzy::FStats::uncertainty(dZone->x1, dZone->x2, dZone->x3, dZone->x4);
-				rfidUTh = fuzzy::FStats::uncertainty(thZone->x1, thZone->x2, thZone->x3, thZone->x4);
 			}
 		}
 		
@@ -2364,16 +2359,33 @@ int GeneralController::initializeKalmanVariables(){
 		if(rfidSensorActivated){
 			totalLandmarks += rfidLandmarksCount;
 		}
-		
- 		
-		kalmanFuzzy->clear();
-		kalmanFuzzy->push_back(xxKK);
-		kalmanFuzzy->push_back(xyKK);
-		kalmanFuzzy->push_back(xThKK);
-		
-		kalmanFuzzy->push_back(vdK1);
-		kalmanFuzzy->push_back(vThK1);
 
+
+		// Values of the bias vector b
+
+		double bD, bTh, bDLaser, bThLaser, bDCamera, bThCamera;
+		bD = robotConfig->navParams->processNoise->dDistribution->bias;
+		bTh = robotConfig->navParams->processNoise->thDistribution->bias;
+		bDLaser = laserDistanceBias;
+		bThLaser = laserAngleBias; 
+		bDCamera = cameraDistanceBias;
+		bThCamera = cameraAngleBias;
+
+		b(0, 0) = bD;
+		b(1, 0) = bTh;
+		b(2, 0) = bDLaser;
+		b(3, 0) = bThLaser;
+		b(4, 0) = bThCamera;
+
+		// Variances and Covariances Matrix of the bias B
+
+		B(0, 0) = Q(0,0); 	B(0, 1) = Q(0,1);	B(0, 2) = 0;							B(0, 3) = 0;							B(0, 4) = 0;
+		B(1, 0) = Q(1,0); 	B(1, 1) = Q(1,1);	B(1, 2) = 0;							B(1, 3) = 0;							B(1, 4) = 0;
+		B(2, 0) = 0; 		B(2, 1) = 0;		B(2, 2) = this->laserDistanceVariance;	B(2, 3) = 0;							B(2, 4) = 0;
+		B(3, 0) = 0; 		B(3, 1) = 0;		B(3, 2) = 0;							B(3, 3) = this->laserAngleVariance;		B(3, 4) = 0;
+		B(4, 0) = 0; 		B(4, 1) = 0;		B(4, 2) = 0;							B(4, 3) = 0;							B(4, 4) = this->cameraAngleVariance;
+
+		
 		result = 0;
 	}
 	
@@ -2417,6 +2429,14 @@ Matrix GeneralController::getP(){
 
 Matrix GeneralController::getQ(){
 	return Q;
+}
+
+Matrix GeneralController::getb(){
+	return b;
+}
+
+Matrix GeneralController::getB(){
+	return B;
 }
 
 double GeneralController::getLaserDistanceAlpha(){

@@ -55,10 +55,11 @@
 #define XML_ELEMENT_SENSORS_STR "sensors"
 #define XML_ELEMENT_SENSOR_STR "sensor"
 #define XML_ELEMENT_OBSERV_NOISE_STR "observation-noise"
-#define XML_ELEMENT_POS_X_ZONE_STR "x-zone"
-#define XML_ELEMENT_POS_Y_ZONE_STR "y-zone"
-#define XML_ELEMENT_POS_TH_ZONE_STR "th-zone"
-#define XML_ELEMENT_POS_D_ZONE_STR "d-zone"
+#define XML_ELEMENT_POS_X_DISTRIBUTION_STR "x-distrib"
+#define XML_ELEMENT_POS_Y_DISTRIBUTION_STR "y-distrib"
+#define XML_ELEMENT_POS_TH_DISTRIBUTION_STR "th-distrib"
+#define XML_ELEMENT_POS_D_DISTRIBUTION_STR "d-distrib"
+
 
 #define XML_ATTRIBUTE_ROBOT_HEIGHT_STR "height"
 #define XML_ATTRIBUTE_LOCALIZATION_STR "localization"
@@ -93,10 +94,14 @@
 #define XML_ATTRIBUTE_RFID_RX_SENSITIVITY_STR "rx-sensitivity"
 
 #define XML_ATTRIBUTE_ALPHA_STR "alpha"
-#define XML_ATTRIBUTE_TRAP_X1_STR "x1"
+#define XML_ATTRIBUTE_DIST_MEAN_STR "mean"
+#define XML_ATTRIBUTE_DIST_VARIANCE_STR "variance"
+#define XML_ATTRIBUTE_DIST_BIAS_STR "bias"
+
+/*#define XML_ATTRIBUTE_TRAP_X1_STR "x1"
 #define XML_ATTRIBUTE_TRAP_X2_STR "x2"
 #define XML_ATTRIBUTE_TRAP_X3_STR "x3"
-#define XML_ATTRIBUTE_TRAP_X4_STR "x4"
+#define XML_ATTRIBUTE_TRAP_X4_STR "x4"*/
 
 #define XML_SENSOR_TYPE_LASER_STR "laser"
 #define XML_SENSOR_TYPE_CAMERA_STR "camera"

@@ -29,8 +29,11 @@ private:
 	static const double LAMBDA;
 
 	static const int SV;
+	static const int BV;
 	static const int SV_AUG;
 	static const int SV_AUG_SIGMA;
+	static const int BIAS_VARIABLES;
+
 	
 	int laserLandmarksCount;
 	int cameraLandmarksCount;
@@ -56,6 +59,11 @@ private:
 	Matrix XSigPredAug;
 	double* wm;
 	double* wc;
+
+	Matrix b;
+	Matrix B;
+	Matrix Pxbk;
+	Matrix pxbk1;
 };
 
 #endif

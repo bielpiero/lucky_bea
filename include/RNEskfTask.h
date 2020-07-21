@@ -21,6 +21,7 @@ private:
 	static const double CAMERA_ERROR_POSITION_X;
 	static const double CAMERA_ERROR_POSITION_Y;
 	static const int STATE_VARIABLES;
+	static const int BIAS_VARIABLES;
 	int laserLandmarksCount;
 	int cameraLandmarksCount;
 
@@ -36,12 +37,19 @@ private:
 	std::FILE* test;
 	Matrix xk;		// current position
 	Matrix xk_1;	// previous position
+	Matrix xk_1_unbiased;
 
 	Matrix Ak;
 	Matrix Bk;
 	Matrix pk1;
 	Matrix Hk;
+	Matrix Hbk;
 	Matrix Pk;
+
+	Matrix b;
+	Matrix B;
+	Matrix Pxbk;
+	Matrix pxbk1;
 };
 
 #endif

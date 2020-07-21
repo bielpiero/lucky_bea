@@ -121,33 +121,46 @@ struct s_trapezoid{
 	}
 };
 
+struct s_distribution{
+	double alpha;
+	double mean;
+	double variance;
+	double bias;
+	s_distribution(){
+		alpha = 0;
+		mean = 0;
+		variance = 0;
+		bias = 0;
+	}
+};
+
 struct s_position{
-	s_trapezoid* xZone;
-	s_trapezoid* yZone;
-	s_trapezoid* thZone;
+	s_distribution* xDistribution;
+	s_distribution* yDistribution;
+	s_distribution* thDistribution;
 	s_position(){
-		xZone = new s_trapezoid();
-		yZone = new s_trapezoid();
-		thZone = new s_trapezoid();		
+		xDistribution = new s_distribution();
+		yDistribution = new s_distribution();
+		thDistribution = new s_distribution();		
 	}
 	~s_position(){
-		delete xZone;
-		delete yZone;
-		delete thZone;
+		delete xDistribution;
+		delete yDistribution;
+		delete thDistribution;
 	}
 };
 
 struct s_obs_dth{
-	s_trapezoid* dZone;
-	s_trapezoid* thZone;
+	s_distribution* dDistribution;
+	s_distribution* thDistribution;
 
 	s_obs_dth(){
-		dZone = new s_trapezoid();
-		thZone = new s_trapezoid();		
+		dDistribution = new s_distribution();
+		thDistribution = new s_distribution();		
 	}
 	~s_obs_dth(){
-		delete dZone;
-		delete thZone;
+		delete dDistribution;
+		delete thDistribution;
 	}
 };
 
@@ -316,6 +329,9 @@ public:
 	Matrix getP();
 	Matrix getQ();
 
+	Matrix getb();
+	Matrix getB();
+
 
 	double getLaserDistanceAlpha();
 	double getLaserAngleAlpha();
@@ -389,6 +405,9 @@ private:
 	Matrix P;
 	Matrix Q;
 
+	Matrix b;
+	Matrix B;
+
 	std::list<RNFunPointer*> sectorChangedSubscribers;
 
 	double laserDistanceAlpha;
@@ -400,6 +419,11 @@ private:
 	double laserAngleVariance;
 	double cameraDistanceVariance;
 	double cameraAngleVariance;
+
+	double laserDistanceBias;
+	double laserAngleBias;
+	double cameraDistanceBias;
+	double cameraAngleBias;
 
 	int tokenRequester;
     int lastSiteVisitedIndex;
