@@ -1,5 +1,5 @@
 <sectors>
-	<sector id="0" name="Machine Hall" width="2065" height="2810" reference="2" polygon="m 0 0 l 0 2123 l 900 0 l 0 -2796 z" adjacency="0">
+	<sector id="0" name="Machine Hall" width="2065" height="2810" reference="2" polygon="m 0 0 l 0 2123 l 900 0 l 0 -2796 z" adjacency="1">
 		<landmarks>
 			<!-- Laser -->
 			<landmark id="0" type="laser" x="399"  y="1876" z="0"/>
@@ -73,7 +73,24 @@
 			<way st="3" adjacency="0,2,4"/>
 			<way st="4" adjacency="0,3"/>
 		</ways>
-		<tags/>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-2cc4" name="door" linked-site-id="7" antenna="2" stretching="0"/>
+		</tags>
 		
+	</sector>
+	<sector id="1" name="Main Building Hallway" width="2065" height="2810" reference="2" polygon="m 0 0 l 0 2123 l 900 0 l 0 -2796 z" adjacency="0">
+		<landmarks/>
+		<features/>
+		<sites/>
+		<ways>
+			<way st="0" adjacency="1,2,3,4"/>
+			<way st="1" adjacency="0,2"/>
+			<way st="2" adjacency="0,1,3"/>
+			<way st="3" adjacency="0,2,4"/>
+			<way st="4" adjacency="0,3"/>
+		</ways>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-6834" name="door" linked-site-id="7" antenna="1" stretching="0"/>
+		</tags>
 	</sector>
 </sectors>
