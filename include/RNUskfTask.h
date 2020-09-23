@@ -52,6 +52,7 @@ private:
 	Matrix xk_1;	// previous position
 
 	Matrix xkAug;		// current position
+	Matrix xkAug_1;
 	Matrix pk1;
 	Matrix Pk;
 	Matrix PkAug;

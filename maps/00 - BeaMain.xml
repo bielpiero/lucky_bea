@@ -1,5 +1,5 @@
 <sectors>
-	<sector id="0" name="Machine Hall" width="2065" height="2810" reference="2" polygon="m 0 0 l 0 2123 l 900 0 l 0 -2796 z">
+	<sector id="0" name="Machine Hall" width="2065" height="2810" reference="2" polygon="m 0 0 l 0 2123 l 900 0 l 0 -2796 z" adjacency="0">
 		<landmarks>
 			<!-- Laser -->
 			<landmark id="0" type="laser" x="399"  y="1876" z="0"/>

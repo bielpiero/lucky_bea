@@ -1,5 +1,5 @@
 <sectors sequence="0,1,0">
-	<sector id="0" name="R Receiver" width="1284" height="335" reference="2" polygon="m 8 0 l 0 98 l -8 0 l 0 136 l 270 0 l 0 -99 l 554 0 l 0 169 l 18 0 l 179 0 l 0 -182 l 245 0 l 0 -117 l -15 0 l 0 -38 l -192 0 l 0 35 l -819 0 l 0 -35 z">
+	<sector id="0" name="R Receiver" width="1284" height="335" reference="2" polygon="m 8 0 l 0 98 l -8 0 l 0 136 l 270 0 l 0 -99 l 554 0 l 0 169 l 18 0 l 179 0 l 0 -182 l 245 0 l 0 -117 l -15 0 l 0 -38 l -192 0 l 0 35 l -819 0 l 0 -35 z" adjacency="0">
 		<landmarks>
 			<landmark id="0" type="laser" x="890" y="35" z="0"/>
 			<landmark id="1" type="laser" x="595" y="154" z="0"/>
@@ -20,9 +20,24 @@
 		<sites cyclic="no" sequence="0">
 			<site id="0" name="doorway" radius="0" tsec="0" x="900" y="300" linked-feature-id="1"/>
 		</sites>
+		<ways>
+			<way st="0" adjacency="1"/>
+			<way st="1" adjacency="2"/>
+			<way st="2" adjacency="1,3"/>
+			<way st="3" adjacency="2,5"/>
+			<!--<way st="4" adjacency="3"/>-->
+			<way st="5" adjacency="3,6"/>
+			<way st="6" adjacency="5,8,7"/>
+			<way st="7" adjacency="6"/>
+			<way st="8" adjacency="6"/>
+		</ways>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="7" antenna="2" stretching="0"/>
+		</tags>
 	</sector>
-	<sector id="1" name="Main Hallway" width="2566" height="521" reference="2" polygon="m 0 300 l 0 173 l 127 0 l 0 53 l 101 0 l 0 -53 l 2144 0 l 0 53 l 115 0 l 0 -53 l 91 0 l 0 -473 l -254 0 l 0 300 z">
+	<sector id="1" name="Main Hallway" width="2566" height="521" reference="2" polygon="m 0 300 l 0 173 l 127 0 l 0 53 l 101 0 l 0 -53 l 2144 0 l 0 53 l 115 0 l 0 -53 l 91 0 l 0 -473 l -254 0 l 0 300 z" adjacency="0">
 		<landmarks>
+			<!--1,2,5,7,9,10,13-->
 			<landmark id="0" type="laser" x="275" y="303" z="0"/>
 			<landmark id="1" type="laser" x="275" y="468" z="0"/>
 			<landmark id="2" type="laser" x="550" y="303" z="0"/>
@@ -38,7 +53,7 @@
 			<landmark id="12" type="laser" x="1925" y="303" z="0"/>
 			<landmark id="13" type="laser" x="1925" y="468" z="0"/>
 			<landmark id="14" type="laser" x="2200" y="468" z="0"/>
-			<landmark id="15" type="laser" x="2566" y="303" z="0"/>
+			<landmark id="15" type="laser" x="2560" y="303" z="0"/>
 			<landmark id="0" type="camera" x="11" y="356" z="250"/>
 			<landmark id="1" type="camera" x="272" y="300" z="250"/>
 			<landmark id="2" type="camera" x="273" y="473" z="250"/>
@@ -93,8 +108,22 @@
 			<site id="22" name="doorway" radius="0" tsec="0" x="2517" y="335"/>
 			<site id="23" name="doorway" radius="0" tsec="0" x="2416" y="138"/>
 		</sites>
+		<ways>
+			<way st="0" adjacency="1"/>
+			<way st="1" adjacency="2"/>
+			<way st="2" adjacency="1,3"/>
+			<way st="3" adjacency="2,5"/>
+			<!--<way st="4" adjacency="3"/>-->
+			<way st="5" adjacency="3,6"/>
+			<way st="6" adjacency="5,8,7"/>
+			<way st="7" adjacency="6"/>
+			<way st="8" adjacency="6"/>
+		</ways>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="7" antenna="2" stretching="0"/>
+		</tags>
 	</sector>
-	<sector id="2" name="LCOE Receiver" width="897" height="432" reference="2" polygon="m 0 0 l 0 432 l 897 0 l 0 -432 z">
+	<sector id="2" name="LCOE Receiver" width="897" height="432" reference="2" polygon="m 0 0 l 0 432 l 897 0 l 0 -432 z" adjacency="0">
 		<landmarks/>
 		<features>
 			<feature id="0" name="charger" width="50" height="25" x="658" y="397" linked-sector-id="7" xcoord="420" ycoord="0"/>
@@ -102,8 +131,22 @@
 		<sites cyclic="no" sequence="12,0,1,2,8">
 			<site id="0" name="doorway" radius="0" tsec="0" x="900" y="300" linked-feature-id="1"/>
 		</sites>
+		<ways>
+			<way st="0" adjacency="1"/>
+			<way st="1" adjacency="2"/>
+			<way st="2" adjacency="1,3"/>
+			<way st="3" adjacency="2,5"/>
+			<!--<way st="4" adjacency="3"/>-->
+			<way st="5" adjacency="3,6"/>
+			<way st="6" adjacency="5,8,7"/>
+			<way st="7" adjacency="6"/>
+			<way st="8" adjacency="6"/>
+		</ways>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="7" antenna="2" stretching="0"/>
+		</tags>
 	</sector>
-	<sector id="3" name="R4" width="573" height="557" reference="2" polygon="m 0 0 l 0 557 l 573 0 l 0 -557 z">
+	<sector id="3" name="R4" width="573" height="557" reference="2" polygon="m 0 0 l 0 557 l 573 0 l 0 -557 z" adjacency="0">
 		<landmarks/>
 		<features>
 			<feature id="2" name="charger" width="50" height="25" x="658" y="397" linked-sector-id="7" xcoord="420" ycoord="0"/>
@@ -111,8 +154,22 @@
 		<sites cyclic="no" sequence="12,0,1,2,8">
 			<site id="0" name="doorway" radius="0" tsec="0" x="900" y="300" linked-feature-id="1"/>
 		</sites>
+		<ways>
+			<way st="0" adjacency="1"/>
+			<way st="1" adjacency="2"/>
+			<way st="2" adjacency="1,3"/>
+			<way st="3" adjacency="2,5"/>
+			<!--<way st="4" adjacency="3"/>-->
+			<way st="5" adjacency="3,6"/>
+			<way st="6" adjacency="5,8,7"/>
+			<way st="7" adjacency="6"/>
+			<way st="8" adjacency="6"/>
+		</ways>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="7" antenna="2" stretching="0"/>
+		</tags>
 	</sector>
-	<sector id="4" name="R3" width="549" height="509" reference="2" polygon="m 0 0 l 0 509 l 549 0 l 0 -509 z">
+	<sector id="4" name="R3" width="549" height="509" reference="2" polygon="m 0 0 l 0 509 l 549 0 l 0 -509 z" adjacency="0">
 		<landmarks/>
 		<features>
 			<feature id="2" name="charger" width="50" height="25" x="658" y="397" linked-sector-id="7" xcoord="420" ycoord="0"/>
@@ -120,8 +177,22 @@
 		<sites cyclic="no" sequence="12,0,1,2,8">
 			<site id="0" name="doorway" radius="0" tsec="0" x="900" y="300" linked-feature-id="1"/>
 		</sites>
+		<ways>
+			<way st="0" adjacency="1"/>
+			<way st="1" adjacency="2"/>
+			<way st="2" adjacency="1,3"/>
+			<way st="3" adjacency="2,5"/>
+			<!--<way st="4" adjacency="3"/>-->
+			<way st="5" adjacency="3,6"/>
+			<way st="6" adjacency="5,8,7"/>
+			<way st="7" adjacency="6"/>
+			<way st="8" adjacency="6"/>
+		</ways>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="7" antenna="2" stretching="0"/>
+		</tags>
 	</sector>
-	<sector id="5" name="R2" width="1017" height="509" reference="2" polygon="m 0 0 l 0 509 l 1017 0 l 0 -509 z">
+	<sector id="5" name="R2" width="1017" height="509" reference="2" polygon="m 0 0 l 0 509 l 1017 0 l 0 -509 z" adjacency="0">
 		<landmarks/>
 		<features>
 			<feature id="2" name="charger" width="50" height="25" x="658" y="397" linked-sector-id="7" xcoord="420" ycoord="0"/>
@@ -129,8 +200,22 @@
 		<sites cyclic="no" sequence="12,0,1,2,8">
 			<site id="0" name="doorway" radius="0" tsec="0" x="900" y="300" linked-feature-id="1"/>
 		</sites>
+		<ways>
+			<way st="0" adjacency="1"/>
+			<way st="1" adjacency="2"/>
+			<way st="2" adjacency="1,3"/>
+			<way st="3" adjacency="2,5"/>
+			<!--<way st="4" adjacency="3"/>-->
+			<way st="5" adjacency="3,6"/>
+			<way st="6" adjacency="5,8,7"/>
+			<way st="7" adjacency="6"/>
+			<way st="8" adjacency="6"/>
+		</ways>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="7" antenna="2" stretching="0"/>
+		</tags>
 	</sector>
-	<sector id="6" name="R1" width="750" height="509" reference="2" polygon="m 0 0 l 0 509 l 750 0 l 0 -509 z">
+	<sector id="6" name="R1" width="750" height="509" reference="2" polygon="m 0 0 l 0 509 l 750 0 l 0 -509 z" adjacency="0">
 		<landmarks/>
 		<features>
 			<feature id="2" name="charger" width="50" height="25" x="658" y="397" linked-sector-id="7" xcoord="420" ycoord="0"/>
@@ -138,6 +223,19 @@
 		<sites cyclic="no" sequence="12,0,1,2,8">
 			<site id="0" name="doorway" radius="0" tsec="0" x="900" y="300" linked-feature-id="1"/>
 		</sites>
+		<ways>
+			<way st="0" adjacency="1"/>
+			<way st="1" adjacency="2"/>
+			<way st="2" adjacency="1,3"/>
+			<way st="3" adjacency="2,5"/>
+			<!--<way st="4" adjacency="3"/>-->
+			<way st="5" adjacency="3,6"/>
+			<way st="6" adjacency="5,8,7"/>
+			<way st="7" adjacency="6"/>
+			<way st="8" adjacency="6"/>
+		</ways>
+		<tags>
+			<tag id="e280-1160-6000-0207-28b5-2cb4" name="door" linked-site-id="7" antenna="2" stretching="0"/>
+		</tags>
 	</sector>
 </sectors>
-

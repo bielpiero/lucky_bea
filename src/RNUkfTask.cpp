@@ -176,7 +176,7 @@ void RNUkfTask::obtainMeasurements(Matrix& zkli, std::vector<int>& ids){
 		}
 
 		for(int j = cameraIndex; j < totalLandmarks; j++){
-			results(j, i) = zkl(j, 1);
+			results(cameraIndex + j, i) = zkl(j, 1);
 			if(not idsProcessed){
 				ids.push_back((int)zkl(j, 3));
 			}
@@ -186,13 +186,12 @@ void RNUkfTask::obtainMeasurements(Matrix& zkli, std::vector<int>& ids){
 	}
 
 	zkli = results;
-	
 }
 
 
 void RNUkfTask::task(){
 	if(enableLocalization){
-		int rsize = 0, vsize = 0;
+		int rsize = 0, vsize = 0, rreject = 0, vreject = 0;
 		int activeRL = 0, activeVL = 0;
 		pk1 = Pk;
 		xk_1 = xk;
@@ -205,7 +204,7 @@ void RNUkfTask::task(){
 		//Pk.print();
 		
 		if(Pk(0, 0) < 0.0 or Pk(1, 1) < 0 or Pk(2, 2) < 0){
-			printf("Error gordo...\n");
+			//printf("Error gordo...\n");
 		}
 
 		Matrix zkli;
@@ -229,6 +228,7 @@ void RNUkfTask::task(){
 			totalLandmarks += activeVL;
 		}
 		int sizeH = (gn->isLaserSensorActivated() ? 2 * activeRL : 0) + (gn->isCameraSensorActivated() ? activeVL : 0);
+		//printf("sizeH = %d \n", sizeH);
 		Matrix currentR(sizeH, sizeH);
 		Matrix zik_1(sizeH, 1);
 		Matrix zi(sizeH, SV_AUG_SIGMA);
@@ -275,6 +275,10 @@ void RNUkfTask::task(){
 
 					currentR(cameraIndex + i, cameraIndex + i) = gn->getCameraAngleVariance();
 
+					//for(int a = 0; i < ids.size(); i++){
+					//	std::cout << ids.at(a) << ' ';
+					//}
+
 					for(int j = 0; j < SV_AUG_SIGMA; j++){
 						int zklIndex = RN_NONE;
 						for(int k = 0; k < cameraLandmarksCount and (zklIndex == RN_NONE); k++){
@@ -288,12 +292,11 @@ void RNUkfTask::task(){
 							//RNUtils::printLn("MapId: %d, SectorId: %d, markerId: %d, Estimación: {d: %f, a: %f}, BD: {d: %f, a: %f}, Error: {a: %f}", lndmrk->getMapId(), lndmrk->getSectorId(), lndmrk->getMarkerId(), distanceFixed, angleFixed, zkl(j, 0), zkl(j, 1), zl(j + laserOffset, 0));
 						}
 					}
-
 				}
 			}
 
-			//printf("zik_1:\n");
-			//zik_1.print();
+			//printf("zkli:\n");
+			//zkli.print();
 
 			//printf("zi:\n");
 			//zi.print();
@@ -327,16 +330,23 @@ void RNUkfTask::task(){
 			//zik_1.print();
 
 			Matrix nu = zik_1 - zi_mean;
+
+			//printf("zik_1\n");
+			//zik_1.print();
+			//printf("zi_mean\n");
+			//zi_mean.print();
+
 			for (int i = 0; i < activeRL; i++){
 				double mdDistance = std::abs(nu(2 * i, 0) / std::sqrt(gn->getLaserDistanceVariance()));
 				double mdAngle = std::abs(nu(2 * i + 1, 0) / std::sqrt(gn->getLaserAngleVariance()));
 
 				if (mdDistance > laserTMDistance or mdAngle > laserTMAngle){
 
-					//RNUtils::printLn("RL landmark %d rejected...", indexFound);
+					//RNUtils::printLn("RL landmark rejected...");
 					nu(2 * i, 0) = 0.0;
 					nu(2 * i + 1, 0) = 0.0;
 					rsize--;
+					rreject++;
 				}
 			}
 
@@ -344,11 +354,13 @@ void RNUkfTask::task(){
 				double mdAngle = std::abs(nu(cameraIndex + i, 0) / std::sqrt(gn->getCameraAngleVariance()));
 
 				if (mdAngle > cameraTMAngle){
-					RNUtils::printLn("FL Landmark %d rejected...", ids[i + laserLandmarksCount]);
+					//RNUtils::printLn("FL Landmark %d rejected...", ids[i + laserLandmarksCount]);
 					nu(cameraIndex + i, 0) = 0;
 					vsize--;
+					vreject++;
 				}
 			}
+
 			//printf("nu(k + 1)\n");
 			//nu.print();
 
@@ -370,7 +382,7 @@ void RNUkfTask::task(){
 
 			gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 			char buffer[1024];
-			sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize);
+			sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize, rreject, vreject);
 			if(test != NULL){
 				fprintf(test, "%s", buffer);
 			}
@@ -383,12 +395,13 @@ void RNUkfTask::task(){
 			//xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
 			gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 			char buffer[1024];
-			sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize);
+			sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize, rreject, vreject);
 			if(test != NULL){
 				fprintf(test, "%s", buffer);
 			}
 		}
 
+		//xk.print();
 		
 		gn->getVisualLandmarks()->clear();
 		gn->unlockVisualLandmarks();

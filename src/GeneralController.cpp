@@ -1040,36 +1040,36 @@ void GeneralController::loadRobotConfig(){
 
 	xml_node<>* pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_X_DISTRIBUTION_STR);
 	s_distribution* x_distribution = robotConfig->navParams->initialPosition->xDistribution;
-	x_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
-	x_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
-	x_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
+	x_distribution->mean = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value());
+	x_distribution->variance = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value());
+	x_distribution->bias = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value());
 
 	pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_Y_DISTRIBUTION_STR);
 	s_distribution* y_distribution = robotConfig->navParams->initialPosition->yDistribution;
-	y_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
-	y_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
-	y_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
+	y_distribution->mean = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value());
+	y_distribution->variance = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value());
+	y_distribution->bias = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value());
 
 	pos_root_node = initial_pos_root_node->first_node(XML_ELEMENT_POS_TH_DISTRIBUTION_STR);
 	s_distribution* th_distribution = robotConfig->navParams->initialPosition->thDistribution;
-	th_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
-	th_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
-	th_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
+	th_distribution->mean = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value());
+	th_distribution->variance = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value());
+	th_distribution->bias = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value());
 
 
 	
 	xml_node<>* process_noise_root_node = nav_root_node->first_node(XML_ELEMENT_PROCESS_NOISE_STR);
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_D_DISTRIBUTION_STR);
 	s_distribution* d_distribution = robotConfig->navParams->processNoise->dDistribution;
-	d_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
-	d_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
-	d_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
+	d_distribution->mean = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value());
+	d_distribution->variance = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value());
+	d_distribution->bias = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value());
 
 	pos_root_node = process_noise_root_node->first_node(XML_ELEMENT_POS_TH_DISTRIBUTION_STR);
 	s_distribution* th1_distribution = robotConfig->navParams->processNoise->thDistribution;
-	th1_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
-	th1_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
-	th1_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
+	th1_distribution->mean = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value());
+	th1_distribution->variance = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value());
+	th1_distribution->bias = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value());
 
 
 
@@ -1091,17 +1091,17 @@ void GeneralController::loadRobotConfig(){
 			xml_node<>* observation_noise_root_node = sensor_node->first_node(XML_ELEMENT_OBSERV_NOISE_STR);
 			pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_D_DISTRIBUTION_STR);
 			s_distribution* d1_distribution = sensor->observationNoise->dDistribution;
-			d1_distribution->alpha = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value());
-			d1_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
-			d1_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
-			d1_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
+			d1_distribution->alpha = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value());
+			d1_distribution->mean = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value());
+			d1_distribution->variance = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value());
+			d1_distribution->bias = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value());
 
 			pos_root_node = observation_noise_root_node->first_node(XML_ELEMENT_POS_TH_DISTRIBUTION_STR);
 			s_distribution* th2_distribution = sensor->observationNoise->thDistribution;
-			th2_distribution->alpha = (double)atof(pos_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value());
-			th2_distribution->mean = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value()) / 100;
-			th2_distribution->variance = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value()) / 100;
-			th2_distribution->bias = (double)std::atoi(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value()) / 100;
+			th2_distribution->alpha = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_ALPHA_STR)->value());
+			th2_distribution->mean = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_MEAN_STR)->value());
+			th2_distribution->variance = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_VARIANCE_STR)->value());
+			th2_distribution->bias = (double)std::atof(pos_root_node->first_attribute(XML_ATTRIBUTE_DIST_BIAS_STR)->value());
 
 			robotConfig->navParams->sensors->push_back(sensor);
 		}
@@ -2331,8 +2331,8 @@ int GeneralController::initializeKalmanVariables(){
 				this->laserAngleAlpha = thDistribution->alpha;
 				this->laserDistanceVariance = dDistribution->variance;
 				this->laserAngleVariance = thDistribution->variance;
-				laserDistanceBias = dDistribution->variance;
-				laserAngleBias = thDistribution->variance;
+				this->laserDistanceBias = dDistribution->bias;
+				this->laserAngleBias = thDistribution->bias;
 				RNUtils::printLn("Laser {ux: %f m^2, uth:%f rads^2}", this->laserDistanceVariance, this->laserAngleVariance);
 
 			} else if(robotConfig->navParams->sensors->at(i)->type == XML_SENSOR_TYPE_CAMERA_STR){
@@ -2340,8 +2340,8 @@ int GeneralController::initializeKalmanVariables(){
 				this->cameraAngleAlpha = thDistribution->alpha;
 				this->cameraDistanceVariance = dDistribution->variance;;
 				this->cameraAngleVariance = thDistribution->variance;
-				cameraDistanceBias = dDistribution->variance;
-				cameraAngleBias = thDistribution->variance;
+				this->cameraDistanceBias = dDistribution->bias;
+				this->cameraAngleBias = thDistribution->bias;
 				RNUtils::printLn("Camara {ux: %f m^2, uth:%f rads^2}", this->cameraDistanceVariance, this->cameraAngleVariance);
 				//cameraUTh = 0.00022;   //forced meanwhile
 
@@ -2366,17 +2366,17 @@ int GeneralController::initializeKalmanVariables(){
 		double bD, bTh, bDLaser, bThLaser, bDCamera, bThCamera;
 		bD = robotConfig->navParams->processNoise->dDistribution->bias;
 		bTh = robotConfig->navParams->processNoise->thDistribution->bias;
-		bDLaser = laserDistanceBias;
-		bThLaser = laserAngleBias; 
-		bDCamera = cameraDistanceBias;
-		bThCamera = cameraAngleBias;
+		bDLaser = this->laserDistanceBias;
+		bThLaser = this->laserAngleBias; 
+		bDCamera = this->cameraDistanceBias;
+		bThCamera = this->cameraAngleBias;
 
 		b(0, 0) = bD;
 		b(1, 0) = bTh;
 		b(2, 0) = bDLaser;
 		b(3, 0) = bThLaser;
 		b(4, 0) = bThCamera;
-
+		b.print();
 		// Variances and Covariances Matrix of the bias B
 
 		B(0, 0) = Q(0,0); 	B(0, 1) = Q(0,1);	B(0, 2) = 0;							B(0, 3) = 0;							B(0, 4) = 0;
@@ -2384,7 +2384,7 @@ int GeneralController::initializeKalmanVariables(){
 		B(2, 0) = 0; 		B(2, 1) = 0;		B(2, 2) = this->laserDistanceVariance;	B(2, 3) = 0;							B(2, 4) = 0;
 		B(3, 0) = 0; 		B(3, 1) = 0;		B(3, 2) = 0;							B(3, 3) = this->laserAngleVariance;		B(3, 4) = 0;
 		B(4, 0) = 0; 		B(4, 1) = 0;		B(4, 2) = 0;							B(4, 3) = 0;							B(4, 4) = this->cameraAngleVariance;
-
+		B.print();
 		
 		result = 0;
 	}

@@ -19,6 +19,7 @@ RNEkfTask::~RNEkfTask(){
 
 void RNEkfTask::init(){
 	if(gn != NULL and gn->initializeKalmanVariables() == 0){
+		lmfile = std::fopen("camera_measures.txt","w+");
 		Ak = Matrix::eye(3);
 		Bk = Matrix(3, 2);
 		Pk = gn->getP();
@@ -55,7 +56,7 @@ void RNEkfTask::kill(){
 
 void RNEkfTask::task(){
 	if(enableLocalization){
-		int rsize = 0, vsize = 0;
+		int rsize = 0, vsize = 0, rreject = 0, vreject = 0;
 		int activeRL = 0, activeVL = 0;
 		pk1 = Pk;
 		xk_1 = xk;
@@ -82,7 +83,7 @@ void RNEkfTask::task(){
 
 		Pk = (Ak * pk1 * ~Ak) + (Bk * currentQ * ~Bk);
 		if(Pk(0, 0) < 0.0 or Pk(1, 1) < 0 or Pk(2, 2) < 0){
-			printf("Error gordo...\n");
+			//printf("Error gordo...\n");
 		}
 		Matrix zkl;
 		getObservations(zkl);
@@ -100,9 +101,11 @@ void RNEkfTask::task(){
 			activeVL = gn->getVisualLandmarks()->size();
 			totalLandmarks += activeVL;
 		}
+
 		int sizeH = (gn->isLaserSensorActivated() ? 2 * activeRL : 0) + (gn->isCameraSensorActivated() ? activeVL : 0);
 		Matrix currentR(sizeH, sizeH);
 		Matrix zl(sizeH, 1);
+		//printf("sizeH = %d\n", sizeH);
 		if(sizeH > 1){
 			Hk = Matrix(sizeH, STATE_VARIABLES);
 			int laserIndex = 0, cameraIndex = 0;
@@ -124,7 +127,7 @@ void RNEkfTask::task(){
 					Matrix measure(2, 1);
 					measure(0, 0) = lndmrk->getPointsXMean();
 					measure(1, 0) = lndmrk->getPointsYMean();
-					
+
 					for (int j = 0; j < laserLandmarksCount; j++){
 						s_landmark* currLandmark = currentSector->landmarkByTypeAndId(XML_SENSOR_TYPE_LASER_STR, (int)zkl(j, 3));
 						//printf("L[%d]: x: %f, y %f\n", currLandmark->id, currLandmark->xpos, currLandmark->ypos);
@@ -151,6 +154,7 @@ void RNEkfTask::task(){
 
 						euclideanDistances.emplace(j, std::sqrt(std::abs(mdk(0, 0))));
 					}
+
 					auto minorDistance = std::min_element(euclideanDistances.begin(), euclideanDistances.end(), [](std::pair<int, double> x, std::pair<int, double> y){ return x.second < y.second; });
 					if(minorDistance != euclideanDistances.end()){
 						Matrix smallHk = matricesHk[minorDistance->first];
@@ -175,14 +179,13 @@ void RNEkfTask::task(){
 
 						if (mdDistance > laserTMDistance or mdAngle > laserTMAngle){
 		
-							//RNUtils::printLn("landmark %d rejected...", indexFound);
+							//RNUtils::printLn("reflective landmark rejected...");
 							zl(2 * i, 0) = 0.0;
 							zl(2 * i + 1, 0) = 0.0;
 							rsize--;
+							rreject++;
 						}
-					}
-					
-					
+					}	
 				}
 			}
 
@@ -217,7 +220,6 @@ void RNEkfTask::task(){
 					if(lndmrk != NULL and (lndmrk->getMapId() == currentSector->getMapId()) and (lndmrk->getSectorId() == currentSector->getId()) and zklIndex != RN_NONE){
 
 						double angleFixed = lndmrk->getPointsYMean();
-						
 
 						zl(cameraIndex + i, 0) = angleFixed - zkl(zklIndex, 1);
 						if(zl(cameraIndex + i, 0) > M_PI){
@@ -231,9 +233,10 @@ void RNEkfTask::task(){
 					double mdAngle = std::abs(zl(cameraIndex + i, 0) / std::sqrt(gn->getCameraAngleVariance()));
 
 					if (mdAngle > cameraTMAngle){
-						//RNUtils::printLn("Landmark %d rejected...", (int)zkl(i, 3));
+						//RNUtils::printLn("FL Landmark %d rejected...", (int)zkl(i, 3));
 						zl(cameraIndex + i, 0) = 0;
 						vsize--;
+						rreject++;
 					}
 				}
 			}
@@ -256,7 +259,7 @@ void RNEkfTask::task(){
 			xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
 			gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 			char buffer[1024];
-			sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize);
+			sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize, rreject, vreject);
 			if(test != NULL){
 				fprintf(test, "%s", buffer);
 			}
@@ -269,12 +272,13 @@ void RNEkfTask::task(){
 			xk(2, 0) = RNUtils::fixAngleRad(xk(2, 0));
 			gn->setAltPose(ArPose(xk(0, 0), xk(1, 0), xk(2, 0) * 180/M_PI));
 			char buffer[1024];
-			sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize);
+			sprintf(buffer, "%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%.4lf\t%s\t%s\t%d\t%d\t%d\t%d\n", gn->getRawEncoderPosition()(0, 0), gn->getRawEncoderPosition()(1, 0), gn->getRawEncoderPosition()(2, 0), xk(0, 0), xk(1, 0), xk(2, 0), bufferpk1, bufferpk, rsize, vsize, rreject, vreject);
 			if(test != NULL){
 				fprintf(test, "%s", buffer);
 			}
 		}
 
+		//xk.print();
 		
 		gn->getVisualLandmarks()->clear();
 		gn->unlockVisualLandmarks();

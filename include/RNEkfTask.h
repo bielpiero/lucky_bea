@@ -34,6 +34,7 @@ private:
 	MapSector* currentSector;
 
 	std::FILE* test;
+	std::FILE* lmfile;
 	Matrix xk;		// current position
 	Matrix xk_1;	// previous position
 

@@ -2,25 +2,25 @@
 	<rfid-config tx-power="8" rx-sensitivity="22"/>
 	<navigation>
 		<initial-position>
-			<x-distrib mean="-5" variance="-3" bias="3"/> <!-- centimeters -->
-			<y-distrib mean="-5" variance="-3" bias="3"/> <!-- centimeters -->
-			<th-distrib mean="-0.2" variance="-0.15" bias="0.15"/> <!-- radians -->
+			<x-distrib mean="0.005" variance="0.00005677" bias="0.005"/> <!-- meters -->
+			<y-distrib mean="0.005" variance="0.00005677" bias="0.005"/> <!-- meters -->
+			<th-distrib mean="0.1" variance="0.01042" bias="0.1"/> <!-- radians -->
 		</initial-position>
 		<process-noise>
-			<d-distrib mean="-4" variance="-2" bias="2" x4="4"/> <!-- centimeters -->
-			<th-distrib mean="-0.070" variance="-0.035" bias="0.035"/> <!-- radians -->
+			<d-distrib mean="-0.019045" variance="0.00015357" bias="-0.019045"/> <!-- meters -->
+			<th-distrib mean="0.0201" variance="0.0009162" bias="0.0201"/> <!-- radians -->
 		</process-noise>
 		<sensors>
 			<sensor type="laser" activated="1">
 				<observation-noise>
-					<d-distrib alpha="0.15" mean="-2" variance="-1" bias="1"/>  <!-- centimeters -->
-					<th-distrib alpha="0.15" mean="-0.01" variance="-0.008" bias="0.008"/> <!-- radians -->
+					<d-distrib alpha="0.3" mean="0.029439" variance="0.0000438966" bias="0.029439"/>  <!-- eters -->
+					<th-distrib alpha="0.3" mean="0.0092" variance="0.0003285" bias="0.0092"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
 			<sensor type="camera" activated="1">
 				<observation-noise>
-					<d-distrib alpha="0.1" mean="-3" variance="-2" bias="2"/>  <!-- centimeters -->
-					<th-distrib alpha="0.05" mean="-0.013" variance="-0.009" bias="0.009"/> <!-- radians -->
+					<d-distrib alpha="0.1" mean="0.05" variance="0.02" bias="0.05"/>  <!-- meters -->
+					<th-distrib alpha="0.1" mean="0.0465" variance="0.00033965" bias="0.0465"/> <!-- radians -->
 				</observation-noise>
 			</sensor>
 		</sensors>
