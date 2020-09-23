@@ -27,13 +27,24 @@ ArAction(name, "BP Implementation for turning and moving to a point"){
 
 	//linearController = new RNPIDController("Linear Speed", 0, 30, -0.16, 0, 0, 1, -linearSpeed, linearSpeed);
 	//angularController = new RNPIDController("Angular Speed", 0, 30, -0.45, 0, 0, 1, -angularSpeed, angularSpeed);
-	speedController = new RNFuzzySpeedController;
+	//speedController = new RNFuzzySpeedController;
 	//hallwayController = new RNHallwayController;
+
+	/*montse*/
+	speedControlDNC = new RNFuzzySpeedControl;
+	dncController = new RNFuzzyDNC;
+	hallController = new RNFuzzyHallDNC;
+	/*montse*/
 }
 
 RNActionGoto::~RNActionGoto(){
 	delete myDesired;
-	delete speedController;
+	//delete speedController;
+	/*montse*/
+	delete hallController;
+	delete dncController;
+	delete speedControlDNC;
+	/*montse*/
 	//delete hallwayController;
 	//delete linearController;
 	//delete angularController;
@@ -45,38 +56,60 @@ ArActionDesired* RNActionGoto::fire(ArActionDesired current){
 		float deltaThetaLocal = 0.0, distanceLocal = 0.0;
 		//ArPose* currPose = new ArPose(myRobot->getPose());
 		ArPose* currPose = rn->getAltPose();
+		LaserScan* laserData = rn->getLaserScan();
+
+		distanceLocal = RNUtils::distanceTo(this->goal.getX(), this->goal.getY(), currPose->getX(), currPose->getY());
+
+		/* VARIABLE PARA INDICAR SI ES PASILLO */
+		//isHallway ...
+
 		//RNUtils::printLn("{currpose: {x: %f, y: %f, th: %f}}", currPose.getX(), currPose.getY(), currPose.getThRad());
 		//RNUtils::printLn("{goal: {x: %f, y: %f, th: %f}}", goal.getX(), goal.getY(), goal.getThRad());
 		if(currPose){
-			if(this->goal.getTh() != 0.0){
-				distanceLocal = 0.0;
-				deltaThetaLocal = -currPose->getTh() + this->goal.getTh();
-			} else {
-				distanceLocal = RNUtils::distanceTo(this->goal.getX(), this->goal.getY(), currPose->getX(), currPose->getY());
-				//distanceLocal = currPose->findDistanceTo(this->goal);
-		    	deltaThetaLocal = ArMath::subAngle(currPose->findAngleTo(this->goal), currPose->getTh());
-		    }
+			if(isHallway){
+				deltaThetaLocal = hallController->getDeltaTheta(laserData, currPose, &goal);
+				//RNUtils::printLn("DNC: PASILLO");
+			}
+			else{
+				deltaThetaLocal = dncController->getDeltaTheta(laserData, currPose, &goal);
+				//RNUtils::printLn("DNC: SALA");
+			}
+			//RNUtils::printLn("{FuzzyDNC DeltaTheta: %f}", deltaThetaLocal);
 	    	//RNUtils::printLn("{Distance: %f, DeltaTheta: %f}", distanceLocal, deltaThetaLocal);
 	    	delete currPose;
 	    }
-		/*if(rn->isLaserReady() and (distanceLocal > minimumDistance)){
-			LaserScan* laserData = rn->getLaserScan();
-			hallwayController->getSystemInput(laserData, &linearSpeed, &angularSpeed);
-			RNUtils::printLn("{lin-vel: %f, rot-vel: %f}", linearSpeed, angularSpeed*180/M_PI);
-			myDesired->setRotVel(angularSpeed*180/M_PI);
-    		myDesired->setVel(linearSpeed);
-		} else {
-			myDesired->setVel(0);
-    		myDesired->setRotVel(0);
-    		angularController->reset();
-    		linearController->reset();
-    		currentState = STATE_ACHIEVED_GOAL;
-		}*/
 
-    	if((deltaThetaLocal > minimumAngle or deltaThetaLocal < -minimumAngle) or (distanceLocal > minimumDistance or distanceLocal < -minimumDistance)){
-    		speedController->getSystemInput(distanceLocal/1e3, RNUtils::deg2Rad(deltaThetaLocal), &linearSpeed, &angularSpeed);
+		if((deltaThetaLocal > minimumAngle or deltaThetaLocal < -minimumAngle)){
+			//Funcion de rotar... preguntar a Biel si separar rotacion de avance?
+			myDesired->setRotVel(0.1); //Consultar rango
+    		myDesired->setVel(0);
+		}
+		//Go forward
+    	else if((distanceLocal > minimumDistance) or (distanceLocal < -minimumDistance)){
+			int i = 0;
+			//Get closest obstacle to the LEFT (sectors 0 to 160)
+			float obsLeft = 100;
+			for(i=0; i<((laserData->size()/2)-20);i++){
+				if(laserData->getRange(i)<obsLeft) obsLeft =laserData->getRange(i);
+			}
+
+			//Get closest obstable to the RIGHT (sectors 200 to 360)
+			float obsRight = 100;
+			for(i=((laserData->size()/2)+20); i<laserData->size();i++){
+				if(laserData->getRange(i)<obsRight) obsRight =laserData->getRange(i);
+			}
+
+			//Get cloaset obstacle to the FRONT (sectors 160 to 200)
+			float obsFront = 100;
+			for(i=((laserData->size()/2)-20); i<((laserData->size()/2)+20);i++){
+				if(laserData->getRange(i)<obsFront) obsFront =laserData->getRange(i);
+			}
+
+			speedControlDNC->getSystemInput(obsLeft, obsRight, obsFront, &linearSpeed, &angularSpeed);
+
+    		//speedControl->getSystemInput(distanceLocal/1e3, RNUtils::deg2Rad(deltaThetaLocal), &linearSpeed, &angularSpeed);
     		//RNUtils::printLn("{lin-vel: %f, rot-vel: %f}", linearSpeed, RNUtils::rad2Deg(angularSpeed));
-			myDesired->setRotVel(RNUtils::rad2Deg(angularSpeed));
+			myDesired->setRotVel(0);
     		myDesired->setVel(linearSpeed);
     	} else {
     		myDesired->setVel(0);

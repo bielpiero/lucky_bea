@@ -201,6 +201,14 @@ public:
 	double getIncrement() { return (0.5 * M_PI / 180); }
 };
 
+class auxPose{
+public:
+	double x;
+	double y;
+	double angle;
+	int sector;
+	double dist;
+};
 
 class RNUtils{
 private:

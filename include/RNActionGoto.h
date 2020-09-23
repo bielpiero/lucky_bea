@@ -4,6 +4,11 @@
 #include "RobotNode.h"
 #include "RNHallwayController.h"
 #include "RNFuzzySpeedController.h"
+/*montse*/
+#include "RNFuzzyDNC.h"
+#include "RNFuzzyHallDNC.h"
+#include "RNFuzzySpeedControl.h"
+/*montse*/
 #include "RNPIDController.h"
 
 #define SATURATION_DISTANCE_MM 1000
@@ -48,8 +53,11 @@ private:
 	RNPIDController* linearController;
 	RNPIDController* angularController;
 	RobotNode* rn;
-	RNHallwayController* hallwayController;
-	RNFuzzySpeedController* speedController;
+	/*montse*/
+	RNFuzzyDNC* dncController;
+	RNFuzzyHallDNC* hallController;
+	RNFuzzySpeedControl* speedControlDNC;
+	/*montse*/
 
 	double linearSpeed;
 	double angularSpeed;
